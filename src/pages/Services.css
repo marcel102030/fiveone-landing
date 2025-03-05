@@ -1,0 +1,255 @@
+.services-section {
+  padding: 6rem 0;
+  background: var(--navy);
+  color: var(--text-white);
+  min-height: 100vh;
+}
+
+.services-section h1 {
+  text-align: center;
+  color: var(--mint);
+  font-size: 2.5rem;
+  margin-bottom: 3rem;
+}
+
+/* Tabs */
+.track-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 3rem;
+  flex-wrap: wrap;
+}
+
+.track-tab {
+  padding: 1rem 2rem;
+  background: transparent;
+  border: 2px solid var(--mint);
+  color: var(--mint);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.track-tab img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(95%) sepia(12%) saturate(454%)
+    hue-rotate(89deg) brightness(97%) contrast(96%);
+  transition: filter 0.3s ease;
+}
+
+.track-tab.active img {
+  filter: brightness(0) saturate(100%);
+}
+
+.track-tab:hover {
+  background: rgba(100, 255, 218, 0.1);
+}
+
+.track-tab.active {
+  background: var(--mint);
+  color: var(--navy);
+}
+
+/* Module Cards */
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+  gap: 2rem;
+  padding: 0 2rem;
+}
+
+.module-card {
+  background: var(--navy-light);
+  border-radius: 10px;
+  padding: 2rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.module-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 30px rgba(100, 255, 218, 0.1);
+}
+
+.module-title {
+  color: var(--mint);
+  font-size: 1.8rem;
+  margin: 0 0 2rem;
+  text-align: center;
+}
+
+/* Submodules */
+.submodules-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.submodule-item {
+  border: 1px solid rgba(100, 255, 218, 0.2);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.submodule-header {
+  padding: 1.5rem;
+  background: rgba(100, 255, 218, 0.05);
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: background-color 0.3s ease;
+}
+
+.submodule-header:hover {
+  background: rgba(100, 255, 218, 0.1);
+}
+
+.submodule-header-content {
+  flex: 1;
+}
+
+.submodule-info {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.submodule-code {
+  background: var(--mint);
+  color: var(--navy);
+  padding: 0.25rem 0.5rem;
+  border-radius: 3px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.submodule-title {
+  margin: 0;
+  font-size: 1.1rem;
+  color: var(--text-white);
+}
+
+.submodule-meta {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-slate);
+  font-size: 0.9rem;
+  align-items: center;
+}
+
+.submodule-instructor {
+  color: var(--text-slate);
+}
+
+.submodule-type {
+  padding: 0.25rem 0.75rem;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.submodule-type.T {
+  background: rgba(100, 255, 218, 0.1);
+  color: var(--mint);
+}
+
+.submodule-type.M {
+  background: rgba(255, 100, 100, 0.1);
+  color: #ff6464;
+}
+
+.submodule-content {
+  padding: 1.5rem;
+  background: var(--navy-lighter);
+}
+
+.lessons-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.lesson-item {
+  color: var(--text-slate);
+  font-size: 0.95rem;
+  padding: 0.75rem;
+  border-radius: 3px;
+  transition: background-color 0.3s ease;
+  background: rgba(100, 255, 218, 0.02);
+}
+
+.lesson-item:hover {
+  background: rgba(100, 255, 218, 0.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .module-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .services-section {
+    padding: 4rem 1rem;
+  }
+
+  .services-section h1 {
+    font-size: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .track-tabs {
+    gap: 0.5rem;
+  }
+
+  .track-tab {
+    padding: 0.75rem 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .track-tab img {
+    width: 20px;
+    height: 20px;
+  }
+
+  .module-grid {
+    padding: 0;
+  }
+
+  .module-card {
+    padding: 1.5rem;
+  }
+
+  .module-title {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .submodule-header {
+    padding: 1rem;
+  }
+
+  .submodule-info {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .submodule-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}

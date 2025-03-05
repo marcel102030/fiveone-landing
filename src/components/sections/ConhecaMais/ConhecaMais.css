@@ -1,0 +1,109 @@
+.conheca-mais {
+  padding: 4em 2em;
+  background: var(--navy);
+  color: var(--text-white);
+}
+
+.conheca-mais h2 {
+  font-size: 2.5em;
+  margin-bottom: 2em;
+  color: var(--text-light-slate);
+  text-align: center;
+  position: relative;
+}
+
+.conheca-mais h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--mint);
+  border-radius: 2px;
+}
+
+.ministerio-cards {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.ministerio-card {
+  background: var(--mint);
+  border-radius: 10px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.ministerio-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(100, 255, 218, 0.3);
+}
+
+.ministerio-card h3 {
+  color: var(--navy);
+  font-size: 1.5em;
+  margin: 0;
+  font-weight: bold;
+}
+
+.ministerio-card p {
+  color: var(--navy);
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 0;
+  flex-grow: 1;
+}
+
+.saiba-mais {
+  background: var(--navy);
+  color: var(--mint);
+  border: none;
+  border-radius: 5px;
+  padding: 0.75em 1.5em;
+  font-size: 0.9em;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+}
+
+.saiba-mais:hover {
+  background: rgba(10, 25, 47, 0.8);
+  transform: scale(1.05);
+}
+
+/* Responsive adjustments */
+@media (max-width: 1200px) {
+  .ministerio-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .ministerio-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    padding: 0 1rem;
+  }
+
+  .conheca-mais h2 {
+    font-size: 2em;
+    margin-bottom: 1.5em;
+  }
+}
+
+@media (max-width: 480px) {
+  .ministerio-cards {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,41 @@
+#sobre {
+  padding: 4em 2em;
+  background: var(--gradient-about);
+  color: var(--text-white);
+  text-align: justify;
+  border-radius: 8px;
+  margin-left: auto;
+  margin-right: auto;
+  position: relative;
+  z-index: 2;
+}
+
+#sobre h2 {
+  font-size: 2.5em;
+  margin-bottom: 1em;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  position: relative;
+  text-align: center;
+  color: var(--text-light-slate);
+}
+
+#sobre h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--mint);
+  border-radius: 2px;
+}
+
+#sobre p {
+  font-size: 1.1em;
+  margin: 0 auto;
+  color: var(--text-slate);
+  line-height: 1.6;
+  max-width: 950px;
+}

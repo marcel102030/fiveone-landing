@@ -1,0 +1,108 @@
+/* Trilha Ministerial Section */
+.trilha-ministerial {
+  padding: 4em 2em;
+  background: var(--navy);
+  color: var(--text-white);
+  text-align: center;
+  scroll-margin-top: var(--scroll-margin-top);
+}
+
+.trilha-ministerial h2 {
+  font-size: 2.5em;
+  margin-bottom: 2em;
+  color: var(--text-light-slate);
+  position: relative;
+}
+
+.trilha-ministerial h2::after {
+  content: "";
+  position: absolute;
+  bottom: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 60px;
+  height: 3px;
+  background: var(--mint);
+  border-radius: 2px;
+}
+
+.trilha-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.trilha-card {
+  background: linear-gradient(
+    180deg,
+    rgba(10, 25, 47, 0.7) 0%,
+    rgba(2, 12, 27, 0.8) 100%
+  );
+  border-radius: 10px;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  cursor: pointer;
+  border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.trilha-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 20px rgba(100, 255, 218, 0.2);
+  border-color: var(--mint);
+}
+
+.card-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.card-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
+  opacity: 0.9;
+  transition: opacity 0.3s ease;
+}
+
+.trilha-card:hover .card-icon img {
+  opacity: 1;
+  filter: brightness(0) invert(1) drop-shadow(0 0 5px rgba(100, 255, 218, 0.5));
+}
+
+.trilha-card h3 {
+  color: var(--mint);
+  font-size: 1.5em;
+  margin: 0;
+}
+
+.trilha-card p {
+  color: var(--text-slate);
+  font-size: 0.9em;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .trilha-cards {
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .trilha-ministerial h2 {
+    font-size: 2em;
+    margin-bottom: 1.5em;
+  }
+}

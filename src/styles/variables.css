@@ -1,0 +1,37 @@
+:root {
+  /* Main Colors */
+  --navy: #0a192f;
+  --navy-light: #112240;
+  --mint: #64ffda;
+  --golden: #ffd700;
+  --golden-dark: #996515;
+
+  /* Text Colors */
+  --text-white: #e6f1ff;
+  --text-slate: #8892b0;
+  --text-light-slate: #ccd6f6;
+
+  /* Layout */
+  --navbar-height: 80px;
+  --scroll-margin-top: var(--navbar-height);
+
+  /* Gradients */
+  --gradient-hero: linear-gradient(
+    rgba(10, 25, 47, 0.95),
+    rgba(17, 34, 64, 0.95)
+  );
+  --gradient-about: linear-gradient(
+    135deg,
+    var(--navy) 0%,
+    var(--navy-light) 100%
+  );
+
+  /* Shadows */
+  --shadow-mint: drop-shadow(0 0 100px rgba(100, 255, 218, 0.3))
+    drop-shadow(0 0 125px rgba(100, 255, 218, 0.2))
+    drop-shadow(0 0 150px rgba(100, 255, 218, 0.1));
+
+  --shadow-mint-strong: drop-shadow(0 0 50px rgba(100, 255, 218, 1))
+    drop-shadow(0 0 75px rgba(100, 255, 218, 0.75))
+    drop-shadow(0 0 100px rgba(100, 255, 218, 0.5));
+}
