@@ -162,6 +162,7 @@
   font-weight: bold;
   margin-bottom: 2rem;
   color: var(--text-light-slate);
+  text-align: center;
 }
 
 .results-header {
@@ -206,6 +207,11 @@
   transition: all 0.3s ease;
   font-weight: 600;
   margin-top: 1rem;
+}
+
+.reset-button {
+  display: block;
+  margin: 4rem auto 6rem;
 }
 
 .start-button:hover,
@@ -325,4 +331,90 @@
   .tooltip::after {
     display: none;
   }
+}
+
+.start-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.username-input {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--mint);
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 250px;
+  background-color: rgba(17, 34, 64, 0.7);
+  color: var(--text-light-slate);
+}
+
+.username-input::placeholder {
+  color: var(--text-slate);
+}
+
+.username-input:focus {
+  outline: none;
+  border-color: var(--text-white);
+  box-shadow: 0 0 0 2px var(--mint);
+}
+
+.quiz-section h1 {
+  text-align: center;
+  color: var(--mint);
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+.intro-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem 2rem;
+}
+
+.theological-explanation {
+  font-size: 1rem;
+  color: var(--text-light-slate);
+  line-height: 1.8;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.theological-explanation h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1.2rem;
+  color: var(--mint);
+}
+
+.theological-explanation p {
+  margin-bottom: 1rem;
+}
+
+.start-form label {
+  font-weight: 500;
+  color: var(--text-slate);
+}
+
+/* Added block for aligning input and button at the top */
+.top-start-button-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.top-start-button-wrapper .username-input {
+  margin: 0;
+  width: 280px;
 }

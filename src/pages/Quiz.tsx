@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 import { BsInfoCircleFill } from "react-icons/bs";
 
@@ -45,12 +47,27 @@ const Quiz = () => {
     statement1: Statement;
     statement2: Statement;
   } | null>(null);
+  const [userInfo, setUserInfo] = useState({
+    name: "",
+    email: "",
+    phone: "",
+    submitted: false,
+  });
+
+  const quizTopRef = useRef<HTMLDivElement | null>(null);
 
   // Preload image when component mounts
   useEffect(() => {
     const img = new Image();
     img.src = logo;
   }, []);
+
+  // Scroll to top when quiz starts
+  useEffect(() => {
+    if (quizStarted && quizTopRef.current) {
+      quizTopRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [quizStarted]);
 
   // Initialize the quiz with first pair
   useEffect(() => {
@@ -109,13 +126,61 @@ const Quiz = () => {
     );
   };
 
+  const handleDownloadPDF = () => {
+    const input = document.getElementById("quiz-result");
+
+    if (!input) return;
+
+    html2canvas(input).then((canvas) => {
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const imgProps = pdf.getImageProperties(imgData);
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
+      pdf.save("resultado-teste-fiveone.pdf");
+    });
+  };
+
   if (!quizStarted) {
     return (
       <section className="quiz-section">
         <div className="content-container">
-          <h1>Quiz de aptidão 5 ministérios</h1>
+          <h1>Descubra o seu Dom Ministerial</h1>
+          <div className="top-start-button-wrapper">
+            <button
+              onClick={() => setQuizStarted(true)}
+              className="start-button"
+              aria-label="Iniciar o Teste (atalho superior)"
+            >
+              Começar Agora
+            </button>
+          </div>
+          <div className="intro-section">
+            <div className="theological-explanation">
+            <h3>Base Teológica do Teste</h3>
+            <p>
+              Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
+              que Cristo concedeu dons ministeriais à Igreja: apóstolos, profetas,
+              evangelistas, pastores e mestres. Esses dons têm como finalidade edificar
+              o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
+            </p>
+            <p>
+              Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
+              inclinações naturais e espirituais relacionadas a esses dons. O objetivo
+              é ajudá-lo a discernir com mais clareza qual dom ministerial está mais
+              presente em sua vida, não como um rótulo, mas como um ponto de partida
+              para seu desenvolvimento no serviço cristão.
+            </p>
+            <p>
+              Lembre-se: todos os dons são importantes e complementares. Este quiz é
+              apenas uma ferramenta de autoconhecimento à luz das Escrituras.
+            </p>
+            </div>
+          </div>
           <p>
-            Este quiz apresentará {TOTAL_QUESTIONS} pares de afirmações. Para
+            Este Teste apresentará {TOTAL_QUESTIONS} pares de afirmações. Para
             cada par, escolha a afirmação que mais se identifica com você.
           </p>
           <p>
@@ -123,13 +188,68 @@ const Quiz = () => {
             para obter um resultado mais preciso.
           </p>
           <p>O teste leva em média 5-10 minutos para ser completado.</p>
-          <button
-            onClick={() => setQuizStarted(true)}
-            className="start-button"
-            aria-label="Iniciar o quiz"
-          >
-            Iniciar Quiz
-          </button>
+          <div className="start-form">
+            <button
+              onClick={() => setQuizStarted(true)}
+              className="start-button"
+              aria-label="Iniciar o Teste"
+            >
+              Quero Fazer o Teste
+            </button>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (showResults && !userInfo.submitted) {
+    return (
+      <section className="quiz-section">
+        <div className="content-container">
+          <h2>Quase lá!</h2>
+          <p>Antes de ver seu resultado, preencha as informações abaixo:</p>
+          <div className="start-form">
+            <input
+              type="text"
+              placeholder="Nome"
+              value={userInfo.name}
+              onChange={(e) =>
+                setUserInfo((prev) => ({ ...prev, name: e.target.value }))
+              }
+              className="username-input"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={userInfo.email}
+              onChange={(e) =>
+                setUserInfo((prev) => ({ ...prev, email: e.target.value }))
+              }
+              className="username-input"
+            />
+            <input
+              type="tel"
+              placeholder="Telefone"
+              value={userInfo.phone}
+              onChange={(e) =>
+                setUserInfo((prev) => ({ ...prev, phone: e.target.value }))
+              }
+              className="username-input"
+            />
+            <button
+              onClick={() =>
+                setUserInfo((prev) => ({ ...prev, submitted: true }))
+              }
+              className="start-button"
+              disabled={
+                !userInfo.name.trim() ||
+                !userInfo.email.trim() ||
+                !userInfo.phone.trim()
+              }
+            >
+              Ver resultado
+            </button>
+          </div>
         </div>
       </section>
     );
@@ -144,20 +264,18 @@ const Quiz = () => {
       }))
       .sort((a, b) => a.score - b.score); // Order is reversed to work with wrap-reverse
 
-    const userName = "Confira seu resultado"; // You might want to make this dynamic
-
     return (
-      <section className="quiz-section">
-        <div className="content-container">
-          <div className="results-header">
+      <section className="Teste-section">
+        <div className="content-container" id="quiz-result">
+          <div className="results-header" style={{ marginTop: "6rem" }}>
             <h2>Parabéns, seu resultado está pronto!</h2>
             <p>
               Leia com atenção as informações abaixo para tirar o máximo de
-              proveito do seu teste. Nele você vai ver qual dos 5 dons você tem
+              proveito do seu teste. Nele você vai ver quais dos 5 dons você tem
               uma maior inclinação e como isso se aplica a sua vida.
             </p>
           </div>
-          <div className="result-name">{userName}</div>
+          <div className="result-name">{userInfo.name}</div>
           <div className="results">
             {sortedScores.map(({ categoryEnum: category, score, metadata }) => (
               <div
@@ -189,9 +307,16 @@ const Quiz = () => {
           <button
             onClick={onHandleReset}
             className="reset-button"
-            aria-label="Reiniciar o quiz"
+            aria-label="Reiniciar o Teste"
           >
             Reiniciar
+          </button>
+          <button
+            onClick={handleDownloadPDF}
+            className="start-button"
+            aria-label="Baixar resultado em PDF"
+          >
+            Baixar Resultado em PDF
           </button>
         </div>
       </section>
@@ -204,10 +329,15 @@ const Quiz = () => {
 
   return (
     <section className="quiz-section">
-      <div className="content-container">
+      <div className="content-container" ref={quizTopRef}>
         <h2>
           Comparação {currentQuestion + 1} de {TOTAL_QUESTIONS}
         </h2>
+        <progress
+          value={currentQuestion + 1}
+          max={TOTAL_QUESTIONS}
+          className="quiz-progress-bar"
+        ></progress>
         <p>Com qual dessas afirmações você mais se identifica?</p>
         <div className="statement-container">
           <StatementButton
@@ -219,6 +349,30 @@ const Quiz = () => {
             onHandleChoice={onHandleChoice}
           />
         </div>
+        <button
+          onClick={() => {
+            if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+              setShowResults(true);
+              return;
+            }
+
+            const newPair = getRandomComparisonPair(usedStatements);
+            if (!newPair) {
+              setShowResults(true);
+              return;
+            }
+
+            setCurrentQuestion((prev) => prev + 1);
+            setCurrentPair(newPair);
+            setUsedStatements(
+              (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
+            );
+          }}
+          className="statement-button none-button"
+          aria-label="Nenhuma das opções acima"
+        >
+          Nenhuma das opções acima
+        </button>
 
         {process.env.NODE_ENV === "development" && (
           <div className="debug-info">
