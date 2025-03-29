@@ -349,7 +349,10 @@ const Quiz = () => {
             onHandleChoice={onHandleChoice}
           />
         </div>
-        <div className="dual-options-wrapper">
+        <div
+          className="dual-options-wrapper"
+          style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "center" }}
+        >
           <button
             onClick={() => {
               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
@@ -371,7 +374,6 @@ const Quiz = () => {
             }}
             className="statement-button none-button"
             aria-label="Nenhuma das opções acima"
-            style={{ marginRight: "1.5rem" }}
           >
             Nenhuma das opções acima
           </button>
