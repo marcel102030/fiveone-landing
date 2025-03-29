@@ -61,6 +61,19 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
 }
 
+.statement-extra-options {
+  display: flex;
+  flex-direction: row;
+  gap: 80px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.statement-extra-options .statement-button:first-child {
+  margin-right: 10px;
+}
+
 .statement-button:hover {
   transform: translateY(-5px);
   border-color: var(--mint);

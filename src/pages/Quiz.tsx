@@ -349,31 +349,63 @@ const Quiz = () => {
             onHandleChoice={onHandleChoice}
           />
         </div>
-        <button
-          onClick={() => {
-            if (currentQuestion >= TOTAL_QUESTIONS - 1) {
-              setShowResults(true);
-              return;
-            }
+        <div className="dual-options-wrapper">
+          <button
+            onClick={() => {
+              if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+                setShowResults(true);
+                return;
+              }
 
-            const newPair = getRandomComparisonPair(usedStatements);
-            if (!newPair) {
-              setShowResults(true);
-              return;
-            }
+              const newPair = getRandomComparisonPair(usedStatements);
+              if (!newPair) {
+                setShowResults(true);
+                return;
+              }
 
-            setCurrentQuestion((prev) => prev + 1);
-            setCurrentPair(newPair);
-            setUsedStatements(
-              (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-            );
-          }}
-          className="statement-button none-button"
-          aria-label="Nenhuma das opções acima"
-        >
-          Nenhuma das opções acima
-        </button>
+              setCurrentQuestion((prev) => prev + 1);
+              setCurrentPair(newPair);
+              setUsedStatements(
+                (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
+              );
+            }}
+            className="statement-button none-button"
+            aria-label="Nenhuma das opções acima"
+            style={{ marginRight: "1.5rem" }}
+          >
+            Nenhuma das opções acima
+          </button>
+          <button
+            onClick={() => {
+              setCategoryScores((prevScores) => ({
+                ...prevScores,
+                [currentPair!.statement1.category]: prevScores[currentPair!.statement1.category] + 1,
+                [currentPair!.statement2.category]: prevScores[currentPair!.statement2.category] + 1,
+              }));
 
+              if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+                setShowResults(true);
+                return;
+              }
+
+              const newPair = getRandomComparisonPair(usedStatements);
+              if (!newPair) {
+                setShowResults(true);
+                return;
+              }
+
+              setCurrentQuestion((prev) => prev + 1);
+              setCurrentPair(newPair);
+              setUsedStatements(
+                (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
+              );
+            }}
+            className="statement-button both-button"
+            aria-label="Me identifico com as duas afirmações"
+          >
+            Me identifico com as duas afirmações
+          </button>
+        </div>
         {process.env.NODE_ENV === "development" && (
           <div className="debug-info">
             {[currentPair.statement1, currentPair.statement2].map(
