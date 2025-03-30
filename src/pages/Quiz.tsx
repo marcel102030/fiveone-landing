@@ -686,7 +686,7 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
     <section className="quiz-section">
       <div className="content-container" ref={quizTopRef}>
         <h2>
-          Comparação {currentQuestion + 1} de {TOTAL_QUESTIONS}
+          Etapa {currentQuestion + 1} de {TOTAL_QUESTIONS}
         </h2>
         <progress
           value={currentQuestion + 1}
