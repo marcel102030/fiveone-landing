@@ -351,7 +351,13 @@ const Quiz = () => {
         </div>
         <div
           className="dual-options-wrapper"
-          style={{ display: "flex", flexWrap: "wrap", gap: "1rem", justifyContent: "center" }}
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "1rem",
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
         >
           <button
             onClick={() => {
