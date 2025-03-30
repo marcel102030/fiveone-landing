@@ -7,9 +7,9 @@
 .quiz-section h1 {
   text-align: center;
   color: var(--mint);
-  font-size: 2.5rem;
+  font-size: 3rem;
   margin-bottom: 2rem;
-  position: relative;
+  font-weight: bold;
 }
 
 .quiz-section h2 {
@@ -401,14 +401,6 @@
   box-shadow: 0 0 0 2px var(--mint);
 }
 
-.quiz-section h1 {
-  text-align: center;
-  color: var(--mint);
-  font-size: 3rem;
-  margin-bottom: 2rem;
-  font-weight: bold;
-}
-
 .intro-section {
   text-align: center;
   margin-bottom: 3rem;
@@ -444,7 +436,11 @@
   color: var(--text-slate);
 }
 
-/* Added block for aligning input and button at the top */
+/* Ajuste para reduzir espaço entre as seções de introdução */
+.no-margin {
+  margin-top: -1rem;
+}
+
 .top-start-button-wrapper {
   display: flex;
   justify-content: center;
@@ -472,6 +468,39 @@
   text-align: left;
   width: 100%;
   max-width: 250px;
+}
+
+.intro-wrapper {
+  text-align: center;
+  max-width: 800px;
+  margin: 2rem auto 3rem;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.intro-wrapper p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-light-slate);
+  margin-bottom: 1rem;
+}
+
+.intro-highlight {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--mint);
+}
+
+.intro-note {
+  font-style: italic;
+}
+
+.intro-time {
+  font-size: 1rem;
+  color: var(--text-slate);
+  margin-top: 1rem;
 }
 
 @media (max-width: 480px) {

@@ -498,15 +498,21 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
               </div>
             </div>
           </div>
-          <p>
-            Este Teste apresentará {TOTAL_QUESTIONS} pares de afirmações. Para
-            cada par, escolha a afirmação que mais se identifica com você.
-          </p>
-          <p>
-            Não existe resposta certa ou errada - seja honesto em suas escolhas
-            para obter um resultado mais preciso.
-          </p>
-          <p>O teste leva em média 5-10 minutos para ser completado.</p>
+          <div style={{ marginTop: "-1.5rem" }}></div>
+          <div className="intro-wrapper">
+            <p className="intro-highlight">
+              Este teste apresentará <strong>50 pares de afirmações</strong>.
+            </p>
+            <p className="intro-text">
+              Para cada par, escolha a afirmação que mais se identifica com você.
+            </p>
+            <p className="intro-note">
+              Não existe resposta certa ou errada – seja honesto em suas escolhas para obter um resultado mais preciso.
+            </p>
+            <p className="intro-time">
+              🕒 O teste leva em média <strong>5 a 10 minutos</strong> para ser completado.
+            </p>
+          </div>
           <div className="start-form">
             <button
               onClick={() => setQuizStarted(true)}
