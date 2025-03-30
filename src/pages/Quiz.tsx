@@ -560,15 +560,6 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
             <InputMask
               mask="(99) 99999-9999"
               value={userInfo.phone}
-              onChange={(e) =>
-                setUserInfo((prev) => ({ ...prev, phone: e.target.value }))
-              }
-              onBlur={() =>
-                setFormErrors((prev) => ({
-                  ...prev,
-                  phone: userInfo.phone.replace(/\D/g, "").length !== 11,
-                }))
-              }
             >
               {(inputProps: any) => (
                 <input
@@ -576,6 +567,15 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
                   type="tel"
                   placeholder="Telefone"
                   className={`username-input ${formErrors.phone ? "input-error" : ""}`}
+                  onChange={(e) =>
+                    setUserInfo((prev) => ({ ...prev, phone: e.target.value }))
+                  }
+                  onBlur={() =>
+                    setFormErrors((prev) => ({
+                      ...prev,
+                      phone: userInfo.phone.replace(/\D/g, "").length !== 11,
+                    }))
+                  }
                 />
               )}
             </InputMask>
