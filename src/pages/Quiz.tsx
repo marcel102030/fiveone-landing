@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import InputMask from "react-input-mask";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+
 
 import { BsInfoCircleFill } from "react-icons/bs";
 
