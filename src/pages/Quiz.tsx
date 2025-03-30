@@ -157,26 +157,28 @@ const Quiz = () => {
               Começar Agora
             </button>
           </div>
-          <div className="intro-section">
-            <div className="theological-explanation">
-            <h3>Base Teológica do Teste</h3>
-            <p>
-              Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
-              que Cristo concedeu dons ministeriais à Igreja: apóstolos, profetas,
-              evangelistas, pastores e mestres. Esses dons têm como finalidade edificar
-              o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
-            </p>
-            <p>
-              Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
-              inclinações naturais e espirituais relacionadas a esses dons. O objetivo
-              é ajudá-lo a discernir com mais clareza qual dom ministerial está mais
-              presente em sua vida, não como um rótulo, mas como um ponto de partida
-              para seu desenvolvimento no serviço cristão.
-            </p>
-            <p>
-              Lembre-se: todos os dons são importantes e complementares. Este quiz é
-              apenas uma ferramenta de autoconhecimento à luz das Escrituras.
-            </p>
+          <div className="responsive-intro-wrapper">
+            <div className="intro-section">
+              <div className="theological-explanation">
+              <h3>Base Teológica do Teste</h3>
+              <p>
+                Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
+                que Cristo concedeu dons ministeriais à Igreja: apóstolos, profetas,
+                evangelistas, pastores e mestres. Esses dons têm como finalidade edificar
+                o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
+              </p>
+              <p>
+                Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
+                inclinações naturais e espirituais relacionadas a esses dons. O objetivo
+                é ajudá-lo a discernir com mais clareza qual dom ministerial está mais
+                presente em sua vida, não como um rótulo, mas como um ponto de partida
+                para seu desenvolvimento no serviço cristão.
+              </p>
+              <p>
+                Lembre-se: todos os dons são importantes e complementares. Este quiz é
+                apenas uma ferramenta de autoconhecimento à luz das Escrituras.
+              </p>
+              </div>
             </div>
           </div>
           <p>
