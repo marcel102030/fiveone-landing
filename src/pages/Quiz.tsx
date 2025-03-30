@@ -100,6 +100,7 @@ const Quiz = () => {
     // Check if quiz should end
     if (currentQuestion >= TOTAL_QUESTIONS - 1) {
       setShowResults(true);
+      setCurrentPair(null);
       return;
     }
 
@@ -107,6 +108,7 @@ const Quiz = () => {
     const newPair = getRandomComparisonPair(usedStatements);
     if (!newPair) {
       setShowResults(true);
+      setCurrentPair(null);
       return;
     }
 
@@ -519,7 +521,12 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
     );
   }
 
-  if (showResults && !userInfo.submitted) {
+  if (
+    showResults &&
+    !userInfo.submitted &&
+    userInfo &&
+    typeof userInfo === "object"
+  ) {
     return (
       <section className="quiz-section">
         <div className="content-container">
@@ -560,22 +567,22 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
             <InputMask
               mask="(99) 99999-9999"
               value={userInfo.phone}
+              onChange={(e) =>
+                setUserInfo((prev) => ({ ...prev, phone: e.target.value }))
+              }
+              onBlur={() =>
+                setFormErrors((prev) => ({
+                  ...prev,
+                  phone: userInfo.phone.replace(/\D/g, "").length !== 11,
+                }))
+              }
             >
-              {(inputProps: any) => (
+              {(inputProps) => (
                 <input
                   {...inputProps}
                   type="tel"
                   placeholder="Telefone"
                   className={`username-input ${formErrors.phone ? "input-error" : ""}`}
-                  onChange={(e) =>
-                    setUserInfo((prev) => ({ ...prev, phone: e.target.value }))
-                  }
-                  onBlur={() =>
-                    setFormErrors((prev) => ({
-                      ...prev,
-                      phone: userInfo.phone.replace(/\D/g, "").length !== 11,
-                    }))
-                  }
                 />
               )}
             </InputMask>
@@ -678,9 +685,14 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
     );
   }
 
-  if (!currentPair) {
-    return null;
-  }
+// ✅ Protege contra renderização fora do navegador (SSR)
+if (typeof window === "undefined") return null;
+
+// ✅ Protege contra estados incompletos no final do quiz
+if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
+  console.warn("Bloqueando renderização pois currentPair está incompleto:", currentPair);
+  return null;
+}
 
   return (
     <section className="quiz-section">
@@ -718,12 +730,14 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
             onClick={() => {
               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
                 setShowResults(true);
+                setCurrentPair(null);
                 return;
               }
 
               const newPair = getRandomComparisonPair(usedStatements);
               if (!newPair) {
                 setShowResults(true);
+                setCurrentPair(null);
                 return;
               }
 
@@ -749,12 +763,14 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
 
               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
                 setShowResults(true);
+                setCurrentPair(null);
                 return;
               }
 
               const newPair = getRandomComparisonPair(usedStatements);
               if (!newPair) {
                 setShowResults(true);
+                setCurrentPair(null);
                 return;
               }
 
@@ -771,21 +787,24 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
             Me identifico com as duas afirmações
           </button>
         </div>
-        {process.env.NODE_ENV === "development" && (
-          <div className="debug-info">
-            {[currentPair.statement1, currentPair.statement2].map(
-              (statement, index) => (
-                <p key={statement.id}>
-                  Categoria {index + 1}:{" "}
-                  {
-                    categoryMetadata.find((c) => c.id === statement.category)
-                      ?.name
-                  }
-                </p>
-              )
-            )}
-          </div>
-        )}
+        {process.env.NODE_ENV === "development" &&
+          currentPair &&
+          currentPair.statement1 &&
+          currentPair.statement2 && (
+            <div className="debug-info">
+              {[currentPair.statement1, currentPair.statement2].map(
+                (statement, index) => (
+                  <p key={statement.id}>
+                    Categoria {index + 1}:{" "}
+                    {
+                      categoryMetadata.find((c) => c.id === statement.category)
+                        ?.name
+                    }
+                  </p>
+                )
+              )}
+            </div>
+          )}
       </div>
     </section>
   );
