@@ -473,3 +473,28 @@
   width: 100%;
   max-width: 250px;
 }
+
+@media (max-width: 480px) {
+  .pdf-download-wrapper {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .pdf-download-wrapper button {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .reset-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
+    margin: 2rem auto 4rem;
+  }
+
+  .pdf-download-note {
+    text-align: center;
+    font-size: 0.95rem;
+    padding: 0 1rem;
+  }
+}

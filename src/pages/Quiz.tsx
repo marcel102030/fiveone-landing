@@ -661,13 +661,9 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
               </div>
             ))}
           </div>
-          <button
-            onClick={onHandleReset}
-            className="reset-button"
-            aria-label="Reiniciar o Teste"
-          >
-            Reiniciar
-          </button>
+          <p className="pdf-download-note" style={{ textAlign: "center" }}>
+            Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
+          </p>
           <div className="pdf-download-wrapper">
             <button
               onClick={handleDownloadPDF}
@@ -676,10 +672,15 @@ O dom de Mestre é essencial para a formação e crescimento sólido da Igreja. 
             >
               Baixar Resultado em PDF
             </button>
-            <p className="pdf-download-note">
-              Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
-            </p>
           </div>
+          <button
+            onClick={onHandleReset}
+            className="reset-button"
+            aria-label="Reiniciar o Teste"
+            style={{ backgroundColor: "#314b56", color: "white" }}
+          >
+            Reiniciar
+          </button>
         </div>
       </section>
     );
