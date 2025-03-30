@@ -29,3 +29,9 @@ export interface CategoryScore {
   categoryEnum: CategoryEnum;
   score: number;
 }
+
+export interface SendPdfPayload {
+  name: string;
+  email: string;
+  pdfBase64: string;
+}
