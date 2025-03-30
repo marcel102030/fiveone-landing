@@ -110,6 +110,7 @@ const Quiz = () => {
     setUsedStatements(
       (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
     );
+    document.activeElement instanceof HTMLElement && document.activeElement.blur();
   };
 
   const onHandleReset = () => {
@@ -379,6 +380,7 @@ const Quiz = () => {
               setUsedStatements(
                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
               );
+              document.activeElement instanceof HTMLElement && document.activeElement.blur();
             }}
             className="statement-button none-button"
             aria-label="Nenhuma das opções acima"
@@ -409,6 +411,7 @@ const Quiz = () => {
               setUsedStatements(
                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
               );
+              document.activeElement instanceof HTMLElement && document.activeElement.blur();
             }}
             className="statement-button both-button"
             aria-label="Me identifico com as duas afirmações"
