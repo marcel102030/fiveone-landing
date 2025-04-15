@@ -64,6 +64,7 @@ const Quiz = () => {
   const [transitioning, setTransitioning] = useState(false);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
+  const nextStepButtonRef = useRef<HTMLButtonElement>(null);
 
   // Preload image when component mounts
   useEffect(() => {
@@ -487,11 +488,21 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
              </p>
            )}
            <button
+             ref={nextStepButtonRef}
              onClick={() => {
                if (!selectedCategory) {
                  setShowSelectWarning(true);
                  return;
                }
+ 
+               // Adiciona a animação visual do clique
+               if (nextStepButtonRef.current) {
+                 nextStepButtonRef.current.classList.add("ring");
+                 setTimeout(() => {
+                   nextStepButtonRef.current?.classList.remove("ring");
+                 }, 500);
+               }
+ 
                onHandleChoice(selectedCategory);
                setSelectedCategory(null);
                setShowSelectWarning(false);

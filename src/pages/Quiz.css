@@ -566,17 +566,24 @@
   font-weight: 600;
   border: none;
   border-radius: 12px;
-  background: linear-gradient(135deg, #64ffda, #64ffda); /* laranja gradiente */
+  background: linear-gradient(135deg, #64ffda, #64ffda);
   color: black;
   cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 8px 20px rgba(100, 255, 218, 0.3);
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 6px 16px rgba(100, 255, 218, 0.25);
   margin-top: 2rem;
   letter-spacing: 0.5px;
   position: relative;
-  overflow: hidden;
 }
 
+/* Efeito de profundidade quando o botão é pressionado */
+.next-step-button:active {
+  transform: scale(0.92);
+  background-color: #00ffc3;
+  box-shadow: 0 0 12px 4px rgba(0, 255, 195, 0.6);
+  transition: all 0.05s ease-in;
+}
+/* Efeito de brilho animado ao passar o mouse */
 .next-step-button::before {
   content: "";
   position: absolute;
@@ -584,7 +591,7 @@
   left: -75%;
   width: 50%;
   height: 100%;
-  background: rgba(100, 255, 218, 0.2);
+  background: rgba(255, 255, 255, 0.15);
   transform: skewX(-20deg);
   transition: left 0.4s ease;
 }
@@ -594,11 +601,11 @@
 }
 
 .next-step-button:hover {
-  background: linear-gradient(135deg, #64ffda, #64ffda); /* laranja mais escuro */
-  transform: translateY(-3px) scale(1.03);
-  box-shadow: 0 10px 28px rgba(100, 255, 218, 0.4);
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 8px 24px rgba(100, 255, 218, 0.4);
 }
 
+/* Acessibilidade */
 .next-step-button:focus {
   outline: none;
 }
@@ -606,4 +613,17 @@
 .next-step-button:focus-visible {
   outline: 2px solid #64ffda;
   outline-offset: 3px;
+}
+
+@keyframes ring-effect {
+  0% {
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(100, 255, 218, 0);
+  }
+}
+
+.next-step-button.ring {
+  animation: ring-effect 0.5s ease-out;
 }
