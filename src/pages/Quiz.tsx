@@ -466,61 +466,15 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
            }}
          >
            <button
-             onClick={() => {
-               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
-                 setShowResults(true);
-                 setCurrentPair(null);
-                 return;
-               }
- 
-               const newPair = getRandomComparisonPair(usedStatements);
-               if (!newPair) {
-                 setShowResults(true);
-                 setCurrentPair(null);
-                 return;
-               }
- 
-               setCurrentQuestion((prev) => prev + 1);
-               setCurrentPair(newPair);
-               setUsedStatements(
-                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-               );
-               document.activeElement instanceof HTMLElement && document.activeElement.blur();
-             }}
-             className="statement-button none-button"
+             onClick={() => setSelectedCategory("nenhuma" as CategoryEnum)}
+             className={`statement-button none-button ${selectedCategory === ("nenhuma" as unknown as CategoryEnum) ? "selected" : ""}`}
              aria-label="Nenhuma das opções acima"
            >
              Nenhuma das opções acima
            </button>
            <button
-             onClick={() => {
-               setCategoryScores((prevScores) => ({
-                 ...prevScores,
-                 [currentPair!.statement1.category]: prevScores[currentPair!.statement1.category] + 1,
-                 [currentPair!.statement2.category]: prevScores[currentPair!.statement2.category] + 1,
-               }));
- 
-               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
-                 setShowResults(true);
-                 setCurrentPair(null);
-                 return;
-               }
- 
-               const newPair = getRandomComparisonPair(usedStatements);
-               if (!newPair) {
-                 setShowResults(true);
-                 setCurrentPair(null);
-                 return;
-               }
- 
-               setCurrentQuestion((prev) => prev + 1);
-               setCurrentPair(newPair);
-               setUsedStatements(
-                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-               );
-               document.activeElement instanceof HTMLElement && document.activeElement.blur();
-             }}
-             className="statement-button both-button"
+             onClick={() => setSelectedCategory("ambas" as CategoryEnum)}
+             className={`statement-button both-button ${selectedCategory === ("ambas" as unknown as CategoryEnum) ? "selected" : ""}`}
              aria-label="Me identifico com as duas afirmações"
            >
              Me identifico com as duas afirmações

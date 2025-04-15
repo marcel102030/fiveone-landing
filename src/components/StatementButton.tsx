@@ -1,10 +1,10 @@
 import React from "react";
-import { CategoryEnum } from "../types/quiz";
 import { Statement } from "../types/quiz";
+import { CategoryEnum } from "../types/quiz";
 
 interface StatementButtonProps {
   statement: Statement;
-  onHandleChoice: (category: CategoryEnum) => void;
+  onHandleChoice: (category: CategoryEnum | "nenhuma" | "ambas") => void;
   className?: string;
 }
 
