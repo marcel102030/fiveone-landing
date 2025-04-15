@@ -442,7 +442,7 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
           max={TOTAL_QUESTIONS}
           className="quiz-progress-bar"
         ></progress>
-        <p>Com qual dessas afirmações você mais se identifica?</p>
+        <p>Selecione a opção com a qual você mais se identifica e clique em “Próxima Etapa”.</p>
          <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
           <StatementButton
             statement={currentPair.statement1}
