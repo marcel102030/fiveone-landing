@@ -583,27 +583,6 @@
   box-shadow: 0 0 12px 4px rgba(0, 255, 195, 0.6);
   transition: all 0.05s ease-in;
 }
-/* Efeito de brilho animado ao passar o mouse */
-.next-step-button::before {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: -75%;
-  width: 50%;
-  height: 100%;
-  background: rgba(255, 255, 255, 0.15);
-  transform: skewX(-20deg);
-  transition: left 0.4s ease;
-}
-
-.next-step-button:hover::before {
-  left: 125%;
-}
-
-.next-step-button:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 8px 24px rgba(100, 255, 218, 0.4);
-}
 
 /* Acessibilidade */
 .next-step-button:focus {
