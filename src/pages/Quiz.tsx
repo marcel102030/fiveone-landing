@@ -59,7 +59,8 @@ const Quiz = () => {
     email: false,
     phone: false,
   });
-
+  const [selectedCategory, setSelectedCategory] = useState<CategoryEnum | null>(null);
+  const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
@@ -442,87 +443,112 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
           className="quiz-progress-bar"
         ></progress>
         <p>Com qual dessas afirmações você mais se identifica?</p>
-        <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
+         <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
           <StatementButton
             statement={currentPair.statement1}
-            onHandleChoice={onHandleChoice}
+            onHandleChoice={() => setSelectedCategory(currentPair.statement1.category)}
+            className={selectedCategory === currentPair.statement1.category ? "selected" : ""}
           />
           <StatementButton
             statement={currentPair.statement2}
-            onHandleChoice={onHandleChoice}
+            onHandleChoice={() => setSelectedCategory(currentPair.statement2.category)}
+            className={selectedCategory === currentPair.statement2.category ? "selected" : ""}
           />
-        </div>
-        <div
-          className="dual-options-wrapper"
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: "1rem",
-            justifyContent: "center",
-            flexWrap: "wrap",
-          }}
-        >
-          <button
-            onClick={() => {
-              if (currentQuestion >= TOTAL_QUESTIONS - 1) {
-                setShowResults(true);
-                setCurrentPair(null);
-                return;
-              }
-
-              const newPair = getRandomComparisonPair(usedStatements);
-              if (!newPair) {
-                setShowResults(true);
-                setCurrentPair(null);
-                return;
-              }
-
-              setCurrentQuestion((prev) => prev + 1);
-              setCurrentPair(newPair);
-              setUsedStatements(
-                (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-              );
-              document.activeElement instanceof HTMLElement && document.activeElement.blur();
-            }}
-            className="statement-button none-button"
-            aria-label="Nenhuma das opções acima"
-          >
-            Nenhuma das opções acima
-          </button>
-          <button
-            onClick={() => {
-              setCategoryScores((prevScores) => ({
-                ...prevScores,
-                [currentPair!.statement1.category]: prevScores[currentPair!.statement1.category] + 1,
-                [currentPair!.statement2.category]: prevScores[currentPair!.statement2.category] + 1,
-              }));
-
-              if (currentQuestion >= TOTAL_QUESTIONS - 1) {
-                setShowResults(true);
-                setCurrentPair(null);
-                return;
-              }
-
-              const newPair = getRandomComparisonPair(usedStatements);
-              if (!newPair) {
-                setShowResults(true);
-                setCurrentPair(null);
-                return;
-              }
-
-              setCurrentQuestion((prev) => prev + 1);
-              setCurrentPair(newPair);
-              setUsedStatements(
-                (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-              );
-              document.activeElement instanceof HTMLElement && document.activeElement.blur();
-            }}
-            className="statement-button both-button"
-            aria-label="Me identifico com as duas afirmações"
-          >
-            Me identifico com as duas afirmações
-          </button>
-        </div>
+         </div>
+         <div
+           className="dual-options-wrapper"
+           style={{
+             display: "flex",
+             flexDirection: "row",
+             gap: "1rem",
+             justifyContent: "center",
+             flexWrap: "wrap",
+           }}
+         >
+           <button
+             onClick={() => {
+               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+                 setShowResults(true);
+                 setCurrentPair(null);
+                 return;
+               }
+ 
+               const newPair = getRandomComparisonPair(usedStatements);
+               if (!newPair) {
+                 setShowResults(true);
+                 setCurrentPair(null);
+                 return;
+               }
+ 
+               setCurrentQuestion((prev) => prev + 1);
+               setCurrentPair(newPair);
+               setUsedStatements(
+                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
+               );
+               document.activeElement instanceof HTMLElement && document.activeElement.blur();
+             }}
+             className="statement-button none-button"
+             aria-label="Nenhuma das opções acima"
+           >
+             Nenhuma das opções acima
+           </button>
+           <button
+             onClick={() => {
+               setCategoryScores((prevScores) => ({
+                 ...prevScores,
+                 [currentPair!.statement1.category]: prevScores[currentPair!.statement1.category] + 1,
+                 [currentPair!.statement2.category]: prevScores[currentPair!.statement2.category] + 1,
+               }));
+ 
+               if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+                 setShowResults(true);
+                 setCurrentPair(null);
+                 return;
+               }
+ 
+               const newPair = getRandomComparisonPair(usedStatements);
+               if (!newPair) {
+                 setShowResults(true);
+                 setCurrentPair(null);
+                 return;
+               }
+ 
+               setCurrentQuestion((prev) => prev + 1);
+               setCurrentPair(newPair);
+               setUsedStatements(
+                 (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
+               );
+               document.activeElement instanceof HTMLElement && document.activeElement.blur();
+             }}
+             className="statement-button both-button"
+             aria-label="Me identifico com as duas afirmações"
+           >
+             Me identifico com as duas afirmações
+           </button>
+         </div>
+         <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+           {showSelectWarning && (
+             <p style={{ color: "#ff5252", textAlign: "center", marginBottom: "1rem" }}>
+               Por favor, selecione uma das opções antes de continuar.
+             </p>
+           )}
+           <button
+             onClick={() => {
+               if (!selectedCategory) {
+                 setShowSelectWarning(true);
+                 return;
+               }
+               onHandleChoice(selectedCategory);
+               setSelectedCategory(null);
+               setShowSelectWarning(false);
+             }}
+             disabled={!selectedCategory}
+             className="next-step-button"
+             aria-label="Próxima Etapa"
+           >
+             Próxima Etapa
+           </button>
+         </div>
         {process.env.NODE_ENV === "development" &&
           currentPair &&
           currentPair.statement1 &&
