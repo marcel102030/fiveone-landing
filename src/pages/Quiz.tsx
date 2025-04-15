@@ -147,7 +147,11 @@ const Quiz = () => {
       .map(([category, score]) => ({
         categoryEnum: category as CategoryEnum,
         score: (score / TOTAL_QUESTIONS) * 100,
-        metadata: categoryMetadata.find((c) => c.id === category)!,
+        metadata: categoryMetadata.find((c) => c.id === category) || {
+          name: "Categoria Desconhecida",
+          description: "Descrição não encontrada.",
+          id: category as CategoryEnum,
+        },
       }))
       .sort((a, b) => b.score - a.score);
   
@@ -354,7 +358,12 @@ const Quiz = () => {
       .map(([category, score]) => ({
         categoryEnum: category as CategoryEnum,
         score: (score / TOTAL_QUESTIONS) * 100,
-        metadata: categoryMetadata.find((c) => c.id === category)!,
+        metadata:
+          categoryMetadata.find((c) => c.id === category) ?? {
+            id: category as CategoryEnum,
+            name: "Dom desconhecido",
+            description: "Nenhuma descrição disponível para este dom.",
+          },
       }))
       .sort((a, b) => a.score - b.score); // Order is reversed to work with wrap-reverse
 
@@ -379,7 +388,7 @@ const Quiz = () => {
                 <div className="category-icon-wrapper">
                   <img
                     src={categoryIcons[category]}
-                    alt={`${metadata.name} icon`}
+                    alt={`${metadata?.name ?? "Ícone"} icon`}
                     className="category-icon"
                   />
                 </div>
