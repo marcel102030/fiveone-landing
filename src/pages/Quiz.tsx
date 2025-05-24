@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import InputMask from "react-input-mask";
+import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 import jsPDF from "jspdf";
 
 
@@ -18,7 +19,6 @@ import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
 
 import "./Quiz.css";
 
-import { CategoryEnum, Statement } from "../types/quiz";
 
 const categoryIcons: Record<CategoryEnum, string> = {
   [CategoryEnum.APOSTOLO]: apostoloIcon,
@@ -59,7 +59,7 @@ const Quiz = () => {
     email: false,
     phone: false,
   });
-  const [selectedCategory, setSelectedCategory] = useState<CategoryEnum | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<ChoiceCategory | null>(null);
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
 
@@ -94,22 +94,32 @@ const Quiz = () => {
     }
   }, [quizStarted, currentPair, usedStatements]);
 
-  const onHandleChoice = (chosenCategory: CategoryEnum) => {
+  const onHandleChoice = (chosenCategory: ChoiceCategory) => {
     setTransitioning(true);
-  
     setTimeout(() => {
-      setCategoryScores((prevScores) => ({
-        ...prevScores,
-        [chosenCategory]: prevScores[chosenCategory] + 1,
-      }));
-  
+      setCategoryScores((prevScores) => {
+        const updatedScores = { ...prevScores };
+
+        if (chosenCategory === "ambas") {
+          updatedScores[currentPair!.statement1.category] += 1;
+          updatedScores[currentPair!.statement2.category] += 1;
+        } else if (
+          chosenCategory !== "nenhuma" &&
+          chosenCategory in updatedScores
+        ) {
+          updatedScores[chosenCategory] += 1;
+        }
+
+        return updatedScores;
+      });
+
       if (currentQuestion >= TOTAL_QUESTIONS - 1) {
         setShowResults(true);
         setCurrentPair(null);
         setTransitioning(false);
         return;
       }
-  
+
       const newPair = getRandomComparisonPair(usedStatements);
       if (!newPair) {
         setShowResults(true);
@@ -117,13 +127,13 @@ const Quiz = () => {
         setTransitioning(false);
         return;
       }
-  
+
       setCurrentQuestion((prev) => prev + 1);
       setCurrentPair(newPair);
       setUsedStatements(
         (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
       );
-  
+
       setTransitioning(false);
     }, 300);
   };
@@ -154,25 +164,25 @@ const Quiz = () => {
         },
       }))
       .sort((a, b) => b.score - a.score);
-  
+
     const pdf = new jsPDF();
-  
+
     // Cabeçalho
     pdf.setFontSize(18);
     pdf.setTextColor(40, 40, 40);
     pdf.text("Resultado do Teste Ministerial", 105, 20, { align: "center" });
-  
+
     // Informações do usuário
     pdf.setFontSize(12);
     pdf.text(`Nome: ${userInfo.name}`, 20, 35);
     pdf.text(`Email: ${userInfo.email}`, 20, 42);
     pdf.text(`Telefone: ${userInfo.phone}`, 20, 49);
-  
+
     // Tabela de Pontuações
     pdf.setFontSize(14);
     pdf.setTextColor(0, 0, 0);
     pdf.text("Pontuação por Dom:", 20, 65);
-  
+
     let yOffset = 75;
     sortedScores.forEach(({ metadata, score }) => {
       pdf.setFontSize(12);
@@ -180,7 +190,7 @@ const Quiz = () => {
       pdf.text(`${metadata.name}: ${score.toFixed(1)}%`, 25, yOffset);
       yOffset += 10;
     });
-  
+
     // Rodapé
     pdf.setFontSize(10);
     pdf.setTextColor(120, 120, 120);
@@ -190,7 +200,7 @@ const Quiz = () => {
       280
     );
     pdf.text("Baseado em Efésios 4:11-13", 20, 285);
-  
+
     // Salvar PDF
     pdf.save("resultado-teste-fiveone.pdf");
   };
@@ -212,24 +222,24 @@ const Quiz = () => {
           <div className="responsive-intro-wrapper">
             <div className="intro-section">
               <div className="theological-explanation">
-              <h3>Base Teológica do Teste</h3>
-              <p>
-                Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
-                que Cristo concedeu dons ministeriais à Igreja: apóstolos, profetas,
-                evangelistas, pastores e mestres. Esses dons têm como finalidade edificar
-                o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
-              </p>
-              <p>
-                Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
-                inclinações naturais e espirituais relacionadas a esses dons. O objetivo
-                é ajudá-lo a discernir com mais clareza qual dom ministerial está mais
-                presente em sua vida, não como um rótulo, mas como um ponto de partida
-                para seu desenvolvimento no serviço cristão.
-              </p>
-              <p>
-                Lembre-se: todos os dons são importantes e complementares. Este quiz é
-                apenas uma ferramenta de autoconhecimento à luz das Escrituras.
-              </p>
+                <h3>Base Teológica do Teste</h3>
+                <p>
+                  Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
+                  que Cristo concedeu dons ministeriais à Igreja: apóstolos, profetas,
+                  evangelistas, pastores e mestres. Esses dons têm como finalidade edificar
+                  o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
+                </p>
+                <p>
+                  Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
+                  inclinações naturais e espirituais relacionadas a esses dons. O objetivo
+                  é ajudá-lo a discernir com mais clareza qual dom ministerial está mais
+                  presente em sua vida, não como um rótulo, mas como um ponto de partida
+                  para seu desenvolvimento no serviço cristão.
+                </p>
+                <p>
+                  Lembre-se: todos os dons são importantes e complementares. Este quiz é
+                  apenas uma ferramenta de autoconhecimento à luz das Escrituras.
+                </p>
               </div>
             </div>
           </div>
@@ -354,18 +364,25 @@ const Quiz = () => {
   }
 
   if (showResults) {
+    const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
+
     const sortedScores = Object.entries(categoryScores)
-      .map(([category, score]) => ({
-        categoryEnum: category as CategoryEnum,
-        score: (score / TOTAL_QUESTIONS) * 100,
-        metadata:
-          categoryMetadata.find((c) => c.id === category) ?? {
-            id: category as CategoryEnum,
-            name: "Dom desconhecido",
-            description: "Nenhuma descrição disponível para este dom.",
-          },
-      }))
-      .sort((a, b) => a.score - b.score); // Order is reversed to work with wrap-reverse
+      .map(([category, score]) => {
+        const metadata = categoryMetadata.find((c) => c.id === category);
+        const safeScore = totalScore > 0 ? (score / totalScore) * 100 : 0;
+
+        if (!metadata || isNaN(safeScore)) {
+          return null;
+        }
+
+        return {
+          categoryEnum: category as CategoryEnum,
+          score: safeScore,
+          metadata,
+        };
+      })
+      .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+      .sort((a, b) => a.score - b.score); // wrap-reverse
 
     return (
       <section className="Teste-section">
@@ -432,14 +449,14 @@ const Quiz = () => {
     );
   }
 
-// ✅ Protege contra renderização fora do navegador (SSR)
-if (typeof window === "undefined") return null;
+  // ✅ Protege contra renderização fora do navegador (SSR)
+  if (typeof window === "undefined") return null;
 
-// ✅ Protege contra estados incompletos no final do quiz
-if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
-  console.warn("Bloqueando renderização pois currentPair está incompleto:", currentPair);
-  return null;
-}
+  // ✅ Protege contra estados incompletos no final do quiz
+  if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
+    console.warn("Bloqueando renderização pois currentPair está incompleto:", currentPair);
+    return null;
+  }
 
   return (
     <section className="quiz-section">
@@ -453,7 +470,7 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
           className="quiz-progress-bar"
         ></progress>
         <p>Selecione a opção com a qual você mais se identifica e clique em “Próxima Etapa”.</p>
-         <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
+        <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
           <StatementButton
             statement={currentPair.statement1}
             onHandleChoice={() => setSelectedCategory(currentPair.statement1.category)}
@@ -464,65 +481,65 @@ if (!currentPair || !currentPair.statement1 || !currentPair.statement2) {
             onHandleChoice={() => setSelectedCategory(currentPair.statement2.category)}
             className={selectedCategory === currentPair.statement2.category ? "selected" : ""}
           />
-         </div>
-         <div
-           className="dual-options-wrapper"
-           style={{
-             display: "flex",
-             flexDirection: "row",
-             gap: "1rem",
-             justifyContent: "center",
-             flexWrap: "wrap",
-           }}
-         >
-           <button
-             onClick={() => setSelectedCategory("nenhuma" as CategoryEnum)}
-             className={`statement-button none-button ${selectedCategory === ("nenhuma" as unknown as CategoryEnum) ? "selected" : ""}`}
-             aria-label="Nenhuma das opções acima"
-           >
-             Nenhuma das opções acima
-           </button>
-           <button
-             onClick={() => setSelectedCategory("ambas" as CategoryEnum)}
-             className={`statement-button both-button ${selectedCategory === ("ambas" as unknown as CategoryEnum) ? "selected" : ""}`}
-             aria-label="Me identifico com as duas afirmações"
-           >
-             Me identifico com as duas afirmações
-           </button>
-         </div>
-         <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
-           {showSelectWarning && (
-             <p style={{ color: "#ff5252", textAlign: "center", marginBottom: "1rem" }}>
-               Por favor, selecione uma das opções antes de continuar.
-             </p>
-           )}
-           <button
-             ref={nextStepButtonRef}
-             onClick={() => {
-               if (!selectedCategory) {
-                 setShowSelectWarning(true);
-                 return;
-               }
- 
-               // Adiciona a animação visual do clique
-               if (nextStepButtonRef.current) {
-                 nextStepButtonRef.current.classList.add("ring");
-                 setTimeout(() => {
-                   nextStepButtonRef.current?.classList.remove("ring");
-                 }, 500);
-               }
- 
-               onHandleChoice(selectedCategory);
-               setSelectedCategory(null);
-               setShowSelectWarning(false);
-             }}
-             disabled={!selectedCategory}
-             className="next-step-button"
-             aria-label="Próxima Etapa"
-           >
-             Próxima Etapa
-           </button>
-         </div>
+        </div>
+        <div
+          className="dual-options-wrapper"
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            gap: "1rem",
+            justifyContent: "center",
+            flexWrap: "wrap",
+          }}
+        >
+          <button
+            onClick={() => setSelectedCategory("nenhuma")}
+            className={`statement-button none-button ${selectedCategory === "nenhuma" ? "selected" : ""}`}
+            aria-label="Nenhuma das opções acima"
+          >
+            Nenhuma das opções acima
+          </button>
+          <button
+            onClick={() => setSelectedCategory("ambas")}
+            className={`statement-button both-button ${selectedCategory === "ambas" ? "selected" : ""}`}
+            aria-label="Me identifico com as duas afirmações"
+          >
+            Me identifico com as duas afirmações
+          </button>
+        </div>
+        <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+          {showSelectWarning && (
+            <p style={{ color: "#ff5252", textAlign: "center", marginBottom: "1rem" }}>
+              Por favor, selecione uma das opções antes de continuar.
+            </p>
+          )}
+          <button
+            ref={nextStepButtonRef}
+            onClick={() => {
+              if (!selectedCategory) {
+                setShowSelectWarning(true);
+                return;
+              }
+
+              // Adiciona a animação visual do clique
+              if (nextStepButtonRef.current) {
+                nextStepButtonRef.current.classList.add("ring");
+                setTimeout(() => {
+                  nextStepButtonRef.current?.classList.remove("ring");
+                }, 500);
+              }
+
+              onHandleChoice(selectedCategory);
+              setSelectedCategory(null);
+              setShowSelectWarning(false);
+            }}
+            disabled={!selectedCategory}
+            className="next-step-button"
+            aria-label="Próxima Etapa"
+          >
+            Próxima Etapa
+          </button>
+        </div>
         {process.env.NODE_ENV === "development" &&
           currentPair &&
           currentPair.statement1 &&

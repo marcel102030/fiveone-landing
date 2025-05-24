@@ -35,3 +35,5 @@ export interface SendPdfPayload {
   email: string;
   pdfBase64: string;
 }
+
+export type ChoiceCategory = CategoryEnum | "ambas" | "nenhuma";
