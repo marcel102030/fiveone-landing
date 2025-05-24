@@ -471,16 +471,28 @@ const Quiz = () => {
         ></progress>
         <p>Selecione a opção com a qual você mais se identifica e clique em “Próxima Etapa”.</p>
         <div className={`statement-container ${transitioning ? "fade-out" : "fade-in"}`}>
-          <StatementButton
-            statement={currentPair.statement1}
-            onHandleChoice={() => setSelectedCategory(currentPair.statement1.category)}
-            className={selectedCategory === currentPair.statement1.category ? "selected" : ""}
-          />
-          <StatementButton
-            statement={currentPair.statement2}
-            onHandleChoice={() => setSelectedCategory(currentPair.statement2.category)}
-            className={selectedCategory === currentPair.statement2.category ? "selected" : ""}
-          />
+          <button
+            className={`statement-button${selectedCategory === currentPair.statement1.category ? " selected" : ""}`}
+            onClick={() => setSelectedCategory(currentPair.statement1.category)}
+            aria-label={currentPair.statement1.text}
+            type="button"
+          >
+            {currentPair.statement1.text}
+            {selectedCategory === currentPair.statement1.category && (
+              <span className="selected-icon" aria-label="Selecionado" style={{ marginLeft: 8 }}>✓</span>
+            )}
+          </button>
+          <button
+            className={`statement-button${selectedCategory === currentPair.statement2.category ? " selected" : ""}`}
+            onClick={() => setSelectedCategory(currentPair.statement2.category)}
+            aria-label={currentPair.statement2.text}
+            type="button"
+          >
+            {currentPair.statement2.text}
+            {selectedCategory === currentPair.statement2.category && (
+              <span className="selected-icon" aria-label="Selecionado" style={{ marginLeft: 8 }}>✓</span>
+            )}
+          </button>
         </div>
         <div
           className="dual-options-wrapper"
@@ -494,17 +506,25 @@ const Quiz = () => {
         >
           <button
             onClick={() => setSelectedCategory("nenhuma")}
-            className={`statement-button none-button ${selectedCategory === "nenhuma" ? "selected" : ""}`}
+            className={`statement-button none-button${selectedCategory === "nenhuma" ? " selected" : ""}`}
             aria-label="Nenhuma das opções acima"
+            type="button"
           >
             Nenhuma das opções acima
+            {selectedCategory === "nenhuma" && (
+              <span className="selected-icon" aria-label="Selecionado" style={{ marginLeft: 8 }}>✓</span>
+            )}
           </button>
           <button
             onClick={() => setSelectedCategory("ambas")}
-            className={`statement-button both-button ${selectedCategory === "ambas" ? "selected" : ""}`}
+            className={`statement-button both-button${selectedCategory === "ambas" ? " selected" : ""}`}
             aria-label="Me identifico com as duas afirmações"
+            type="button"
           >
             Me identifico com as duas afirmações
+            {selectedCategory === "ambas" && (
+              <span className="selected-icon" aria-label="Selecionado" style={{ marginLeft: 8 }}>✓</span>
+            )}
           </button>
         </div>
         <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
