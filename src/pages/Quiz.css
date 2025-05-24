@@ -630,3 +630,28 @@
   color: var(--mint);
   opacity: 0.9;
 }
+
+/* --- Mobile Usability Improvements (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .statement-container {
+    gap: 16px;
+  }
+
+  .statement-button {
+    width: 100%;
+    padding: 1.25rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .statement-extra-options {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .next-step-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+}
