@@ -30,6 +30,8 @@ const categoryIcons: Record<CategoryEnum, string> = {
 const TOTAL_QUESTIONS = 50; // Number of comparisons to show
 
 const Quiz = () => {
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const pendingLeaveAction = useRef<(() => void) | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [categoryScores, setCategoryScores] = useState<
     Record<CategoryEnum, number>
@@ -64,6 +66,75 @@ const Quiz = () => {
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
+
+  // Intercepta navegação via pushState/popstate (HashRouter-friendly)
+  const lastHashRef = useRef(window.location.hash);
+
+  useEffect(() => {
+    const originalPushState = window.history.pushState;
+
+    window.history.pushState = function (...args) {
+      const result = originalPushState.apply(this, args as any);
+      const newHash = window.location.hash;
+      if (lastHashRef.current !== newHash) {
+        const event = new PopStateEvent("popstate");
+        window.dispatchEvent(event);
+      }
+      return result;
+    };
+
+    const handlePopState = () => {
+      if (quizStarted && !showResults) {
+        const currentHash = window.location.hash;
+        const previousHash = lastHashRef.current;
+
+        if (currentHash !== previousHash) {
+          window.history.pushState(null, "", previousHash);
+          pendingLeaveAction.current = () => {
+            window.location.hash = currentHash;
+          };
+          setShowLeaveModal(true);
+        }
+      } else {
+        lastHashRef.current = window.location.hash;
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+      window.history.pushState = originalPushState;
+    };
+  }, [quizStarted, showResults]);
+
+  const confirmLeave = () => {
+    pendingLeaveAction.current?.();
+    // Atualiza o hash sem disparar popstate e mantém o controle correto do hash
+    window.history.pushState(null, "", window.location.hash);
+    lastHashRef.current = window.location.hash;
+    setShowLeaveModal(false);
+  };
+
+  const cancelLeave = () => {
+    window.history.pushState(null, "", lastHashRef.current);
+    pendingLeaveAction.current = null;
+    setShowLeaveModal(false);
+  };
+
+  // Efeito para interceptar saída da página durante o quiz
+  useEffect(() => {
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      if (quizStarted && !showResults) {
+        event.preventDefault();
+        event.returnValue = "";
+      }
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, [quizStarted, showResults]);
 
   // Preload image when component mounts
   useEffect(() => {
@@ -578,6 +649,22 @@ const Quiz = () => {
             </div>
           )}
       </div>
+      {showLeaveModal && (
+        <div className="modal-backdrop">
+          <div className="modal">
+            <h3>Deseja sair do teste?</h3>
+            <p>Suas respostas serão perdidas se você sair agora.</p>
+            <div className="modal-actions">
+              <button className="confirm-button" onClick={confirmLeave}>
+                Sair do Teste
+              </button>
+              <button className="cancel-button" onClick={cancelLeave}>
+                Continuar Respondendo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 };
