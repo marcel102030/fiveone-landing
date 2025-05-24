@@ -13,7 +13,6 @@ import profetaIcon from "../assets/images/icons/profeta.png";
 import apostoloIcon from "../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../assets/images/icons/evangelista.png";
 
-import StatementButton from "../components/StatementButton";
 
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
 
