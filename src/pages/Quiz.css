@@ -805,3 +805,50 @@
     padding: 1rem;
   }
 }
+/* PDF Export Layout */
+.pdf-export-layout {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  position: absolute;
+  left: -9999px;
+  width: 100%;
+  max-width: 800px;
+  padding: 2rem;
+  background: #ffffff;
+  color: #000000;
+  font-family: 'Helvetica', sans-serif;
+  line-height: 1.6;
+  font-size: 12pt;
+}
+
+.pdf-export-layout h1,
+.pdf-export-layout h2,
+.pdf-export-layout h3 {
+  color: #222;
+  font-weight: bold;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.pdf-export-layout p {
+  margin-bottom: 1rem;
+}
+
+.pdf-export-section {
+  margin-top: 2rem;
+}
+
+.pdf-export-highlight {
+  font-weight: bold;
+  font-size: 14pt;
+  color: #444;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+@media print {
+  .pdf-export-layout {
+    display: block;
+  }
+}

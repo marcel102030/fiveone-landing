@@ -1,7 +1,10 @@
 import { useEffect, useState, useRef } from "react";
 import InputMask from "react-input-mask";
-import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
+import { CategoryEnum, Statement, ChoiceCategory, getProfileTextForDom } from "../types/quiz";
 import jsPDF from "jspdf";
+// @ts-ignore
+// @ts-ignore
+import html2pdf from "html2pdf.js";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
@@ -66,6 +69,7 @@ const Quiz = () => {
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
+  const pdfRef = useRef<HTMLDivElement>(null);
 
   // Intercepta navegação via pushState/popstate (HashRouter-friendly)
   const lastHashRef = useRef(window.location.hash);
@@ -180,6 +184,9 @@ const Quiz = () => {
           updatedScores[chosenCategory] += 1;
         }
 
+        console.log("Categoria escolhida:", chosenCategory);
+        console.log("Pontuações atualizadas:", updatedScores);
+
         return updatedScores;
       });
 
@@ -223,56 +230,23 @@ const Quiz = () => {
   };
 
   const handleDownloadPDF = () => {
-    const sortedScores = Object.entries(categoryScores)
-      .map(([category, score]) => ({
-        categoryEnum: category as CategoryEnum,
-        score: (score / TOTAL_QUESTIONS) * 100,
-        metadata: categoryMetadata.find((c) => c.id === category) || {
-          name: "Categoria Desconhecida",
-          description: "Descrição não encontrada.",
-          id: category as CategoryEnum,
-        },
-      }))
-      .sort((a, b) => b.score - a.score);
+    if (!pdfRef.current) {
+      console.warn("Referência do PDF não encontrada.");
+      return;
+    }
 
-    const pdf = new jsPDF();
+    // Verificação para garantir que a função está sendo chamada
+    console.log("Gerando PDF com html2pdf");
 
-    // Cabeçalho
-    pdf.setFontSize(18);
-    pdf.setTextColor(40, 40, 40);
-    pdf.text("Resultado do Teste Ministerial", 105, 20, { align: "center" });
+    const opt = {
+      margin: 0.5,
+      filename: "resultado-teste-fiveone.pdf",
+      image: { type: "jpeg", quality: 0.98 },
+      html2canvas: { scale: 2 },
+      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    };
 
-    // Informações do usuário
-    pdf.setFontSize(12);
-    pdf.text(`Nome: ${userInfo.name}`, 20, 35);
-    pdf.text(`Email: ${userInfo.email}`, 20, 42);
-    pdf.text(`Telefone: ${userInfo.phone}`, 20, 49);
-
-    // Tabela de Pontuações
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    pdf.text("Pontuação por Dom:", 20, 65);
-
-    let yOffset = 75;
-    sortedScores.forEach(({ metadata, score }) => {
-      pdf.setFontSize(12);
-      pdf.setTextColor(33, 33, 33);
-      pdf.text(`${metadata.name}: ${score.toFixed(1)}%`, 25, yOffset);
-      yOffset += 10;
-    });
-
-    // Rodapé
-    pdf.setFontSize(10);
-    pdf.setTextColor(120, 120, 120);
-    pdf.text(
-      "Este resultado é apenas uma ferramenta de autoconhecimento ministerial.",
-      20,
-      280
-    );
-    pdf.text("Baseado em Efésios 4:11-13", 20, 285);
-
-    // Salvar PDF
-    pdf.save("resultado-teste-fiveone.pdf");
+    html2pdf().set(opt).from(pdfRef.current).save();
   };
 
   if (!quizStarted) {
@@ -456,7 +430,7 @@ const Quiz = () => {
 
     return (
       <section className="Teste-section">
-        <div className="content-container" id="quiz-result">
+        <div className="content-container" id="quiz-result" ref={pdfRef}>
           <div className="results-header" style={{ marginTop: "6rem" }}>
             <h2>Parabéns, seu resultado está pronto!</h2>
             <p>
@@ -499,12 +473,37 @@ const Quiz = () => {
           </p>
           <div className="pdf-download-wrapper">
             <button
-              onClick={handleDownloadPDF}
+              onClick={() => {
+                // Log extra para depuração do clique
+                console.log("Botão de download PDF clicado");
+                handleDownloadPDF();
+              }}
               className="start-button"
               aria-label="Baixar resultado em PDF"
             >
               Baixar Resultado em PDF
             </button>
+          </div>
+          {/* Container para exportação PDF (visível para html2pdf, sem ocultação) */}
+          <div>
+            <div className="pdf-export-layout" ref={pdfRef}>
+              <h1>Resultado Teste 5 Ministérios</h1>
+              <h2>FIVE ONE Movement</h2>
+              <div className="pdf-export-section">
+                <span className="pdf-export-highlight">DATA DA AVALIAÇÃO:</span>
+                <p>{new Date().toLocaleDateString()}</p>
+                <span className="pdf-export-highlight">NOME DA PESSOA:</span>
+                <p>{userInfo.name}</p>
+                <span className="pdf-export-highlight">DOM MINISTERIAL:</span>
+                <p>{sortedScores[0].metadata.name}</p>
+              </div>
+              <div className="pdf-export-section">
+                <h3>Meu Perfil Ministerial</h3>
+                {getProfileTextForDom(sortedScores[0].categoryEnum).map((paragraph, index) => (
+                  <p key={index}>{paragraph}</p>
+                ))}
+              </div>
+            </div>
           </div>
           <button
             onClick={onHandleReset}
