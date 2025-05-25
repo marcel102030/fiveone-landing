@@ -1,0 +1,149 @@
+.contact-section {
+  background-color: var(--navy);
+  color: var(--mint);
+  padding: 5rem 2rem;
+  text-align: center;
+}
+
+.contact-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  margin-bottom: 6rem;
+}
+
+@media (min-width: 768px) {
+  .contact-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 6rem;
+    align-items: start;
+  }
+}
+
+.contact-column {
+  padding: 1rem;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .contact-column {
+    text-align: left;
+  }
+}
+
+.contact-column h2 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  text-align: left;
+  color: var(--mint);
+  text-transform: uppercase;
+}
+
+.contact-column img {
+  max-width: 80px;
+  margin-bottom: 1rem;
+  margin-top: 0.5rem;
+}
+
+.contact-column p,
+.contact-column a {
+  font-size: 1rem;
+  line-height: 1.6;
+  display: block;
+  color: var(--white);
+  text-align: left;
+}
+
+.contact-column a {
+  text-decoration: none;
+  margin: 0.25rem 0;
+}
+
+.contact-column a:hover {
+  text-decoration: underline;
+}
+
+.social-icons {
+  display: flex;
+  gap: 1rem;
+  justify-content: left;
+  margin-top: 1rem;
+}
+
+.social-icons a {
+  font-size: 1.5rem;
+  color: var(--white);
+}
+
+.social-icons a:hover {
+  color: var(--mint);
+}
+
+.contact-footer-note {
+  color: var(--white);
+  font-size: 0.95rem;
+  margin-top: 3rem;
+  text-align: center;
+  max-width: 700px;
+  margin-left: auto;
+  margin-right: auto;
+}
+.contact-title {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 10rem;
+  margin-top: 6rem;
+  color: var(--white);
+}
+
+.hero-title {
+  text-align: center;
+  font-size: 3rem;
+  font-weight: bold;
+  margin-bottom: 8rem;
+  margin-top: 4rem;
+  color: var(--white);
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.hero-content {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width: 100%;
+  padding: 2rem 1rem;
+}
+
+@media (max-width: 480px) {
+  .contact-title,
+  .hero-title {
+    font-size: 2rem;
+    margin-bottom: 4rem;
+  }
+
+  .contact-column h2 {
+    font-size: 1.2rem;
+    text-align: center;
+  }
+
+  .contact-column p,
+  .contact-column a {
+    font-size: 0.95rem;
+    text-align: center;
+  }
+
+  .social-icons {
+    justify-content: center;
+  }
+
+  .contact-footer-note {
+    font-size: 0.85rem;
+    padding: 0 1rem;
+  }
+}

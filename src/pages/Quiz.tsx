@@ -285,10 +285,9 @@ const Quiz = () => {
                   </p>
                 </div>
                 <div className="theological-block aligned-box">
-                  <h3>Nota Final</h3>
+                  <h3>Considerações Finais</h3>
                   <p>
-                    Lembre-se: todos os dons são importantes e complementares. Este quiz é
-                    apenas uma ferramenta de autoconhecimento à luz das Escrituras.
+                    Lembre-se: todos os dons são importantes e complementares. Este quiz é apenas uma ferramenta de autoconhecimento à luz das Escrituras. Os resultados são baseados em suas respostas e não representam, de forma absoluta, o chamado de Deus para a sua vida.
                   </p>
                 </div>
               </div>
@@ -306,7 +305,7 @@ const Quiz = () => {
               Não existe resposta certa ou errada – seja honesto em suas escolhas para obter um resultado mais preciso.
             </p>
             <p className="intro-time">
-              🕒 O teste leva em média <strong>5 a 10 minutos</strong> para ser completado.
+              🕒 O teste leva em média <strong>7 a 15 minutos</strong> para ser completado.
             </p>
           </div>
           <div className="start-form">
