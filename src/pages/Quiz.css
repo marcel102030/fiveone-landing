@@ -857,11 +857,13 @@
     text-align: justify;
     font-size: 1rem;
     line-height: 1.8;
-    padding: 2rem 1.5rem;
-    margin: 1rem;
-    border-radius: 16px;
+    padding: 1.5rem 1rem;
+    margin: 1rem 0 2rem;
+    border-radius: 12px;
     background-color: rgba(255, 255, 255, 0.04);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    width: calc(100vw - 2rem);
+    max-width: 100%;
   }
 
   .theological-explanation h3 {
