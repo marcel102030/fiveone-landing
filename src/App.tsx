@@ -1,4 +1,9 @@
-import { Route, HashRouter as Router, Routes } from "react-router-dom";
+import {
+  Route,
+  HashRouter as Router,
+  Routes,
+  useLocation,
+} from "react-router-dom";
 
 import Blog from "./pages/Blog";
 import Home from "./pages/Home";
@@ -15,9 +20,11 @@ import Navbar from "./components/layout/Navbar/Navbar";
 import ScrollToTop from "./components/layout/ScrollToTop/ScrollToTop";
 import ScrollToTopOnMount from "./components/layout/ScrollToTop/ScrollToTopOnMount";
 
-function App() {
+function AppContent() {
+  const location = useLocation();
+
   return (
-    <Router>
+    <>
       <ScrollToTopOnMount />
       <div className="app">
         <Navbar />
@@ -33,8 +40,16 @@ function App() {
           </Routes>
         </main>
         <ScrollToTop />
-        <Footer />
+        {location.pathname !== "/teste-dons" && <Footer />}
       </div>
+    </>
+  );
+}
+
+function App() {
+  return (
+    <Router>
+      <AppContent />
     </Router>
   );
 }
