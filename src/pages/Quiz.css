@@ -852,3 +852,11 @@
     display: block;
   }
 }
+@media (max-width: 480px) {
+  .theological-explanation {
+    text-align: justify;
+    font-size: 0.95rem;
+    padding: 1.5rem 1rem;
+    line-height: 1.7;
+  }
+}
