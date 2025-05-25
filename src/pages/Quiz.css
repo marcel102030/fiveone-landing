@@ -878,3 +878,38 @@
     color: var(--text-light-slate);
   }
 }
+@media (max-width: 480px) {
+  .theological-explanation {
+    padding: 0;
+    margin: 1rem 0 2rem;
+    background: none;
+    box-shadow: none;
+  }
+
+  .theological-block {
+    background-color: rgba(255, 255, 255, 0.04);
+    padding: 1.2rem 1rem;
+    margin: 1rem auto;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    width: 100%;
+    max-width: 100%;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    box-sizing: border-box;
+  }
+
+  .theological-block h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.8rem;
+    text-align: center;
+    color: var(--mint);
+  }
+
+  .theological-block p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-light-slate);
+    text-align: justify;
+  }
+}
