@@ -858,21 +858,19 @@
     font-size: 1rem;
     line-height: 1.8;
     padding: 1.5rem 1rem;
-    margin: 1rem 0 2rem;
+    margin: 1rem auto 2rem;
     border-radius: 12px;
     background-color: rgba(255, 255, 255, 0.04);
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
-    width: calc(100vw - 2rem);
-    max-width: 100%;
+    width: 94%;
+    max-width: 94%;
   }
-
   .theological-explanation h3 {
     font-size: 1.3rem;
     line-height: 1.4;
     margin-bottom: 1.2rem;
     color: var(--mint);
   }
-
   .theological-explanation p {
     font-size: 1rem;
     line-height: 1.75;
