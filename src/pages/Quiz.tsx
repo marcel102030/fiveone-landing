@@ -265,7 +265,7 @@ const Quiz = () => {
           <div className="responsive-intro-wrapper">
             <div className="intro-section">
               <div className="theological-explanation">
-                <div className="theological-block">
+                <div className="theological-block aligned-box">
                   <h3>Sobre o Teste</h3>
                   <p>
                     Este teste foi inspirado em Efésios 4:11-13, onde o apóstolo Paulo ensina
@@ -274,7 +274,7 @@ const Quiz = () => {
                     o corpo de Cristo, levar os santos à maturidade e promover a unidade da fé.
                   </p>
                 </div>
-                <div className="theological-block">
+                <div className="theological-block aligned-box">
                   <h3>Objetivo do Teste</h3>
                   <p>
                     Cada afirmação neste Teste foi cuidadosamente pensada para refletir as
@@ -284,7 +284,7 @@ const Quiz = () => {
                     para seu desenvolvimento no serviço cristão.
                   </p>
                 </div>
-                <div className="theological-block">
+                <div className="theological-block aligned-box">
                   <h3>Nota Final</h3>
                   <p>
                     Lembre-se: todos os dons são importantes e complementares. Este quiz é
