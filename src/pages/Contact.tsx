@@ -1,5 +1,4 @@
 import './Contact.css';
-import { FaPhoneAlt, FaEnvelope, FaBuilding, FaIdCard, FaInstagram, FaYoutube, FaTiktok } from "react-icons/fa";
 
 const Contact = () => {
   return (
