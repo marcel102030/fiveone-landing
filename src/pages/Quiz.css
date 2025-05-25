@@ -855,8 +855,26 @@
 @media (max-width: 480px) {
   .theological-explanation {
     text-align: justify;
-    font-size: 0.95rem;
-    padding: 1.5rem 1rem;
-    line-height: 1.7;
+    font-size: 1rem;
+    line-height: 1.8;
+    padding: 2rem 1.5rem;
+    margin: 1rem;
+    border-radius: 16px;
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  }
+
+  .theological-explanation h3 {
+    font-size: 1.3rem;
+    line-height: 1.4;
+    margin-bottom: 1.2rem;
+    color: var(--mint);
+  }
+
+  .theological-explanation p {
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    color: var(--text-light-slate);
   }
 }
