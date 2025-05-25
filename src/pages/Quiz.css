@@ -905,10 +905,19 @@
     color: var(--mint);
   }
 
-  .theological-block p {
+.theological-block p {
     font-size: 1rem;
     line-height: 1.7;
     color: var(--text-light-slate);
     text-align: justify;
-  }
+}
+}
+/* Theological block paragraph */
+.theological-block p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-light-slate);
+  text-align: justify;
+  word-spacing: normal;
+  hyphens: auto;
 }
