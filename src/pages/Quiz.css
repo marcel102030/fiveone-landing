@@ -921,3 +921,1198 @@
   word-spacing: normal;
   hyphens: auto;
 }
+
+.modal {
+  background-color: var(--navy);
+  color: var(--text-white);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+.quiz-section {
+  padding: 6rem 0;
+  background: var(--navy);
+  color: var(--text-white);
+}
+
+.quiz-section h1 {
+  text-align: center;
+  color: var(--mint);
+  font-size: 3rem;
+  margin-bottom: 2rem;
+  font-weight: bold;
+}
+
+.quiz-section h2 {
+  color: var(--text-light-slate);
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+.quiz-section {
+  margin: 0 auto;
+  padding: 4rem 20px;
+  text-align: center;
+  min-height: calc(100vh - var(--navbar-height));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--gradient-about);
+  color: var(--text-light-slate);
+}
+
+.quiz-section p {
+  margin: 0 auto;
+  color: var(--text-slate);
+  line-height: 1.8;
+  font-size: 1.1rem;
+  /* margin-bottom: 0.5rem; */
+  /* max-width: 600px; */
+}
+
+.statement-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin: 20px 0;
+  width: 100%;
+}
+
+.statement-button {
+  position: relative;
+  padding: 2rem;
+  font-size: 1.1rem;
+  cursor: pointer;
+  text-align: left;
+  line-height: 1.6;
+  border: 1px solid rgba(100, 255, 218, 0.1);
+  border-radius: 10px;
+  background: rgba(17, 34, 64, 0.7);
+  color: var(--text-light-slate);
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.statement-extra-options {
+  display: flex;
+  flex-direction: row;
+  gap: 80px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.statement-extra-options .statement-button:first-child {
+  margin-right: 10px;
+}
+
+.statement-button:hover {
+  transform: translateY(-5px);
+  border-color: var(--mint);
+  box-shadow: 0 4px 20px rgba(100, 255, 218, 0.2);
+}
+
+.statement-button:focus {
+  outline: none;
+}
+
+.statement-button:focus-visible {
+  outline: 2px solid var(--mint);
+  outline-offset: 2px;
+}
+
+.statement-button.selected {
+  border: 2px solid var(--mint);
+  background-color: rgba(100, 255, 218, 0.08);
+  box-shadow: 0 0 10px rgba(100, 255, 218, 0.3);
+  transform: scale(1.01);
+  color: var(--text-white);
+}
+
+.results {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  flex-direction: row-reverse;
+  justify-content: flex-end;
+  width: 100%;
+  margin: 20px 0;
+  border-radius: 10px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  position: relative;
+}
+
+.result-item {
+  flex: 1 1 120px;
+  min-width: 120px;
+  padding: 2rem;
+  margin: 0;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.result-item:hover {
+  transform: translateY(-5px);
+}
+
+.category-icon-wrapper {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.category-icon {
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
+  height: auto;
+  filter: brightness(0) invert(1);
+  object-fit: contain;
+}
+
+.result-item.pastor {
+  background-color: #005f73;
+}
+
+.result-item.apostolo {
+  background-color: #ca6702;
+}
+
+.result-item.mestre {
+  background-color: #ee9b00;
+}
+
+.result-item.profeta {
+  background-color: #bb3e03;
+}
+
+.result-item.evangelista {
+  background-color: #9b2226;
+}
+
+.result-item h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: inherit;
+}
+
+.result-item p {
+  margin: 10px 0;
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: inherit;
+}
+
+.result-name {
+  font-size: 1.8rem;
+  font-weight: bold;
+  margin-bottom: 2rem;
+  color: var(--text-light-slate);
+  text-align: center;
+}
+
+.results-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.results-header h2 {
+  font-size: 2.5rem;
+  color: var(--text-light-slate);
+  margin-bottom: 1rem;
+}
+
+.results-header p {
+  color: var(--text-slate);
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.quiz-section img {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.quiz-section .logo {
+  max-width: 200px;
+  margin-bottom: 2rem;
+  height: auto;
+  object-fit: contain;
+}
+
+.start-button,
+.reset-button {
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  background-color: var(--mint);
+  color: var(--navy);
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 600;
+  margin-top: 1rem;
+}
+
+.reset-button {
+  display: block;
+  margin: 4rem auto 6rem;
+}
+
+.pdf-download-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-direction: column;
+}
+
+.pdf-download-wrapper button {
+  margin: 0 auto;
+}
+
+.pdf-download-description {
+  text-align: center;
+  margin-top: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-slate);
+}
+
+.start-button:hover,
+.reset-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 15px rgba(100, 255, 218, 0.3);
+}
+
+.debug-info {
+  margin-top: 2rem;
+  padding: 1rem;
+  background: rgba(17, 34, 64, 0.7);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: var(--text-slate);
+  border: 1px solid rgba(100, 255, 218, 0.1);
+}
+
+.category-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+}
+
+.info-icon {
+  cursor: help;
+  position: relative;
+  width: 16px;
+  height: 16px;
+  opacity: 0.8;
+  transition: opacity 0.2s;
+  z-index: 2;
+}
+
+.info-icon:hover {
+  opacity: 1;
+}
+
+.tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: fixed;
+  width: 200px;
+  background: rgba(17, 34, 64, 0.95);
+  color: var(--text-light-slate);
+  text-align: center;
+  padding: 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  z-index: 1000;
+  border: 1px solid rgba(100, 255, 218, 0.1);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.info-icon:hover .tooltip {
+  visibility: visible;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.tooltip::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  margin-left: -5px;
+  border-width: 5px;
+  border-style: solid;
+  border-color: rgba(17, 34, 64, 0.95) transparent transparent transparent;
+}
+
+@media (max-width: 768px) {
+  .quiz-section {
+    padding: 3rem 1rem;
+  }
+
+  .quiz-section h1 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-section h2 {
+    font-size: 1.5rem;
+  }
+
+  .quiz-section p {
+    font-size: 1rem;
+  }
+
+  .statement-button {
+    padding: 1.5rem;
+    font-size: 1rem;
+  }
+
+  .results-header h2 {
+    font-size: 2rem;
+  }
+
+  .result-item {
+    padding: 1.5rem;
+  }
+
+  .result-item p {
+    font-size: 1.5rem;
+  }
+
+  .tooltip {
+    position: fixed;
+    left: 50% !important;
+    transform: translateX(-50%);
+    bottom: auto;
+    top: 60%;
+  }
+
+  .tooltip::after {
+    display: none;
+  }
+  .statement-button:focus {
+    outline: none;
+  }
+
+  .statement-button:focus-visible {
+    outline: 2px solid var(--mint);
+    outline-offset: 2px;
+  }
+}
+
+.start-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 2rem;
+}
+
+.username-input {
+  padding: 0.8rem 1rem;
+  border: 1px solid var(--mint);
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 250px;
+  background-color: rgba(17, 34, 64, 0.7);
+  color: var(--text-light-slate);
+}
+
+.username-input::placeholder {
+  color: var(--text-slate);
+}
+
+.username-input:focus {
+  outline: none;
+  border-color: var(--text-white);
+  box-shadow: 0 0 0 2px var(--mint);
+}
+
+.intro-section {
+  text-align: center;
+  margin-bottom: 3rem;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 1rem 2rem;
+}
+
+.theological-explanation {
+  font-size: 1rem;
+  color: var(--text-light-slate);
+  line-height: 1.8;
+  padding: 2rem;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.theological-explanation h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1.2rem;
+  color: var(--mint);
+}
+
+.theological-explanation p {
+  margin-bottom: 1rem;
+}
+
+.start-form label {
+  font-weight: 500;
+  color: var(--text-slate);
+}
+
+/* Ajuste para reduzir espaço entre as seções de introdução */
+.no-margin {
+  margin-top: -1rem;
+}
+
+.top-start-button-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 2rem;
+}
+
+.top-start-button-wrapper .username-input {
+  margin: 0;
+  width: 280px;
+}
+
+.input-error {
+  border: 1px solid #ff4d4f !important;
+  box-shadow: 0 0 0 2px rgba(255, 77, 79, 0.4);
+}
+
+.error-msg {
+  color: #ff4d4f;
+  font-size: 0.8rem;
+  margin-top: -0.5rem;
+  margin-bottom: 0.5rem;
+  text-align: left;
+  width: 100%;
+  max-width: 250px;
+}
+
+.intro-wrapper {
+  text-align: center;
+  max-width: 800px;
+  margin: 2rem auto 3rem;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.02);
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+
+.intro-wrapper p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: var(--text-light-slate);
+  margin-bottom: 1rem;
+}
+
+.intro-highlight {
+  font-size: 1.3rem;
+  font-weight: 600;
+  color: var(--mint);
+}
+
+.intro-note {
+  font-style: italic;
+}
+
+.intro-time {
+  font-size: 1rem;
+  color: var(--text-slate);
+  margin-top: 1rem;
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-in forwards;
+}
+
+.fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+@media (max-width: 480px) {
+  .pdf-download-wrapper {
+    width: 100%;
+    padding: 0 1rem;
+  }
+
+  .pdf-download-wrapper button {
+    width: 100%;
+    font-size: 1rem;
+  }
+
+  .reset-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
+    margin: 2rem auto 4rem;
+  }
+
+  .pdf-download-note {
+    text-align: center;
+    font-size: 0.95rem;
+    padding: 0 1rem;
+  }
+
+  .fade-in {
+    animation: fadeIn 0.3s ease-in forwards;
+  }
+
+  .fade-out {
+    animation: fadeOut 0.3s ease-out forwards;
+  }
+}
+
+.next-step-button {
+  padding: 1rem 2.5rem;
+  font-size: 1.15rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #64ffda, #64ffda);
+  color: black;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 6px 16px rgba(100, 255, 218, 0.25);
+  margin-top: 2rem;
+  letter-spacing: 0.5px;
+  position: relative;
+}
+
+/* Efeito de profundidade quando o botão é pressionado */
+.next-step-button:active {
+  transform: scale(0.92);
+  background-color: #00ffc3;
+  box-shadow: 0 0 12px 4px rgba(0, 255, 195, 0.6);
+  transition: all 0.05s ease-in;
+}
+
+/* Acessibilidade */
+.next-step-button:focus {
+  outline: none;
+}
+
+.next-step-button:focus-visible {
+  outline: 2px solid #64ffda;
+  outline-offset: 3px;
+}
+
+@keyframes ring-effect {
+  0% {
+    box-shadow: 0 0 0 0 rgba(100, 255, 218, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 10px rgba(100, 255, 218, 0);
+  }
+}
+
+.next-step-button.ring {
+  animation: ring-effect 0.5s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+/* Ícone de seleção para botão selecionado */
+.selected-icon {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  font-size: 1.4rem;
+  color: var(--mint);
+  opacity: 0.9;
+}
+
+/* --- Mobile Usability Improvements (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .statement-container {
+    gap: 16px;
+  }
+
+  .statement-button {
+    width: 100%;
+    padding: 1.25rem;
+    font-size: 1rem;
+    text-align: center;
+  }
+
+  .statement-extra-options {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .next-step-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+
+  .quiz-section h1 {
+    font-size: 1.7rem;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+    padding: 0 1rem;
+  }
+
+  .quiz-section .start-button,
+  .quiz-section .reset-button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 0.85rem;
+    margin-top: 1rem;
+  }
+
+  .intro-wrapper,
+  .theological-explanation {
+    padding: 1.5rem 1rem;
+    margin: 0 1rem 2rem;
+    border-radius: 10px;
+  }
+
+  .intro-wrapper p,
+  .theological-explanation p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .intro-wrapper h3,
+  .theological-explanation h3 {
+    font-size: 1.2rem;
+  }
+
+  .top-start-button-wrapper {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .top-start-button-wrapper .username-input {
+    width: 100%;
+  }
+}
+/* Modal de confirmação de saída */
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background-color: var(--navy);
+  color: var(--text-white);
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  max-width: 400px;
+  width: 90%;
+  text-align: center;
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+.modal h3 {
+  font-size: 1.4rem;
+  margin-bottom: 1rem;
+  color: var(--mint);
+}
+
+.modal p {
+  font-size: 1rem;
+  color: var(--text-light-slate);
+  margin-bottom: 1.5rem;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.modal-actions button {
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.confirm-button {
+  background-color: #ff4d4f;
+  color: white;
+}
+
+.cancel-button {
+  background-color: var(--mint);
+  color: black;
+}
+
+.confirm-button:hover {
+  background-color: #d9363e;
+}
+
+.cancel-button:hover {
+  background-color: #52e0c4;
+}
+@media (max-width: 480px) {
+  .modal {
+    padding: 1.5rem 1rem;
+    max-width: 90%;
+  }
+
+  .modal h3 {
+    font-size: 1.2rem;
+  }
+
+  .modal p {
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .modal-actions button {
+    width: 100%;
+    font-size: 1rem;
+    padding: 1rem;
+  }
+}
+/* PDF Export Layout */
+.pdf-export-layout {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  position: absolute;
+  left: -9999px;
+  width: 100%;
+  max-width: 800px;
+  padding: 2rem;
+  background: #ffffff;
+  color: #000000;
+  font-family: 'Helvetica', sans-serif;
+  line-height: 1.6;
+  font-size: 12pt;
+}
+
+.pdf-export-layout h1,
+.pdf-export-layout h2,
+.pdf-export-layout h3 {
+  color: #222;
+  font-weight: bold;
+  text-align: center;
+  margin: 1rem 0;
+}
+
+.pdf-export-layout p {
+  margin-bottom: 1rem;
+}
+
+.pdf-export-section {
+  margin-top: 2rem;
+}
+
+.pdf-export-highlight {
+  font-weight: bold;
+  font-size: 14pt;
+  color: #444;
+  margin-bottom: 1rem;
+  display: block;
+}
+
+@media print {
+  .pdf-export-layout {
+    display: block;
+  }
+}
+@media (max-width: 480px) {
+  .theological-explanation {
+    text-align: justify;
+    font-size: 1rem;
+    line-height: 1.8;
+    padding: 1.5rem 1rem;
+    margin: 1rem auto 2rem;
+    border-radius: 12px;
+    background-color: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+    width: 94%;
+    max-width: 94%;
+  }
+  .theological-explanation h3 {
+    font-size: 1.3rem;
+    line-height: 1.4;
+    margin-bottom: 1.2rem;
+    color: var(--mint);
+  }
+  .theological-explanation p {
+    font-size: 1rem;
+    line-height: 1.75;
+    margin-bottom: 1rem;
+    color: var(--text-light-slate);
+  }
+}
+@media (max-width: 480px) {
+  .theological-explanation {
+    padding: 0;
+    margin: 1rem 0 2rem;
+    background: none;
+    box-shadow: none;
+  }
+
+  .theological-block {
+    background-color: rgba(255, 255, 255, 0.04);
+    padding: 1.2rem;
+    margin: 0;
+    margin-bottom: 1.5rem;
+    margin-left: -6vw;
+    border-radius: 12px;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    width: 74vw;
+    box-sizing: border-box;
+  }
+
+  .theological-block h3 {
+    font-size: 1.25rem;
+    margin-bottom: 0.8rem;
+    text-align: center;
+    color: var(--mint);
+  }
+
+.theological-block p {
+    font-size: 1rem;
+    line-height: 1.7;
+    color: var(--text-light-slate);
+    text-align: justify;
+}
+}
+/* Theological block paragraph */
+.theological-block p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: var(--text-light-slate);
+  text-align: justify;
+  word-spacing: normal;
+  hyphens: auto;
+}
+/* Gifts Intro Section */
+.gifts-intro {
+  margin-top: 5rem;
+  margin-bottom: 3rem;
+  text-align: center;
+  padding: 0 1rem;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.gifts-intro h2 {
+  font-size: 2rem;
+  color: var(--mint);
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.gifts-intro p {
+  font-size: 1.2rem;
+  line-height: 1.8;
+  max-width: 700px;
+  margin: 0 auto;
+  color: var(--text-light-slate);
+}
+
+/* ----------- Gifts Overview Section Styles ----------- */
+  .gifts-overview-section {
+    background-color: rgba(17, 34, 64, 0.5);
+    padding: 4rem 2rem;
+    margin-top: 6rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+    max-width: 960px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .gifts-overview-section h2 {
+    font-size: 2.6rem;
+    color: var(--mint);
+    margin-bottom: 1.8rem;
+    font-weight: 700;
+  }
+
+  .gifts-overview-section p {
+    font-size: 1.2rem;
+    color: var(--text-light-slate);
+    line-height: 1.9;
+    max-width: 760px;
+    margin: 0 auto;
+  }
+
+@media (max-width: 768px) {
+  .gifts-overview-section {
+    padding: 2rem 1.25rem;
+    margin-top: 4rem;
+  }
+
+  .gifts-overview-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .gifts-overview-section p {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+}
+/* ----------- Dom Apóstolo Card Styles ----------- */
+.don-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2.5rem;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+  max-width: 860px;
+  margin-left: auto;
+  margin-right: auto;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.don-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.don-card-header img.don-icon {
+  width: 48px;
+  height: 48px;
+}
+
+.don-card-header h3 {
+  font-size: 1.8rem;
+  color: var(--mint);
+  margin: 0;
+}
+
+.don-card p {
+  font-size: 1.1rem;
+  line-height: 1.75;
+  color: var(--text-light-slate);
+  text-align: justify;
+  margin-bottom: 1rem;
+}
+/* ----------- Escola Five One Promo Section ----------- */
+.promo-escola-section {
+  background: linear-gradient(to right, #0a192f, #0c223f);
+  border-radius: 20px;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  margin: 4rem auto;
+  padding: 3rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+  max-width: 1000px;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.promo-escola-image {
+  max-width: 280px;
+  flex: 1 1 260px;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.promo-escola-image img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
+.promo-escola-content {
+  flex: 2 1 400px;
+  text-align: left;
+  color: var(--text-light-slate);
+}
+
+.promo-escola-content h3 {
+  font-size: 2rem;
+  color: var(--mint);
+  margin-bottom: 1rem;
+}
+
+.promo-escola-content p {
+  font-size: 1.2rem;
+  margin-bottom: 1.5rem;
+  line-height: 1.7;
+}
+
+.promo-escola-content a {
+  display: inline-block;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--mint);
+  color: var(--navy);
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.promo-escola-content a:hover {
+  background-color: #52e0c4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+}
+
+@media (max-width: 768px) {
+  .promo-escola-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem 1rem;
+  }
+
+  .promo-escola-content {
+    text-align: center;
+  }
+
+  .promo-escola-content h3 {
+    font-size: 1.6rem;
+  }
+
+  .promo-escola-content p {
+    font-size: 1rem;
+  }
+
+  .promo-escola-content a {
+    font-size: 1rem;
+  }
+}
+@media (max-width: 480px) {
+  .gifts-intro h2 {
+    font-size: 1.4rem;
+  }
+
+  .gifts-intro p {
+    font-size: 1rem;
+    padding: 0 1rem;
+  }
+
+  .gifts-overview-section {
+    padding: 2rem 1rem;
+    margin-top: 3rem;
+  }
+
+  .gifts-overview-section h2 {
+    font-size: 1.6rem;
+  }
+
+  .gifts-overview-section p {
+    font-size: 1rem;
+    line-height: 1.7;
+  }
+
+  .don-card {
+    padding: 1.5rem;
+    margin: 1rem;
+  }
+
+  .don-card-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .don-card-header h3 {
+    font-size: 1.4rem;
+  }
+
+  .don-card p {
+    font-size: 1rem;
+    text-align: justify;
+  }
+
+  .promo-escola-section {
+    padding: 2rem 1rem;
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .promo-escola-image {
+    max-width: 100%;
+    flex: 1 1 auto;
+    margin-bottom: 1rem;
+  }
+
+  .promo-escola-content {
+    flex: 1 1 auto;
+    text-align: center;
+  }
+
+  .promo-escola-content h3 {
+    font-size: 1.4rem;
+  }
+
+  .promo-escola-content p {
+    font-size: 1rem;
+  }
+
+  .promo-escola-content a {
+    font-size: 0.95rem;
+    padding: 0.7rem 1.2rem;
+  }
+}

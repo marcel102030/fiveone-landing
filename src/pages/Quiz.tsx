@@ -14,6 +14,7 @@ import pastorIcon from "../assets/images/icons/pastor.png";
 import profetaIcon from "../assets/images/icons/profeta.png";
 import apostoloIcon from "../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../assets/images/icons/evangelista.png";
+import escolaFiveOne from "../assets/images/escola-fiveone.jpeg";
 
 
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
@@ -474,25 +475,8 @@ const Quiz = () => {
               </div>
             ))}
           </div>
-          <p className="pdf-download-note" style={{ textAlign: "center" }}>
-            Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
-          </p>
-          <div className="pdf-download-wrapper">
-            <button
-              onClick={() => {
-                // Log extra para depuração do clique
-                console.log("Botão de download PDF clicado");
-                handleDownloadPDF();
-              }}
-              className="start-button"
-              aria-label="Baixar resultado em PDF"
-            >
-              Baixar Resultado em PDF
-            </button>
-          </div>
           {/* Container para exportação PDF (visível para html2pdf, sem ocultação) */}
-          <div>
-            <div className="pdf-export-layout" ref={pdfRef}>
+          <div className="pdf-export-layout" ref={pdfRef}>
               <h1>Resultado Teste 5 Ministérios</h1>
               <h2>FIVE ONE Movement</h2>
               <div className="pdf-export-section">
@@ -510,16 +494,137 @@ const Quiz = () => {
                 ))}
               </div>
             </div>
-          </div>
-          <button
-            onClick={onHandleReset}
-            className="reset-button"
-            aria-label="Reiniciar o Teste"
-            style={{ backgroundColor: "#314b56", color: "white" }}
+        </div>
+        {/* Fecha content-container antes de adicionar a nova section */}
+        <div className="don-profile-wrapper">
+          <h2
+            style={{
+              textAlign: "center",
+              marginBottom: "2.5rem",
+              marginTop: "5rem",
+              fontSize: "2rem",
+              color: "#ffffff",
+            }}
           >
-            Reiniciar
+            Entenda seu Resultado
+          </h2>
+          <p
+            style={{
+              textAlign: "center",
+              maxWidth: "750px",
+              margin: "0 auto 3.5rem",
+              fontSize: "1.15rem",
+              lineHeight: "1.6",
+              color: "#cfd8dc",
+            }}
+          >
+            Cada um dos Cinco Ministérios reflete aspectos do caráter de Deus, que Ele deseja ver em ação através de você.
+            Abaixo, detalhamos o que cada ministério significa e como você pode aplicá-lo de maneira eficaz em sua vida.
+          </p>
+          <div className="don-profile-cards">
+            {/* Aqui será implementado o conteúdo individual de cada dom */}
+            <div className="don-card apostolo-card">
+              <div className="don-card-header">
+                <img src={apostoloIcon} alt="Ícone do Apóstolo" className="don-icon" />
+                <h3>Apóstolo</h3>
+              </div>
+              <p>
+                O papel do apóstolo no Corpo de Cristo é de extrema importância. Ele amplia a visão da igreja, assegurando que cada membro cumpra seu papel de forma eficaz, restaurando princípios fundamentais e mantendo a igreja ancorada em bases sólidas.
+              </p>
+              <p>
+                Os apóstolos são desbravadores espirituais, frequentemente responsáveis por abrir novos caminhos, plantar igrejas e estabelecer fundamentos doutrinários. Sua liderança é marcada por coragem, visão estratégica e um profundo senso de missão.
+              </p>
+            </div>
+            <div className="don-card profeta-card">
+              <div className="don-card-header">
+                <img src={profetaIcon} alt="Ícone do Profeta" className="don-icon" />
+                <h3>Profeta</h3>
+              </div>
+              <p>
+                O profeta é aquele que guarda a aliança. Sua principal função é garantir que a igreja permaneça fiel ao coração de Deus, confrontando desvios e chamando o povo de volta ao arrependimento e à intimidade com o Senhor.
+              </p>
+              <p>
+                Profetas são sensíveis à voz de Deus e muitas vezes têm discernimento aguçado sobre tempos, estações e situações espirituais. São chamados a proclamar a verdade com ousadia e a alinhar a igreja com os valores do Reino.
+              </p>
+            </div>
+            <div className="don-card evangelista-card">
+              <div className="don-card-header">
+                <img src={evangelistaIcon} alt="Ícone do Evangelista" className="don-icon" />
+                <h3>Evangelista</h3>
+              </div>
+              <p>
+                O evangelista é aquele que carrega no coração o anseio por alcançar os perdidos. Seu chamado está voltado à proclamação das boas novas de Jesus Cristo com paixão, clareza e compaixão.
+              </p>
+              <p>
+                Evangelistas movem a igreja para fora das quatro paredes, inspirando-a a viver de forma missionária. Têm a capacidade de conectar o evangelho com a vida real das pessoas e convidá-las a uma transformação genuína em Cristo.
+              </p>
+            </div>
+            <div className="don-card pastor-card">
+              <div className="don-card-header">
+                <img src={pastorIcon} alt="Ícone do Pastor" className="don-icon" />
+                <h3>Pastor</h3>
+              </div>
+              <p>
+                O pastor é aquele que cuida, consola e caminha junto. Ele tem um coração voltado ao rebanho, guiando com empatia, proximidade e zelo.
+              </p>
+              <p>
+                Pastores promovem ambientes de cuidado e pertencimento dentro da igreja. Sua presença é marcada por serviço, escuta ativa e disposição para ajudar os outros a amadurecerem na fé.
+              </p>
+            </div>
+            <div className="don-card mestre-card">
+              <div className="don-card-header">
+                <img src={mestreIcon} alt="Ícone do Mestre" className="don-icon" />
+                <h3>Mestre</h3>
+              </div>
+              <p>
+                O mestre é aquele que busca compreender e comunicar a verdade de Deus de forma clara e profunda. Tem paixão pelo ensino das Escrituras e pela formação espiritual da igreja.
+              </p>
+              <p>
+                Mestres ajudam a igreja a permanecer sólida na Palavra, combatendo falsas doutrinas e promovendo crescimento teológico. Sua influência molda o entendimento e a prática cristã.
+              </p>
+            </div>
+
+          </div>
+        </div>
+        {/* BLOCO ESCOLA FIVE ONE MOVIDO PARA CÁ */}
+        <section className="promo-escola-section">
+          <div className="promo-escola-image">
+            <img src={escolaFiveOne} alt="Escola Five One" />
+          </div>
+          <div className="promo-escola-content">
+            <h3>Descubra a Escola Five One</h3>
+            <p>
+              Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
+              ministerial e conecte-se com uma comunidade de aprendizado e propósito.
+            </p>
+            <a href="https://alunos.escolafiveone.com" target="_blank" rel="noopener noreferrer">
+              Acesse a Plataforma
+            </a>
+          </div>
+        </section>
+        <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>
+          Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
+        </p>
+        <div className="pdf-download-wrapper">
+          <button
+            onClick={() => {
+              console.log("Botão de download PDF clicado");
+              handleDownloadPDF();
+            }}
+            className="start-button"
+            aria-label="Baixar resultado em PDF"
+          >
+            Baixar Resultado em PDF
           </button>
         </div>
+        <button
+          onClick={onHandleReset}
+          className="reset-button"
+          aria-label="Reiniciar o Teste"
+          style={{ backgroundColor: "#314b56", color: "white", marginTop: "1.5rem" }}
+        >
+          Reiniciar
+        </button>
       </section>
     );
   }
