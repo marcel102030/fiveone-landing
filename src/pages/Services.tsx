@@ -174,8 +174,8 @@ const Services = () => {
                   A Escola promove a construção de uma comunidade de apoio e aprendizado, incentivando o crescimento mútuo. Através dos grupos, os alunos compartilham experiências, discutem temas e constroem laços de apoio.
                 </p>
               </div>
-            </div>
 
+            </div>
             <section className="promo-escola-section">
               <div className="promo-escola-image">
                 <img src={escolaFiveOne} alt="Escola Five One" />
@@ -271,6 +271,23 @@ const Services = () => {
               </div>
             ))}
           </div>
+          {showModules && (
+            <section className="promo-escola-section">
+              <div className="promo-escola-image">
+                <img src={escolaFiveOne} alt="Escola Five One" />
+              </div>
+              <div className="promo-escola-content">
+                <h3>Descubra a Escola Five One</h3>
+                <p>
+                  Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
+                  ministerial e conecte-se com uma comunidade de aprendizado e propósito.
+                </p>
+                <a href="https://alunos.escolafiveone.com" target="_blank" rel="noopener noreferrer">
+                  Quero Fazer Parte
+                </a>
+              </div>
+            </section>
+          )}
         </div>
       </div>
     </section>
