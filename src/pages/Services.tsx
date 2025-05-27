@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
 import "./Services.css";
 
@@ -93,6 +93,8 @@ const Services = () => {
   const [openSubmodules, setOpenSubmodules] = useState<{
     [key: string]: boolean;
   }>({});
+  const [showModules, setShowModules] = useState(false);
+  const [fadeInModules, setFadeInModules] = useState(false);
 
   const currentTrack = tracks.find((track) => track.id === selectedTrack);
 
@@ -109,51 +111,143 @@ const Services = () => {
     setOpenSubmodules({}); // Reset open submodules when changing tracks
   };
 
+  useEffect(() => {
+    if (showModules) {
+      setFadeInModules(false);
+      const timer = setTimeout(() => {
+        setFadeInModules(true);
+      }, 100); // small delay to restart animation
+      return () => clearTimeout(timer);
+    }
+  }, [selectedTrack, showModules]);
+
   return (
     <section className="services-section">
       <div className="content-container">
-        <h1>Formação Ministerial</h1>
-
-        <div className="track-tabs">
-          {tracks.map((track) => (
-            <button
-              key={track.id}
-              className={`track-tab ${
-                selectedTrack === track.id ? "active" : ""
-              }`}
-              onClick={() => handleTrackChange(track.id)}
-            >
-              <img src={trackIcons[track.id]} alt={track.title} />
-              <span>{track.title}</span>
-            </button>
-          ))}
+        <div className="services-header">
+          <h1>FORMAÇÕES TEOLÓGICAS À DISTÂNCIA</h1>
+          <p>CURSOS COMPLETOS 100% ONLINE</p>
         </div>
 
-        <div className="module-grid">
-          {currentTrack?.modules.map((module, moduleIndex) => (
-            <div key={moduleIndex} className="module-card">
-              <h2 className="module-title">{module.title}</h2>
-              <div className="submodules-list">
-                {module.submodules.map((submodule, submoduleIndex) => (
-                  <SubmoduleAccordion
-                    key={submoduleIndex}
-                    code={submodule.code}
-                    title={submodule.title}
-                    type={submodule.type}
-                    instructor={submodule.instructor}
-                    lessons={submodule.lessons}
-                    isOpen={
-                      !!openSubmodules[`${moduleIndex}-${submoduleIndex}`]
-                    }
-                    onToggle={() =>
-                      toggleSubmodule(moduleIndex, submoduleIndex)
-                    }
-                  />
-                ))}
+        <div className="intro-platform">
+          <div className="services-highlight">
+            <h2 className="highlight-title">Descubra tudo o que a Escola Five One oferece para sua formação teológica e ministerial</h2>
+            <div className="highlight-arrow-css"></div>
+          </div>
+          <div className="academic-structure">
+            <h2 className="academic-title">ESTRUTURA ACADÊMICA</h2>
+            <p className="academic-subtitle">Durante o curso você terá acesso a:</p>
+            <div className="academic-features">
+              <div className="academic-feature">
+                <div className="icon icon-video" aria-hidden="true"></div>
+                <p><strong>Descoberta do Dom Ministerial:</strong><br />
+                A Escola Five One ajuda cada aluno a identificar e desenvolver seu dom ministerial (Apóstolo, Profeta, Evangelista, Pastor ou Mestre), direcionando-o para o exercício pleno de seu chamado.
+                </p>
+              </div>
+              <div className="academic-feature">
+                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <p><strong>Formação Teológica Completa:</strong><br />
+                Além do treinamento ministerial no seu dom específico, oferecemos uma formação teológica sólida e abrangente, que inclui auxílio em Apologética, ensinando como defender a fé a partir do seu dom, conhecimento em história da igreja e interpretação bíblica e muito mais. Garantindo que nossos alunos tenham uma base completa para seu desenvolvimento ministerial.
+                </p>
+              </div>
+              <div className="academic-feature">
+                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <p><strong>Professores Especializados:</strong><br />
+                Contamos com professores experientes em diversos dons ministeriais, proporcionando uma abordagem rica e diversificada.
+                </p>
+              </div>
+              <div className="academic-feature">
+                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <p><strong>Plataforma:</strong><br />
+                Uma plataforma de aprendizado acessível e prática, onde cada aluno pode desenvolver seu dom em qualquer lugar.
+                </p>
+              </div>
+              <div className="academic-feature">
+                <div className="icon icon-disciplines" aria-hidden="true"></div>
+                <p><strong>Aulas Ao Vivo e Gravadas:</strong><br />
+                Oferecemos aulas ao vivo que fortalecem o aprendizado e possibilitam a interação direta entre alunos e professores. As aulas Ao vivo irão ocorrer uma vez por semana, para que o aluno se aprofunde ainda mais no seu Dom. Novas aulas gravadas, lançadas toda segunda-feira. São quatro aulas por semana de até 25 minutos cada, para que você possa assistir quando e onde quiser. Com isso, você pode dedicar apenas 20 minutos por dia para investir no seu crescimento Teológico e Ministerial.
+                </p>
+              </div>
+              <div className="academic-feature">
+                <div className="icon icon-exercises" aria-hidden="true"></div>
+                <p><strong>Mentorias e Grupos no Discord e WhatsApp:</strong><br />
+                A Escola promove a construção de uma comunidade de apoio e aprendizado, incentivando o crescimento mútuo. Através dos grupos, os alunos compartilham experiências, discutem temas e constroem laços de apoio. 
+                </p>
               </div>
             </div>
-          ))}
+            <div className="academic-buttons">
+              <button
+                className="btn-red"
+                onClick={() => {
+                  setShowModules((prev) => {
+                    if (!prev) {
+                      setFadeInModules(false);
+                      setTimeout(() => setFadeInModules(true), 100);
+                    }
+                    return !prev;
+                  });
+                }}
+              >
+                {showModules ? "ESCONDER GRADE DA ESCOLA FIVE ONE" : "CONHEÇA A GRADE DA ESCOLA FIVE ONE"}
+              </button>
+            </div>
+          </div>
         </div>
+
+        <div
+          className={`module-wrapper ${showModules ? "show" : ""} ${fadeInModules ? "fade-in" : ""}`}
+          style={{
+            visibility: showModules ? "visible" : "hidden",
+            height: showModules ? "auto" : "0",
+            overflow: "hidden",
+            transition: "all 0.3s ease"
+          }}
+        >
+            <div className="track-tabs">
+              {tracks.map((track) => {
+                const isSelected = selectedTrack === track.id;
+                const currentTrackId = track.id;
+                // Debug: log selected and current track
+                console.log("Selected:", selectedTrack, "Current Track:", currentTrackId);
+                return (
+                  <button
+                    key={track.id}
+                    className={`track-tab animate-tab ${isSelected ? "active" : ""}`}
+                    onClick={() => handleTrackChange(track.id)}
+                  >
+                    <img src={trackIcons[track.id]} alt={track.title} />
+                    <span>{track.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="module-grid">
+              {currentTrack?.modules.map((module, moduleIndex) => (
+                <div key={moduleIndex} className="module-card">
+                  <h2 className="module-title">{module.title}</h2>
+                  <div className="submodules-list">
+                    {module.submodules.map((submodule, submoduleIndex) => (
+                      <SubmoduleAccordion
+                        key={submoduleIndex}
+                        code={submodule.code}
+                        title={submodule.title}
+                        type={submodule.type}
+                        instructor={submodule.instructor}
+                        lessons={submodule.lessons}
+                        isOpen={
+                          !!openSubmodules[`${moduleIndex}-${submoduleIndex}`]
+                        }
+                        onToggle={() =>
+                          toggleSubmodule(moduleIndex, submoduleIndex)
+                        }
+                      />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
       </div>
     </section>
   );

@@ -48,7 +48,7 @@ export const apostleTrack: Track = {
           type: "M",
           instructor: "Marcelo",
           lessons: [
-            { title: "Somos todos sacerdotes e os 5 Ministérios" },
+            { title: "A extensão dos 5 Ministérios" },
             { title: "Entendendo os Dons segundo a Biblia" },
             { title: "O Ministro do Evangelho" },
             { title: "Visão Profética sobre os 5 Ministérios" },
