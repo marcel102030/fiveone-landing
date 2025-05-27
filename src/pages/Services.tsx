@@ -129,11 +129,6 @@ const Services = () => {
           <h1>FORMAÇÕES TEOLÓGICAS À DISTÂNCIA</h1>
           <p>CURSOS COMPLETOS 100% ONLINE</p>
         </div>
-        <div className="services-header">
-          <h1>FORMAÇÕES TEOLÓGICAS À DISTÂNCIA</h1>
-          <p>CURSOS COMPLETOS 100% ONLINE</p>
-        </div>
-
         <div className="intro-platform">
           <div className="services-highlight">
             <h2 className="highlight-title">Descubra tudo o que a Escola Five One oferece para sua formação teológica e ministerial</h2>
