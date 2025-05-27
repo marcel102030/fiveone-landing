@@ -402,7 +402,7 @@
   background: var(--navy);
   color: var(--text-white);
   text-align: center;
-  padding: 6rem 2rem 2rem;
+  padding: 0.5rem 2rem 1.5rem;
 }
 
 .services-header h1 {
@@ -652,5 +652,35 @@
   100% {
     opacity: 0;
     transform: translateY(-30px) scale(0.95);
+  }
+}
+/* Track Name Title */
+.track-name-title {
+  text-align: center;
+  font-size: 2rem;
+  color: var(--text-white);
+  margin: 3rem auto 4rem;
+  font-weight: 700;
+  animation: fadeSlideIn 0.6s ease;
+  background: rgba(100, 255, 218, 0.1);
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  width: fit-content;
+  padding-left: 1.5rem;
+}
+
+.track-prefix {
+  color: var(--text-slate);
+  margin-right: 0.5rem;
+}
+
+.track-highlight {
+  color: var(--mint);
+}
+
+@media (max-width: 768px) {
+  .track-name-title {
+    font-size: 1.5rem;
+    margin: 2.5rem auto 2rem;
   }
 }

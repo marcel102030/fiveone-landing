@@ -120,62 +120,6 @@ const Ministerio = () => {
           </a>
         </div>
       </section>
-      <section className="estrutura-academica-section">
-        <h2 className="estrutura-titulo">O que você encontrará na Escola Five One</h2>
-        <div className="estrutura-itens">
-          <div className="estrutura-item">
-            <span className="estrutura-icone">🎥</span>
-            <p>Aulas em vídeo de até 25 minutos</p>
-          </div>
-          <div className="estrutura-item">
-            <span className="estrutura-icone">👨‍🏫</span>
-            <p>Professores com experiência ministerial</p>
-          </div>
-          <div className="estrutura-item">
-            <span className="estrutura-icone">🧑‍🤝‍🧑</span>
-            <p>Comunidade de apoio e grupos ativos</p>
-          </div>
-          <div className="estrutura-item">
-            <span className="estrutura-icone">📚</span>
-            <p>Mentoria e discipulado contínuo</p>
-          </div>
-          <div className="estrutura-item">
-            <span className="estrutura-icone">📅</span>
-            <p>Encontros ao vivo semanais e conteúdo novo toda segunda</p>
-          </div>
-        </div>
-      </section>
-      <section className="beneficios-escola-section">
-        <h2 className="beneficios-titulo">Tudo o que a Escola Five One oferece</h2>
-        <div className="beneficio-item">
-          <h3>1. Descubra seu Dom</h3>
-          <p>A Escola ajuda você a identificar e exercer seu chamado ministerial (Apóstolo, Profeta, Evangelista, Pastor ou Mestre).</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>2. Formação Teológica Completa</h3>
-          <p>Oferecemos uma base sólida em Apologética, história da igreja e interpretação bíblica, garantindo preparo completo para o ministério.</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>3. Professores Especializados</h3>
-          <p>Você aprende com ministros experientes que oferecem uma formação rica e aplicada.</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>4. Plataforma Acessível</h3>
-          <p>Aulas em estilo Netflix, com acesso prático de qualquer lugar e materiais disponíveis para aprofundamento.</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>5. Aulas Gravadas e ao Vivo</h3>
-          <p>Encontros semanais ao vivo e novas aulas gravadas toda segunda-feira, com duração de até 25 minutos.</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>6. Comunidade e Mentoria</h3>
-          <p>Participe de grupos de apoio, tire dúvidas e cresça junto com outros alunos em uma jornada compartilhada.</p>
-        </div>
-        <div className="beneficio-item">
-          <h3>7. Grupos no Discord e WhatsApp</h3>
-          <p>Interaja, compartilhe experiências e receba suporte direto em nossa comunidade online.</p>
-        </div>
-      </section>
     </div>
   );
 };

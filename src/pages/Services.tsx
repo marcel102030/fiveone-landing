@@ -222,6 +222,14 @@ const Services = () => {
               })}
             </div>
 
+            <div className="track-header-wrapper margin-top-track-header">
+              <h2 className="current-track-title">
+                <span className="track-prefix">Formação Ministerial:</span>{" "}
+                <span className="track-highlight">{currentTrack?.title}</span>
+              </h2>
+            </div>
+
+            <div style={{ marginTop: "40px" }}></div>
             <div className="module-grid">
               {currentTrack?.modules.map((module, moduleIndex) => (
                 <div key={moduleIndex} className="module-card">
