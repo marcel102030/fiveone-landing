@@ -12,6 +12,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Services from "./pages/Services";
 import BlogPostPage from "./pages/BlogPostPage";
+import Ministerio from "./pages/Ministerio";
 
 import "./App.css";
 
@@ -37,6 +38,7 @@ function AppContent() {
             <Route path="/insights" element={<Blog />} />
             <Route path="/insights/:postId" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
+            <Route path="/ministerios/:nome" element={<Ministerio />} />
           </Routes>
         </main>
         <ScrollToTop />

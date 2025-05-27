@@ -1,4 +1,5 @@
 import "./ConhecaMais.css";
+import { useNavigate } from "react-router-dom";
 
 interface MinisterioCard {
   title: string;
@@ -33,6 +34,7 @@ const ministerios: MinisterioCard[] = [
 ];
 
 const ConhecaMais = () => {
+  const navigate = useNavigate();
   return (
     <section className="conheca-mais">
       <div className="content-container">
@@ -42,7 +44,12 @@ const ConhecaMais = () => {
             <div key={index} className="ministerio-card">
               <h3>{ministerio.title}</h3>
               <p>{ministerio.description}</p>
-              <button className="saiba-mais">Saiba Mais</button>
+              <button
+                className="saiba-mais"
+                onClick={() => navigate(`/ministerios/${ministerio.title.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase()}`)}
+              >
+                Saiba Mais
+              </button>
             </div>
           ))}
         </div>

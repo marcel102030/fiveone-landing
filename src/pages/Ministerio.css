@@ -1,0 +1,97 @@
+.ministerio-page {
+  max-width: 1000px;
+  margin: 5rem auto;
+  padding: 3rem;
+  background-color: #00132a;
+  border-radius: 16px;
+  box-shadow: 0 6px 24px rgba(0, 255, 218, 0.15);
+  font-family: 'Segoe UI', sans-serif;
+  line-height: 1.7;
+  color: #ffffff;
+  text-align: center;
+}
+
+.ministerio-page h1 {
+  font-size: 2.5rem;
+  color: #6fffe9;
+  margin-bottom: 1.8rem;
+}
+
+
+.ministerio-page p {
+  font-size: 1.25rem;
+  color: #d3d3d3;
+  text-align: justify;
+  padding: 0 1.5rem;
+}
+
+.ministerio-page h2 {
+  font-size: 1.8rem;
+  color: #6fffe9;
+  margin: 2.5rem 0 1rem;
+  text-align: left;
+  padding: 0 1.5rem;
+}
+
+.ministerio-page ul {
+  list-style-type: disc;
+  margin: 0 1.5rem 2rem 3rem;
+  padding: 0;
+  text-align: left;
+  color: #ffffff;
+}
+
+.ministerio-page li {
+  margin-bottom: 0.75rem;
+  font-size: 1.15rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .ministerio-page {
+    padding: 2rem 1.25rem;
+  }
+
+  .ministerio-page h1 {
+    font-size: 2rem;
+  }
+
+  .ministerio-page p {
+    font-size: 1.05rem;
+  }
+}
+
+.ministerio-section {
+  margin-top: 3rem;
+  padding: 0 1.5rem;
+}
+
+.ministerio-section h3 {
+  font-size: 1.5rem;
+  color: #6fffe9;
+  margin-bottom: 0.75rem;
+}
+
+.ministerio-section p {
+  font-size: 1.15rem;
+  color: #d3d3d3;
+  line-height: 1.6;
+  text-align: justify;
+}
+
+@media (max-width: 768px) {
+  .ministerio-section {
+    padding: 0 1rem;
+  }
+
+  .ministerio-section h3 {
+    font-size: 1.25rem;
+    text-align: center;
+  }
+
+  .ministerio-section p {
+    font-size: 0.95rem;
+    text-align: justify;
+    padding: 0;
+  }
+}

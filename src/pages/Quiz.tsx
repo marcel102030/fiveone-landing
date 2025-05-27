@@ -598,7 +598,7 @@ const Quiz = () => {
               ministerial e conecte-se com uma comunidade de aprendizado e propósito.
             </p>
             <a href="https://alunos.escolafiveone.com" target="_blank" rel="noopener noreferrer">
-              Acesse a Plataforma
+             Quero Fazer Parte
             </a>
           </div>
         </section>
