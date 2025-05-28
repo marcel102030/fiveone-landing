@@ -186,7 +186,7 @@ const Services = () => {
                   Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
                   ministerial e conecte-se com uma comunidade de aprendizado e propósito.
                 </p>
-                <a href="https://alunos.escolafiveone.com" target="_blank" rel="noopener noreferrer">
+                <a href="https://escolafiveone.hotmart.host/formacao-de-mestre-five-one-df44d8cd-3a6b-44b0-aaec-652290fc529a" target="_blank" rel="noopener noreferrer">
                   Quero Fazer Parte
                 </a>
               </div>
@@ -282,7 +282,7 @@ const Services = () => {
                   Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
                   ministerial e conecte-se com uma comunidade de aprendizado e propósito.
                 </p>
-                <a href="https://alunos.escolafiveone.com" target="_blank" rel="noopener noreferrer">
+                <a href="https://escolafiveone.hotmart.host/formacao-de-mestre-five-one-df44d8cd-3a6b-44b0-aaec-652290fc529a" target="_blank" rel="noopener noreferrer">
                   Quero Fazer Parte
                 </a>
               </div>
