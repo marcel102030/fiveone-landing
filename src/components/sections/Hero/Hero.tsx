@@ -65,16 +65,11 @@ const Hero = ({ onScrollClick }: HeroProps) => {
           draggable="false"
         />
         <h1 className="hero-title">Bem-vindo ao Five One</h1>
-        <p className="hero-subtitle">
-          Venha trilhar seu caminho ministerial com a Escola Five One! Escolha
-          entre uma das 5 Trilhas Ministeriais:
-        </p>
-        <p className="hero-subtitle">
-          Apóstolo, Profeta, Evangelista, Pastor ou Mestre
-        </p>
-        <button onClick={onScrollClick}>
-          CLIQUE AQUI E CONHEÇA NOSSAS TRILHAS MINISTERIAIS
-        </button>
+        <div className="hero-button-wrapper" style={{ marginTop: '-80px' }}>
+          <button className="hero-main-button" onClick={onScrollClick}>
+            CLIQUE AQUI E CONHEÇA NOSSAS TRILHAS MINISTERIAIS
+          </button>
+        </div>
       </div>
 
       <IconColumn icons={[...icons].reverse()} className="right" />
