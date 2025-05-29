@@ -441,9 +441,10 @@ const Quiz = () => {
           <div className="results-header" style={{ marginTop: "6rem" }}>
             <h2>Parabéns, seu resultado está pronto!</h2>
             <p>
-              Leia com atenção as informações abaixo para tirar o máximo de
-              proveito do seu teste. Nele você vai ver quais dos 5 dons você tem
-              uma maior inclinação e como isso se aplica a sua vida.
+              Leia com atenção as informações abaixo para tirar o máximo de proveito do seu teste. 
+              Nele você vai ver quais dos 5 dons você tem uma maior inclinação, como isso se aplica 
+              à sua vida e ainda poderá <strong>baixar o resultado em PDF</strong> ou 
+              <strong> compartilhar nas redes sociais</strong>.
             </p>
           </div>
           <div className="result-name">{userInfo.name}</div>
@@ -494,6 +495,7 @@ const Quiz = () => {
                 ))}
               </div>
             </div>
+          <div className="down-arrow"></div>
         </div>
         {/* Fecha content-container antes de adicionar a nova section */}
         <div className="don-profile-wrapper">
@@ -518,8 +520,8 @@ const Quiz = () => {
               color: "#cfd8dc",
             }}
           >
-            Cada um dos Cinco Ministérios reflete aspectos do caráter de Deus, que Ele deseja ver em ação através de você.
-            Abaixo, detalhamos o que cada ministério significa e como você pode aplicá-lo de maneira eficaz em sua vida.
+            Os cinco dons ministeriais descritos em Efésios 4 — Apóstolo, Profeta, Evangelista, Pastor e Mestre — expressam dimensões únicas do ministério de Cristo distribuídas ao seu Corpo.
+            A seguir, você encontrará uma explicação teológica de cada um desses dons, com base bíblica e doutrinária, para que compreenda o significado e a importância de cada um no contexto da edificação da Igreja.
           </p>
           <div className="don-profile-cards">
             {/* Aqui será implementado o conteúdo individual de cada dom */}
@@ -602,6 +604,45 @@ const Quiz = () => {
             </a>
           </div>
         </section>
+        <div className="social-share">
+          <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Compartilhe seu resultado:</p>
+          <div className="share-buttons">
+            <a
+              href="https://instagram.com/escolafiveone"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Instagram
+            </a>
+            <a
+              href="https://www.tiktok.com/@escolafiveone"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              TikTok
+            </a>
+            <a
+              href={`https://wa.me/?text=${encodeURIComponent("Descobri meu Dom Ministerial! Faça você também: https://escolafiveone.com/quiz")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              WhatsApp
+            </a>
+            <a
+              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://escolafiveone.com/quiz")}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Facebook
+            </a>
+            <button onClick={() => {
+              navigator.clipboard.writeText("https://escolafiveone.com/quiz");
+              alert("Link copiado para a área de transferência!");
+            }}>
+              Copiar Link
+            </button>
+          </div>
+        </div>
         <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>
           Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
         </p>

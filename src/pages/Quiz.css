@@ -2116,3 +2116,72 @@
     padding: 0.7rem 1.2rem;
   }
 }
+/* ----------- Social Share Buttons Section ----------- */
+.share-buttons-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin: 2rem auto;
+  text-align: center;
+}
+
+.share-buttons-wrapper h3 {
+  font-size: 1.3rem;
+  color: var(--mint);
+  margin-bottom: 0.5rem;
+}
+
+.share-buttons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.share-buttons a {
+  padding: 0.75rem 1.25rem;
+  background-color: var(--mint);
+  color: var(--navy);
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.share-buttons a:hover {
+  background-color: #52e0c4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+}
+
+@media (max-width: 480px) {
+  .share-buttons a {
+    font-size: 0.95rem;
+    padding: 0.6rem 1rem;
+  }
+
+  .share-buttons-wrapper h3 {
+    font-size: 1.1rem;
+  }
+}
+/* Down Arrow Icon for Quiz Results */
+.down-arrow {
+  display: block;
+  width: 0;
+  height: 0;
+  margin: 2rem auto;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-top: 14px solid var(--mint);
+  animation: bounceDown 1.2s infinite;
+}
+
+@keyframes bounceDown {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
