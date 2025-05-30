@@ -157,25 +157,6 @@
   object-fit: contain;
 }
 
-.result-item.pastor {
-  background-color: #005f73;
-}
-
-.result-item.apostolo {
-  background-color: #ca6702;
-}
-
-.result-item.mestre {
-  background-color: #ee9b00;
-}
-
-.result-item.profeta {
-  background-color: #bb3e03;
-}
-
-.result-item.evangelista {
-  background-color: #9b2226;
-}
 
 .result-item h3 {
   margin: 0;
@@ -1081,24 +1062,25 @@
   object-fit: contain;
 }
 
-.result-item.pastor {
-  background-color: #005f73;
+.result-item.evangelista {
+  background-color: #cfb012;
 }
 
+
 .result-item.apostolo {
-  background-color: #ca6702;
+  background-color: #1b6ea5;
+}
+
+.result-item.pastor {
+  background-color: #9B59B6;
 }
 
 .result-item.mestre {
-  background-color: #ee9b00;
+  background-color: #2f994a;
 }
 
 .result-item.profeta {
-  background-color: #bb3e03;
-}
-
-.result-item.evangelista {
-  background-color: #9b2226;
+  background-color: #a80d0d;
 }
 
 .result-item h3 {
@@ -2193,13 +2175,14 @@
 }
 /* TikTok share button style */
 .share-buttons a.tiktok {
-  background: linear-gradient(45deg, #000000, #69C9D0, #EE1D52);
+  background-color: #000;
+  color: #fff;
   border: none;
 }
 .share-buttons a.tiktok:hover {
-  background: linear-gradient(45deg, #000000, #69C9D0, #EE1D52);
+  background-color: #1c1c1c;
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(105, 201, 208, 0.5);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 /* WhatsApp share button style */
 .share-buttons a.whatsapp {
