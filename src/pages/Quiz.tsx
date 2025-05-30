@@ -622,6 +622,7 @@ const Quiz = () => {
               aria-label="Instagram"
             >
               <FaInstagram size={24} />
+              <span className="tooltip-share">Instagram</span>
             </a>
             <a
               href={`https://www.tiktok.com/@escola.five.one?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
@@ -631,6 +632,7 @@ const Quiz = () => {
               aria-label="TikTok"
             >
               <FaTiktok size={24} />
+              <span className="tooltip-share">TikTok</span>
             </a>
             <a
               href={`https://wa.me/?text=${shareText}%20&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
@@ -640,6 +642,7 @@ const Quiz = () => {
               aria-label="WhatsApp"
             >
               <FaWhatsapp size={24} />
+              <span className="tooltip-share">WhatsApp</span>
             </a>
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=https://fiveonemovement.com/#/teste-dons&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados&quote=${shareText}`}
@@ -649,6 +652,7 @@ const Quiz = () => {
               aria-label="Facebook"
             >
               <FaFacebook size={24} />
+              <span className="tooltip-share">Facebook</span>
             </a>
             <button
               className="copiar-link"
@@ -660,7 +664,25 @@ const Quiz = () => {
               style={{ backgroundColor: "#5df2d6", border: "none", borderRadius: "12px", padding: "1rem 2rem" }}
             >
               <FaLink size={20} />
+              <span className="tooltip-share">Copiar Link</span>
             </button>
+            {/* Botão de compartilhamento nativo */}
+            {typeof navigator !== "undefined" && navigator.share && (
+              <button
+                className="compartilhar-nativo"
+                onClick={() => {
+                  navigator.share({
+                    title: "Descubra seu Dom Ministerial",
+                    text: `${userInfo.name.split(" ")[0]} fez o teste dos 5 Ministérios e descobriu seu dom! Faça você também.`,
+                    url: "https://fiveonemovement.com/#/teste-dons",
+                  }).catch((error) => console.error("Erro ao compartilhar:", error));
+                }}
+                aria-label="Compartilhar nativamente"
+                style={{ backgroundColor: "#5df2d6", border: "none", borderRadius: "12px", padding: "1rem 2rem" }}
+              >
+                📲 Compartilhar
+              </button>
+            )}
           </div>
         </div>
         <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>

@@ -2103,15 +2103,20 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1rem;
-  margin: 2rem auto;
-  text-align: center;
+  gap: 1.2rem;
+  margin: 3rem auto;
+  padding: 2rem;
+  border-radius: 16px;
+  background-color: rgba(255, 255, 255, 0.03);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  max-width: 600px;
 }
 
 .share-buttons-wrapper h3 {
-  font-size: 1.3rem;
+  font-size: 1.5rem;
+  font-weight: 600;
   color: var(--mint);
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .share-buttons {
@@ -2122,6 +2127,7 @@
 }
 
 .share-buttons a {
+  position: relative;
   padding: 0.75rem;
   display: flex;
   align-items: center;
@@ -2235,4 +2241,59 @@
   50% {
     transform: translateY(10px);
   }
+}
+
+/* -------- Tooltip Share Button Styles -------- */
+.tooltip-share {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background-color: rgba(17, 34, 64, 0.95);
+  color: var(--text-light-slate);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.share-buttons a:hover .tooltip-share {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-18px);
+}
+
+.share-buttons a {
+  position: relative;
+}
+/* -------- Tooltip Share Button Styles -------- */
+.tooltip-share {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background-color: rgba(17, 34, 64, 0.95);
+  color: var(--text-light-slate);
+  padding: 0.6rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  white-space: nowrap;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  pointer-events: none;
+  z-index: 10;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.share-buttons a:hover .tooltip-share {
+  opacity: 1;
+  visibility: visible;
+  transform: translateX(-50%) translateY(-18px);
 }
