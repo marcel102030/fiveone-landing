@@ -7,6 +7,7 @@ import html2pdf from "html2pdf.js";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
+import { FaInstagram, FaTiktok, FaWhatsapp, FaFacebook, FaLink } from "react-icons/fa";
 
 import logo from "../assets/images/logo-fiveone-white.png";
 import mestreIcon from "../assets/images/icons/mestre.png";
@@ -606,40 +607,53 @@ const Quiz = () => {
         </section>
         <div className="social-share">
           <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Compartilhe seu resultado:</p>
-          <div className="share-buttons">
+          <div className="share-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <a
               href="https://instagram.com/escolafiveone"
               target="_blank"
               rel="noopener noreferrer"
+              className="instagram"
+              aria-label="Instagram"
             >
-              Instagram
+              <FaInstagram size={24} />
             </a>
             <a
               href="https://www.tiktok.com/@escolafiveone"
               target="_blank"
               rel="noopener noreferrer"
+              className="tiktok"
+              aria-label="TikTok"
             >
-              TikTok
+              <FaTiktok size={24} />
             </a>
             <a
               href={`https://wa.me/?text=${encodeURIComponent("Descobri meu Dom Ministerial! Faça você também: https://escolafiveone.com/quiz")}`}
               target="_blank"
               rel="noopener noreferrer"
+              className="whatsapp"
+              aria-label="WhatsApp"
             >
-              WhatsApp
+              <FaWhatsapp size={24} />
             </a>
             <a
               href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://escolafiveone.com/quiz")}`}
               target="_blank"
               rel="noopener noreferrer"
+              className="facebook"
+              aria-label="Facebook"
             >
-              Facebook
+              <FaFacebook size={24} />
             </a>
-            <button onClick={() => {
-              navigator.clipboard.writeText("https://escolafiveone.com/quiz");
-              alert("Link copiado para a área de transferência!");
-            }}>
-              Copiar Link
+            <button
+              className="copiar-link"
+              onClick={() => {
+                navigator.clipboard.writeText("https://escolafiveone.com/quiz");
+                alert("Link copiado para a área de transferência!");
+              }}
+              aria-label="Copiar Link"
+              style={{ backgroundColor: "#5df2d6", border: "none", borderRadius: "12px", padding: "1rem 2rem" }}
+            >
+              <FaLink size={20} />
             </button>
           </div>
         </div>

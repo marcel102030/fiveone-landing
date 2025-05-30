@@ -2140,7 +2140,13 @@
 }
 
 .share-buttons a {
-  padding: 0.75rem 1.25rem;
+  padding: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  font-size: 1.25rem;
   background-color: var(--mint);
   color: var(--navy);
   border-radius: 8px;
@@ -2149,18 +2155,80 @@
   transition: all 0.3s ease;
 }
 
+.share-buttons a.copy-link {
+  background-color: var(--mint);
+  color: var(--navy);
+  border: none;
+}
+
 .share-buttons a:hover {
   background-color: #52e0c4;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
 }
 
+/* Copy Link share button style */
+.share-buttons a.copy-link:hover {
+  background-color: #52e0c4;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(100, 255, 218, 0.3);
+}
+
+/* Instagram share button style */
+/* Instagram share button style */
+.share-buttons a.instagram,
+.share-buttons a.tiktok,
+.share-buttons a.whatsapp,
+.share-buttons a.facebook {
+  color: white;
+}
+.share-buttons a.instagram {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  border: none;
+}
+.share-buttons a.instagram:hover {
+  background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(220, 39, 67, 0.5);
+}
+/* TikTok share button style */
+.share-buttons a.tiktok {
+  background: linear-gradient(45deg, #000000, #69C9D0, #EE1D52);
+  border: none;
+}
+.share-buttons a.tiktok:hover {
+  background: linear-gradient(45deg, #000000, #69C9D0, #EE1D52);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(105, 201, 208, 0.5);
+}
+/* WhatsApp share button style */
+.share-buttons a.whatsapp {
+  background-color: #25D366;
+  border: none;
+}
+.share-buttons a.whatsapp:hover {
+  background-color: #1ebe5d;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.4);
+}
+/* Facebook share button style */
+.share-buttons a.facebook {
+  background-color: #1877F2;
+  border: none;
+}
+.share-buttons a.facebook:hover {
+  background-color: #0f66e5;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.4);
+}
+
 @media (max-width: 480px) {
   .share-buttons a {
-    font-size: 0.95rem;
-    padding: 0.6rem 1rem;
+    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
+    padding: 0.5rem;
   }
-
   .share-buttons-wrapper h3 {
     font-size: 1.1rem;
   }
