@@ -436,6 +436,12 @@ const Quiz = () => {
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => a.score - b.score); // wrap-reverse
 
+    // --- Adicionado para compartilhamento ---
+    const mainDom = sortedScores[sortedScores.length - 1]?.metadata?.name ?? "meu dom";
+    const userName = userInfo.name.trim().split(" ")[0]; // pega o primeiro nome
+    const shareText = encodeURIComponent(`${userName} descobriu que seu Dom Ministerial é ${mainDom}! Faça o teste também: https://fiveonemovement.com/#/teste-dons`);
+    // --- Fim do bloco compartilhamento ---
+
     return (
       <section className="Teste-section">
         <div className="content-container" id="quiz-result" ref={pdfRef}>
@@ -609,7 +615,7 @@ const Quiz = () => {
           <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Compartilhe seu resultado:</p>
           <div className="share-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <a
-              href="https://instagram.com/escolafiveone"
+              href={`https://www.instagram.com/fiveone.oficial/?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
               target="_blank"
               rel="noopener noreferrer"
               className="instagram"
@@ -618,7 +624,7 @@ const Quiz = () => {
               <FaInstagram size={24} />
             </a>
             <a
-              href="https://www.tiktok.com/@escolafiveone"
+              href={`https://www.tiktok.com/@escola.five.one?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
               target="_blank"
               rel="noopener noreferrer"
               className="tiktok"
@@ -627,7 +633,7 @@ const Quiz = () => {
               <FaTiktok size={24} />
             </a>
             <a
-              href={`https://wa.me/?text=${encodeURIComponent("Descobri meu Dom Ministerial! Faça você também: https://escolafiveone.com/quiz")}`}
+              href={`https://wa.me/?text=${shareText}%20&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
               target="_blank"
               rel="noopener noreferrer"
               className="whatsapp"
@@ -636,7 +642,7 @@ const Quiz = () => {
               <FaWhatsapp size={24} />
             </a>
             <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://escolafiveone.com/quiz")}`}
+              href={`https://www.facebook.com/sharer/sharer.php?u=https://fiveonemovement.com/#/teste-dons&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados&quote=${shareText}`}
               target="_blank"
               rel="noopener noreferrer"
               className="facebook"
@@ -647,7 +653,7 @@ const Quiz = () => {
             <button
               className="copiar-link"
               onClick={() => {
-                navigator.clipboard.writeText("https://escolafiveone.com/quiz");
+                navigator.clipboard.writeText("https://fiveonemovement.com/#/teste-dons");
                 alert("Link copiado para a área de transferência!");
               }}
               aria-label="Copiar Link"
