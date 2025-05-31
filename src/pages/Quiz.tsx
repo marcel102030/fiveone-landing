@@ -22,6 +22,14 @@ import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
 
 import "./Quiz.css";
 
+declare global {
+  interface Window {
+    gtag: (...args: any[]) => void;
+  }
+}
+
+const gtag = window.gtag;
+
 
 const categoryIcons: Record<CategoryEnum, string> = {
   [CategoryEnum.APOSTOLO]: apostoloIcon,
@@ -192,6 +200,13 @@ const Quiz = () => {
       });
 
       if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+        // Adiciona evento do Google Analytics
+        if (typeof gtag === "function") {
+          gtag("event", "quiz_completed", {
+            event_category: "quiz",
+            event_label: "Quiz dos 5 Ministérios",
+          });
+        }
         setShowResults(true);
         setCurrentPair(null);
         setTransitioning(false);
@@ -257,7 +272,15 @@ const Quiz = () => {
           <h1>Descubra o seu Dom Ministerial</h1>
           <div className="top-start-button-wrapper">
             <button
-              onClick={() => setQuizStarted(true)}
+              onClick={() => {
+                setQuizStarted(true);
+                if (typeof gtag === "function") {
+                  gtag("event", "quiz_start", {
+                    event_category: "quiz",
+                    event_label: "Quiz dos 5 Ministérios",
+                  });
+                }
+              }}
               className="start-button"
               aria-label="Iniciar o Teste (atalho superior)"
             >
@@ -312,7 +335,15 @@ const Quiz = () => {
           </div>
           <div className="start-form">
             <button
-              onClick={() => setQuizStarted(true)}
+              onClick={() => {
+                setQuizStarted(true);
+                if (typeof gtag === "function") {
+                  gtag("event", "quiz_start", {
+                    event_category: "quiz",
+                    event_label: "Quiz dos 5 Ministérios",
+                  });
+                }
+              }}
               className="start-button"
               aria-label="Iniciar o Teste"
             >
@@ -403,6 +434,14 @@ const Quiz = () => {
 
                 if (!Object.values(hasErrors).some(Boolean)) {
                   setUserInfo((prev) => ({ ...prev, submitted: true }));
+
+                  if (typeof gtag === "function") {
+                    gtag("event", "quiz_form_submitted", {
+                      event_category: "quiz",
+                      event_label: "Quiz dos 5 Ministérios",
+                      value: 1,
+                    });
+                  }
                 }
               }}
               className="start-button"
