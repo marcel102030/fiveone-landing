@@ -1,5 +1,8 @@
 import { useState, useEffect } from "react";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import { MdLightbulbOutline, MdDevices, MdPublic } from "react-icons/md";
+import { GiOpenBook } from "react-icons/gi";
+import { FaChalkboardTeacher } from "react-icons/fa";
 import "./Services.css";
 
 // Import icons
@@ -139,37 +142,37 @@ const Services = () => {
             <p className="academic-subtitle">Durante o curso você terá acesso a:</p>
             <div className="academic-features">
               <div className="academic-feature">
-                <div className="icon icon-video" aria-hidden="true"></div>
+                <div className="icon-wrapper"><MdLightbulbOutline size={36} /></div>
                 <p><strong>Descoberta do Dom Ministerial:</strong><br />
                   A Escola Five One ajuda cada aluno a identificar e desenvolver seu dom ministerial (Apóstolo, Profeta, Evangelista, Pastor ou Mestre), direcionando-o para o exercício pleno de seu chamado.
                 </p>
               </div>
               <div className="academic-feature">
-                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <div className="icon-wrapper"><GiOpenBook size={36} /></div>
                 <p><strong>Formação Teológica Completa:</strong><br />
                   Além do treinamento ministerial no seu dom específico, oferecemos uma formação teológica sólida e abrangente, que inclui auxílio em Apologética, ensinando como defender a fé a partir do seu dom, conhecimento em história da igreja e interpretação bíblica e muito mais. Garantindo que nossos alunos tenham uma base completa para seu desenvolvimento ministerial.
                 </p>
               </div>
               <div className="academic-feature">
-                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <div className="icon-wrapper"><FaChalkboardTeacher size={36} /></div>
                 <p><strong>Professores Especializados:</strong><br />
                   Contamos com professores experientes em diversos dons ministeriais, proporcionando uma abordagem rica e diversificada.
                 </p>
               </div>
               <div className="academic-feature">
-                <div className="icon icon-monitors" aria-hidden="true"></div>
+                <div className="icon-wrapper"><MdDevices size={36} /></div>
                 <p><strong>Plataforma:</strong><br />
                   Uma plataforma de aprendizado acessível e prática, onde cada aluno pode desenvolver seu dom em qualquer lugar.
                 </p>
               </div>
               <div className="academic-feature">
-                <div className="icon icon-disciplines" aria-hidden="true"></div>
+                <div className="icon-wrapper"><MdPublic size={36} /></div>
                 <p><strong>Aulas Ao Vivo e Gravadas:</strong><br />
                   Oferecemos aulas ao vivo que fortalecem o aprendizado e possibilitam a interação direta entre alunos e professores. As aulas Ao vivo irão ocorrer uma vez por semana, para que o aluno se aprofunde ainda mais no seu Dom. Novas aulas gravadas, lançadas toda segunda-feira. São quatro aulas por semana de até 25 minutos cada, para que você possa assistir quando e onde quiser. Com isso, você pode dedicar apenas 20 minutos por dia para investir no seu crescimento Teológico e Ministerial.
                 </p>
               </div>
               <div className="academic-feature">
-                <div className="icon icon-exercises" aria-hidden="true"></div>
+                <div className="icon-wrapper"><FaChalkboardTeacher size={36} /></div>
                 <p><strong>Mentorias e Grupos no Discord e WhatsApp:</strong><br />
                   A Escola promove a construção de uma comunidade de apoio e aprendizado, incentivando o crescimento mútuo. Através dos grupos, os alunos compartilham experiências, discutem temas e constroem laços de apoio.
                 </p>
