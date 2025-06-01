@@ -1,5 +1,6 @@
 import "./ConhecaMais.css";
 import { useNavigate } from "react-router-dom";
+import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 
 interface MinisterioCard {
   title: string;
@@ -56,7 +57,7 @@ const ConhecaMais = () => {
         <h3 className="quiz-card-title">Pronto para descobrir seu dom?</h3>
         <div className="quiz-card" onClick={() => navigate("/teste-dons")}>
           <img
-            src="/src/assets/images/icons/apostolo.png"
+            src={apostoloIcon}
             alt="Ícone representando o teste de dons"
             className="quiz-card-icon"
             draggable="false"
