@@ -53,6 +53,16 @@ const ConhecaMais = () => {
             </div>
           ))}
         </div>
+        <h3 className="quiz-card-title">Pronto para descobrir seu dom?</h3>
+        <div className="quiz-card" onClick={() => navigate("/teste-dons")}>
+          <img
+            src="/src/assets/images/icons/apostolo.png"
+            alt="Ícone representando o teste de dons"
+            className="quiz-card-icon"
+            draggable="false"
+          />
+          <p className="quiz-card-text">Descubra o seu Chamado - Teste Dons Ministeriais</p>
+        </div>
       </div>
     </section>
   );

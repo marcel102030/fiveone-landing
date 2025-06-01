@@ -34,6 +34,7 @@ function AppContent() {
             <Route path="/" element={<Home />} />
             <Route path="/quem-somos" element={<About />} />
             <Route path="/teste-dons" element={<Quiz />} />
+            <Route path="/quiz" element={<Quiz />} />
             <Route path="/formacao-ministerial" element={<Services />} />
             <Route path="/insights" element={<Blog />} />
             <Route path="/insights/:postId" element={<BlogPostPage />} />
