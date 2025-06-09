@@ -1,0 +1,272 @@
+.igreja-container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+    background-color: #0d1b2a;
+    color: #ffffff;
+    font-family: 'Helvetica Neue', sans-serif;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+  
+  .igreja-header {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  
+  .igreja-header h1 {
+    font-size: 3rem;
+    color: #61dafb;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    text-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  }
+  
+  .igreja-header p {
+    font-size: 1.2rem;
+    color: #cbd5e1;
+    line-height: 1.6;
+  }
+  
+  .igreja-section {
+    margin-bottom: 2.5rem;
+  }
+  
+  .igreja-section h2 {
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    color: #84caff;
+    border-left: 4px solid #3a86ff;
+    padding-left: 10px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+  }
+  
+  .igreja-section ul {
+    list-style: none;
+    padding: 0 0 0 1rem;
+    border-left: 2px solid #3a86ff;
+    margin-bottom: 1.5rem;
+  }
+  
+  .igreja-section li {
+    margin-bottom: 0.6rem;
+    font-size: 1.05rem;
+    color: #e0e0e0;
+    position: relative;
+    padding-left: 1.2rem;
+  }
+
+  .igreja-section li::before {
+    content: "•";
+    position: absolute;
+    left: 0;
+    color: #3a86ff;
+  }
+  
+  .igreja-section p {
+    color: #d1d5db;
+    font-size: 1.05rem;
+    line-height: 1.6;
+  }
+  
+  .igreja-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  
+  .igreja-btn {
+    padding: 0.9rem 1.6rem;
+    background-color: #023e8a;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background 0.3s ease;
+  }
+  
+  .igreja-btn:hover {
+    background-color: #0077b6;
+  }
+
+.igreja-mapa-container {
+    margin-top: 1.5rem;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+  }
+
+.igreja-filtros {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.igreja-filtros select {
+  padding: 0.6rem 1rem;
+  font-size: 1rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  background-color: #fff;
+}
+
+.igreja-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.5rem;
+}
+
+.igreja-card {
+  background-color: #1b263b;
+  border-radius: 10px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #3a86ff;
+  color: #f1f1f1;
+}
+
+.igreja-card h3 {
+  margin-top: 0;
+  color: #8ecae6;
+}
+
+.igreja-card a {
+  color: #4dabf7;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+.igreja-card a:hover {
+    text-decoration: underline;
+}
+.igreja-imagem-topo {
+  width: 100%;
+  max-height: 400px;
+  object-fit: cover;
+  border-radius: 12px;
+  margin-bottom: 2rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.manifesto-bloco ul {
+  border-left: none;
+  padding-left: 1rem;
+  margin-top: 1rem;
+}
+
+.manifesto-bloco li {
+  color: #dee2e6;
+  position: relative;
+  padding-left: 1.2rem;
+  margin-bottom: 0.6rem;
+}
+
+.manifesto-bloco li::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: #3a86ff;
+}
+
+.manifesto-bloco blockquote {
+  font-style: italic;
+  color: #a0aec0;
+  border-left: 3px solid #3a86ff;
+  padding-left: 1rem;
+  margin-top: 1.5rem;
+  background-color: transparent;
+  border-radius: 6px;
+}
+.testemunhos-bloco {
+  margin-top: 4rem;
+}
+
+.testemunhos-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.testemunho-card {
+  position: relative;
+  flex: 1 1 calc(33.333% - 1rem);
+  min-height: 340px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.testemunho-card:hover {
+  transform: translateY(-5px);
+}
+
+.testemunho-card h3 {
+  margin: 0.5rem 0;
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
+.testemunho-card p {
+  font-size: 1rem;
+  color: #e0e0e0;
+  line-height: 1.4;
+}
+
+.testemunho-tag {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+  opacity: 0.9;
+}
+
+.encontros-bloco {
+  margin-top: 4rem;
+}
+
+.encontros-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.encontro-card {
+  position: relative;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  height: 260px;
+  display: flex;
+  align-items: flex-end;
+  padding: 1rem;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  overflow: hidden;
+  transition: transform 0.3s ease;
+}
+
+.encontro-card h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: bold;
+  text-shadow: 0 2px 5px rgba(0,0,0,0.6);
+}
+
+.encontro-card:hover {
+  transform: scale(1.02);
+}
