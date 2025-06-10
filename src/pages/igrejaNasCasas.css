@@ -270,3 +270,23 @@
 .encontro-card:hover {
   transform: scale(1.02);
 }
+
+.igreja-section blockquote {
+    font-style: italic;
+    color: #a0aec0;
+    border-left: 3px solid #3a86ff;
+    padding-left: 1rem;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    background-color: transparent;
+    border-radius: 6px;
+    line-height: 1.6;
+  }
+
+  .igreja-section blockquote strong {
+    display: block;
+    margin-top: 0.75rem;
+    color: #84caff;
+    font-weight: 600;
+    font-style: normal;
+  }

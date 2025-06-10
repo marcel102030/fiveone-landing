@@ -74,12 +74,8 @@ const IgrejaNasCasas: React.FC = () => {
           Embora simples, essa igreja já contém em si o DNA da multiplicação: uma comunidade de fé, comunhão, discipulado e missão.
         </p>
         <p>
-          Vivemos o que Frank Viola chama de desintoxicação eclesiástica: estamos deixando para trás estruturas que engessam o mover de Deus,
-          para redescobrir uma fé viva, relacional e participativa.
+        Inspirados por autores como Frank Viola, estamos em um tempo de redescoberta do que é ser Igreja: uma fé que se vive em comunidade, com simplicidade, participação e relacionamento autêntico. Estamos nos movendo de estruturas formais para encontros vivos — onde Cristo está presente e cada pessoa tem espaço para servir e crescer.
         </p>
-        <blockquote>
-          Como Neil Cole afirma: “Nós não estamos plantando igrejas. Estamos plantando o evangelho em pessoas. Igrejas são o fruto disso.”
-        </blockquote>
       </section>
 
       <section className="igreja-section manifesto-bloco">
@@ -95,7 +91,7 @@ const IgrejaNasCasas: React.FC = () => {
           <li>Casas se tornando centros de glória e avivamento, como escreve Jeremiah Johnson;</li>
           <li>Uma rede relacional e apostólica, e não uma instituição centralizada;</li>
           <li>Cada cristão vivendo seu dom ministerial com ousadia (Efésios 4:7-16);</li>
-          <li>Uma Igreja que cresce por contágio de vida, não por estratégias de marketing.</li>
+          <li>Uma Igreja que não cresce como uma pirâmide, buscando altura e centralização, mas como uma videira, que se espalha de casa em casa. Quando há crescimento numérico, não construímos prédios — multiplicamos a vida e abrimos novas casas de glória.</li>
         </ul>
         <blockquote>
           A igreja não está morrendo. Ela está se movendo. De volta às casas. <br />
@@ -119,39 +115,40 @@ const IgrejaNasCasas: React.FC = () => {
           </li>
           <li>
             <strong>Comunidades de Discipulado Diversas e Locais</strong><br />
-            A reunião geográfica nos conduz à diversidade real. Vivemos juntos, como uma família espiritual, com pessoas de diferentes idades, origens sociais, culturas, etnias, estágios de vida e níveis de maturidade na fé. Não nos reunimos por afinidade, mas por aliança. O discipulado acontece no encontro com o outro — no lugar onde Deus nos planta.
+            A reunião geográfica nos conduz à diversidade real. Vivemos juntos, como uma família espiritual, com pessoas de diferentes idades, origens sociais, culturas, etnias, estágios de vida e níveis de maturidade na fé. Não nos reunimos apenas por afinidade, mas também por aliança. O discipulado acontece no encontro com o outro — no lugar onde Deus nos planta.
           </li>
         </ul>
-        <p>
-          Somos uma IGREJA DE IGREJAS DOMÉSTICAS: Muitas igrejas domésticas, conectadas como uma só.
-        </p>
       </section>
 
       <section className="igreja-section">
         <h2>Como Funciona</h2>
         <ul>
-          <li>Encontros semanais nos lares</li>
-          <li>Liderança plural com dons ministeriais</li>
-          <li>Discipulado e cuidado mútuo</li>
-          <li>Ação do Espírito Santo</li>
+          <li>Reuniões semanais nos lares, com ensino bíblico, louvor, oração, discipulado e partilha de vida</li>
+          <li>Presbíteros em cada casa assumem uma função paterna e maternal, cuidando de perto dos membros como um pai ou mãe cuida dos filhos. Com sabedoria reconhecida e maturidade aprovada por Deus, eles acompanham a vida da igreja local de forma relacional e contínua.</li>
+          <li>Formação por meio dos cinco ministérios (apóstolos, profetas, evangelistas, pastores e mestres), que servem como um sistema circulatório espiritual para manter a saúde da igreja</li>
+          <li>Liderança plural que promove unidade, crescimento e fidelidade ao modelo de Cristo</li>
+          <li>Multiplicação natural, com igrejas que se reproduzem organicamente pela ação do Espírito Santo</li>
         </ul>
       </section>
 
       <section className="igreja-section">
         <h2>Participe da Rede</h2>
         <div className="igreja-buttons">
+          <button className="igreja-btn">Quero participar de uma igreja nas Casas</button>
           <button className="igreja-btn">Quero abrir minha casa e liderar uma igreja nas casas.</button>
-          <button className="igreja-btn">Quero participar de uma igreja</button>
         </div>
       </section>
 
       <section className="igreja-section">
         <h2>Por que Igrejas nas Casas?</h2>
         <p>
-          Nos inspiramos no modelo de Atos 2:42-47, onde a Igreja se reunia nas casas,
-          perseverando na doutrina dos apóstolos, no partir do pão e na comunhão.
-          Cremos que cada lar pode ser um altar onde Cristo é o centro.
+        Nos inspiramos no Novo Testamento, onde a Igreja primitiva se reunia em casas, como vemos claramente nas cartas de Paulo e no relato de Atos 2:42-47. Ali, os discípulos perseveravam na doutrina dos apóstolos, na comunhão, no partir do pão e nas orações. Acreditamos que esse modelo simples, relacional e centrado em Cristo não é apenas bíblico, mas também atual e estratégico. Em um mundo cada vez mais hostil ao evangelho, as igrejas nos lares oferecem uma estrutura resiliente e fiel à missão — com ou sem prédios religiosos, com ou sem liberdade institucional. Assim, a Igreja volta para as casas: onde a fé é provada, a vida é compartilhada e o evangelho é vivido no cotidiano.
         </p>
+        <blockquote>
+          Quando cristãos de todos os segmentos sociais e culturais, de todas as situações de vida e denominações sentirem em seu espírito um eco nítido daquilo que o Espírito de Deus diz hoje à igreja, eles começarão a funcionar claramente como um corpo, a ouvir globalmente e agir localmente. Deixarão de pedir que Deus abençoe o que fazem e começarão a fazer o que Deus abençoa. Na própria vizinhança se congregarão em igrejas nos lares e se encontrarão para cultos festivos que abrangem a cidade ou região toda.<br />
+          Você também está convidado a aderir a esse movimento aberto e dar a sua própria contribuição. Dessa maneira provavelmente também a sua casa há de ser uma casa que transforma o mundo.<br />
+          <strong>– Wolfgang Simson</strong>
+        </blockquote>
       </section>
 
       <section className="igreja-section">

@@ -50,13 +50,13 @@ const Navbar = () => {
           >
             DESCUBRA O SEU DOM MINISTERIAL
           </Link>
-          <Link
+          {/* <Link
             to="/igrejas"
             className={`nav-link ${isActive("/igrejas") ? "active" : ""}`}
             onClick={() => setIsMenuOpen(false)}
           >
             REDE DE IGREJAS
-          </Link>
+          </Link> */}
           <Link
             to="/formacao-ministerial"
             className={`nav-link ${

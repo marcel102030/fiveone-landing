@@ -13,7 +13,7 @@ import Contact from "./pages/Contact";
 import Services from "./pages/Services";
 import BlogPostPage from "./pages/BlogPostPage";
 import Ministerio from "./pages/Ministerio";
-// import IgrejaNasCasas from "./pages/igrejaNasCasas";
+import IgrejaNasCasas from "./pages/igrejaNasCasas";
 
 import "./App.css";
 
@@ -41,7 +41,7 @@ function AppContent() {
             <Route path="/insights/:postId" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
-            {/* <Route path="/igrejas" element={<IgrejaNasCasas />} /> */}
+            { <Route path="/igrejas" element={<IgrejaNasCasas />} /> }
           </Routes>
         </main>
         <ScrollToTop />
