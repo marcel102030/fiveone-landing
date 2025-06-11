@@ -1,6 +1,5 @@
 import jazzUrl from "../assets/images/blog/5q-jazz.png";
 import heroiUrl from "../assets/images/blog/hero-journey.png";
-import identityUrl from "../assets/images/blog/5q-identity.png";
 import mulheres5MinisterioUrl from "../assets/images/blog/mulheres5ministerio.jpeg";
 import ansiedadeUrl from "../assets/images/blog/Sem espaço para a ansiedade.jpg";
 import pulpitoUrl from "../assets/images/blog/O problema da supervalorização da Pregação em Púlpito.jpg";
