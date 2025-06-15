@@ -1,15 +1,15 @@
 import React from 'react';
-import testemunho1 from '../assets/images/testemunho1.jpg';
-import testemunho2 from '../assets/images/testemunho2.jpg';
-import testemunho3 from '../assets/images/testemunho3.jpg';
+// import testemunho1 from '../assets/images/testemunho1.jpg';
+// import testemunho2 from '../assets/images/testemunho2.jpg';
+// import testemunho3 from '../assets/images/testemunho3.jpg';
 // import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia.jpg';
 // import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia2.jpg';
 // import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia3.jpg';
 import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia4.jpg';
-import encontro1 from '../assets/images/encontro1.jpg';
-import encontro2 from '../assets/images/encontro2.jpg';
-import encontro3 from '../assets/images/encontro3.jpg';
-import encontro4 from '../assets/images/encontro4.jpg';
+// import encontro1 from '../assets/images/encontro1.jpg';
+// import encontro2 from '../assets/images/encontro2.jpg';
+// import encontro3 from '../assets/images/encontro3.jpg';
+// import encontro4 from '../assets/images/encontro4.jpg';
 import './igrejaNasCasas.css';
 
 const IgrejaNasCasas: React.FC = () => {
