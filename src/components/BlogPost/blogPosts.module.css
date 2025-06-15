@@ -1,0 +1,97 @@
+.postContainer {
+  font-family: 'Inter', sans-serif;
+  font-size: 1.125rem;
+  line-height: 1.9;
+  color: #e6e6e6;
+  padding: 4rem 1rem;
+  max-width: 800px;
+  margin: auto;
+}
+
+.postContainer h1 {
+  font-size: 3rem;
+  color: #00e5a0;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.postContainer h2 {
+  font-size: 2.25rem;
+  color: #1de9b6;
+  margin-top: 3rem;
+  margin-bottom: 1.25rem;
+  border-bottom: 2px solid #1de9b6;
+  padding-bottom: 0.4rem;
+  font-weight: 700;
+}
+
+.postContainer h3 {
+  font-size: 1.75rem;
+  color: #80cbc4;
+  margin-top: 2.5rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+}
+
+.postContainer p {
+  margin-bottom: 1.75rem;
+  font-size: 1.08rem;
+  line-height: 1.85;
+  color: #d0d0d0;
+}
+
+.postContainer blockquote {
+  border-left: 3px solid #00e5a0;
+  margin: 2.5rem 0;
+  padding: 1.25rem 2rem;
+  background-color: #101a28;
+  font-style: italic;
+  color: #b6c8d6;
+  border-radius: 6px;
+  position: relative;
+  box-shadow: 0 0 0 1px #1de9b633 inset;
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.postContainer blockquote::before {
+  display: none;
+}
+
+.postContainer ul {
+  padding-left: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.postContainer li {
+  margin-bottom: 0.75rem;
+}
+
+.postContainer strong {
+  color: #ffffff;
+}
+
+.postContainer em {
+  color: #cccccc;
+}
+
+.postContainer .versiculo {
+  background: #1f1f1f;
+  padding: 1rem 1.25rem;
+  border-left: 5px solid #00e5a0;
+  font-style: italic;
+  margin: 2.5rem 0;
+  color: #d0ffd6;
+  font-size: 1.05rem;
+}
+
+.featuredImage {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  border-radius: 10px;
+  margin: 2rem auto;
+  display: block;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}

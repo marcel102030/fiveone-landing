@@ -185,7 +185,7 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
-      <section className="igreja-section encontros-bloco">
+      {/* <section className="igreja-section encontros-bloco">
         <h2>Veja como são os nossos encontros</h2>
         <div className="encontros-grid">
           <div
@@ -221,9 +221,9 @@ const IgrejaNasCasas: React.FC = () => {
             <h3></h3>
           </div>
         </div>
-      </section>
+      </section> */}
 
-      <section className="igreja-section testemunhos-bloco">
+      {/* <section className="igreja-section testemunhos-bloco">
         <h2>Histórias de Vida</h2>
         <div className="testemunhos-grid">
           <div className="testemunho-card" style={{ backgroundImage: `url(${testemunho1})` }}>
@@ -242,7 +242,7 @@ const IgrejaNasCasas: React.FC = () => {
             <p>“Fui acolhida como família. Pela primeira vez, me senti parte de algo vivo.”<br />– Lidia</p>
           </div>
         </div>
-      </section>
+      </section> */}
     </div>
   );
 };

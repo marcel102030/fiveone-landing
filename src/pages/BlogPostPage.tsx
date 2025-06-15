@@ -1,5 +1,5 @@
 import { useParams, Navigate } from "react-router-dom";
-import BlogPost from "../components/BlogPost/BlogPost";
+import BlogPost from "../components/BlogPost/ BlogPost";
 import { blogPosts } from "../data/blogPosts";
 
 const BlogPostPage = () => {
@@ -10,14 +10,7 @@ const BlogPostPage = () => {
     return <Navigate to="/insights" replace />;
   }
 
-  return (
-    <BlogPost
-      title={post.title}
-      content={post.content}
-      date={post.date}
-      featuredImage={post.imageUrl}
-    />
-  );
+  return <BlogPost post={post} />;
 };
 
 export default BlogPostPage;

@@ -5,7 +5,7 @@ import {
   useLocation,
 } from "react-router-dom";
 
-import Blog from "./pages/Blog";
+import BlogList from "./pages/BlogList";
 import Home from "./pages/Home";
 import Quiz from "./pages/Quiz";
 import About from "./pages/About";
@@ -37,7 +37,7 @@ function AppContent() {
             <Route path="/teste-dons" element={<Quiz />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/formacao-ministerial" element={<Services />} />
-            <Route path="/insights" element={<Blog />} />
+            <Route path="/insights" element={<BlogList />} />
             <Route path="/insights/:postId" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
