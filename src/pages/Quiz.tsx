@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import InputMask from "react-input-mask";
-import { CategoryEnum, Statement, ChoiceCategory, getProfileTextForDom } from "../types/quiz";
+import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 // @ts-ignore
 // @ts-ignore
 
