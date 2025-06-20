@@ -2,7 +2,6 @@ export type DomMinisterial = 'Apostólico' | 'Profético' | 'Evangelístico' | '
 
 export const perfisMinisteriais: Record<DomMinisterial, string[]> = {
   Apostólico: [
-    'INTRODUÇÃO: Essa é uma avaliação ministerial baseada no modelo de Efésios 4:7,11-12, onde encontramos os cinco dons ministeriais: Apostólico, Profético, Evangelístico, Pastoral e de Ensino. Esses dons são fundamentais para a edificação da Igreja e o crescimento do Corpo de Cristo. Cada crente possui uma inclinação natural para um ou mais desses dons, contribuindo para a missão e expansão do Reino de Deus. O dom Apostólico tem como principal função a expansão do Reino, a plantação de igrejas e a inovação no ministério. Os apóstolos são pioneiros, visionários e catalisadores da obra missionária.',
     'VISÃO GERAL DO DOM APOSTÓLICO: A pessoa com dom apostólico possui uma forte inclinação para iniciar novas obras, conectar pessoas e estabelecer fundamentos duradouros no Reino de Deus. Ele sente um chamado para desenvolver e mobilizar outros para a missão, assumindo riscos para ampliar a obra de Deus.',
     'CARACTERÍSTICAS: Pensamento visionário e estratégico; disposição para assumir riscos e iniciar novos projetos; capacidade de liderar e influenciar outros; forte senso de missão e envio; habilidade de conectar diferentes grupos e ministérios; inconformismo com o status quo; facilidade para trabalhar com redes e expansão.',
     'FUNÇÕES PRINCIPAIS: Semeador do DNA da Igreja; plantador de igrejas e comunidades; mobilizador de líderes; conector translocal; provedor de inovação ministerial; garantidor da fidelidade à visão e missão.',
@@ -32,7 +31,6 @@ export const perfisMinisteriais: Record<DomMinisterial, string[]> = {
     'CONCLUSÃO: O dom Evangelístico fortalece a missão da Igreja, impulsionando-a a sair das quatro paredes e levar o Evangelho ao mundo.'
   ],
   Pastoral: [
-    'INTRODUÇÃO: O dom Pastoral é essencial para o cuidado e desenvolvimento espiritual da Igreja. O pastor tem um coração voltado para as pessoas.',
     'VISÃO GERAL DO DOM PASTORAL: A pessoa com dom pastoral possui profundo senso de compaixão e zelo pelo bem-estar das pessoas. Cuida, orienta e discipula, promovendo unidade e amor.',
     'CARACTERÍSTICAS: Compaixão; disposição para ouvir; habilidade para criar acolhimento; compromisso com discipulado; paciência; sensibilidade para necessidades emocionais; capacidade de promover unidade.',
     'FUNÇÕES PRINCIPAIS: Cuidado e aconselhamento; criar comunidade saudável; discipulado; mediação de conflitos; ensino prático; cuidado com necessitados.',

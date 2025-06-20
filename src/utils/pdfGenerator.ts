@@ -1,7 +1,9 @@
+import introducao from '../assets/images/introducao.png';
 import gmailIcon from '../assets/images/icons/gmail.png';
 import logo from '../assets/images/FIVE ONE LOGO QUADRADA FUNDO BRANCO.png';
 import instagramIcon from '../assets/images/icons/instagram.png';
 import youtubeIcon from '../assets/images/icons/youtube.png';
+import meuPerfilMinisterial from '../assets/images/meuperfilministerial.png';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { DomMinisterial, perfisMinisteriais } from '../data/perfisMinisteriais';
@@ -48,14 +50,38 @@ export const generatePDF = ({
   doc.setTextColor(0, 0, 0);
   doc.line(10, 45, 200, 45);
 
-  // Seção: Meu Perfil Ministerial
-  doc.setFontSize(14);
-  doc.text('Meu Perfil Ministerial', 14, 55);
+  // Adicionar imagem 'meuperfilministerial' na primeira página (ajuste de tamanho e centralização)
+  const perfilImg = new Image();
+  perfilImg.src = meuPerfilMinisterial;
+  doc.addImage(perfilImg, 'PNG', 20, 55, 170, 210);
 
-  // Conteúdo do Perfil Ministerial
+  doc.addPage();
+
+  // Cabeçalho da segunda página usando a imagem introducao.png
+  const introImg = new Image();
+  introImg.src = introducao;
+  doc.addImage(introImg, 'PNG', 0, 0, 210, 40);
+
+  // Conteúdo da página 2 abaixo do cabeçalho
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+
+  const textoIntro = `Essa é uma avaliação ministerial baseada no modelo de Efésios 4:7,11-12, onde encontramos os cinco dons ministeriais: Apostólico, Profético, Evangelístico, Pastoral e de Ensino. Esses dons são fundamentais para a edificação da Igreja e o crescimento do Corpo de Cristo. Cada crente possui uma inclinação natural para um ou mais desses dons, contribuindo para a missão e expansão do Reino de Deus.
+
+O dom Evangelístico é essencial para a propagação do Evangelho e o crescimento da Igreja. O evangelista tem uma paixão ardente por compartilhar a mensagem de salvação com os perdidos e trazê-los para uma relação transformadora com Cristo.`;
+
+  const textoDividido = doc.splitTextToSize(textoIntro, 180);
+  doc.text(textoDividido, 14, 50);
+
+  doc.addPage();
+
+  // Seção: Meu Perfil Ministerial na terceira página
+  doc.setFontSize(14);
+  doc.text('Meu Perfil Ministerial', 14, 20);
+
   const perfilContent = perfisMinisteriais[domPrincipal];
 
-  let currentHeight = 65;
+  let currentHeight = 30;
   perfilContent.forEach(paragraph => {
     const splitText = doc.splitTextToSize(paragraph, 180);
     doc.text(splitText, 14, currentHeight);
