@@ -3,11 +3,11 @@ import InputMask from "react-input-mask";
 import { CategoryEnum, Statement, ChoiceCategory, getProfileTextForDom } from "../types/quiz";
 // @ts-ignore
 // @ts-ignore
-import html2pdf from "html2pdf.js";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
 import { FaInstagram, FaTiktok, FaWhatsapp, FaFacebook, FaLink } from "react-icons/fa";
+
 
 import logo from "../assets/images/logo-fiveone-white.png";
 import mestreIcon from "../assets/images/icons/mestre.png";
@@ -16,6 +16,9 @@ import profetaIcon from "../assets/images/icons/profeta.png";
 import apostoloIcon from "../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../assets/images/icons/evangelista.png";
 import escolaFiveOne from "../assets/images/escola-fiveone.jpeg";
+
+import { generatePDF } from "../utils/pdfGenerator";
+import { DomMinisterial } from '../data/perfisMinisteriais';
 
 
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
@@ -246,23 +249,57 @@ const Quiz = () => {
   };
 
   const handleDownloadPDF = () => {
-    if (!pdfRef.current) {
-      console.warn("Referência do PDF não encontrada.");
-      return;
-    }
-
-    // Verificação para garantir que a função está sendo chamada
-    console.log("Gerando PDF com html2pdf");
-
-    const opt = {
-      margin: 0.5,
-      filename: "resultado-teste-fiveone.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "a4", orientation: "portrait" },
+    // Mapa de conversão do nome do dom para a chave utilizada em perfisMinisteriais
+    const domNameToKey: Record<string, DomMinisterial> = {
+      'Apóstolo': 'Apostólico',
+      'Profeta': 'Profético',
+      'Evangelista': 'Evangelístico',
+      'Pastor': 'Pastoral',
+      'Mestre': 'Mestre',
     };
+    try {
+      const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
 
-    html2pdf().set(opt).from(pdfRef.current).save();
+      const sortedScores = Object.entries(categoryScores)
+        .map(([category, score]) => {
+          const metadata = categoryMetadata.find((c) => c.id === category);
+          const safeScore = totalScore > 0 ? (score / totalScore) * 100 : 0;
+
+          if (!metadata || isNaN(safeScore)) {
+            return null;
+          }
+
+          return {
+            categoryEnum: category as CategoryEnum,
+            score: safeScore,
+            metadata,
+          };
+        })
+        .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
+        .sort((a, b) => b.score - a.score); // ordem decrescente
+
+      if (sortedScores.length === 0) {
+        alert('Erro ao gerar PDF. Não foi possível calcular seu Dom principal.');
+        return;
+      }
+
+      const mainDom = domNameToKey[sortedScores[0]?.metadata?.name] as DomMinisterial;
+
+      console.log('Gerando PDF para:', mainDom);
+
+      generatePDF({
+        name: userInfo.name,
+        date: new Date().toLocaleDateString(),
+        domPrincipal: mainDom,
+        percentuais: sortedScores.map((s) => ({
+          dom: s.metadata.name,
+          valor: s.score,
+        })),
+      });
+    } catch (err) {
+      alert('Ocorreu um erro ao gerar o PDF. Tente novamente.');
+      console.error('Erro ao gerar PDF:', err);
+    }
   };
 
   if (!quizStarted) {
@@ -522,25 +559,6 @@ const Quiz = () => {
               </div>
             ))}
           </div>
-          {/* Container para exportação PDF (visível para html2pdf, sem ocultação) */}
-          <div className="pdf-export-layout" ref={pdfRef}>
-              <h1>Resultado Teste 5 Ministérios</h1>
-              <h2>FIVE ONE Movement</h2>
-              <div className="pdf-export-section">
-                <span className="pdf-export-highlight">DATA DA AVALIAÇÃO:</span>
-                <p>{new Date().toLocaleDateString()}</p>
-                <span className="pdf-export-highlight">NOME DA PESSOA:</span>
-                <p>{userInfo.name}</p>
-                <span className="pdf-export-highlight">DOM MINISTERIAL:</span>
-                <p>{sortedScores[0].metadata.name}</p>
-              </div>
-              <div className="pdf-export-section">
-                <h3>Meu Perfil Ministerial</h3>
-                {getProfileTextForDom(sortedScores[0].categoryEnum).map((paragraph, index) => (
-                  <p key={index}>{paragraph}</p>
-                ))}
-              </div>
-            </div>
           <div className="down-arrow"></div>
         </div>
         {/* Fecha content-container antes de adicionar a nova section */}
