@@ -6,7 +6,7 @@ import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
-import { FaInstagram, FaTiktok, FaWhatsapp, FaFacebook, FaLink } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaWhatsapp, FaLink } from "react-icons/fa";
 
 
 import logo from "../assets/images/logo-fiveone-white.png";
