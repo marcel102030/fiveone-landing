@@ -18,7 +18,6 @@ import evangelistaIcon from "../assets/images/icons/evangelista.png";
 import escolaFiveOne from "../assets/images/escola-fiveone.jpeg";
 
 import { generatePDF } from "../utils/pdfGenerator";
-import { DomMinisterial } from '../data/perfisMinisteriais';
 
 
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
@@ -250,7 +249,7 @@ const Quiz = () => {
 
   const handleDownloadPDF = () => {
     // Mapa de conversão do nome do dom para a chave utilizada em perfisMinisteriais
-    const domNameToKey: Record<string, DomMinisterial> = {
+    const domNameToKey: Record<string, string> = {
       'Apóstolo': 'Apostólico',
       'Profeta': 'Profético',
       'Evangelista': 'Evangelístico',
@@ -283,14 +282,14 @@ const Quiz = () => {
         return;
       }
 
-      const mainDom = domNameToKey[sortedScores[0]?.metadata?.name] as DomMinisterial;
+      const mainDom = domNameToKey[sortedScores[0]?.metadata?.name];
 
       console.log('Gerando PDF para:', mainDom);
 
       generatePDF({
         name: userInfo.name,
         date: new Date().toLocaleDateString(),
-        domPrincipal: mainDom,
+        domPrincipal: mainDom as any,
         percentuais: sortedScores.map((s) => ({
           dom: s.metadata.name,
           valor: s.score,
@@ -669,7 +668,7 @@ const Quiz = () => {
           </div>
         </section>
         <div className="social-share">
-          <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Compartilhe seu resultado:</p>
+          <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Nos siga nas redes Sociais e Compartilhe seu resultado:</p>
           <div className="share-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <a
               href={`https://www.instagram.com/fiveone.oficial/?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
@@ -700,16 +699,6 @@ const Quiz = () => {
             >
               <FaWhatsapp size={24} />
               <span className="tooltip-share">WhatsApp</span>
-            </a>
-            <a
-              href={`https://www.facebook.com/sharer/sharer.php?u=https://fiveonemovement.com/#/teste-dons&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados&quote=${shareText}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="facebook"
-              aria-label="Facebook"
-            >
-              <FaFacebook size={24} />
-              <span className="tooltip-share">Facebook</span>
             </a>
             <button
               className="copiar-link"
