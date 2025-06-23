@@ -6,7 +6,7 @@ import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
-import { FaInstagram, FaTiktok, FaWhatsapp, FaLink } from "react-icons/fa";
+import { FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa";
 
 
 import logo from "../assets/images/logo-fiveone-white.png";
@@ -668,10 +668,12 @@ const Quiz = () => {
           </div>
         </section>
         <div className="social-share">
-          <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>Nos siga nas redes Sociais e Compartilhe seu resultado:</p>
+          <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>
+            Nos siga nas redes sociais:
+          </p>
           <div className="share-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             <a
-              href={`https://www.instagram.com/fiveone.oficial/?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
+              href="https://www.instagram.com/fiveone.oficial/"
               target="_blank"
               rel="noopener noreferrer"
               className="instagram"
@@ -681,7 +683,7 @@ const Quiz = () => {
               <span className="tooltip-share">Instagram</span>
             </a>
             <a
-              href={`https://www.tiktok.com/@escola.five.one?utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
+              href="https://www.tiktok.com/@escola.five.one"
               target="_blank"
               rel="noopener noreferrer"
               className="tiktok"
@@ -691,44 +693,15 @@ const Quiz = () => {
               <span className="tooltip-share">TikTok</span>
             </a>
             <a
-              href={`https://wa.me/?text=${shareText}%20&utm_source=quiz&utm_medium=compartilhamento&utm_campaign=resultados`}
+              href="https://www.youtube.com/@Five_One_Movement"
               target="_blank"
               rel="noopener noreferrer"
-              className="whatsapp"
-              aria-label="WhatsApp"
+              className="youtube"
+              aria-label="YouTube"
+              style={{ backgroundColor: "#FF0000", padding: "10px", borderRadius: "12px" }}
             >
-              <FaWhatsapp size={24} />
-              <span className="tooltip-share">WhatsApp</span>
+              <FaYoutube size={24} color="#fff" />
             </a>
-            <button
-              className="copiar-link"
-              onClick={() => {
-                navigator.clipboard.writeText("https://fiveonemovement.com/#/teste-dons");
-                alert("Link copiado para a área de transferência!");
-              }}
-              aria-label="Copiar Link"
-              style={{ backgroundColor: "#5df2d6", border: "none", borderRadius: "12px", padding: "1rem 2rem" }}
-            >
-              <FaLink size={20} />
-              <span className="tooltip-share">Copiar Link</span>
-            </button>
-            {/* Botão de compartilhamento nativo */}
-            {typeof navigator !== "undefined" && navigator.share && (
-              <button
-                className="compartilhar-nativo"
-                onClick={() => {
-                  navigator.share({
-                    title: "Descubra seu Dom Ministerial",
-                    text: `${userInfo.name.split(" ")[0]} fez o teste dos 5 Ministérios e descobriu seu dom! Faça você também.`,
-                    url: "https://fiveonemovement.com/#/teste-dons",
-                  }).catch((error) => console.error("Erro ao compartilhar:", error));
-                }}
-                aria-label="Compartilhar nativamente"
-                style={{ backgroundColor: "#5df2d6", border: "none", borderRadius: "12px", padding: "1rem 2rem" }}
-              >
-                📲 Compartilhar
-              </button>
-            )}
           </div>
         </div>
         <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>
