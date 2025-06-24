@@ -205,12 +205,12 @@ Portanto, este relatório é muito mais do que informação. Ele é um convite p
 
   // Se for Profético, renderiza função específica e retorna!
   if (domPrincipal === 'Profético') {
-    renderProfetico(doc, name, date, percentuais);
+    renderProfetico(doc, name, percentuais);
     return;
   }
   // Se for Apostólico, renderiza função específica e retorna!
   if (domPrincipal === 'Apostólico') {
-    renderApostolico(doc, name, date, percentuais);
+    renderApostolico(doc, name, percentuais);
     return;
   }
 };
@@ -219,7 +219,6 @@ Portanto, este relatório é muito mais do que informação. Ele é um convite p
 function renderProfetico(
   doc: jsPDF,
   name: string,
-  date: string,
   percentuais: { dom: string; valor: number }[]
 ) {
   // Cabeçalho Profético na página 3
@@ -697,7 +696,6 @@ Sem o dom de ensino, a igreja se torna superficial, sem profundidade na Palavra.
 function renderApostolico(
   doc: jsPDF,
   name: string,
-  date: string,
   percentuais: { dom: string; valor: number }[]
 ) {
   // Cabeçalho Apostólico na página 3
