@@ -511,10 +511,6 @@ const Quiz = () => {
       .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
       .sort((a, b) => a.score - b.score); // wrap-reverse
 
-    // --- Adicionado para compartilhamento ---
-    const mainDom = sortedScores[sortedScores.length - 1]?.metadata?.name ?? "meu dom";
-    const userName = userInfo.name.trim().split(" ")[0]; // pega o primeiro nome
-    // --- Fim do bloco compartilhamento ---
 
     return (
       <section className="Teste-section">
