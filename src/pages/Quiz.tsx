@@ -514,7 +514,6 @@ const Quiz = () => {
     // --- Adicionado para compartilhamento ---
     const mainDom = sortedScores[sortedScores.length - 1]?.metadata?.name ?? "meu dom";
     const userName = userInfo.name.trim().split(" ")[0]; // pega o primeiro nome
-    const shareText = encodeURIComponent(`${userName} descobriu que seu Dom Ministerial é ${mainDom}! Faça o teste também: https://fiveonemovement.com/#/teste-dons`);
     // --- Fim do bloco compartilhamento ---
 
     return (
