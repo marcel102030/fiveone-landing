@@ -77,6 +77,7 @@ const Quiz = () => {
   const [selectedCategory, setSelectedCategory] = useState<ChoiceCategory | null>(null);
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
@@ -251,7 +252,7 @@ const Quiz = () => {
     // Mapa de conversão do nome do dom para a chave utilizada em perfisMinisteriais
     const domNameToKey: Record<string, string> = {
       'Apóstolo': 'Apostólico',
-      'Profeta': 'Profético',
+      'Profeta': 'Profeta',
       'Evangelista': 'Evangelístico',
       'Pastor': 'Pastoral',
       'Mestre': 'Mestre',
@@ -294,7 +295,8 @@ const Quiz = () => {
           valor: s.score,
         }))
       );
-      
+      setShowDownloadSuccess(true);
+      setTimeout(() => setShowDownloadSuccess(false), 4000);
     } catch (err) {
       alert('Ocorreu um erro ao gerar o PDF. Tente novamente.');
       console.error('Erro ao gerar PDF:', err);
@@ -722,6 +724,12 @@ const Quiz = () => {
         >
           Reiniciar
         </button>
+        {/* Toast de sucesso PDF */}
+        {showDownloadSuccess && (
+          <div className="toast-success">
+            ✅ PDF gerado e baixado com sucesso!
+          </div>
+        )}
       </section>
     );
   }

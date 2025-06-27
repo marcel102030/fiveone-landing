@@ -70,9 +70,10 @@ export async function renderHeader(doc: jsPDFType, name: string, date: string, d
   await loadImageAndAdd(doc, '/assets/images/logo_maior.png', 'PNG', 10, 5, 40, 40);
 
   // Ajustar posições para evitar sobreposição
-  const leftX = 55;
-  const rightX = 95;
-  let linhaY = 20;
+  const leftX = 70;
+  // const rightX = 130;
+  const valueX = leftX + 45; // Aproxima os valores dos rótulos
+  let linhaY = 18;
 
   // Título
   doc.setTextColor(255, 255, 255);
@@ -80,24 +81,24 @@ export async function renderHeader(doc: jsPDFType, name: string, date: string, d
   doc.setFontSize(18);
   doc.text('FIVE ONE MOVEMENT', leftX, linhaY);
 
-  linhaY += 10;
+  linhaY += 8;
   doc.setFontSize(12);
+  doc.setFont('helvetica', 'bold');
+  doc.text('Nome:', leftX, linhaY);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`${name}`, valueX, linhaY);
+
+  linhaY += 5;
   doc.setFont('helvetica', 'bold');
   doc.text('Data da Avaliação:', leftX, linhaY);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${date}`, rightX, linhaY);
+  doc.text(`${date}`, valueX, linhaY);
 
-  linhaY += 6;
-  doc.setFont('helvetica', 'bold');
-  doc.text('Nome da Pessoa:', leftX, linhaY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${name}`, rightX, linhaY);
-
-  linhaY += 6;
+  linhaY += 5;
   doc.setFont('helvetica', 'bold');
   doc.text('Dom Ministerial:', leftX, linhaY);
   doc.setFont('helvetica', 'normal');
-  doc.text(`${domPrincipal}`, rightX, linhaY);
+  doc.text(`${domPrincipal}`, valueX, linhaY);
 }
 
 export function aplicarFundo(doc: jsPDFType) {
@@ -267,7 +268,7 @@ export async function renderRodape(doc: jsPDFType): Promise<void> {
   doc.text('escolafiveone@gmail.com', 156, pageHeight - 8);
 }
 import { renderApostolico } from './pdfGeneratorApostolo';
-// import { renderProfetico } from './pdfGeneratorProfeta';
+import { renderProfeta } from './pdfGeneratorProfeta';
 // import { renderEvangelistico } from './pdfGeneratorEvangelista';
 // import { renderPastoral } from './pdfGeneratorPastor';
 // import { renderMestre } from './pdfGeneratorMestre';
@@ -344,6 +345,9 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   switch (maiorPercentual.dom) {
     case 'Apostólico':
       await renderApostolico(doc);
+      break;
+    case 'Profeta':
+      await renderProfeta(doc);
       break;
     // futuros casos dos outros dons
     default:
