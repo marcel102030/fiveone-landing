@@ -3,11 +3,11 @@ import { aplicarFundo, loadImageAndAdd } from './mainPdfGenerator';
 
 
 
-export async function renderApostolico(doc: jsPDF, name: string, date: string, percentuais: any) {
-  await renderTextoApostolico(doc, name, date);
+export async function renderApostolico(doc: jsPDF) {
+  await renderTextoApostolico(doc);
 }
 
-async function renderTextoApostolico(doc: jsPDF, name: string, date: string) {
+async function renderTextoApostolico(doc: jsPDF) {
   aplicarFundo(doc);
 
   await loadImageAndAdd(doc, '/assets/images/apostolico_fundo_claro.png', 'PNG', 50, 10, 110, 30);

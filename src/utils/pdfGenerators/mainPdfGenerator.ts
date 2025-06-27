@@ -343,7 +343,7 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   doc.addPage();
   switch (maiorPercentual.dom) {
     case 'Apostólico':
-      await renderApostolico(doc, name, date, percentuais);
+      await renderApostolico(doc);
       break;
     // futuros casos dos outros dons
     default:
