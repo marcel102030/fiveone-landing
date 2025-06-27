@@ -17,7 +17,7 @@ import apostoloIcon from "../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../assets/images/icons/evangelista.png";
 import escolaFiveOne from "../assets/images/escola-fiveone.jpeg";
 
-import { generatePDF } from "../utils/pdfGenerator";
+import { generatePDF } from "../utils/pdfGenerators/mainPdfGenerator";
 
 
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
@@ -286,15 +286,15 @@ const Quiz = () => {
 
       console.log('Gerando PDF para:', mainDom);
 
-      generatePDF({
-        name: userInfo.name,
-        date: new Date().toLocaleDateString(),
-        domPrincipal: mainDom as any,
-        percentuais: sortedScores.map((s) => ({
-          dom: s.metadata.name,
+      generatePDF(
+        userInfo.name,
+        new Date().toLocaleDateString(),
+        sortedScores.map((s) => ({
+          dom: domNameToKey[s.metadata.name],
           valor: s.score,
-        })),
-      });
+        }))
+      );
+      
     } catch (err) {
       alert('Ocorreu um erro ao gerar o PDF. Tente novamente.');
       console.error('Erro ao gerar PDF:', err);
