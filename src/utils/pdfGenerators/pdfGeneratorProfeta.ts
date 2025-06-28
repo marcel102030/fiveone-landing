@@ -27,11 +27,13 @@ async function renderTextoProfeta(doc: jsPDF) {
   doc.setFontSize(12);
 
   const texto = `
-O dom profético é marcado por pessoas que têm sensibilidade espiritual aguçada e uma forte convicção de ouvir e comunicar a vontade de Deus. Quem tem esse dom é chamado a ser a voz de Deus para a Igreja, trazendo direção, correção, encorajamento e discernimento.
+O dom profético é caracterizado por uma profunda sensibilidade espiritual e uma capacidade singular de perceber o que Deus está falando e fazendo em determinado tempo. Pessoas com esse dom sentem-se constantemente movidas a buscar, discernir e transmitir a vontade de Deus de forma clara, direta e muitas vezes confrontadora.
 
-Os profetas são aqueles que percebem o que Deus está fazendo em tempos e estações, confrontam injustiças espirituais e chamam o povo de Deus ao arrependimento e à santidade. Sua paixão é manter a igreja alinhada com o coração de Deus.
+Profetas são guardiões da aliança de Deus com o Seu povo. Eles se levantam para corrigir desvios espirituais, denunciar injustiças, despertar a igreja para o arrependimento e chamar a liderança e a comunidade de volta ao propósito original. Sua voz ecoa nos momentos de apatia espiritual, provocando transformação e alinhamento com o coração de Deus.
 
-Pessoas com esse dom tendem a ter uma linguagem direta, são intensas e muitas vezes incompreendidas, pois não temem dizer verdades difíceis. No entanto, são essenciais para manter a pureza, a visão espiritual e o temor do Senhor na comunidade.
+Quem carrega esse dom sente um peso interior por ver a igreja viver em santidade, integridade e fidelidade às Escrituras. São pessoas que enxergam além do visível, discernem motivações ocultas e têm o ímpeto de trazer verdades que libertam, ainda que sejam desconfortáveis.
+
+Emocionalmente intensos e com uma paixão inegociável pela pureza da Igreja, os profetas muitas vezes enfrentam incompreensão. No entanto, sua contribuição é essencial para o equilíbrio e a saúde espiritual da comunidade. Eles chamam a Igreja de volta ao centro da vontade de Deus, promovendo restauração, renovação e temor ao Senhor.
 `;
 
   const splitText = doc.splitTextToSize(texto, 180);
@@ -115,16 +117,17 @@ Pessoas com esse dom tendem a ter uma linguagem direta, são intensas e muitas v
 
   // ---------- Caixa FUNÇÕES PRINCIPAIS ----------
   const funcoesColuna1 = [
-    'Chamar a Igreja ao arrependimento e santidade',
-    'Discernir e confrontar falsas doutrinas e pecados ocultos',
-    'Trazer direção profética para tempos de crise',
-    'Encorajar a fé e fortalecer a confiança na Palavra de Deus'
+    'Chamar a Igreja ao arrependimento e santidade, confrontando o pecado com amor e verdade',
+    'Discernir os tempos espirituais e alertar a liderança sobre desvios ou direções necessárias',
+    'Trazer direção profética em momentos de crise, oferecendo clareza diante da confusão',
+    'Inspirar fé e esperança, reforçando a confiança nas promessas de Deus, mesmo em tempos difíceis'
   ];
 
   const funcoesColuna2 = [
-    'Interpretar os tempos e movimentos espirituais',
-    'Promover alinhamento espiritual na liderança',
-    'Ser voz ativa de correção, edificação e consolo para a Igreja'
+    'Confrontar falsas doutrinas e promover alinhamento bíblico na pregação e prática da Igreja',
+    'Restaurar a manifestação dos dons espirituais na comunidade, evitando que a Igreja se torne apenas um espaço de discurso teológico sem vida e poder',
+    'Ativar os outros ministérios e dons, criando um ambiente fértil para o mover do Espírito Santo e edificação mútua',
+    'Ser voz de correção, edificação e consolo para toda a Igreja'
   ];
 
   let maxAlturaFuncoesCol1 = 0;
@@ -190,24 +193,18 @@ Pessoas com esse dom tendem a ter uma linguagem direta, são intensas e muitas v
 
   // Dados Pontos Cegos
   const pontosCegosColuna1 = [
-    'Tendência ao julgamento duro e falta de misericórdia',
-    'Isolamento por se sentir incompreendido',
-    'Falar sem sabedoria ou tempo certo',
-    'Excesso de crítica e rigidez',
-    'Expectativa irreal de perfeição nas pessoas',
-    'Desconexão emocional com quem não entende seu dom',
-    'Foco excessivo em erros e pecados alheios',
-    'Negligência com o amor pastoral'
+    'Dureza nas palavras e julgamento precipitado, causando mais medo do que arrependimento',
+    'Tendência ao isolamento e à desconfiança da liderança e dos outros dons ministeriais',
+    'Falar fora do tempo ou de maneira emocionalmente desequilibrada, gerando confusão',
+    'Rigidez com processos de discipulado, exigindo mudanças rápidas demais nas pessoas',
+    'Acreditar que toda sua percepção é uma revelação inquestionável de Deus, não aceitando que suas palavras sejam avaliadas e julgadas pela comunidade'
   ];
   const pontosCegosColuna2 = [
-    'Dificuldade em trabalhar em equipe',
-    'Falta de paciência com processos de maturação espiritual',
-    'Imediatismo em ver resultados',
-    'Excesso de autocobrança e culpa',
-    'Desgaste emocional por carregar muitas cargas intercessórias',
-    'Dificuldade em receber correção',
-    'Falha ao equilibrar graça e verdade',
-    'Exagero em trazer palavras duras sem base relacional'
+    'Obsessão por erros e pecados, perdendo a capacidade de trazer esperança e consolo',
+    'Falta de equilíbrio entre exortação e cuidado pastoral, com dificuldade de demonstrar empatia',
+    'Exagero na busca por experiências e manifestações espirituais, negligenciando o estudo da Palavra e a teologia saudável',
+    'Tendência ao misticismo, vendo significado espiritual em tudo, o que pode gerar insegurança na comunidade',
+    'Resistência à correção e dificuldade em aceitar ajustes de outros líderes ou dons'
   ];
 
   // Calcular altura máxima de cada coluna
@@ -282,15 +279,17 @@ Pessoas com esse dom tendem a ter uma linguagem direta, são intensas e muitas v
   currentHeight += 6;
 
   const impactoApostolico = [
-    'IMPACTO NA IGREJA: Alinhamento espiritual; Sensibilidade à voz de Deus; Arrependimento coletivo; Discernimento de tempos e estratégias do Reino.',
+    'IMPACTO NA IGREJA: Alinhamento espiritual; Sensibilidade contínua à voz de Deus; Arrependimento coletivo; Discernimento de tempos, direções e estratégias do Reino.',
     '',
-    '• Seja uma voz que traz vida, não condenação. Lembre-se que a profecia bíblica serve para edificação, exortação e consolação.',
+    '• Seja uma voz que traz vida e esperança. Lembre-se de que a profecia bíblica é dada para edificação, exortação e consolo. Evite ser um mensageiro de medo ou condenação.',
     '',
-    '• Procure compartilhar suas percepções espirituais com sabedoria e humildade, buscando edificar a comunidade e não gerar medo ou divisão.',
+    '• Compartilhe suas percepções espirituais com humildade, temor e sabedoria. Reconheça que toda profecia é parcial e precisa ser avaliada pela comunidade, como ensinado em 1 Coríntios 14.',
     '',
-    '• Mantenha uma vida de oração, jejum e estudo da Palavra para que suas mensagens estejam sempre alinhadas com o coração de Deus.',
+    '• Mantenha uma vida consistente de oração, jejum e estudo bíblico. Assim, sua sensibilidade espiritual será sustentada por fundamentos sólidos nas Escrituras.',
     '',
-    '• Valorize a correção fraterna e esteja disposto a ser discipulado por outros dons para crescer em equilíbrio e maturidade.'
+    '• Valorize a correção fraterna e o discipulado de outros dons ministeriais. Profetas maduros são aqueles que aprenderam a ouvir Deus, mas também a ouvir irmãos em Cristo.',
+    '',
+    '• Busque ser um agente de reconciliação e alinhamento espiritual. Sua voz deve conduzir a Igreja de volta ao coração de Deus, promovendo restauração, temor do Senhor e unidade no Corpo de Cristo.'
   ];
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(11);
