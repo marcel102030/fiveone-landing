@@ -13,51 +13,6 @@ export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG'
 import autoTable from 'jspdf-autotable';
 import jsPDF from 'jspdf';
 import type { jsPDF as jsPDFType } from 'jspdf';
-export async function renderTextoAPEST(doc: jsPDFType, currentHeight: number): Promise<number> {
-  doc.addPage();
-  aplicarFundo(doc);
-
-  const textoAPEST = `
-Igreja Disfuncional — Quando falta equilíbrio nos Ministérios
-
-De acordo com Efésios 4, Deus deu à Igreja cinco tipos de dons ministeriais: Apostólico, Profético, Evangelístico, Pastoral e de Ensino (Mestre). Cada um deles reflete um aspecto do ministério de Cristo e é fundamental para o crescimento saudável da Igreja.
-
-Quando um ou mais desses dons não estão ativos ou funcionando corretamente, a Igreja se torna desequilibrada e disfuncional. Veja como isso acontece na prática:
-
-Quando falta o Apostólico (Fica só Profeta, Evangelista, Pastor e Mestre):
-A igreja tende a ser fechada, sem visão de expansão e inovação. Falta direcionamento para multiplicação, plantação de novas igrejas e avanço do Reino.
-
-Quando falta o Profético (Fica só Apóstolo, Evangelista, Pastor e Mestre):
-A igreja perde a sensibilidade à voz de Deus, ao alinhamento espiritual e à correção profética. Torna-se institucional, fria e vulnerável a desvios doutrinários e estratégicos.
-
-Quando falta o Evangelístico (Fica só Apóstolo, Profeta, Pastor e Mestre):
-A igreja se volta apenas para dentro, esquecendo a missão de alcançar os perdidos. Não há crescimento, nem cultura evangelística.
-
-Quando falta o Pastoral (Fica só Apóstolo, Profeta, Evangelista e Mestre):
-A igreja se torna relacionalmente fria, sem cuidado, acolhimento e restauração. Pessoas feridas e sem acompanhamento deixam de permanecer.
-
-Quando falta o Mestre (Fica só Apóstolo, Profeta, Evangelista e Pastor):
-A igreja se torna superficial, sem profundidade bíblica, vulnerável a heresias e sem maturidade doutrinária. Falta ensino sólido e discipulado consistente.
-  `;
-
-  const textoDividido = doc.splitTextToSize(textoAPEST, 180);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(14);
-  doc.setTextColor(15, 38, 50);
-  const titleY = 20;
-  doc.text('Como fica uma Igreja sem os Cinco Ministérios em funcionamento?', 14, titleY);
-
-  const textStartY = titleY + 10;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10);
-  doc.setTextColor(0, 0, 0);
-  doc.text(textoDividido, 14, textStartY);
-
-  currentHeight = textStartY + textoDividido.length * 6 + 10;
-
-  return currentHeight;
-}
 
 
 
@@ -196,53 +151,120 @@ export async function renderEscolaFiveOne(doc: jsPDFType) {
 export async function renderResumoDosDons(doc: jsPDFType, percentuais: { dom: string; valor: number }[]): Promise<void> {
   aplicarFundo(doc);
 
-  // Bloco para renderizar o texto da página APEST antes do título
-  const textoAPEST = `
-Igreja Disfuncional — Quando falta equilíbrio nos Ministérios
+  let yTitulo = 16;
 
-De acordo com Efésios 4, Deus deu à Igreja cinco tipos de dons ministeriais: Apostólico, Profético, Evangelístico, Pastoral e de Ensino (Mestre). Cada um deles reflete um aspecto do ministério de Cristo e é fundamental para o crescimento saudável da Igreja.
+  // Título principal
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(4, 91, 98);
+  doc.text('Relação dos 5 Ministérios', 105, yTitulo, { align: 'center' });
 
-Quando um ou mais desses dons não estão ativos ou funcionando corretamente, a Igreja se torna desequilibrada e disfuncional. Veja como isso acontece na prática:
+  // Subtítulo com espaçamento seguro
+  yTitulo += 10;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(14);
+  doc.setTextColor(4, 91, 98);
+  doc.text('Quando falta equilíbrio nos Ministérios', 105, yTitulo, { align: 'center' });
 
-Quando falta o Apostólico (Fica só Profeta, Evangelista, Pastor e Mestre):
-A igreja tende a ser fechada, sem visão de expansão e inovação. Ela perde sua capacidade de romper barreiras, plantar igrejas, começar novos movimentos e se torna estagnada, com medo de mudanças. Sem o dom apostólico, a igreja fica sem direcionamento para multiplicação.
+  // --- Todos os preenchimentos de fundo e faixa central viriam aqui, se existissem ---
 
-Quando falta o Profético (Fica só Apóstolo, Evangelista, Pastor e Mestre):
-Sem a influência do dom profético, a igreja perde a sensibilidade à voz de Deus, a correção e ao alinhamento espiritual. Ela se torna muito institucional, mecânica e desconectada da vontade de Deus. É uma igreja sem discernimento, vulnerável ao erro e sem clareza sobre o que Deus quer para aquele tempo e lugar.
 
-Quando falta o Evangelístico (Fica só Apóstolo, Profeta, Pastor e Mestre):
-Quando não há operação do dom evangelístico, a igreja se torna voltada apenas para dentro, esquecendo o mundo à sua volta. Ela perde o senso de missão e deixa de ser relevante na sociedade. Sem o evangelístico, poucas pessoas se convertem, o crescimento da igreja para e ela deixa de cumprir seu papel no avanço do Reino.
+  let currentY = yTitulo;  // Atualize o currentY para seguir após o subtítulo
 
-Quando falta o Pastoral (Fica só Apóstolo, Profeta, Evangelista e Mestre):
-Se a função pastoral não está presente, a igreja se torna fria, sem cuidado, sem acolhimento, sem comunhão e sem restauração. As pessoas se sentem sozinhas, sem acompanhamento e acabam se afastando. É uma igreja que até pode crescer numericamente, mas não cuida dos seus membros, gerando feridos e abandonados.
+  // Layout das caixas dos dons
+  const boxX = 15;
+  const boxWidth = 180;
+  const boxInnerPadding = 3; // mm (reduzido de 5 para 3)
+  currentY += 2;  // Comece um pouco abaixo do subtítulo
+  const boxSpacing = 5; // espaço vertical entre caixas (reduzido de 7 para 5)
 
-Quando falta o Mestre (Ensino) (Fica só Apóstolo, Profeta, Evangelista e Pastor):
-Sem o dom de ensino, a igreja se torna superficial, sem profundidade na Palavra. As pessoas não crescem em conhecimento bíblico, ficam vulneráveis a heresias e acabam vivendo uma fé rasa, baseada apenas em experiências e emoções. É uma igreja que não amadurece espiritualmente.
-`;
+  // Dados dos dons e descrições
+  const dons = [
+    {
+      titulo: 'Quando falta o Apostólico (Fica só Profeta, Evangelista, Pastor e Mestre):',
+      texto: 'A igreja tende a ser fechada, sem visão de expansão e inovação. Ela perde sua capacidade de romper barreiras, plantar igrejas, começar novos movimentos e se torna estagnada, com medo de mudanças. Sem o dom apostólico, a igreja fica sem direcionamento para multiplicação.'
+    },
+    {
+      titulo: 'Quando falta o Profético (Fica só Apóstolo, Evangelista, Pastor e Mestre):',
+      texto: 'Sem a influência do dom profético, a igreja perde a sensibilidade à voz de Deus, a correção e ao alinhamento espiritual. Ela se torna muito institucional, mecânica e desconectada da vontade de Deus. É uma igreja sem discernimento, vulnerável ao erro e sem clareza sobre o que Deus quer para aquele tempo e lugar.'
+    },
+    {
+      titulo: 'Quando falta o Evangelístico (Fica só Apóstolo, Profeta, Pastor e Mestre):',
+      texto: 'Quando não há operação do dom evangelístico, a igreja se torna voltada apenas para dentro, esquecendo o mundo à sua volta. Ela perde o senso de missão e deixa de ser relevante na sociedade. Sem o evangelístico, poucas pessoas se convertem, o crescimento da igreja para e ela deixa de cumprir seu papel no avanço do Reino.'
+    },
+    {
+      titulo: 'Quando falta o Pastoral (Fica só Apóstolo, Profeta, Evangelista e Mestre):',
+      texto: 'Se a função pastoral não está presente, a igreja se torna fria, sem cuidado, sem acolhimento, sem comunhão e sem restauração. As pessoas se sentem sozinhas, sem acompanhamento e acabam se afastando. É uma igreja que até pode crescer numericamente, mas não cuida dos seus membros, gerando feridos e abandonados.'
+    },
+    {
+      titulo: 'Quando falta o Mestre (Ensino) (Fica só Apóstolo, Profeta, Evangelista e Pastor):',
+      texto: 'Sem o dom de ensino, a igreja se torna superficial, sem profundidade na Palavra. As pessoas não crescem em conhecimento bíblico, ficam vulneráveis a heresias e acabam vivendo uma fé rasa, baseada apenas em experiências e emoções. É uma igreja que não amadurece espiritualmente.'
+    }
+  ];
 
-  const textoFormatado = doc.splitTextToSize(textoAPEST.trim(), 180);
+  // Introdução geral
+  const intro = '';
+
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(10);
   doc.setTextColor(0, 0, 0);
-  doc.text(textoFormatado, 15, 30);
+  // Caixa de introdução (sem borda azul, só fundo claro)
+  const introLines = doc.splitTextToSize(intro, boxWidth - 2 * boxInnerPadding);
+  const introHeight = introLines.length * 5.1 + 2 * boxInnerPadding;
+  doc.setFillColor(235, 255, 250);
+  doc.rect(boxX, currentY, boxWidth, introHeight, 'F');
+  doc.text(introLines, boxX + boxInnerPadding, currentY + boxInnerPadding + 4);
+  currentY += introHeight + boxSpacing;
 
-  // Depois deste bloco, continue com o código já existente que desenha o título, tabela e rodapé
+  // Para cada dom: caixa cinza clara, borda azul, texto
+  dons.forEach(({ titulo, texto }) => {
+    // Preparar texto do dom
+    const tituloLines = doc.splitTextToSize(titulo, boxWidth - 2 * boxInnerPadding);
+    const textoLines = doc.splitTextToSize(texto, boxWidth - 2 * boxInnerPadding);
+    const totalLines = tituloLines.length + textoLines.length;
+    const boxHeight = totalLines * 5.1 + 2 * boxInnerPadding;
+
+    // Caixa com fundo cinza claro e borda verde escuro do rodapé
+    doc.setFillColor(230, 230, 230);
+    doc.setDrawColor(4, 91, 98); // Verde escuro igual ao rodapé
+    doc.rect(boxX, currentY, boxWidth, boxHeight, 'FD');
+
+    // Texto dentro da caixa
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(9); // reduzido de 10 para 9
+    doc.setTextColor(0, 0, 0);
+    let yText = currentY + boxInnerPadding + 4;
+    doc.text(tituloLines, boxX + boxInnerPadding, yText, { maxWidth: boxWidth - 2 * boxInnerPadding });
+    yText += tituloLines.length * 5.1;
+    doc.text(textoLines, boxX + boxInnerPadding, yText, { maxWidth: boxWidth - 2 * boxInnerPadding });
+
+    currentY += boxHeight + boxSpacing;
+  });
+
+  // Título do resumo dos dons
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.setTextColor(0, 102, 204);
-  // Calcula a altura do texto para posicionar o título abaixo do textoAPEST
-  const titleY = 20 + textoFormatado.length * 5.5 + 5;
-  doc.text('Resumo dos Seus Dons', 14, titleY);
+  doc.setFontSize(14); // reduzido de 18 para 14
+  doc.setTextColor(0, 51, 102); // Azul médio, mesma cor do subtítulo "Quando falta equilíbrio nos Ministérios"
+  let resumoTitleY = currentY + 4;
+  doc.text('Resumo dos Seus Dons', 14, resumoTitleY);
 
+  // Verificar se o espaço restante é suficiente para a tabela
+  const pageHeight = doc.internal.pageSize.getHeight();
+  if (resumoTitleY > pageHeight - 50) {
+    doc.addPage();
+    resumoTitleY = 20;  // Reiniciar margem superior da nova página
+  }
+
+  // Tabela de percentuais
   const tableData = percentuais.map(p => [p.dom, `${p.valor.toFixed(1)}%`]);
-
   await autoTable(doc, {
     head: [['Dom', 'Percentual']],
     body: tableData,
-    startY: titleY + 2,  // Reduzido para aproximar mais a tabela do título
+    startY: resumoTitleY + 6,  // Adicionado espaçamento abaixo do título
     theme: 'grid',
     styles: { halign: 'center' },
-    headStyles: { fillColor: [49, 75, 86] },
+    bodyStyles: { fontSize: 8 },
+    headStyles: { fillColor: [49, 75, 86], fontSize: 9 },
   });
 
   await renderRodape(doc);
@@ -282,7 +304,7 @@ export async function renderIntroducao(doc: jsPDFType): Promise<void> {
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
   doc.setTextColor(15, 38, 50);
-  doc.text('INTRODUÇÃO', 105, y, { align: 'center' });
+  doc.text('VISÃO GERAL SOBRE OS 5 MINISTÉRIOS', 105, y, { align: 'center' });
 
   // Linha horizontal
   y += 5;
@@ -327,16 +349,16 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   // Adicionar imagem 'meuPerfilMinisterial' na primeira página (ajuste de tamanho e posição como no PDF antigo)
   const perfilImg = new Image();
   perfilImg.src = meuPerfilMinisterial;
-  doc.addImage(perfilImg, 'PNG', 20, 55, 170, 210);
+  doc.addImage(perfilImg, 'PNG', 20, 70, 170, 210); // Y alterado de 110 para 70
 
   doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 38, 50);
-  doc.text('Meu Perfil Ministerial', 105, 80, { align: 'center' });
+  doc.text('Meu Perfil Ministerial', 105, 95, { align: 'center' });  // Y alterado de 85 para 95
   // Linha horizontal abaixo do título "Meu Perfil Ministerial"
   doc.setDrawColor(15, 38, 50); // Cor semelhante ao título
   doc.setLineWidth(1.5);
-  doc.line(60, 85, 150, 85);
+  doc.line(60, 100, 150, 100);  // Y alterado de 90 para 100
 
   doc.addPage();
   await renderIntroducao(doc);
@@ -356,7 +378,7 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   }
 
   await renderEscolaFiveOne(doc);
-  await renderTextoAPEST(doc, 30);
+  doc.addPage();
   await renderResumoDosDons(doc, percentuais);
   await renderRodape(doc);
 
