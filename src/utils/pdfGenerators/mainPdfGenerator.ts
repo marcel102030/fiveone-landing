@@ -291,7 +291,7 @@ export async function renderRodape(doc: jsPDFType): Promise<void> {
 }
 import { renderApostolico } from './pdfGeneratorApostolo';
 import { renderProfeta } from './pdfGeneratorProfeta';
-// import { renderEvangelistico } from './pdfGeneratorEvangelista';
+import { renderEvangelistico } from './pdfGeneratorEvangelista';
 // import { renderPastoral } from './pdfGeneratorPastor';
 // import { renderMestre } from './pdfGeneratorMestre';
 
@@ -371,7 +371,9 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
     case 'Profeta':
       await renderProfeta(doc);
       break;
-    // futuros casos dos outros dons
+    case 'Evangelístico':
+      await renderEvangelistico(doc);
+      break;
     default:
       console.error('Dom ministerial não reconhecido:', maiorPercentual.dom);
       break;
