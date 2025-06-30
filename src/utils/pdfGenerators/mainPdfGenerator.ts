@@ -292,7 +292,7 @@ export async function renderRodape(doc: jsPDFType): Promise<void> {
 import { renderApostolico } from './pdfGeneratorApostolo';
 import { renderProfeta } from './pdfGeneratorProfeta';
 import { renderEvangelistico } from './pdfGeneratorEvangelista';
-// import { renderPastoral } from './pdfGeneratorPastor';
+import { renderPastor } from './pdfGeneratorPastor';
 import { renderMestre } from './pdfGeneratorMestre';
 
 export async function renderIntroducao(doc: jsPDFType): Promise<void> {
@@ -374,6 +374,9 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
     case 'Evangelístico':
       await renderEvangelistico(doc);
       break;
+    case 'Pastor':
+      await renderPastor(doc);
+      break;
     case 'Mestre':
       await renderMestre(doc);
       break;
@@ -387,6 +390,8 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   await renderResumoDosDons(doc, percentuais);
   await renderRodape(doc);
 
+  console.log('Dom recebido:', maiorPercentual.dom);
   console.log('Salvando PDF agora...');
-  doc.save('Resultado-Teste.pdf');
+  const nomeArquivo = `Resultado_FiveOne_${maiorPercentual.dom}`.normalize('NFD').replace(/[\u0300-\u036f\s]/g, '');
+  doc.save(`${nomeArquivo}.pdf`);
 }

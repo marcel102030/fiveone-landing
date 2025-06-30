@@ -254,7 +254,7 @@ const Quiz = () => {
       'Apóstolo': 'Apostólico',
       'Profeta': 'Profeta',
       'Evangelista': 'Evangelístico',
-      'Pastor': 'Pastoral',
+      'Pastor': 'Pastor',
       'Mestre': 'Mestre',
     };
     try {
