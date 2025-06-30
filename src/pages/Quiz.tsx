@@ -249,7 +249,6 @@ const Quiz = () => {
   };
 
   const handleDownloadPDF = () => {
-    // Mapa de conversão do nome do dom para a chave utilizada em perfisMinisteriais
     const domNameToKey: Record<string, string> = {
       'Apóstolo': 'Apostólico',
       'Profeta': 'Profeta',
@@ -257,6 +256,7 @@ const Quiz = () => {
       'Pastor': 'Pastor',
       'Mestre': 'Mestre',
     };
+
     try {
       const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
 
@@ -283,18 +283,25 @@ const Quiz = () => {
         return;
       }
 
-      const mainDom = domNameToKey[sortedScores[0]?.metadata?.name];
+      const highestScore = sortedScores[0].score;
+      const tiedDoms = sortedScores.filter(s => s.score === highestScore);
 
-      console.log('Gerando PDF para:', mainDom);
+      tiedDoms.forEach((domResult) => {
+        const mainDom = domNameToKey[domResult.metadata.name];
 
-      generatePDF(
-        userInfo.name,
-        new Date().toLocaleDateString(),
-        sortedScores.map((s) => ({
-          dom: domNameToKey[s.metadata.name],
-          valor: s.score,
-        }))
-      );
+        console.log('Gerando PDF para:', mainDom);
+
+        generatePDF(
+          userInfo.name,
+          new Date().toLocaleDateString(),
+          sortedScores.map((s) => ({
+            dom: domNameToKey[s.metadata.name],
+            valor: s.score,
+          })),
+          mainDom // dom principal atual
+        );
+      });
+
       setShowDownloadSuccess(true);
       setTimeout(() => setShowDownloadSuccess(false), 4000);
     } catch (err) {

@@ -339,12 +339,12 @@ Portanto, este relatório é muito mais do que informação. Ele é um convite p
 
 import meuPerfilMinisterial from '/assets/images/PerfilMinisterial3.png';
 
-export async function generatePDF(name: string, date: string, percentuais: { dom: string; valor: number }[]) {
+export async function generatePDF(name: string, date: string, percentuais: { dom: string; valor: number }[], domPrincipal: string) {
   const doc = new jsPDF();
 
   aplicarFundo(doc);
-  const maiorPercentual = percentuais.reduce((prev, current) => (current.valor > prev.valor ? current : prev));
-  await renderHeader(doc, name, date, maiorPercentual.dom);
+  // const maiorPercentual = percentuais.reduce((prev, current) => (current.valor > prev.valor ? current : prev));
+  await renderHeader(doc, name, date, domPrincipal);
 
   // Adicionar imagem 'meuPerfilMinisterial' na primeira página (ajuste de tamanho e posição como no PDF antigo)
   const perfilImg = new Image();
@@ -364,7 +364,7 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   await renderIntroducao(doc);
 
   doc.addPage();
-  switch (maiorPercentual.dom) {
+  switch (domPrincipal) {
     case 'Apostólico':
       await renderApostolico(doc);
       break;
@@ -381,7 +381,7 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
       await renderMestre(doc);
       break;
     default:
-      console.error('Dom ministerial não reconhecido:', maiorPercentual.dom);
+      console.error('Dom ministerial não reconhecido:', domPrincipal);
       break;
   }
 
@@ -390,8 +390,8 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   await renderResumoDosDons(doc, percentuais);
   await renderRodape(doc);
 
-  console.log('Dom recebido:', maiorPercentual.dom);
+  console.log('Dom recebido:', domPrincipal);
   console.log('Salvando PDF agora...');
-  const nomeArquivo = `Resultado_FiveOne_${maiorPercentual.dom}`.normalize('NFD').replace(/[\u0300-\u036f\s]/g, '');
+  const nomeArquivo = `Resultado_FiveOne_${domPrincipal}`.normalize('NFD').replace(/[\u0300-\u036f\s]/g, '');
   doc.save(`${nomeArquivo}.pdf`);
 }
