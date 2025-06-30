@@ -293,7 +293,7 @@ import { renderApostolico } from './pdfGeneratorApostolo';
 import { renderProfeta } from './pdfGeneratorProfeta';
 import { renderEvangelistico } from './pdfGeneratorEvangelista';
 // import { renderPastoral } from './pdfGeneratorPastor';
-// import { renderMestre } from './pdfGeneratorMestre';
+import { renderMestre } from './pdfGeneratorMestre';
 
 export async function renderIntroducao(doc: jsPDFType): Promise<void> {
   aplicarFundo(doc);
@@ -373,6 +373,9 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
       break;
     case 'Evangelístico':
       await renderEvangelistico(doc);
+      break;
+    case 'Mestre':
+      await renderMestre(doc);
       break;
     default:
       console.error('Dom ministerial não reconhecido:', maiorPercentual.dom);
