@@ -78,6 +78,7 @@ const Quiz = () => {
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
   const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
@@ -248,7 +249,7 @@ const Quiz = () => {
     );
   };
 
-  const handleDownloadPDF = () => {
+  const handleDownloadPDF = async () => {
     const domNameToKey: Record<string, string> = {
       'Apóstolo': 'Apostólico',
       'Profeta': 'Profeta',
@@ -258,6 +259,7 @@ const Quiz = () => {
     };
 
     try {
+      setIsGeneratingPDF(true);
       const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
 
       const sortedScores = Object.entries(categoryScores)
@@ -286,12 +288,12 @@ const Quiz = () => {
       const highestScore = sortedScores[0].score;
       const tiedDoms = sortedScores.filter(s => s.score === highestScore);
 
-      tiedDoms.forEach((domResult) => {
+      for (const domResult of tiedDoms) {
         const mainDom = domNameToKey[domResult.metadata.name];
 
         console.log('Gerando PDF para:', mainDom);
 
-        generatePDF(
+        await generatePDF(
           userInfo.name,
           new Date().toLocaleDateString(),
           sortedScores.map((s) => ({
@@ -300,13 +302,16 @@ const Quiz = () => {
           })),
           mainDom // dom principal atual
         );
-      });
+      }
 
       setShowDownloadSuccess(true);
-      setTimeout(() => setShowDownloadSuccess(false), 4000);
+      setTimeout(() => setShowDownloadSuccess(false), 8000);
     } catch (err) {
+      setIsGeneratingPDF(false);
       alert('Ocorreu um erro ao gerar o PDF. Tente novamente.');
       console.error('Erro ao gerar PDF:', err);
+    } finally {
+      setIsGeneratingPDF(false);
     }
   };
 
@@ -499,6 +504,30 @@ const Quiz = () => {
     );
   }
 
+  // Bloco de feedback fixo no topo (toast para PDF)
+  const pdfToastBlock = (
+    (isGeneratingPDF || showDownloadSuccess) && (
+      <div
+        style={{
+          position: "fixed",
+          top: "1rem",
+          right: "1rem",
+          backgroundColor: "#32f2cf",
+          color: "#003f2d",
+          padding: "0.75rem 1.5rem",
+          borderRadius: "8px",
+          fontWeight: "bold",
+          zIndex: 9999,
+          boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        {isGeneratingPDF
+          ? "📄 Gerando PDF... Por favor, aguarde o download."
+          : "✅ PDF gerado e baixado com sucesso!"}
+      </div>
+    )
+  );
+
   if (showResults) {
     const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
 
@@ -522,6 +551,8 @@ const Quiz = () => {
 
 
     return (
+      <>
+        {pdfToastBlock}
       <section className="Teste-section">
         <div className="content-container" id="quiz-result" ref={pdfRef}>
           <div className="results-header" style={{ marginTop: "6rem" }}>
@@ -731,13 +762,8 @@ const Quiz = () => {
         >
           Reiniciar
         </button>
-        {/* Toast de sucesso PDF */}
-        {showDownloadSuccess && (
-          <div className="toast-success">
-            ✅ PDF gerado e baixado com sucesso!
-          </div>
-        )}
       </section>
+      </>
     );
   }
 
@@ -751,6 +777,8 @@ const Quiz = () => {
   }
 
   return (
+    <>
+      {pdfToastBlock}
     <section className="quiz-section">
       <div className="content-container" ref={quizTopRef}>
         <h2>
@@ -888,7 +916,8 @@ const Quiz = () => {
         </div>
       )}
     </section>
-  );
+  </>
+);
 };
 
 export default Quiz;

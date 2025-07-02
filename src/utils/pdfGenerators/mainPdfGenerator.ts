@@ -393,5 +393,8 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   console.log('Dom recebido:', domPrincipal);
   console.log('Salvando PDF agora...');
   const nomeArquivo = `Resultado_FiveOne_${domPrincipal}`.normalize('NFD').replace(/[\u0300-\u036f\s]/g, '');
-  doc.save(`${nomeArquivo}.pdf`);
+  await new Promise<void>((resolve) => {
+    doc.save(`${nomeArquivo}.pdf`);
+    resolve();
+  });
 }
