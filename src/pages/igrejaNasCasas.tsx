@@ -134,8 +134,22 @@ const IgrejaNasCasas: React.FC = () => {
       <section className="igreja-section">
         <h2>Participe da Rede</h2>
         <div className="igreja-buttons">
-          <button className="igreja-btn">Quero participar de uma igreja nas Casas</button>
-          <button className="igreja-btn">Quero abrir minha casa e liderar uma igreja nas casas.</button>
+          <a
+            href="https://wa.me/5583987181731?text=Olá,%20eu%20vim%20através%20do%20site%20Five%20One.%20Quero%20participar%20de%20uma%20igreja%20nas%20Casas%20e%20gostaria%20de%20saber%20mais%20sobre%20como%20funciona."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="igreja-btn"
+          >
+            Quero participar de uma igreja nas Casas
+          </a>
+          <a
+            href="https://wa.me/5583987181731?text=Olá,%20eu%20vim%20através%20do%20site%20Five%20One.%20Quero%20abrir%20minha%20casa%20e%20liderar%20uma%20igreja%20nas%20Casas.%20Gostaria%20de%20saber%20mais%20sobre%20como%20posso%20começar."
+            target="_blank"
+            rel="noopener noreferrer"
+            className="igreja-btn"
+          >
+            Quero abrir minha casa e liderar uma igreja nas casas.
+          </a>
         </div>
       </section>
 
