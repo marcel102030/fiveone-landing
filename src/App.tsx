@@ -3,6 +3,7 @@ import {
   HashRouter as Router,
   Routes,
   useLocation,
+  useNavigate,
 } from "react-router-dom";
 
 import BlogList from "./pages/BlogList";
@@ -14,6 +15,8 @@ import Services from "./pages/Services";
 import BlogPostPage from "./pages/BlogPostPage";
 import Ministerio from "./pages/Ministerio";
 import IgrejaNasCasas from "./pages/igrejaNasCasas";
+import Plataforma from "./pages/plataforma/plataforma";
+import LoginAluno from "./pages/plataforma/loginAluno";
 
 import "./App.css";
 
@@ -24,12 +27,19 @@ import ScrollToTopOnMount from "./components/layout/ScrollToTop/ScrollToTopOnMou
 
 function AppContent() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogin = () => {
+    navigate("/plataforma");
+  };
+
+  const hideLayout = location.pathname === "/plataforma" || location.pathname === "/login-aluno";
 
   return (
     <>
       <ScrollToTopOnMount />
-      <div className="app">
-        <Navbar />
+      <div className={`app ${hideLayout ? "plataforma-mode no-navbar-padding" : ""}`}>
+        {!hideLayout && <Navbar />}
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -41,11 +51,13 @@ function AppContent() {
             <Route path="/insights/:postId" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
-            { <Route path="/igrejas" element={<IgrejaNasCasas />} /> }
+            <Route path="/igrejas" element={<IgrejaNasCasas />} />
+            <Route path="/plataforma" element={<Plataforma />} />
+            <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
           </Routes>
         </main>
         <ScrollToTop />
-        {location.pathname !== "/teste-dons" && <Footer />}
+        {!hideLayout && location.pathname !== "/teste-dons" && <Footer />}
       </div>
     </>
   );

@@ -80,15 +80,13 @@ const Navbar = () => {
           >
             CONTATO
           </Link>
-          <a
-            href="https://alunos.escolafiveone.com/login"
+          <Link
+            to="/login-aluno"
             className="button-link"
-            target="_blank"
-            rel="noopener noreferrer"
             onClick={() => setIsMenuOpen(false)}
           >
             ALUNOS FIVE ONE
-          </a>
+          </Link>
         </div>
       </div>
     </nav>

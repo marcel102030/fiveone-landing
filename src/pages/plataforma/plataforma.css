@@ -1,0 +1,258 @@
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 2rem;
+  background-color: rgba(0, 0, 0, 0);
+  color: white;
+  font-family: 'Inter', sans-serif;
+  position: relative;
+  z-index: 10;
+}
+
+.header img {
+  height: 48px;
+  margin-right: 1rem;
+}
+
+.header nav a {
+  color: white;
+  text-decoration: none;
+  margin-left: 1.5rem;
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: color 0.3s ease;
+}
+
+.header nav a:hover {
+  color: #00ffff;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0c1f33;
+  height: 100vh;
+  width: 100vw;
+  font-family: 'Inter', sans-serif;
+}
+
+.inicio-container {
+  background-image: url('/assets/images/banner-login-fiveone.png');
+  min-height: 100vh;
+  width: 100vw;
+  background-size: cover;
+  background-position: center center;
+  background-repeat: no-repeat;
+  background-color: #0c1f33;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-family: 'Inter', sans-serif;
+  flex-direction: column;
+  text-align: center;
+  padding: 30rem 2rem 4rem 2rem;
+  position: relative;
+  z-index: 2;
+  text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
+}
+
+.scroll-down-arrow {
+  margin-top: 2rem;
+  font-size: 4rem;
+  color: #00ffff;
+  animation: bounce 2s infinite;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+.scroll-down-arrow:hover {
+  transform: scale(1.2);
+}
+
+@keyframes bounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(10px);
+  }
+}
+
+.inicio-container h1 {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.inicio-container p {
+  font-size: 1.4rem;
+  max-width: 600px;
+  line-height: 1.6;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+@media screen and (max-width: 768px) {
+  .inicio-container h1 {
+    font-size: 2.4rem;
+  }
+
+  .inicio-container p {
+    font-size: 1.2rem;
+    padding: 0 1rem;
+  }
+}
+
+
+/* --- Bem-Vindos Section Styles --- */
+.bem-vindos {
+  background-color: #0c1f33;
+  padding: 4rem 2rem;
+  color: white;
+  text-align: center;
+}
+
+.bem-vindos h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.bem-vindos p {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 3rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.bem-vindos-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 1rem;
+  overflow-x: auto;
+  padding-bottom: 1rem;
+}
+
+.bem-vindos-item {
+  flex: 0 0 auto;
+  width: 350px;
+  height: 250px;
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.bem-vindos-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,255,255,0.5);
+}
+
+@media screen and (max-width: 768px) {
+  .bem-vindos-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.bem-vindos-container::-webkit-scrollbar {
+  display: none;
+}
+
+.bem-vindos-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+body,
+html {
+  background-color: #0c1f33; /* mesma cor que o header */
+}
+
+/* --- Formação Ministerial Section Styles --- */
+.formacao-ministerial {
+  background-color: #0c1f33;
+  padding: 4rem 2rem 5rem 2rem;
+  color: white;
+  text-align: center;
+}
+
+.formacao-ministerial h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.formacao-ministerial p {
+  font-size: 1.2rem;
+  color: #ccc;
+  margin-bottom: 3rem;
+  font-family: 'Inter', sans-serif;
+}
+
+.formacao-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  gap: 3rem;
+  overflow-x: auto;
+  padding: 0 4rem;
+  padding-bottom: 1rem;
+  margin-top: 3rem; /* added this line */
+}
+
+.formacao-container::-webkit-scrollbar {
+  display: none;
+}
+
+.formacao-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.formacao-item {
+  flex: 0 0 auto;
+  width: 260px;
+  height: 480px; /* increased height */
+  background-size: cover;
+  background-position: center;
+  border-radius: 12px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 1rem;
+  font-size: 1.2rem;
+  font-weight: bold;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+}
+
+.formacao-item:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 12px rgba(0,255,255,0.5);
+}
+
+@media screen and (max-width: 768px) {
+  .formacao-ministerial-container {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+.formacao-ministerial-container::-webkit-scrollbar {
+  display: none;
+}
+
+.formacao-ministerial-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}

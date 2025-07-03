@@ -36,3 +36,13 @@ main {
 .read-the-docs {
   color: #888;
 }
+
+.no-navbar-padding main {
+  padding-top: 0 !important;
+}
+
+.app.plataforma-mode {
+  background-color: transparent;
+  padding: 0;
+  margin: 0;
+}
