@@ -96,6 +96,34 @@ body {
   align-items: center;
 }
 
+/* Added general rule for large screens */
+.bem-vindos-container,
+.formacao-container {
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.bem-vindos-item,
+.formacao-item {
+  width: 100%;
+  max-width: 300px;
+  margin: 1rem;
+}
+
+@media screen and (max-width: 768px) {
+  .bem-vindos-container,
+  .formacao-container {
+    flex-direction: row;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    flex: 0 0 auto;
+  }
+}
+
 @media screen and (max-width: 768px) {
   .inicio-container h1 {
     font-size: 2.4rem;
@@ -134,7 +162,6 @@ body {
   flex-direction: row;
   justify-content: center;
   gap: 1rem;
-  overflow-x: auto;
   padding-bottom: 1rem;
 }
 
@@ -177,11 +204,20 @@ html {
 }
 
 /* --- Formação Ministerial Section Styles --- */
+/* --- Formação Ministerial Section Styles --- */
 .formacao-ministerial {
   background-color: #0c1f33;
   padding: 4rem 2rem 5rem 2rem;
   color: white;
   text-align: center;
+}
+
+.formacao-ministerial .arrow-icon {
+  font-size: 4rem;
+  color: #00ffff;
+  animation: bounce 2s infinite;
+  margin-bottom: 2rem;
+  margin-top: -6rem;
 }
 
 .formacao-ministerial h2 {
@@ -202,7 +238,6 @@ html {
   flex-direction: row;
   justify-content: center;
   gap: 3rem;
-  overflow-x: auto;
   padding: 0 4rem;
   padding-bottom: 1rem;
   margin-top: 3rem; /* added this line */
@@ -338,4 +373,92 @@ html {
   object-fit: cover;
   border-radius: 50%;
   transform: translateX(8px);
+}
+
+/* Responsividade adicional para tablets */
+@media screen and (max-width: 1024px) {
+  .bem-vindos-container {
+    gap: 1.5rem;
+    padding: 0 2rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .formacao-container {
+    gap: 1.5rem;
+    padding: 0 2rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    width: 180px;
+    height: 360px;
+  }
+
+  .inicio-container h1 {
+    font-size: 2.2rem;
+  }
+}
+
+/* Responsividade para celulares grandes */
+@media screen and (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .header nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  .perfil-menu {
+    margin-left: 0;
+    margin-top: 0.5rem;
+  }
+
+  .bem-vindos-container,
+  .formacao-container {
+    flex-direction: row;
+    overflow-x: auto;
+    flex-wrap: nowrap;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    flex: 0 0 auto;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    width: 90%;
+    max-width: 350px;
+  }
+
+  .inicio-container {
+    padding: 18rem 1rem 2rem 1rem;
+  }
+}
+
+/* Responsividade para celulares pequenos */
+@media screen and (max-width: 480px) {
+  .inicio-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .inicio-container p {
+    font-size: 1rem;
+  }
+
+  .perfil-dropdown-menu {
+    min-width: 120px;
+  }
+
+  .perfil-dropdown-menu a {
+    font-size: 0.8rem;
+  }
 }

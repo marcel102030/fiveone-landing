@@ -128,6 +128,7 @@ const PaginaInicial = () => {
         </div>
       </section>
       <section className="formacao-ministerial">
+        <div className="arrow-icon">↓</div>
         <h2>Sua Formação Ministerial</h2>
         <div className="formacao-container">
           <div
