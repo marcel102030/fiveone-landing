@@ -256,3 +256,86 @@ html {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
+
+
+/* --- Perfil Menu & Dropdown Styles --- */
+.perfil-menu {
+  position: relative;
+  display: inline-block;
+  margin-left: 1.5rem;
+  text-align: center;
+}
+
+.perfil-button {
+  background-color: transparent;
+  border: none;
+  color: white;
+  font-weight: 600;
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  transition: color 0.3s ease;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.3rem;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: white;
+  overflow: hidden;
+}
+
+.perfil-button:hover {
+  color: #00ffff;
+}
+
+.perfil-dropdown-menu {
+  display: block;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%) translateY(-10px);
+  background-color: #001a33;
+  border: 1px solid #00ffff;
+  border-radius: 6px;
+  min-width: 140px;
+  z-index: 99;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  box-shadow: 0 6px 12px rgba(0, 255, 255, 0.3);
+}
+
+.perfil-dropdown-menu.active {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
+}
+
+.perfil-dropdown-menu a {
+  color: white;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.9rem;
+  display: block;
+  text-decoration: none;
+  font-weight: 600;
+  text-align: center;
+  border-radius: 6px;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  background-color: #002b4d;
+  margin: 0.25rem;
+}
+
+.perfil-dropdown-menu a:hover {
+  background-color: #003f66;
+  transform: translateY(-2px);
+}
+.perfil-button img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  transform: translateX(8px);
+}
