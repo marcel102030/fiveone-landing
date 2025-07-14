@@ -1,94 +1,22 @@
-import logoSmall from "./assets/images/logo-fiveone-white-small.png";
-const perfilLogo = "/assets/images/logo_maior.png";
+import Header from "./Header";
 import "./plataforma.css";
-import { useState, useEffect, useRef } from "react";
-
-const Header = () => {
-  const [isDropdownOpen, setDropdownOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(event.target as Node)
-      ) {
-        setDropdownOpen(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  return (
-    <header className="header">
-      <div className="header-left">
-        <img
-          src={logoSmall}
-          alt="Logo Five One"
-          className="header-logo"
-        />
-        <nav className="header-nav">
-          <a
-            href="#"
-            className="header-link"
-            onClick={(e) => {
-              e.preventDefault();
-              const section = document.getElementById("inicio");
-              section?.scrollIntoView({ behavior: "smooth" });
-            }}
-          >
-            Início
-          </a>
-          <a
-            href="https://discord.gg/aCNSSzpY"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="header-link"
-          >
-            Comunidade Five One
-          </a>
-          <a
-            href="https://fiveonemovement.com/#/teste-dons"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="header-link"
-          >
-            Descubra o seu Dom Ministerial
-          </a>
-          <a
-            href="https://fiveonemovement.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="header-link"
-          >
-            Site Five One
-          </a>
-        </nav>
-      </div>
-      <div className="header-right">
-        <div className="perfil-menu" ref={dropdownRef}>
-          <button
-            className="perfil-button"
-            onClick={() => setDropdownOpen(!isDropdownOpen)}
-          >
-            <img src={perfilLogo} alt="Perfil" className="perfil-logo" />
-          </button>
-          {isDropdownOpen && (
-            <div className="perfil-dropdown-menu active">
-              <a href="/#/login-aluno" className="perfil-dropdown-item">Sair</a>
-            </div>
-          )}
-        </div>
-      </div>
-    </header>
-  );
-};
+import { Link } from "react-router-dom";
+import { useState } from "react";
 
 const PaginaInicial = () => {
+  const [modalContent, setModalContent] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const handleShowModal = (message: string) => {
+    setModalContent(message);
+    setShowModal(true);
+  };
+
+  const handleCloseModal = () => {
+    setShowModal(false);
+    setModalContent("");
+  };
+
   return (
     <>
       <Header />
@@ -133,30 +61,46 @@ const PaginaInicial = () => {
         <div className="formacao-container">
           <div
             className="formacao-item"
-            role="button"
             style={{ backgroundImage: "url('/assets/images/apostolo.png')" }}
+            onClick={() => handleShowModal('Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.')}
+            role="button"
+            tabIndex={0}
           />
           <div
             className="formacao-item"
-            role="button"
             style={{ backgroundImage: "url('/assets/images/profeta.png')" }}
+            onClick={() => handleShowModal('Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.')}
+            role="button"
+            tabIndex={0}
           />
           <div
             className="formacao-item"
-            role="button"
             style={{ backgroundImage: "url('/assets/images/evangelista.png')" }}
+            onClick={() => handleShowModal('Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.')}
+            role="button"
+            tabIndex={0}
           />
           <div
             className="formacao-item"
-            role="button"
             style={{ backgroundImage: "url('/assets/images/pastor.png')" }}
-          />
-          <div
-            className="formacao-item"
+            onClick={() => handleShowModal('Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.')}
             role="button"
+            tabIndex={0}
+          />
+          <Link
+            to="/streamer-mestre"
+            className="formacao-item"
             style={{ backgroundImage: "url('/assets/images/mestre.png')" }}
           />
         </div>
+        {showModal && (
+          <div className="modal-overlay" onClick={handleCloseModal}>
+            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+              <p>{modalContent}</p>
+              <button onClick={handleCloseModal} className="modal-close-button">Fechar</button>
+            </div>
+          </div>
+        )}
       </section>
     </>
   );

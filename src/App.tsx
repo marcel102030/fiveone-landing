@@ -17,6 +17,8 @@ import Ministerio from "./pages/Ministerio";
 import IgrejaNasCasas from "./pages/igrejaNasCasas";
 import Plataforma from "./pages/plataforma/plataforma";
 import LoginAluno from "./pages/plataforma/loginAluno";
+import StreamerApostolo from "./pages/plataforma/streamerApostolo";
+import StreamerMestre from "./pages/plataforma/streamerMestre";
 
 import "./App.css";
 
@@ -33,7 +35,7 @@ function AppContent() {
     navigate("/plataforma");
   };
 
-  const hideLayout = location.pathname === "/plataforma" || location.pathname === "/login-aluno";
+  const hideLayout = location.pathname === "/plataforma" || location.pathname === "/login-aluno" || location.pathname === "/streamer-apostolo" || location.pathname === "/streamer-mestre";
 
   return (
     <>
@@ -53,6 +55,8 @@ function AppContent() {
             <Route path="/ministerios/:nome" element={<Ministerio />} />
             <Route path="/igrejas" element={<IgrejaNasCasas />} />
             <Route path="/plataforma" element={<Plataforma />} />
+            <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
+            <Route path="/streamer-mestre" element={<StreamerMestre />} />
             <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
           </Routes>
         </main>
