@@ -170,18 +170,47 @@
     width: 100%;
   }
   .aula-card {
-    width: 100%;
-    max-width: 140px;
+    width: 21%;
+    min-width: 260px;
+    max-width: 320px;
     background-color: #1e1e1e;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
-    padding: 0.4rem;
-    font-size: 0.6rem;
-    margin-bottom: 0.75rem;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    padding: 0.5rem;
+    font-size: 0.75rem;
+    margin: 0.5rem 0;
+    margin-left: 0;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border 0.3s ease;
+  }
+
+  .aula-card:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 12px rgba(0, 255, 255, 0.6);
+    border: 1px solid #00e5ff;
+    background-color: #2a2a2a;
+    cursor: pointer;
+  }
+
+  .aula-card:active {
+    transform: scale(0.97);
+  }
+
+  .aula-card img {
+    width: 100%;
+    border-radius: 10px;
+    margin-bottom: 0.25rem;
+  }
+
+  .modulo-card-label {
+    margin-top: 0.25rem;
+    font-weight: bold;
+    color: #ffffff;
+    font-size: 0.75rem;
   }
   
   .aula-card iframe {
@@ -193,18 +222,18 @@
   /* Custom streamer wrapper */
   .streamer-wrapper {
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
     align-items: center;
     flex-direction: column;
     padding: 2rem 1rem;
     max-width: 1200px;
-    margin: 0 auto;
+    margin-left: 2rem;
   }
   
   .streamer-main {
     flex: 1;
     display: flex;
-    justify-content: center;
+    justify-content: flex-start;
   }
   
 .video-container {
@@ -315,8 +344,7 @@
   flex-direction: column;
   gap: 0.75rem;
   flex-shrink: 0;
-  max-height: 100%;
-  height: 100%;
+  max-height: 75vh;
   overflow-y: auto;
   margin-top: 7.3rem;
 }
@@ -325,11 +353,12 @@
   display: flex;
   flex-direction: row;
   justify-content: center;
-  align-items: stretch;
+  align-items: flex-start;
   gap: 2rem;
-  width: 100%;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 2rem auto 0 auto;
+  padding: 0 2rem;
+  width: 100%;
 }
 
 .sidebar-title {
@@ -502,4 +531,63 @@
     padding: 0.3rem;
     font-size: 0.8rem;
   }
+}
+
+@media (max-width: 600px) {
+  .aula-card {
+    max-width: 90%;
+    font-size: 0.7rem;
+  }
+
+  .aula-card img {
+    border-radius: 8px;
+  }
+}
+/* --- Controla o tamanho da imagem do Módulo 01 --- */
+.modulo-card-image {
+  width: 180px;
+  height: auto;
+  display: block;
+  margin: 0;
+}
+
+.modulos-container {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 2rem;
+  max-width: 1300px;
+  margin: 2rem auto;
+  align-items: flex-start;
+  width: 100%;
+  padding-left: 2rem;
+}
+
+@media (max-width: 1024px) {
+  .modulos-container {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .modulos-container {
+    grid-template-columns: 1fr;
+  }
+}
+/* --- Selo "Em Breve" --- */
+.badge-embreve {
+  background-color: #ff4081;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.aula-card {
+  position: relative;
 }
