@@ -1,11 +1,22 @@
 import Header from "./Header";
 import "./plataforma.css";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useRef } from "react";
 
 const PaginaInicial = () => {
   const [modalContent, setModalContent] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  const carouselRef = useRef<HTMLDivElement>(null);
+
+  const scrollCarousel = (direction: number) => {
+    if (carouselRef.current) {
+      carouselRef.current.scrollBy({
+        left: direction * 300,
+        behavior: "smooth",
+      });
+    }
+  };
 
   const handleShowModal = (message: string) => {
     setModalContent(message);
@@ -21,7 +32,6 @@ const PaginaInicial = () => {
     <>
       <Header />
       <div id="inicio" className="inicio-container">
-        <h1>Bem-vindo à Plataforma Five One</h1>
         <div className="scroll-down-arrow">↓</div>
       </div>
       <section className="bem-vindos">
@@ -55,6 +65,38 @@ const PaginaInicial = () => {
           />
         </div>
       </section>
+      {(() => {
+        const lastWatchedRaw = localStorage.getItem("videos_assistidos");
+        if (!lastWatchedRaw) return null;
+        const lastWatchedArray = JSON.parse(lastWatchedRaw);
+        if (!Array.isArray(lastWatchedArray)) return null;
+
+        return (
+          <section className="continuar-assistindo">
+            <div className="continuar-seta">↓</div>
+            <h2>Continuar Assistindo</h2>
+            <div className="carousel-wrapper">
+              <button className="arrow left" onClick={() => scrollCarousel(-1)}>‹</button>
+              <div className="continuar-container" ref={carouselRef}>
+                {Array.from(new Map(lastWatchedArray.map((video: any) => [video.url, video])).values()).map((video: any, index: number) => (
+                  <div
+                    key={index}
+                    className="continuar-card"
+                    style={{ backgroundImage: `url('${video.thumbnail}')` }}
+                    role="button"
+                    onClick={() => window.location.href = video.url}
+                  >
+                    <div className="continuar-overlay">
+                      <p>{video.title}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <button className="arrow right" onClick={() => scrollCarousel(1)}>›</button>
+            </div>
+          </section>
+        );
+      })()}
       <section className="formacao-ministerial">
         <div className="arrow-icon">↓</div>
         <h2>Sua Formação Ministerial</h2>

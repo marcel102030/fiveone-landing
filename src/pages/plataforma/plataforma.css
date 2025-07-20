@@ -1,3 +1,13 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+.container {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
 .header {
   display: flex;
   align-items: center;
@@ -18,7 +28,7 @@
 .header nav a {
   color: white;
   text-decoration: none;
-  margin-left: 1.5rem;
+  margin-left: clamp(0.75rem, 2vw, 1.5rem);
   font-weight: 600;
   font-size: 1.1rem;
   transition: color 0.3s ease;
@@ -32,15 +42,23 @@ body {
   margin: 0;
   padding: 0;
   background-color: #0c1f33;
-  height: 100vh;
-  width: 100vw;
+  min-height: 100vh;
+  width: 100%;
   font-family: 'Inter', sans-serif;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+html {
+  background-color: #0c1f33;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 .inicio-container {
   background-image: url('/assets/images/banner-login-fiveone.png');
   min-height: 100vh;
-  width: 100vw;
+  width: 100%;
   background-size: cover;
   background-position: center center;
   background-repeat: no-repeat;
@@ -52,14 +70,14 @@ body {
   font-family: 'Inter', sans-serif;
   flex-direction: column;
   text-align: center;
-  padding: 30rem 2rem 4rem 2rem;
+  padding: 12rem 1rem 4rem 1rem;
   position: relative;
   z-index: 2;
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
 }
 
 .scroll-down-arrow {
-  margin-top: 2rem;
+  margin-top: 5rem;
   font-size: 4rem;
   color: #00ffff;
   animation: bounce 2s infinite;
@@ -81,12 +99,12 @@ body {
 }
 
 .inicio-container h1 {
-  font-size: 3rem;
-  margin-bottom: 1rem;
+  font-size: clamp(2rem, 5vw, 4rem);
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
 }
 
 .inicio-container p {
-  font-size: 1.4rem;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
   max-width: 600px;
   line-height: 1.6;
 }
@@ -98,8 +116,12 @@ body {
 
 /* Added general rule for large screens */
 .bem-vindos-container,
-.formacao-container {
+.formacao-container,
+.continuar-container {
   flex-wrap: wrap;
+  justify-content: center;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  max-width: 100%;
   justify-content: center;
 }
 
@@ -107,7 +129,36 @@ body {
 .formacao-item {
   width: 100%;
   max-width: 300px;
-  margin: 1rem;
+}
+
+@media screen and (max-width: 1024px) {
+  .bem-vindos-container {
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: 0 1.5rem;
+  }
+
+  .formacao-container {
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: 0 1.5rem;
+  }
+
+  .continuar-container {
+    gap: clamp(0.75rem, 2vw, 1.5rem);
+    padding: 0 1.5rem;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    max-width: 280px;
+  }
+
+  .inicio-container h1 {
+    font-size: 2.2rem;
+  }
+
+  .inicio-container p {
+    font-size: 1.2rem;
+  }
 }
 
 @media screen and (max-width: 768px) {
@@ -122,9 +173,28 @@ body {
   .formacao-item {
     flex: 0 0 auto;
   }
-}
 
-@media screen and (max-width: 768px) {
+  .bem-vindos-item,
+  .formacao-item {
+    width: 90%;
+    max-width: 350px;
+  }
+
+  .continuar-container {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    justify-content: flex-start;
+  }
+
+  .continuar-card {
+    flex: 0 0 auto;
+  }
+
+  .inicio-container {
+    padding: 10rem 1rem 2rem 1rem;
+  }
+
   .inicio-container h1 {
     font-size: 2.4rem;
   }
@@ -135,25 +205,48 @@ body {
   }
 }
 
+@media screen and (max-width: 480px) {
+  .inicio-container h1 {
+    font-size: 1.8rem;
+  }
+
+  .inicio-container p {
+    font-size: 1rem;
+  }
+
+  .perfil-dropdown-menu {
+    min-width: 120px;
+  }
+
+  .perfil-dropdown-menu a {
+    font-size: 0.8rem;
+  }
+
+  .bem-vindos-item,
+  .formacao-item {
+    max-width: 100%;
+  }
+}
+
 
 /* --- Bem-Vindos Section Styles --- */
 .bem-vindos {
   background-color: #0c1f33;
-  padding: 4rem 2rem;
+  padding: 6rem 1rem 2rem 1rem;
   color: white;
   text-align: center;
 }
 
 .bem-vindos h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
   font-family: 'Inter', sans-serif;
 }
 
 .bem-vindos p {
   font-size: 1.2rem;
   color: #ccc;
-  margin-bottom: 3rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
   font-family: 'Inter', sans-serif;
 }
 
@@ -161,13 +254,15 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  gap: 1rem;
-  padding-bottom: 1rem;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding-bottom: 0.5rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .bem-vindos-item {
   flex: 0 0 auto;
-  width: 350px;
+  width: 280px;
   height: 250px;
   background-size: cover;
   background-position: center;
@@ -198,12 +293,6 @@ body {
   scrollbar-width: none;
 }
 
-body,
-html {
-  background-color: #0c1f33; /* mesma cor que o header */
-}
-
-/* --- Formação Ministerial Section Styles --- */
 /* --- Formação Ministerial Section Styles --- */
 .formacao-ministerial {
   background-color: #0c1f33;
@@ -216,20 +305,20 @@ html {
   font-size: 4rem;
   color: #00ffff;
   animation: bounce 2s infinite;
-  margin-bottom: 2rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
   margin-top: -6rem;
 }
 
 .formacao-ministerial h2 {
-  font-size: 2.5rem;
-  margin-bottom: 1rem;
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
   font-family: 'Inter', sans-serif;
 }
 
 .formacao-ministerial p {
   font-size: 1.2rem;
   color: #ccc;
-  margin-bottom: 3rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
   font-family: 'Inter', sans-serif;
 }
 
@@ -237,10 +326,11 @@ html {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  gap: 3rem;
-  padding: 0 4rem;
-  padding-bottom: 1rem;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  padding: 0 1rem;
+  padding-bottom: clamp(0.75rem, 2vw, 1.5rem);
   margin-top: 3rem; /* added this line */
+  flex-wrap: wrap;
 }
 
 .formacao-container::-webkit-scrollbar {
@@ -269,6 +359,7 @@ html {
   font-size: 1.2rem;
   font-weight: bold;
   text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
+  max-width: 100%;
 }
 
 .formacao-item:hover {
@@ -297,7 +388,7 @@ html {
 .perfil-menu {
   position: relative;
   display: inline-block;
-  margin-left: 1.5rem;
+  margin-left: clamp(0.75rem, 2vw, 1.5rem);
   text-align: center;
 }
 
@@ -378,16 +469,16 @@ html {
 /* Responsividade adicional para tablets */
 @media screen and (max-width: 1024px) {
   .bem-vindos-container {
-    gap: 1.5rem;
+    gap: clamp(0.75rem, 2vw, 1.5rem);
     padding: 0 2rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     overflow-x: auto;
   }
 
   .formacao-container {
-    gap: 1.5rem;
+    gap: clamp(0.75rem, 2vw, 1.5rem);
     padding: 0 2rem;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     overflow-x: auto;
   }
 
@@ -412,7 +503,7 @@ html {
   .header nav {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem;
+    gap: clamp(0.75rem, 2vw, 1.5rem);
     margin-top: 0.5rem;
   }
 
@@ -440,12 +531,27 @@ html {
   }
 
   .inicio-container {
-    padding: 18rem 1rem 2rem 1rem;
+    padding: 10rem 1rem 2rem 1rem;
   }
 }
 
 /* Responsividade para celulares pequenos */
 @media screen and (max-width: 480px) {
+  .inicio-container h3 {
+    font-size: 1.25rem;
+  }
+  .inicio-container p {
+    font-size: 0.9rem;
+  }
+  .custom-modal {
+    padding: 1rem 1.25rem;
+  }
+  .custom-modal h3 {
+    font-size: 1.25rem;
+  }
+  .custom-modal p {
+    font-size: 0.9rem;
+  }
   .inicio-container h1 {
     font-size: 1.8rem;
   }
@@ -528,5 +634,155 @@ html {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* --- Continuar Assistindo Section Styles --- */
+.continuar-assistindo {
+  padding: 3rem 2rem;
+  background-color: #0c1f33;
+  text-align: center;
+}
+
+.continuar-assistindo h2 {
+  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+}
+
+.continuar-card {
+  flex: 0 0 auto;
+  scroll-snap-align: start;
+  width: 320px;
+  height: 180px;
+  margin: 0 auto;
+  background-size: cover;
+  background-position: center;
+  border-radius: 10px;
+  position: relative;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.continuar-card:hover {
+  transform: scale(1.03);
+}
+
+.continuar-overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.4);
+  color: white;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  border-radius: 10px;
+  padding: 1rem;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .continuar-card {
+    width: 90%;
+    height: auto;
+    aspect-ratio: 16/9;
+  }
+
+  .continuar-assistindo h2 {
+    font-size: 2rem;
+  }
+
+  .continuar-overlay {
+    font-size: 0.9rem;
+    padding: 0.8rem;
+  }
+}
+
+.continuar-container {
+  display: flex;
+  flex-direction: row;
+  gap: clamp(0.75rem, 2vw, 1.5rem);
+  overflow-x: auto;
+  padding: 0 1rem;
+  margin-top: clamp(0.75rem, 2vw, 1.5rem);
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  flex-wrap: nowrap;
+  justify-content: center;
+  scroll-padding-left: 1rem;
+  max-width: 100%;
+  justify-content: center;
+}
+
+@media screen and (max-width: 768px) {
+  .continuar-container {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+    justify-content: flex-start;
+  }
+
+  .continuar-card {
+    flex: 0 0 auto;
+  }
+}
+
+.continuar-container::-webkit-scrollbar {
+  display: none;
+}
+.continuar-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.continuar-seta {
+  text-align: center;
+  margin-bottom: -1.5rem;
+  font-size: 4rem;
+  color: #00ffff;
+  animation: bounce 2s infinite;
+}
+
+/* New carousel styles for Continuar Assistindo section */
+.carousel-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+.arrow {
+  background: none;
+  border: none;
+  color: #00ffff;
+  font-size: 3rem;
+  cursor: pointer;
+  z-index: 2;
+  padding: 0 0.5rem;
+  transition: transform 0.2s ease;
+}
+
+.arrow:hover {
+  transform: scale(1.2);
+}
+
+.arrow.left {
+  position: absolute;
+  left: 0;
+}
+
+.arrow.right {
+  position: absolute;
+  right: 0;
+}
+
+@media screen and (max-width: 768px) {
+  .arrow {
+    font-size: 2.5rem;
   }
 }

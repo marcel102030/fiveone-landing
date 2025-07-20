@@ -93,10 +93,16 @@ const StreamerMestre = () => {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [lastWatched, setLastWatched] = useState<number | null>(null);
   const [completedVideos, setCompletedVideos] = useState<number[]>([]);
   const [isModuloAberto, setIsModuloAberto] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const savedProgress = localStorage.getItem('progress_mestre_aula_01');
+    if (savedProgress) setLastWatched(Number(savedProgress));
+  }, []);
 
   useEffect(() => {
     const resizeSidebar = () => {
@@ -113,6 +119,41 @@ const StreamerMestre = () => {
       window.removeEventListener('resize', resizeSidebar);
     };
   }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const iframe = videoRef.current?.querySelector('iframe');
+      if (iframe) {
+        // Attempt to get current time from the iframe's contentWindow if same-origin (likely not possible)
+        // So for Vimeo/YouTube, we would need to use their APIs, but since it's not set up, we'll skip direct time reading.
+        // Instead, as a workaround, we can save a dummy progress or assume the video is being watched when the iframe is present.
+
+        // For demonstration, save a dummy progress of 1 (or you can implement API integration)
+        // But here, we just store that user has started watching.
+        localStorage.setItem('progress_mestre_aula_01', '1');
+        localStorage.setItem('has_mestre_progress', 'true');
+        const currentVideoData = {
+          title: currentVideo.title,
+          thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_apostololicos.png',
+          url: currentVideo.url
+        };
+        const existingWatched = JSON.parse(localStorage.getItem('videos_assistidos') || '[]');
+
+        // Remove duplicatas com base na URL
+        const filteredWatched = existingWatched.filter((video: any) => video.url !== currentVideoData.url);
+
+        // Adiciona o vídeo atual ao início da lista
+        const updatedWatched = [currentVideoData, ...filteredWatched];
+
+        // Limita a lista a no máximo 10 vídeos
+        const limitedWatched = updatedWatched.slice(0, 10);
+
+        localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+      }
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [currentIndex]);
 
   const handleMarkAsCompleted = () => {
     if (!completedVideos.includes(currentIndex)) {
