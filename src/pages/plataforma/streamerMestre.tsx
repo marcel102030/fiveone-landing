@@ -8,10 +8,12 @@ const StreamerMestre = () => {
       url: 'https://player.vimeo.com/video/1100734000',
       title: 'Aula 01 – Introdução à História da Igreja',
       thumbnail: '/assets/images/Introducao_historia_igreja.png',
+      pdfUrl: '/assets/pdfs/aula01.pdf',
     },
     {
       url: 'https://www.youtube.com/embed/XQEGw923yD0',
       title: 'Aula 02 – A Igreja Primitiva',
+      pdfUrl: '/assets/pdfs/aula02.pdf',
     },
     {
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
@@ -253,28 +255,44 @@ const StreamerMestre = () => {
                     allowFullScreen
                   />
                 </div>
-                <div className="next-button-container">
-                  <div className="button-group-center">
-                    {currentIndex > 0 && (
-                      <button className="prev-lesson-button" onClick={handlePrevious}>
-                        Aula Anterior
-                      </button>
-                    )}
-                    {currentIndex < videoList.length - 1 && (
-                      <button className="next-lesson-button" onClick={handleNext}>
-                        Próxima Aula
-                      </button>
-                    )}
-                  </div>
-                  {!completedVideos.includes(currentIndex) ? (
-                    <button className="complete-lesson-button" onClick={handleMarkAsCompleted}>
-                      Marcar como Concluído
-                    </button>
-                  ) : (
-                    <div className="completed-indicator">
-                      Aula Concluída
+                <div className="button-wrapper">
+                  <div className="button-area">
+                    <div className="button-group-row">
+                      {currentVideo.pdfUrl && (
+                        <div className="left-button-wrapper">
+                          <button
+                            className="lesson-button pdf-view-button"
+                            onClick={() => window.open(currentVideo.pdfUrl, '_blank')}
+                          >
+                            Baixar PDF da Aula
+                          </button>
+                        </div>
+                      )}
+
+                      <div className="center-buttons-wrapper">
+                        {currentIndex > 0 && (
+                          <button className="lesson-button prev-lesson-button" onClick={handlePrevious}>
+                            Anterior
+                          </button>
+                        )}
+                        {currentIndex < videoList.length - 1 && (
+                          <button className="lesson-button next-lesson-button" onClick={handleNext}>
+                            Próxima
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="right-button-wrapper">
+                        {!completedVideos.includes(currentIndex) ? (
+                          <button className="lesson-button complete-lesson-button" onClick={handleMarkAsCompleted}>
+                            Concluir
+                          </button>
+                        ) : (
+                          <div className="completed-indicator">Concluída</div>
+                        )}
+                      </div>
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
               <div className="video-sidebar" ref={sidebarRef}>

@@ -26,7 +26,7 @@
   .streamer-content {
     display: flex;
     flex-direction: row;
-    gap: 2rem;
+    gap: 1.5rem;
     align-items: flex-start;
     justify-content: center;
     width: 100%;
@@ -247,7 +247,7 @@
   
   .video-container iframe {
     width: 100%;
-    max-width: 960px;
+    max-width: 100%;
     aspect-ratio: 16 / 9;
     border: none;
     border-radius: 10px;
@@ -280,19 +280,31 @@
   
   .button-wrapper {
     display: flex;
-    justify-content: space-between;
+    justify-content: center;
     align-items: center;
-    max-width: 960px;
+    gap: 1rem;
+    flex-wrap: wrap;
     width: 100%;
     margin-top: 1rem;
     padding: 0 1rem;
   }
 
+.button-wrapper .pdf-view-button {
+  margin-top: 0.3rem;
+  margin-left: -1rem;
+  position: relative;
+}
+
+  .pdf-view-button {
+    margin-top: 1rem;
+    align-self: flex-start;
+  }
+
   .button-group-center {
     display: flex;
+    justify-content: center;
     gap: 1rem;
-    margin: 0 auto;
-    margin-left: 260px;
+    width: 100%;
   }
 
   .complete-lesson-button {
@@ -354,11 +366,12 @@
   flex-direction: row;
   justify-content: center;
   align-items: flex-start;
-  gap: 2rem;
+  gap: 1.5rem;
   max-width: 1200px;
   margin: 2rem auto 0 auto;
-  padding: 0 2rem;
+  padding: 0 5vw;
   width: 100%;
+  flex-wrap: wrap;
 }
 
 .sidebar-title {
@@ -554,12 +567,12 @@
 .modulos-container {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 2rem;
+  gap: 1.5rem;
   max-width: 1300px;
   margin: 2rem auto;
   align-items: flex-start;
   width: 100%;
-  padding-left: 2rem;
+  padding-left: 5vw;
 }
 
 @media (max-width: 1024px) {
@@ -590,4 +603,173 @@
 
 .aula-card {
   position: relative;
+}
+
+.pdf-view-button {
+  background: linear-gradient(135deg, #e53935, #b71c1c);
+  color: #ffffff;
+  padding: 0.7rem 1.6rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 1rem;
+  box-shadow: 0 4px 12px rgba(255, 87, 34, 0.5);
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.pdf-view-button:hover {
+  background: linear-gradient(135deg, #c62828, #8e0000);
+  transform: translateY(-2px);
+}
+
+/* Added button layout styles */
+.button-layout {
+  display: flex;
+  justify-content: space-evenly;
+  align-items: center;
+  flex-wrap: nowrap;
+  width: 100%;
+  margin-top: 2rem;
+  padding: 0 2rem;
+  position: relative;
+  gap: 1rem;
+}
+
+.button-left,
+.button-center,
+.button-right {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.button-left {
+  justify-content: flex-start;
+}
+
+.button-center {
+  justify-content: center;
+  position: static;
+  transform: none;
+}
+
+.button-right {
+  justify-content: flex-end;
+  padding-right: 6.5rem;
+  margin-right: 3rem; /* Ajuste adicional para mover o botão Concluir ainda mais à direita */
+}
+
+@media (max-width: 768px) {
+  .button-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .button-left,
+  .button-center,
+  .button-right {
+    position: static;
+    transform: none;
+    justify-content: center;
+    padding: 0;
+  }
+}
+
+/* Added or replaced .button-group-row */
+.button-group-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+/* Added new button wrapper classes */
+.left-button-wrapper,
+.center-buttons-wrapper,
+.right-button-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.left-button-wrapper {
+  justify-content: flex-start;
+}
+
+.center-buttons-wrapper {
+  justify-content: center;
+  gap: 12px;
+}
+
+.right-button-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  flex: 1;
+  margin-right: -1.3rem; /* Ajuste adicional para mover o botão Concluir ainda mais à direita */
+}
+
+.button-wrapper,
+.button-area {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .button-layout {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .button-left, .button-center, .button-right {
+    width: 100%;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .streamer-titulo {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .button-wrapper {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .video-sidebar {
+    width: 100%;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+
+  .sidebar-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .sidebar-video-info {
+    width: 100%;
+  }
+
+  .sidebar-video-title {
+    font-size: 0.75rem;
+    text-align: left;
+  }
+
+  .aula-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .pdf-view-button {
+    width: 100%;
+    justify-content: center;
+  }
 }
