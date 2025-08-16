@@ -2269,3 +2269,36 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+/* -------- Linha divisória com texto centralizado -------- */
+.section-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 3rem 0 2rem;
+  color: #7f8fa6;
+  font-size: 0.85rem;
+  letter-spacing: 1px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid rgba(127, 143, 166, 0.4);
+  margin: 0 1rem;
+}
+.separator-line {
+  border: none;
+  border-top: 1px solid #4ee1c1;
+  margin: 40px auto;
+  width: 60%;
+  opacity: 0.4;
+}
+
+.divider-line-only {
+  width: 80%;
+  height: 1px;
+  background-color: #2ce1c2;
+  opacity: 0.3;
+  margin: 40px auto;
+}

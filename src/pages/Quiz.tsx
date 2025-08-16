@@ -23,6 +23,8 @@ import { generatePDF } from "../utils/pdfGenerators/mainPdfGenerator";
 import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
 
 import "./Quiz.css";
+import TrainingFormats from "../components/TrainingFormats";
+import "../components/TrainingFormats.css";
 
 declare global {
   interface Window {
@@ -401,6 +403,9 @@ const Quiz = () => {
             </button>
           </div>
         </div>
+        {/* ===== Formatos de Treinamento (Cards) ===== */}
+        <div className="divider-line-only"></div>
+        <TrainingFormats />
       </section>
     );
   }

@@ -1,0 +1,269 @@
+.training-cards-section {
+  margin: 4rem auto 0;
+  padding: 2.5rem 1rem 3rem;
+  max-width: 1350px;
+  color: #e6f7f2;
+}
+.training-cards-section {
+  margin: 4rem auto 0;
+  padding: 2.5rem 1rem 3rem;
+  max-width: 1350px;
+  color: #e6f7f2;
+}
+
+.training-cards-section h2 {
+  text-align: center;
+  font-size: 2rem;
+  margin-bottom: 0.75rem;
+  color: #7ff7da;
+}
+
+.training-intro {
+  text-align: center;
+  max-width: 780px;
+  margin: 0 auto 2rem;
+  margin-bottom: 4.5rem;
+  color: #cfe9e4;
+}
+
+.cards-grid {
+  display: grid;
+  gap: 1.25rem;
+  grid-template-columns: repeat(12, 1fr);
+}
+.cards-grid {
+  align-items: stretch; /* força altura igual */
+}
+
+.card {
+  grid-column: span 12;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 1.5rem 1.5rem 1.25rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.15);
+  transition: transform .2s ease, box-shadow .2s ease;
+  display: flex;               /* layout vertical */
+  flex-direction: column;      /* conteúdo em coluna */
+  min-height: 540px;           /* altura mínima para reduzir saltos */
+}
+
+.card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(0,0,0,0.2);
+}
+.card * {
+  line-height: 1.55;
+}
+
+.card-featured {
+  border-color: #32f2cf;
+  box-shadow: 0 10px 26px rgba(50,242,207,0.15);
+}
+.card-featured .btn-outline {
+  border-width: 2px;
+}
+
+.card-head {
+  display: flex;
+  align-items: center;
+  gap: .75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  text-align: center;
+}
+
+.card-head h3 {
+  margin: 0;
+  font-size: 1.35rem;
+  font-weight: 700;
+}
+
+.card-sub {
+  margin: 0;
+  opacity: .85;
+  font-size: 1rem;
+}
+
+.card-desc,
+.card-sub,
+.card-list li {
+  text-align: justify;
+  text-justify: inter-word;
+}
+
+.badge {
+  font-size: .8rem;
+  padding: .28rem .6rem;
+  border-radius: 999px;
+  background: #163c3a;
+  border: 1px solid #2ee6c9;
+  color: #aaf7ea;
+}
+
+.card-desc {
+  margin: 1rem 0 1.25rem;
+  color: #d7eeea;
+  font-size: 1rem;
+}
+
+.card-list {
+  margin: 0 0 1rem 0;
+  padding-left: 1.1rem;
+  list-style: disc;
+}
+
+
+.card-list li {
+  margin: .4rem 0;
+  font-size: .98rem;
+}
+
+/* limita a largura útil do texto dentro do card */
+.card p,
+.card ul {
+  max-width: 62ch;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* melhora o justify em PT-BR */
+.card-desc,
+.card-sub,
+.card-list li {
+  text-align: justify;
+  text-justify: inter-word;
+  hyphens: auto;
+  overflow-wrap: anywhere;
+}
+
+.card-list {
+  padding-left: 1.25rem;
+}
+
+.card-list li {
+  font-size: 1.05rem;
+  line-height: 1.65;
+  margin: .5rem 0;
+}
+
+.card-head h3 {
+  text-wrap: balance;
+}
+
+.card-footer {
+  display: flex;
+  gap: .5rem;
+  flex-wrap: wrap;
+  margin-top: auto; /* empurra o botão para o rodapé do card */
+}
+
+.card-footer .btn {
+  width: 100%;
+  text-align: center;
+  max-width: 320px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.btn {
+  display: inline-block;
+  text-decoration: none;
+  padding: .65rem 1rem;
+  border-radius: 10px;
+  background: #32f2cf;
+  color: #003f2d;
+  font-weight: 700;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 2px solid #32f2cf;
+  color: #32f2cf;
+}
+
+.btn.ghost {
+  background: transparent;
+  border: 1px dashed #32f2cf;
+  color: #aaf7ea;
+}
+
+/* melhora espaçamento vertical em telas grandes */
+@media (min-width: 860px) {
+  .training-cards-section { padding-bottom: 4rem; }
+}
+
+@media (min-width: 640px) {
+  .card {
+    grid-column: span 6;
+  }
+}
+
+@media (min-width: 980px) {
+  .card {
+    grid-column: span 3;
+  }
+  .card { min-height: 590px; }
+}
+
+.compare {
+  margin-top: 2rem;
+  margin-bottom: 2.5rem;
+  text-align: center;
+  background: rgba(255,255,255,0.02);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 1.25rem 1rem 1.75rem;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  max-width: 580px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.compare h4 {
+  margin: 0 0 1rem;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #aaf7ea;
+}
+
+.compare .btn {
+  padding: .65rem 1.1rem;
+  font-size: .95rem;
+  border-radius: 10px;
+  transition: background-color .2s ease, transform .2s ease;
+  margin-top: 1rem;
+}
+
+.compare .btn:hover,
+.compare .btn:focus {
+  background-color: #32f2cf;
+  color: #003f2d;
+  transform: translateY(-2px);
+}
+@media (max-width: 640px) {
+  .training-cards-section {
+    padding: 2rem 1rem;
+  }
+
+  .cards-grid {
+    grid-template-columns: 1fr; /* Um card por linha */
+  }
+
+  .card {
+    grid-column: span 12;
+    min-height: auto;
+    padding: 1.25rem 1rem;
+  }
+
+  .card-footer .btn {
+    max-width: 100%;
+  }
+
+  .compare {
+    padding: 1rem;
+    font-size: 0.9rem;
+  }
+}
