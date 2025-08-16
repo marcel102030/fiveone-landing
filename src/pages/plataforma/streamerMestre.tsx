@@ -93,16 +93,11 @@ const StreamerMestre = () => {
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [lastWatched, setLastWatched] = useState<number | null>(null);
   const [completedVideos, setCompletedVideos] = useState<number[]>([]);
   const [isModuloAberto, setIsModuloAberto] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    const savedProgress = localStorage.getItem('progress_mestre_aula_01');
-    if (savedProgress) setLastWatched(Number(savedProgress));
-  }, []);
 
   useEffect(() => {
     const resizeSidebar = () => {
