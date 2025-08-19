@@ -1,5 +1,5 @@
 .igreja-container {
-  max-width: 1000px;
+  max-width: 1400px;
   margin: 0 auto;
   padding: 4rem 2rem;
   background-color: #0d1b2a;
@@ -7,6 +7,12 @@
   font-family: 'Helvetica Neue', sans-serif;
   border-radius: 12px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 768px) {
+  .igreja-container {
+    padding: 2rem 1rem;
+  }
 }
 
 .igreja-header {
@@ -433,4 +439,13 @@ color: #ffffff;
   font-size: 1rem;
   color: #d1d5db;
   line-height: 1.5;
+}
+
+.rede-container-limitado {
+  max-width: 1000px;
+  margin: 3rem auto;
+  padding: 2rem;
+  background-color: #12263a;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
