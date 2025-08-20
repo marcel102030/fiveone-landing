@@ -7,9 +7,9 @@ import React from 'react';
 // import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia3.jpg';
 import imagemTopo from '../assets/images/Comunhão de pessoas lendo a biblia4.jpg';
 import encontro1 from '../assets/images/encontro1.jpg';
-import encontro2 from '../assets/images/encontro1.jpg';
+import encontro2 from '../assets/images/encontro2.png';
 import encontro3 from '../assets/images/encontro1.jpg';
-import encontro4 from '../assets/images/encontro1.jpg';
+import encontro4 from '../assets/images/encontro4.jpg';
 import './igrejaNasCasas.css';
 
 const IgrejaNasCasas: React.FC = () => {
