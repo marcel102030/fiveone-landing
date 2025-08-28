@@ -1,3 +1,12 @@
+function arrayBufferToBase64(buffer: ArrayBuffer): string {
+  let binary = "";
+  const bytes = new Uint8Array(buffer);
+  const chunkSize = 0x8000; // processa em blocos para evitar stack overflow
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunkSize));
+  }
+  return btoa(binary);
+}
 import autoTable from 'jspdf-autotable';
 import jsPDF from 'jspdf';
 import type { jsPDF as jsPDFType } from 'jspdf';
@@ -355,9 +364,7 @@ export async function generatePDF(
   await renderHeader(doc, name, date, domPrincipal);
 
   // Adicionar imagem 'meuPerfilMinisterial' na primeira página (ajuste de tamanho e posição como no PDF antigo)
-  const perfilImg = new Image();
-  perfilImg.src = meuPerfilMinisterial;
-  doc.addImage(perfilImg, 'PNG', 20, 70, 170, 210); // Y alterado de 110 para 70
+  await loadImageAndAdd(doc, meuPerfilMinisterial, 'PNG', 20, 70, 170, 210);
 
   doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
@@ -403,9 +410,9 @@ export async function generatePDF(
     .replace(/[\u0300-\u036f\s]/g, '');
   const filename = `${nomeArquivo}.pdf`;
 
-  // Gera base64 (sem prefixo data:)
-  const dataUriString = doc.output('datauristring');
-  const base64 = (dataUriString.split('base64,')[1] || '').trim();
+  // Gera base64 a partir de ArrayBuffer (mais robusto)
+  const arrayBuffer = doc.output('arraybuffer');
+  const base64 = arrayBufferToBase64(arrayBuffer as ArrayBuffer);
 
   // Mantém o download para o usuário
   doc.save(filename);
