@@ -539,17 +539,60 @@ const Quiz = () => {
                 if (!Object.values(hasErrors).some(Boolean)) {
                   setUserInfo((prev) => ({ ...prev, submitted: true }));
 
-                  // Passo 3: envia e-mail automaticamente após o usuário enviar Nome/Email/Telefone
-                  const scoresForEmail = computeScoresForEmail(categoryScores);
-                  void sendResultsEmail({
-                    name: userInfo.name,
-                    email: userInfo.email,
-                    phone: userInfo.phone,
-                    scores: scoresForEmail,
-                    // Observação: o PDF real será integrado no Passo 4; por ora enviamos um base64 simples
-                    pdfBase64: undefined,
-                    filename: "resultado.pdf",
-                  });
+                  // Passo 4: gerar PDF real e enviar por e-mail (mesma lógica do handleDownloadPDF)
+                  (async () => {
+                    try {
+                      const domNameToKey: Record<string, string> = {
+                        "Apóstolo": "Apostólico",
+                        "Profeta": "Profeta",
+                        "Evangelista": "Evangelístico",
+                        "Pastor": "Pastor",
+                        "Mestre": "Mestre",
+                      };
+
+                      const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
+
+                      const sortedScores = Object.entries(categoryScores)
+                        .map(([category, score]) => {
+                          const metadata = categoryMetadata.find((c) => c.id === category);
+                          const safeScore = totalScore > 0 ? (score / totalScore) * 100 : 0;
+                          if (!metadata || isNaN(safeScore)) return null;
+                          return { categoryEnum: category as CategoryEnum, score: safeScore, metadata };
+                        })
+                        .filter((e): e is NonNullable<typeof e> => e !== null)
+                        .sort((a, b) => b.score - a.score);
+
+                      if (sortedScores.length === 0) {
+                        console.warn("Não foi possível calcular o Dom principal para envio por e-mail.");
+                      } else {
+                        const domPrincipal = domNameToKey[sortedScores[0].metadata.name] ?? "Apostólico";
+                        const percentuaisPdf = sortedScores.map((s) => ({
+                          dom: domNameToKey[s.metadata.name] ?? s.metadata.name,
+                          valor: s.score,
+                        }));
+
+                        const hoje = new Date().toLocaleDateString("pt-BR");
+                        const { base64, filename } = await generatePDF(
+                          userInfo.name,
+                          hoje,
+                          percentuaisPdf,
+                          domPrincipal
+                        );
+
+                        const scoresForEmail = computeScoresForEmail(categoryScores);
+                        void sendResultsEmail({
+                          name: userInfo.name,
+                          email: userInfo.email,
+                          phone: userInfo.phone,
+                          scores: scoresForEmail,
+                          pdfBase64: base64,   // PDF real
+                          filename,            // Nome correto: Resultado_FiveOne_#.pdf
+                        });
+                      }
+                    } catch (err) {
+                      console.error("Falha ao gerar/enviar PDF:", err);
+                    }
+                  })();
 
                   if (typeof gtag === "function") {
                     gtag("event", "quiz_form_submitted", {
