@@ -1,3 +1,7 @@
+import autoTable from 'jspdf-autotable';
+import jsPDF from 'jspdf';
+import type { jsPDF as jsPDFType } from 'jspdf';
+
 // Helper para carregar imagem e adicionar ao PDF
 export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG' | 'JPEG', x: number, y: number, w: number, h: number) {
   return new Promise<void>((resolve, reject) => {
@@ -10,9 +14,6 @@ export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG'
     img.onerror = reject;
   });
 }
-import autoTable from 'jspdf-autotable';
-import jsPDF from 'jspdf';
-import type { jsPDF as jsPDFType } from 'jspdf';
 
 
 
@@ -257,7 +258,7 @@ export async function renderResumoDosDons(doc: jsPDFType, percentuais: { dom: st
 
   // Tabela de percentuais
   const tableData = percentuais.map(p => [p.dom, `${p.valor.toFixed(1)}%`]);
-  await autoTable(doc, {
+  autoTable(doc, {
     head: [['Dom', 'Percentual']],
     body: tableData,
     startY: resumoTitleY + 6,  // Adicionado espaçamento abaixo do título
@@ -339,7 +340,14 @@ Portanto, este relatório é muito mais do que informação. Ele é um convite p
 
 import meuPerfilMinisterial from '/assets/images/PerfilMinisterial3.png';
 
-export async function generatePDF(name: string, date: string, percentuais: { dom: string; valor: number }[], domPrincipal: string) {
+export type GeneratePdfResult = { base64: string; filename: string };
+
+export async function generatePDF(
+  name: string,
+  date: string,
+  percentuais: { dom: string; valor: number }[],
+  domPrincipal: string
+): Promise<GeneratePdfResult> {
   const doc = new jsPDF();
 
   aplicarFundo(doc);
@@ -354,11 +362,11 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
   doc.setTextColor(15, 38, 50);
-  doc.text('Meu Perfil Ministerial', 105, 95, { align: 'center' });  // Y alterado de 85 para 95
+  doc.text('Meu Perfil Ministerial', 105, 95, { align: 'center' }); // Y alterado de 85 para 95
   // Linha horizontal abaixo do título "Meu Perfil Ministerial"
   doc.setDrawColor(15, 38, 50); // Cor semelhante ao título
   doc.setLineWidth(1.5);
-  doc.line(60, 100, 150, 100);  // Y alterado de 90 para 100
+  doc.line(60, 100, 150, 100); // Y alterado de 90 para 100
 
   doc.addPage();
   await renderIntroducao(doc);
@@ -390,11 +398,17 @@ export async function generatePDF(name: string, date: string, percentuais: { dom
   await renderResumoDosDons(doc, percentuais);
   await renderRodape(doc);
 
-  console.log('Dom recebido:', domPrincipal);
-  console.log('Salvando PDF agora...');
-  const nomeArquivo = `Resultado_FiveOne_${domPrincipal}`.normalize('NFD').replace(/[\u0300-\u036f\s]/g, '');
-  await new Promise<void>((resolve) => {
-    doc.save(`${nomeArquivo}.pdf`);
-    resolve();
-  });
+  const nomeArquivo = `Resultado_FiveOne_${domPrincipal}`
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f\s]/g, '');
+  const filename = `${nomeArquivo}.pdf`;
+
+  // Gera base64 (sem prefixo data:)
+  const dataUriString = doc.output('datauristring');
+  const base64 = (dataUriString.split('base64,')[1] || '').trim();
+
+  // Mantém o download para o usuário
+  doc.save(filename);
+
+  return { base64, filename };
 }

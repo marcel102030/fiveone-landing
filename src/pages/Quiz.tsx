@@ -32,6 +32,55 @@ declare global {
   }
 }
 
+// === Helpers (Passo 3) ===
+interface EmailScoreItem { category: string; score: number }
+
+async function sendResultsEmail(
+  payload: {
+    name: string;
+    email: string;
+    phone: string;
+    scores: EmailScoreItem[];
+    pdfBase64?: string;
+    filename?: string;
+  }
+) {
+  try {
+    const res = await fetch("/api/send-quiz", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: payload.name,
+        email: payload.email,
+        phone: payload.phone,
+        scores: payload.scores,
+        pdf: {
+          filename: payload.filename || "resultado.pdf",
+          // Temporário: se não houver PDF real ainda, envia um base64 simples
+          base64: payload.pdfBase64 || "SGVsbG8gV29ybGQ=",
+        },
+      }),
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      console.error("/api/send-quiz error:", data);
+      return { ok: false, error: data } as const;
+    }
+    return { ok: true, id: data?.id } as const;
+  } catch (e) {
+    console.error("sendResultsEmail exception:", e);
+    return { ok: false, error: e } as const;
+  }
+}
+
+function computeScoresForEmail(categoryScores: Record<CategoryEnum, number>): EmailScoreItem[] {
+  const total = Object.values(categoryScores).reduce((s, v) => s + v, 0);
+  return Object.entries(categoryScores)
+    .map(([cat, val]) => ({ category: String(cat), score: total > 0 ? Math.round((val / total) * 100) : 0 }))
+    .sort((a, b) => b.score - a.score);
+}
+
 const gtag = window.gtag;
 
 
@@ -489,6 +538,18 @@ const Quiz = () => {
 
                 if (!Object.values(hasErrors).some(Boolean)) {
                   setUserInfo((prev) => ({ ...prev, submitted: true }));
+
+                  // Passo 3: envia e-mail automaticamente após o usuário enviar Nome/Email/Telefone
+                  const scoresForEmail = computeScoresForEmail(categoryScores);
+                  void sendResultsEmail({
+                    name: userInfo.name,
+                    email: userInfo.email,
+                    phone: userInfo.phone,
+                    scores: scoresForEmail,
+                    // Observação: o PDF real será integrado no Passo 4; por ora enviamos um base64 simples
+                    pdfBase64: undefined,
+                    filename: "resultado.pdf",
+                  });
 
                   if (typeof gtag === "function") {
                     gtag("event", "quiz_form_submitted", {
