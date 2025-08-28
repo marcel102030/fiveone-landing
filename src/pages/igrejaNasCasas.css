@@ -35,6 +35,57 @@
   line-height: 1.6;
 }
 
+/* === CTAs no topo (header) === */
+.igreja-header .igreja-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 1.1rem;
+  padding: 1rem 1.6rem;
+  font-size: 1.05rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: linear-gradient(180deg, rgba(2,62,138,1) 0%, rgba(2,62,138,0.85) 100%);
+  box-shadow: 0 6px 22px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.08);
+  transition: transform 0.12s ease, box-shadow 0.3s ease, background 0.3s ease, opacity 0.2s ease;
+  text-decoration: none;
+}
+
+.igreja-header .igreja-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 28px rgba(0,0,0,0.32);
+  background: linear-gradient(180deg, rgba(0,119,182,1) 0%, rgba(0,119,182,0.9) 100%);
+}
+
+/* Espaçamento entre os dois botões */
+.igreja-header .igreja-btn + .igreja-btn { 
+  margin-left: 0.75rem; 
+}
+
+/* Diferenciar visualmente o 2º botão ("Participe") como variante outline */
+.igreja-header .igreja-btn:nth-of-type(2) {
+  background: transparent;
+  border: 1.5px solid #84caff;
+  color: #84caff;
+  box-shadow: none;
+}
+.igreja-header .igreja-btn:nth-of-type(2):hover {
+  background: rgba(132,202,255,0.12);
+  border-color: #3a86ff;
+  color: #cfefff;
+}
+
+/* Empilhamento no mobile */
+@media (max-width: 640px) {
+  .igreja-header .igreja-btn {
+    width: 100%;
+  }
+  .igreja-header .igreja-btn + .igreja-btn {
+    margin-left: 0;
+  }
+}
+
 .igreja-section {
   margin-bottom: 2.5rem;
 }

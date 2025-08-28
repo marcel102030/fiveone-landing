@@ -46,6 +46,8 @@ const IgrejaNasCasas: React.FC = () => {
         <img src={imagemTopo} alt="Comunhão de pessoas lendo a Bíblia" className="igreja-imagem-topo" />
         <h1>Rede de Igrejas nas Casas</h1>
         <p>Uma rede missionária de igrejas nas casas, fundamentada em Cristo e alinhada aos cinco dons ministeriais.</p>
+        <a href="#encontre-igreja" className="igreja-btn">Encontre uma Igreja</a>
+        <a href="#participe-rede" className="igreja-btn">Participe</a>
       </header>
       <div className="igreja-layout">
         <div className="rede-container-limitado">
@@ -135,7 +137,7 @@ const IgrejaNasCasas: React.FC = () => {
             </div>
           </section>
 
-          <section className="igreja-section">
+          <section className="igreja-section" id="encontre-igreja">
             <h3 className="igreja-titulo-section">Como Funciona</h3>
             <div className="igreja-texto-container">
               <div className="igreja-card-grid">
@@ -158,7 +160,7 @@ const IgrejaNasCasas: React.FC = () => {
             </div>
           </section>
 
-          <section className="igreja-section">
+          <section className="igreja-section" id="participe-rede">
             <h3 className="igreja-titulo-section">Participe da Rede</h3>
             <div className="igreja-texto-container">
               <div className="igreja-buttons">
