@@ -18,7 +18,11 @@ interface QuizPayload {
   pdf: { filename: string; base64: string };
 }
 
-type Env = { RESEND_API_KEY: string; RESEND_FROM?: string };
+type Env = {
+  RESEND_API_KEY: string;
+  RESEND_FROM?: string;
+  RESEND_REPLY_TO?: string; // novo campo opcional
+};
 export const onRequest = async (
   context: { request: Request; env: Env }
 ): Promise<Response> => {
@@ -82,10 +86,14 @@ export const onRequest = async (
       </div>
     `;
 
-    // 7) Remetente
+    // 7) Remetente (usa variável de ambiente se existir; caso contrário, usa o domínio verificado)
     const fromAddress = env.RESEND_FROM && env.RESEND_FROM.trim().length > 0
       ? env.RESEND_FROM
-      : "onboarding@resend.dev";
+      : "Five One <resultado5ministerios@fiveonemovement.com>";
+    // 7.1) Reply-To (opcional): permite que o destinatário responda para outro endereço
+    const replyTo = env.RESEND_REPLY_TO && env.RESEND_REPLY_TO.trim().length > 0
+      ? env.RESEND_REPLY_TO
+      : "escolafiveone@gmail.com";
 
     // 8) Envio via Resend
     const resendResp = await fetch("https://api.resend.com/emails", {
@@ -97,8 +105,9 @@ export const onRequest = async (
       body: JSON.stringify({
         from: fromAddress, // ex.: "Five One <resultados@fiveone.com.br>"
         to: email,
-        subject: "Seu Resultado – Teste dos 5 Ministérios",
+        subject: "Seu Resultado – Teste dos 5 Ministérios | Five One",
         html,
+        reply_to: replyTo,
         attachments: [
           {
             filename: pdf.filename,
