@@ -2,7 +2,8 @@
 // Cloudflare Pages Function — envia e-mail via Resend com anexo PDF (base64)
 // Atualizações:
 // - Handler unificado `onRequest` com suporte a OPTIONS/GET (CORS e verificação)
-// - Correção TS: evita `req.json<T>()` e faz casting após `await req.json()`
+// - Suporte a anexos múltiplos (empate de dom): `pdfs: [{ filename, base64 }, ...]`
+// - Validação robusta de PDF (JVBER + tamanho mínimo)
 
 const CORS_HEADERS: Record<string, string> = {
   "Access-Control-Allow-Origin": "*",
@@ -15,14 +16,16 @@ interface QuizPayload {
   email: string;
   phone: string;
   scores?: Array<{ category: string; score: number }>;
-  pdf: { filename: string; base64: string };
+  pdf?: { filename: string; base64: string };
+  pdfs?: Array<{ filename: string; base64: string }>;
 }
 
 type Env = {
   RESEND_API_KEY: string;
   RESEND_FROM?: string;
-  RESEND_REPLY_TO?: string; // novo campo opcional
+  RESEND_REPLY_TO?: string; // opcional
 };
+
 export const onRequest = async (
   context: { request: Request; env: Env }
 ): Promise<Response> => {
@@ -59,37 +62,46 @@ export const onRequest = async (
       });
     }
 
-    // 4) Lê e tipa o body (sem usar generic no req.json para evitar TS2347)
+    // 4) Lê e tipa o body
     const body = (await request.json()) as unknown as QuizPayload;
-    const { name, email, phone, scores, pdf } = body;
+    const { name, email, phone, scores, pdf, pdfs } = body;
 
-    // Debug/validação do anexo
-    const base64Len = pdf?.base64 ? pdf.base64.length : 0;
-    const isLikelyPdf = typeof pdf?.base64 === "string" && pdf.base64.startsWith("JVBER"); // assinatura típica de PDF em base64
-    if (base64Len < 2000 || !isLikelyPdf) {
-      // Tamanho muito pequeno ou não parece um PDF; evita enviar lixo para o Resend
-      return new Response(
-        JSON.stringify({
-          error: "Invalid PDF attachment",
-          detail: {
-            reason: !isLikelyPdf ? "attachment does not look like a PDF (missing JVBER header)" : "attachment too small",
-            filename: pdf?.filename,
-            base64_length: base64Len,
-          },
-        }),
-        { status: 422, headers: { "content-type": "application/json", ...CORS_HEADERS } }
-      );
-    }
-
-    // 5) Validação mínima
-    if (!name || !email || !phone || !pdf?.filename || !pdf?.base64) {
+    // 5) Validação mínima de campos
+    if (!name || !email || !phone) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {
         status: 400,
         headers: { "content-type": "application/json", ...CORS_HEADERS },
       });
     }
 
-    // 6) Monta HTML
+    // 6) Normaliza e valida anexos (suporta 1 ou muitos)
+    const items = Array.isArray(pdfs) && pdfs.length > 0 ? pdfs : (pdf ? [pdf] : []);
+    if (items.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "Missing PDF attachment(s)" }),
+        { status: 400, headers: { "content-type": "application/json", ...CORS_HEADERS } }
+      );
+    }
+
+    for (const it of items) {
+      const len = it?.base64 ? it.base64.length : 0;
+      const looksPdf = typeof it?.base64 === "string" && it.base64.startsWith("JVBER");
+      if (len < 2000 || !looksPdf) {
+        return new Response(
+          JSON.stringify({
+            error: "Invalid PDF attachment",
+            detail: {
+              reason: !looksPdf ? "attachment does not look like a PDF (missing JVBER header)" : "attachment too small",
+              filename: it?.filename,
+              base64_length: len,
+            },
+          }),
+          { status: 422, headers: { "content-type": "application/json", ...CORS_HEADERS } }
+        );
+      }
+    }
+
+    // 7) Monta HTML
     const summary =
       (scores ?? []).map((s) => `${s.category}: ${s.score}`).join("<br>") || "Sem pontuações";
 
@@ -104,16 +116,15 @@ export const onRequest = async (
       </div>
     `;
 
-    // 7) Remetente (usa variável de ambiente se existir; caso contrário, usa o domínio verificado)
+    // 8) Remetente e reply-to
     const fromAddress = env.RESEND_FROM && env.RESEND_FROM.trim().length > 0
       ? env.RESEND_FROM
       : "Five One <resultado5ministerios@fiveonemovement.com>";
-    // 7.1) Reply-To (opcional): permite que o destinatário responda para outro endereço
     const replyTo = env.RESEND_REPLY_TO && env.RESEND_REPLY_TO.trim().length > 0
       ? env.RESEND_REPLY_TO
       : "escolafiveone@gmail.com";
 
-    // 8) Envio via Resend
+    // 9) Envio via Resend
     const resendResp = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -121,17 +132,12 @@ export const onRequest = async (
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: fromAddress, // ex.: "Five One <resultados@fiveone.com.br>"
+        from: fromAddress,
         to: email,
         subject: "Seu Resultado – Teste dos 5 Ministérios | Five One",
         html,
         reply_to: replyTo,
-        attachments: [
-          {
-            filename: pdf.filename,
-            content: pdf.base64, // base64 cru
-          },
-        ],
+        attachments: items.map((it) => ({ filename: it.filename, content: it.base64 })),
       }),
     });
 

@@ -43,6 +43,7 @@ async function sendResultsEmail(
     scores: EmailScoreItem[];
     pdfBase64?: string;
     filename?: string;
+    pdfs?: Array<{ filename: string; base64: string }>;
   }
 ) {
   try {
@@ -54,11 +55,12 @@ async function sendResultsEmail(
         email: payload.email,
         phone: payload.phone,
         scores: payload.scores,
-        pdf: {
-          filename: payload.filename || "resultado.pdf",
-          // Temporário: se não houver PDF real ainda, envia um base64 simples
-          base64: payload.pdfBase64 || "SGVsbG8gV29ybGQ=",
-        },
+        ...(payload.pdfs && payload.pdfs.length > 0
+          ? { pdfs: payload.pdfs }
+          : payload.pdfBase64 && payload.filename
+            ? { pdf: { filename: payload.filename, base64: payload.pdfBase64 } }
+            : {}
+        ),
       }),
     });
 
@@ -539,7 +541,7 @@ const Quiz = () => {
                 if (!Object.values(hasErrors).some(Boolean)) {
                   setUserInfo((prev) => ({ ...prev, submitted: true }));
 
-                  // Passo 4: gerar PDF real e enviar por e-mail (mesma lógica do handleDownloadPDF)
+                  // Passo 4: gerar PDF(s) real(is) e enviar por e-mail (suporta empate)
                   (async () => {
                     try {
                       const domNameToKey: Record<string, string> = {
@@ -564,34 +566,44 @@ const Quiz = () => {
 
                       if (sortedScores.length === 0) {
                         console.warn("Não foi possível calcular o Dom principal para envio por e-mail.");
-                      } else {
-                        const domPrincipal = domNameToKey[sortedScores[0].metadata.name] ?? "Apostólico";
-                        const percentuaisPdf = sortedScores.map((s) => ({
-                          dom: domNameToKey[s.metadata.name] ?? s.metadata.name,
-                          valor: s.score,
-                        }));
+                        return;
+                      }
 
-                        const hoje = new Date().toLocaleDateString("pt-BR");
+                      // Lista completa de percentuais para o PDF
+                      const percentuaisPdf = sortedScores.map((s) => ({
+                        dom: domNameToKey[s.metadata.name] ?? s.metadata.name,
+                        valor: s.score,
+                      }));
+
+                      // Detecta empate no maior percentual
+                      const highestScore = sortedScores[0].score;
+                      const tiedDoms = sortedScores.filter((s) => Math.abs(s.score - highestScore) < 0.0001);
+
+                      const hoje = new Date().toLocaleDateString("pt-BR");
+                      const pdfsToSend: Array<{ filename: string; base64: string }> = [];
+
+                      for (const domResult of tiedDoms) {
+                        const mainDom = domNameToKey[domResult.metadata.name] ?? domResult.metadata.name;
                         const { base64, filename } = await generatePDF(
                           userInfo.name,
                           hoje,
                           percentuaisPdf,
-                          domPrincipal,
+                          mainDom,
                           false // não baixar aqui; apenas gerar base64 para envio por e-mail (mobile-safe)
                         );
-
-                        const scoresForEmail = computeScoresForEmail(categoryScores);
-                        void sendResultsEmail({
-                          name: userInfo.name,
-                          email: userInfo.email,
-                          phone: userInfo.phone,
-                          scores: scoresForEmail,
-                          pdfBase64: base64,   // PDF real
-                          filename,            // Nome correto: Resultado_FiveOne_#.pdf
-                        });
+                        pdfsToSend.push({ filename, base64 });
                       }
+
+                      const scoresForEmail = computeScoresForEmail(categoryScores);
+                      void sendResultsEmail({
+                        name: userInfo.name,
+                        email: userInfo.email,
+                        phone: userInfo.phone,
+                        scores: scoresForEmail,
+                        pdfs: pdfsToSend,
+                      });
                     } catch (err) {
-                      console.error("Falha ao gerar/enviar PDF:", err);
+                      console.error("Falha ao gerar/enviar PDF(s):", err);
                     }
                   })();
 
