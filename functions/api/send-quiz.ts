@@ -106,13 +106,40 @@ export const onRequest = async (
       (scores ?? []).map((s) => `${s.category}: ${s.score}`).join("<br>") || "Sem pontuações";
 
     const html = `
-      <div style="font-family: Arial, sans-serif; line-height:1.5;">
-        <h2>Seu resultado do Teste dos 5 Ministérios</h2>
-        <p>Olá, ${escapeHtml(name)}!</p>
-        <p>Segue em anexo o seu PDF com o resultado.</p>
-        <p><strong>Resumo:</strong><br>${summary}</p>
-        <p><em>Telefone informado:</em> ${escapeHtml(phone)}</p>
-        <p>Deus abençoe!<br/>Equipe Five One</p>
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+        <h2 style="text-align:center; color:#4A148C; margin: 0 0 16px;">📊 Seu Resultado do Teste dos 5 Ministérios</h2>
+
+        <p>Olá, <strong>${escapeHtml(name)}</strong>!</p>
+
+        <p>
+          Obrigado por realizar o <strong>Teste dos 5 Ministérios</strong>.
+          Em anexo você encontrará o(s) PDF(s) detalhando seu resultado.
+        </p>
+
+        <h3 style="color:#4A148C; margin-top: 20px;">Resumo das suas pontuações:</h3>
+        <div style="background:#f5f5f5; padding:12px; border-radius:8px; margin-bottom:20px;">
+          ${summary}
+        </div>
+
+        <p style="margin-top:20px;">🙏 Que este resultado te ajude a crescer no seu chamado ministerial.</p>
+
+        <hr style="margin:25px 0; border:none; border-top:1px solid #ddd;" />
+
+        <div style="text-align:center; font-size:14px; color:#555;">
+          <p>
+            Siga a <strong>Five One</strong> para mais conteúdos sobre os 5 Ministérios:<br/>
+            <a href="https://instagram.com/escola_five_one" style="color:#4A148C; text-decoration:none;" target="_blank" rel="noopener noreferrer">
+              📷 Instagram: @escola_five_one
+            </a>
+          </p>
+          <p style="font-size:12px; color:#777;">
+            Este é um e-mail automático. Por favor, não responda diretamente a ele.
+          </p>
+        </div>
+
+        <div style="margin-top:20px; text-align:center; font-size:13px; color:#999;">
+          © 2025 Five One — Todos os direitos reservados
+        </div>
       </div>
     `;
 
