@@ -63,6 +63,24 @@ export const onRequest = async (
     const body = (await request.json()) as unknown as QuizPayload;
     const { name, email, phone, scores, pdf } = body;
 
+    // Debug/validação do anexo
+    const base64Len = pdf?.base64 ? pdf.base64.length : 0;
+    const isLikelyPdf = typeof pdf?.base64 === "string" && pdf.base64.startsWith("JVBER"); // assinatura típica de PDF em base64
+    if (base64Len < 2000 || !isLikelyPdf) {
+      // Tamanho muito pequeno ou não parece um PDF; evita enviar lixo para o Resend
+      return new Response(
+        JSON.stringify({
+          error: "Invalid PDF attachment",
+          detail: {
+            reason: !isLikelyPdf ? "attachment does not look like a PDF (missing JVBER header)" : "attachment too small",
+            filename: pdf?.filename,
+            base64_length: base64Len,
+          },
+        }),
+        { status: 422, headers: { "content-type": "application/json", ...CORS_HEADERS } }
+      );
+    }
+
     // 5) Validação mínima
     if (!name || !email || !phone || !pdf?.filename || !pdf?.base64) {
       return new Response(JSON.stringify({ error: "Missing required fields" }), {

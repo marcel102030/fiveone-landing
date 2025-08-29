@@ -15,6 +15,7 @@ import type { jsPDF as jsPDFType } from 'jspdf';
 export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG' | 'JPEG', x: number, y: number, w: number, h: number) {
   return new Promise<void>((resolve, reject) => {
     const img = new Image();
+    img.crossOrigin = 'anonymous';
     img.src = src;
     img.onload = () => {
       doc.addImage(img, format, x, y, w, h);
@@ -355,9 +356,10 @@ export async function generatePDF(
   name: string,
   date: string,
   percentuais: { dom: string; valor: number }[],
-  domPrincipal: string
+  domPrincipal: string,
+  download: boolean = true
 ): Promise<GeneratePdfResult> {
-  const doc = new jsPDF();
+  const doc = new jsPDF({ compress: true });
 
   aplicarFundo(doc);
   // const maiorPercentual = percentuais.reduce((prev, current) => (current.valor > prev.valor ? current : prev));
@@ -415,7 +417,9 @@ export async function generatePDF(
   const base64 = arrayBufferToBase64(arrayBuffer as ArrayBuffer);
 
   // Mantém o download para o usuário
-  doc.save(filename);
+  if (download) {
+    doc.save(filename);
+  }
 
   return { base64, filename };
 }

@@ -576,7 +576,8 @@ const Quiz = () => {
                           userInfo.name,
                           hoje,
                           percentuaisPdf,
-                          domPrincipal
+                          domPrincipal,
+                          false // não baixar aqui; apenas gerar base64 para envio por e-mail (mobile-safe)
                         );
 
                         const scoresForEmail = computeScoresForEmail(categoryScores);
