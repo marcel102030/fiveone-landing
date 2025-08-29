@@ -132,6 +132,8 @@ const Quiz = () => {
   const [transitioning, setTransitioning] = useState(false);
   const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  const [showEmailInfo, setShowEmailInfo] = useState(false);
+  const [emailInfoLeaving, setEmailInfoLeaving] = useState(false);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
@@ -539,6 +541,7 @@ const Quiz = () => {
                 setFormErrors(hasErrors);
 
                 if (!Object.values(hasErrors).some(Boolean)) {
+                  setShowEmailInfo(true);
                   setUserInfo((prev) => ({ ...prev, submitted: true }));
 
                   // Passo 4: gerar PDF(s) real(is) e enviar por e-mail (suporta empate)
@@ -675,6 +678,30 @@ const Quiz = () => {
     return (
       <>
         {pdfToastBlock}
+        {showEmailInfo && (
+          <div className={`email-info-banner${emailInfoLeaving ? ' leave' : ''}`} aria-live="polite">
+            <span className="icon">✉️</span>
+            <span>
+              Enviamos o seu resultado para <strong>{userInfo.email}</strong>.&nbsp;
+              Verifique a sua <strong>Caixa de Entrada</strong> ou a pasta <strong>Spam/Lixo eletrônico</strong>.
+              O PDF em anexo contém as características do seu Dom ministerial e os percentuais dos 5 dons.
+            </span>
+            <button
+              type="button"
+              onClick={() => {
+                setEmailInfoLeaving(true);
+                setTimeout(() => {
+                  setShowEmailInfo(false);
+                  setEmailInfoLeaving(false);
+                }, 300); // mantém em sincronia com a duração do slideUp no CSS
+              }}
+              aria-label="Fechar aviso"
+              className="ok-btn"
+            >
+              Ok
+            </button>
+          </div>
+        )}
       <section className="Teste-section">
         <div className="content-container" id="quiz-result" ref={pdfRef}>
           <div className="results-header" style={{ marginTop: "6rem" }}>
