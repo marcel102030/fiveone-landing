@@ -128,8 +128,8 @@ export const onRequest = async (
         <div style="text-align:center; font-size:14px; color:#555;">
           <p>
             Siga a <strong>Five One</strong> para mais conteúdos sobre os 5 Ministérios:<br/>
-            <a href="https://instagram.com/escola_five_one" style="color:#4A148C; text-decoration:none;" target="_blank" rel="noopener noreferrer">
-              📷 Instagram: @escola_five_one
+            <a href="https://www.instagram.com/fiveone.oficial/" style="color:#4A148C; text-decoration:none;" target="_blank" rel="noopener noreferrer">
+              📷 Instagram: @fiveone.oficial
             </a>
           </p>
           <p style="font-size:12px; color:#777;">
