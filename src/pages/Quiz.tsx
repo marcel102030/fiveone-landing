@@ -84,6 +84,51 @@ function computeScoresForEmail(categoryScores: Record<CategoryEnum, number>): Em
     .sort((a, b) => b.score - a.score);
 }
 
+// === Helpers para igreja (URL) e envio backend ===
+function getChurchFromURL() {
+  if (typeof window === 'undefined') return { churchId: undefined, churchSlug: undefined };
+
+  const url = new URL(window.location.href);
+
+  // padrão bonito: /c/<slug>
+  const m = url.pathname.match(/^\/c\/([^\/?#]+)/i);
+  const slugFromPath = m ? decodeURIComponent(m[1]) : undefined;
+
+  // alternativas por querystring
+  const slugFromQuery = url.searchParams.get('churchSlug') ?? undefined;
+  const idFromQuery   = url.searchParams.get('church') ?? url.searchParams.get('churchId') ?? undefined;
+
+  return {
+    churchId: idFromQuery || undefined,
+    churchSlug: slugFromPath ?? slugFromQuery,
+  };
+}
+
+async function saveQuizResponseToServer(payload: {
+  churchId?: string;
+  churchSlug?: string;
+  person?: { name?: string; email?: string; phone?: string };
+  scores: Record<string, number>;
+  topDom: string;
+  ties?: string[];
+}) {
+  try {
+    const res = await fetch('/api/quiz-store', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      console.error('quiz-store error:', data);
+    } else {
+      console.log('quiz-store ok:', data);
+    }
+  } catch (err) {
+    console.error('quiz-store exception:', err);
+  }
+}
+
 const gtag = window.gtag;
 
 
@@ -608,6 +653,41 @@ const Quiz = () => {
                       });
                     } catch (err) {
                       console.error("Falha ao gerar/enviar PDF(s):", err);
+                    }
+                  })();
+
+                  // Salva a resposta agregada por igreja (não bloqueia UI)
+                  (() => {
+                    try {
+                      // 1) Calcula percentuais com base no estado atual
+                      const scoresPercent: Record<string, number> = {};
+                      Object.entries(categoryScores).forEach(([key, value]) => {
+                        const pct = Math.round((Number(value) / TOTAL_QUESTIONS) * 100);
+                        scoresPercent[key] = isNaN(pct) ? 0 : pct;
+                      });
+
+                      // 2) Top e empates (tolerância igual à do PDF)
+                      const sorted = Object.entries(scoresPercent).sort((a, b) => b[1] - a[1]);
+                      const topValue = sorted[0]?.[1] ?? 0;
+                      const ties = sorted.filter(([_, v]) => Math.abs(v - topValue) < 0.0001).map(([k]) => k);
+                      const topDom = sorted[0]?.[0] ?? '';
+
+                      // 3) Igreja via URL e dados da pessoa
+                      const churchCtx = getChurchFromURL();
+
+                      void saveQuizResponseToServer({
+                        ...churchCtx, // { churchId?, churchSlug? }
+                        person: {
+                          name: userInfo.name,
+                          email: userInfo.email,
+                          phone: userInfo.phone,
+                        },
+                        scores: scoresPercent,
+                        topDom,
+                        ties,
+                      });
+                    } catch (e) {
+                      console.error('Falha ao enviar resposta agregada:', e);
                     }
                   })();
 
