@@ -9,6 +9,7 @@ import { BsInfoCircleFill } from "react-icons/bs";
 import { FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa";
 
 
+
 import logo from "../assets/images/logo-fiveone-white.png";
 import mestreIcon from "../assets/images/icons/mestre.png";
 import pastorIcon from "../assets/images/icons/pastor.png";
