@@ -88,7 +88,7 @@ function computeScoresForEmail(categoryScores: Record<CategoryEnum, number>): Em
 function getChurchFromURL() {
   if (typeof window === 'undefined') return { churchId: undefined, churchSlug: undefined };
 
-  const { href, pathname, search, hash } = window.location;
+  const { href, pathname, hash } = window.location;
   const url = new URL(href);
 
   let slugFromPath: string | undefined;
