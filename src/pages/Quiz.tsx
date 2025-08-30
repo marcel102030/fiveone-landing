@@ -88,15 +88,34 @@ function computeScoresForEmail(categoryScores: Record<CategoryEnum, number>): Em
 function getChurchFromURL() {
   if (typeof window === 'undefined') return { churchId: undefined, churchSlug: undefined };
 
-  const url = new URL(window.location.href);
+  const { href, pathname, search, hash } = window.location;
+  const url = new URL(href);
 
-  // padrão bonito: /c/<slug>
-  const m = url.pathname.match(/^\/c\/([^\/?#]+)/i);
-  const slugFromPath = m ? decodeURIComponent(m[1]) : undefined;
+  let slugFromPath: string | undefined;
+  let slugFromQuery: string | undefined;
+  let idFromQuery: string | undefined;
 
-  // alternativas por querystring
-  const slugFromQuery = url.searchParams.get('churchSlug') ?? undefined;
-  const idFromQuery   = url.searchParams.get('church') ?? url.searchParams.get('churchId') ?? undefined;
+  // --- Caminho normal (sem hash): /c/<slug> e query ?churchSlug= ...
+  const m = pathname.match(/^\/c\/([^\/?#]+)/i);
+  if (m) slugFromPath = decodeURIComponent(m[1]);
+
+  slugFromQuery = url.searchParams.get('churchSlug') ?? undefined;
+  idFromQuery = url.searchParams.get('church') ?? url.searchParams.get('churchId') ?? undefined;
+
+  // --- Suporte ao HashRouter: hash do tipo "#/teste-dons?churchSlug=..." ou "#/c/<slug>?..."
+  if (!slugFromPath && hash) {
+    const hashStr = hash.startsWith('#') ? hash.slice(1) : hash; // remove '#'
+    const [hashPath, hashQuery] = hashStr.split('?');
+
+    const m2 = hashPath?.match(/^\/c\/([^\/?#]+)/i);
+    if (m2) slugFromPath = decodeURIComponent(m2[1]);
+
+    if (hashQuery) {
+      const params = new URLSearchParams(hashQuery);
+      slugFromQuery = slugFromQuery ?? (params.get('churchSlug') ?? undefined);
+      idFromQuery = idFromQuery ?? (params.get('church') ?? params.get('churchId') ?? undefined);
+    }
+  }
 
   return {
     churchId: idFromQuery || undefined,
