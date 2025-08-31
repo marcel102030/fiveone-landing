@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import "./AdminChurches.css";
 
+const PROD_ORIGIN = "https://fiveonemovement.com";
+
 type Row = {
   id: string;
   slug: string;
@@ -33,23 +35,146 @@ export default function AdminChurches() {
   const [filterCity, setFilterCity] = useState<string>("__ALL__");
   const [filterPart, setFilterPart] = useState<"ALL" | "LOW" | "MED" | "HIGH">("ALL");
 
-  useEffect(() => {
-    let cancel = false;
-    (async () => {
-      try {
-        setLoading(true);
-        const r = await fetch("/api/church-list");
-        const j: ApiOut = await r.json();
-        if (!r.ok || !j.ok) throw new Error(j?.error || `Erro ${r.status}`);
-        if (!cancel) setRows(j.churches || []);
-      } catch (e: any) {
-        if (!cancel) setError(String(e?.message || e));
-      } finally {
-        if (!cancel) setLoading(false);
+  // Modal criar igreja
+  const [showCreate, setShowCreate] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [form, setForm] = useState({
+    name: "",
+    leader_name: "",
+    city: "",
+    expected_members: "" as number | string,
+    notes: ""
+  });
+  // Sucesso na criação (toast com links)
+  const [createSuccess, setCreateSuccess] = useState<
+    | null
+    | {
+        name: string;
+        slug: string;
+        invite_url?: string;
+        report_url?: string;
+        quiz_url?: string;
       }
-    })();
-    return () => { cancel = true; };
+  >(null);
+  const [copied, setCopied] = useState(false);
+  const [copiedRowSlug, setCopiedRowSlug] = useState<string | null>(null);
+  function makeUrlsFromSlug(slug: string) {
+    return {
+      invite_url: `${PROD_ORIGIN}/c/${slug}`,
+      report_url: `${PROD_ORIGIN}/#/relatorio/${slug}`,
+      quiz_url: `${PROD_ORIGIN}/c/${slug}`,
+    };
+  }
+
+  async function copyToClipboard(text: string) {
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        // Fallback para ambientes sem HTTPS
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        ta.style.position = "fixed";
+        ta.style.opacity = "0";
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (e) {
+      alert("Não foi possível copiar o link");
+    }
+  }
+
+  async function loadChurches() {
+    try {
+      setLoading(true);
+      setError(null);
+      const r = await fetch("/api/church-list");
+      const j: ApiOut = await r.json();
+      if (!r.ok || !j.ok) throw new Error(j?.error || `Erro ${r.status}`);
+      setRows(j.churches || []);
+    } catch (e: any) {
+      setError(String(e?.message || e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    loadChurches();
   }, []);
+
+  async function submitCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.name.trim()) {
+      alert("Nome é obrigatório");
+      return;
+    }
+
+    try {
+      setCreating(true);
+      const res = await fetch("/api/church-create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          name: form.name.trim(),
+          leader_name: form.leader_name.trim() || null,
+          city: form.city.trim() || null,
+          expected_members:
+            typeof form.expected_members === "string"
+              ? Number(form.expected_members || 0)
+              : form.expected_members || 0,
+          notes: form.notes?.trim() || null,
+        }),
+      });
+
+      if (!res.ok) {
+        const txt = await res.text().catch(() => "");
+        throw new Error(txt || `Erro ${res.status}`);
+      }
+
+      let payload: any = null;
+      try { payload = await res.json(); } catch {}
+
+      // Tenta extrair slug e URLs do backend; se não vier, cria a partir do nome
+      const slugFromApi = payload?.church?.slug || payload?.slug;
+      const nameFromApi = payload?.church?.name || form.name.trim();
+      let urls = { invite_url: undefined as string | undefined, report_url: undefined as string | undefined, quiz_url: undefined as string | undefined };
+      if (payload?.invite_url || payload?.report_url || payload?.quiz_url) {
+        urls = {
+          invite_url: payload.invite_url,
+          report_url: payload.report_url,
+          quiz_url: payload.quiz_url,
+        };
+      } else if (slugFromApi) {
+        urls = makeUrlsFromSlug(slugFromApi);
+      }
+
+      const slugFinal = slugFromApi || nameFromApi
+        .toLowerCase()
+        .normalize("NFD").replace(/\p{Diacritic}/gu, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/(^-|-$)+/g, "");
+
+      setCreateSuccess({
+        name: nameFromApi,
+        slug: slugFinal,
+        ...urls,
+      });
+
+      setShowCreate(false);
+      setForm({ name: "", leader_name: "", city: "", expected_members: "", notes: "" });
+      await loadChurches();
+    } catch (err: any) {
+      alert(err?.message ?? "Falha ao criar igreja");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   // Lista de cidades distintas para o filtro (inclui "Não informado")
   const cityOptions = Array.from(
@@ -172,6 +297,33 @@ export default function AdminChurches() {
         </div>
       </div>
 
+      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8, marginBottom: 8 }}>
+        <button className="admin-btn" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
+      </div>
+
+      {createSuccess && (
+        <div className="toast-success">
+          <div className="toast-body">
+            <div>
+              <div className="toast-title">Igreja criada com sucesso</div>
+              <div className="toast-sub">{createSuccess.name} (slug: <code>{createSuccess.slug}</code>)</div>
+            </div>
+            <div className="toast-actions">
+              {(createSuccess.slug) && (
+                <button
+                  className="admin-btn"
+                  onClick={() => copyToClipboard(`${PROD_ORIGIN}/c/${createSuccess.slug}`)}
+                  title="Copiar link do teste (5 Ministérios)"
+                >
+                  {copied ? "Copiado!" : "Copiar Link Teste 5 Ministérios"}
+                </button>
+              )}
+              <button className="admin-btn" onClick={() => setCreateSuccess(null)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="admin-search">
         <input
           value={q}
@@ -283,9 +435,22 @@ export default function AdminChurches() {
                         <Link to={r.report_url}>
                           <button className="admin-btn">Relatório</button>
                         </Link>
-                        <a href={r.invite_url}>
-                          <button className="admin-btn">Link convite</button>
-                        </a>
+                        <div className="copy-wrap">
+                          <button
+                            className="admin-btn"
+                            onClick={() => {
+                              copyToClipboard(`${PROD_ORIGIN}/c/${r.slug}`);
+                              setCopiedRowSlug(r.slug);
+                              setTimeout(() => setCopiedRowSlug(null), 1500);
+                            }}
+                            title="Copiar link do teste (5 Ministérios)"
+                          >
+                            Link convite
+                          </button>
+                          {copiedRowSlug === r.slug && (
+                            <span className="copied-tip" role="status" aria-live="polite">✅ copiado</span>
+                          )}
+                        </div>
                         <a href={r.quiz_url}>
                           <button className="admin-btn">Abrir teste</button>
                         </a>
@@ -322,6 +487,78 @@ export default function AdminChurches() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {showCreate && (
+        <div className="modal-backdrop" role="dialog" aria-modal="true">
+          <div className="modal-card">
+            <div className="modal-head">
+              <h3 className="modal-title">Criar igreja</h3>
+              <button className="modal-close" onClick={() => setShowCreate(false)} aria-label="Fechar">×</button>
+            </div>
+
+            <form onSubmit={submitCreate} className="modal-form">
+              <div className="form-row">
+                <label>Nome *</label>
+                <input
+                  className="form-input"
+                  value={form.name}
+                  onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                  placeholder="Ex.: Rede Five One - Centro"
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Líder</label>
+                <input
+                  className="form-input"
+                  value={form.leader_name}
+                  onChange={(e) => setForm((f) => ({ ...f, leader_name: e.target.value }))}
+                  placeholder="Ex.: Marcelo"
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Cidade</label>
+                <input
+                  className="form-input"
+                  value={form.city}
+                  onChange={(e) => setForm((f) => ({ ...f, city: e.target.value }))}
+                  placeholder="Ex.: Campina Grande"
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Membros previstos</label>
+                <input
+                  className="form-input"
+                  type="number"
+                  min={0}
+                  value={form.expected_members}
+                  onChange={(e) => setForm((f) => ({ ...f, expected_members: e.target.value }))}
+                  placeholder="Ex.: 120"
+                />
+              </div>
+
+              <div className="form-row">
+                <label>Observações</label>
+                <textarea
+                  className="form-input"
+                  rows={3}
+                  value={form.notes}
+                  onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))}
+                  placeholder="Opcional"
+                />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="admin-btn" onClick={() => setShowCreate(false)}>Cancelar</button>
+                <button type="submit" className="admin-btn" disabled={creating}>{creating ? "Criando..." : "Criar"}</button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </div>

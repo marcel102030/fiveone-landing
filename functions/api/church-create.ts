@@ -52,13 +52,22 @@ export const onRequestPost = async (ctx: any) => {
     // defina o domínio do seu site nas variáveis do Cloudflare
     const site = (ctx.env.SITE_URL as string) || 'https://seusite.com';
     const inviteUrl = `${site}/c/${data.slug}`;
+    const reportUrl = `${site}/#/relatorio/${data.slug}`;
+    const quizUrl = `${site}/#/c/${data.slug}`;
 
-    return new Response(JSON.stringify({
-      ok: true,
-      id: data.id,
-      slug: data.slug,
-      inviteUrl
-    }), { headers: { 'content-type': 'application/json' } });
+    return new Response(
+      JSON.stringify({
+        ok: true,
+        church: { id: data.id, slug: data.slug, name },
+        slug: data.slug,
+        invite_url: inviteUrl,
+        report_url: reportUrl,
+        quiz_url: quizUrl,
+        // compatibilidade antiga (camelCase)
+        inviteUrl,
+      }),
+      { headers: { 'content-type': 'application/json' } }
+    );
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
   }

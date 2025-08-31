@@ -4,6 +4,7 @@ import {
   Routes,
   useLocation,
   useNavigate,
+  useSearchParams,
 } from "react-router-dom";
 
 import BlogList from "./pages/BlogList";
@@ -31,7 +32,10 @@ import ScrollToTopOnMount from "./components/layout/ScrollToTop/ScrollToTopOnMou
 
 function AppContent() {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+
+  const isInviteTest = location.pathname === "/teste-dons" && searchParams.has("churchSlug");
 
   const handleLogin = () => {
     navigate("/plataforma");
@@ -44,7 +48,8 @@ function AppContent() {
     location.pathname === "/streamer-mestre" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/relatorio") ||
-    location.pathname.startsWith("/r");
+    location.pathname.startsWith("/r") ||
+    isInviteTest;
 
   return (
     <>
@@ -73,7 +78,7 @@ function AppContent() {
           </Routes>
         </main>
         <ScrollToTop />
-        {!hideLayout && location.pathname !== "/teste-dons" && <Footer />}
+        {!hideLayout && !isInviteTest && <Footer />}
       </div>
     </>
   );

@@ -2424,3 +2424,78 @@
     transform: translateY(-16px);
   }
 }
+/* ---------- Church link banner (when quiz is opened via church link) ---------- */
+.church-banner-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: 0.75rem 0 1.25rem;
+}
+
+.church-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 22px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, rgba(100, 255, 218, 0.15), rgba(100, 255, 218, 0.05));
+  color: var(--text-light-slate);
+  border: 1px solid rgba(100, 255, 218, 0.4);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  font-weight: 600;
+  font-size: 1.05rem;
+  animation: fadeIn 0.25s ease-in-out;
+  text-align: center;
+  max-width: 700px;
+  justify-content: center;
+  letter-spacing: 0.5px;
+}
+
+.church-banner .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--mint);
+  display: inline-block;
+  box-shadow: 0 0 0 2px rgba(100,255,218,0.25);
+}
+
+/* Banner slug and strong highlight */
+.church-banner strong {
+  color: var(--mint);
+  font-weight: 700;
+}
+.church-banner .slug {
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(100,255,218,0.12);
+  border: 1px solid rgba(100,255,218,0.22);
+  font-weight: 800;
+  color: var(--mint);
+}
+
+/* Compact on small screens */
+@media (max-width: 640px) {
+  .church-banner-wrapper {
+    padding: 0 12px;
+    margin: 0.5rem 0 1rem;
+  }
+  .church-banner {
+    width: 100%;
+    justify-content: center;
+    line-height: 1.35;
+    padding: 12px 12px;
+    font-size: 0.97rem;
+    border-radius: 12px; /* easier tap target on mobile */
+  }
+  .church-banner .slug {
+    display: inline-block;
+    max-width: 60%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+}

@@ -13,6 +13,7 @@ type Church = {
 
 export const onRequestGet = async (ctx: any) => {
   try {
+    const site = (ctx.env.SITE_URL as string) || new URL(ctx.request.url).origin;
     const admin = createClient(
       ctx.env.SUPABASE_URL as string,
       ctx.env.SUPABASE_SERVICE_ROLE_KEY as string,
@@ -42,9 +43,9 @@ export const onRequestGet = async (ctx: any) => {
     const payload = (churches || []).map((c: Church) => ({
       ...c,
       total_responses: counts.get(c.id) || 0,
-      report_url: `/relatorio/${c.slug}`,
-      invite_url: `/c/${c.slug}`, // link “bonito” para a igreja convidar membros
-      quiz_url: `/#/teste-dons?churchSlug=${c.slug}`, // fallback
+      report_url: `${site}/#/relatorio/${c.slug}`,
+      invite_url: `${site}/c/${c.slug}`,
+      quiz_url: `${site}/#/c/${c.slug}`,
     }));
 
     return new Response(JSON.stringify({ ok: true, churches: payload }), {

@@ -203,9 +203,42 @@ const Quiz = () => {
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
   const pdfRef = useRef<HTMLDivElement>(null);
+  // Detecta se é link personalizado de igreja (esconde cards inferiores)
+  const churchCtx = getChurchFromURL();
+  const isInviteLink = Boolean(churchCtx.churchSlug);
 
   // Intercepta navegação via pushState/popstate (HashRouter-friendly)
   const lastHashRef = useRef(window.location.hash);
+
+  // Info da igreja (para exibir o nome no topo quando for link personalizado)
+  const [churchInfo, setChurchInfo] = useState<{ id?: string; name?: string; slug?: string } | null>(null);
+
+  useEffect(() => {
+    // só busca se for link personalizado
+    if (!isInviteLink && !churchCtx.churchId) return;
+
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/church-list');
+        if (!res.ok) return;
+        const data = await res.json();
+        const rows: any[] = Array.isArray(data?.rows) ? data.rows : (Array.isArray(data) ? data : []);
+        const bySlug = churchCtx.churchSlug
+          ? rows.find((r) => (r?.slug || '').toLowerCase() === String(churchCtx.churchSlug).toLowerCase())
+          : undefined;
+        const byId = !bySlug && churchCtx.churchId
+          ? rows.find((r) => String(r?.id) === String(churchCtx.churchId))
+          : undefined;
+        const found = bySlug || byId || null;
+        if (!aborted) setChurchInfo(found ? { id: found.id, name: found.name, slug: found.slug } : null);
+      } catch (e) {
+        console.warn('Falha ao carregar church-list para banner do quiz:', e);
+      }
+    })();
+
+    return () => { aborted = true; };
+  }, [isInviteLink, churchCtx.churchSlug, churchCtx.churchId]);
 
   useEffect(() => {
     const originalPushState = window.history.pushState;
@@ -439,6 +472,15 @@ const Quiz = () => {
     return (
       <section className="quiz-section">
         <div className="content-container">
+          {(churchCtx.churchSlug || churchCtx.churchId) && (
+            <div className="church-banner-wrapper">
+              <div className="church-banner" role="status" aria-live="polite">
+                <span className="dot" aria-hidden="true" />
+                Teste vinculado à igreja:{' '}
+                <span className="slug">{churchInfo?.name || churchCtx.churchSlug || churchCtx.churchId}</span>
+              </div>
+            </div>
+          )}
           <h1>Descubra o seu Dom Ministerial</h1>
           <div className="top-start-button-wrapper">
             <button
@@ -522,8 +564,12 @@ const Quiz = () => {
           </div>
         </div>
         {/* ===== Formatos de Treinamento (Cards) ===== */}
-        <div className="divider-line-only"></div>
-        <TrainingFormats />
+        {!isInviteLink && (
+          <>
+            <div className="divider-line-only"></div>
+            <TrainingFormats />
+          </>
+        )}
       </section>
     );
   }
