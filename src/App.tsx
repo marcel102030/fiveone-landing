@@ -37,7 +37,14 @@ function AppContent() {
     navigate("/plataforma");
   };
 
-  const hideLayout = location.pathname === "/plataforma" || location.pathname === "/login-aluno" || location.pathname === "/streamer-apostolo" || location.pathname === "/streamer-mestre";
+  const hideLayout =
+    location.pathname === "/plataforma" ||
+    location.pathname === "/login-aluno" ||
+    location.pathname === "/streamer-apostolo" ||
+    location.pathname === "/streamer-mestre" ||
+    location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/relatorio") ||
+    location.pathname.startsWith("/r");
 
   return (
     <>
