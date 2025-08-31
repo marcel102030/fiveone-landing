@@ -61,8 +61,8 @@ export default function AdminChurches() {
   function makeUrlsFromSlug(slug: string) {
     return {
       invite_url: `${PROD_ORIGIN}/c/${slug}`,
-      report_url: `${PROD_ORIGIN}/#/relatorio/${slug}`,
-      quiz_url: `${PROD_ORIGIN}/c/${slug}`,
+      report_url: `/relatorio/${slug}`,
+      quiz_url: `${PROD_ORIGIN}/#/teste-dons?churchSlug=${slug}`,
     };
   }
 
@@ -96,7 +96,11 @@ export default function AdminChurches() {
       const r = await fetch("/api/church-list");
       const j: ApiOut = await r.json();
       if (!r.ok || !j.ok) throw new Error(j?.error || `Erro ${r.status}`);
-      setRows(j.churches || []);
+      const normalized = (j.churches || []).map((row) => ({
+        ...row,
+        ...makeUrlsFromSlug(row.slug),
+      }));
+      setRows(normalized);
     } catch (e: any) {
       setError(String(e?.message || e));
     } finally {
@@ -432,7 +436,7 @@ export default function AdminChurches() {
                     </td>
                     <td className="admin-td">
                       <div className="admin-actions">
-                        <Link to={r.report_url}>
+                        <Link to={`/relatorio/${r.slug}`}>
                           <button className="admin-btn">Relatório</button>
                         </Link>
                         <div className="copy-wrap">
@@ -451,9 +455,6 @@ export default function AdminChurches() {
                             <span className="copied-tip" role="status" aria-live="polite">✅ copiado</span>
                           )}
                         </div>
-                        <a href={r.quiz_url}>
-                          <button className="admin-btn">Abrir teste</button>
-                        </a>
                       </div>
                     </td>
                   </tr>
