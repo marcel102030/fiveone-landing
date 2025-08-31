@@ -1,0 +1,321 @@
+/* ===== Admin – Painel de Igrejas ===== */
+
+.admin-wrap {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 16px;
+}
+
+.admin-title {
+  margin: 0 0 8px 0;
+  font-size: 28px;
+  font-weight: 800;
+}
+
+.admin-subtitle {
+  margin: 0 0 16px 0;
+  color: #94a3b8; /* slate-400 */
+}
+
+/* Busca */
+.admin-search {
+  display: flex;
+  gap: 8px;
+  margin: 16px 0;
+}
+
+.admin-search-input {
+  flex: 1;
+  background: #0b1220; /* dark card */
+  border: 1px solid #1e293b; /* slate-800 */
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #ffffff;
+  outline: none;
+}
+
+.admin-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.admin-search-input:focus {
+  border-color: #334155; /* slate-700 */
+}
+
+/* Mensagens */
+.admin-msg {
+  margin: 8px 0 16px;
+  color: #e2e8f0; /* slate-200 */
+}
+
+.admin-msg--error {
+  color: #ef4444; /* red-500 */
+}
+
+/* Tabela */
+.admin-table-wrap {
+  overflow-x: auto;        /* scroll horizontal se precisar */
+  overflow-y: auto;        /* permite rolagem vertical para sticky header */
+  max-height: 70vh;        /* altura prática para listas grandes */
+  border-top: 1px solid #1e293b;
+  border-bottom: 1px solid #1e293b;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 820px; /* evita quebrar demais em telas estreitas */
+}
+
+.admin-thead-row th,
+.admin-th {
+  text-align: left;
+  padding: 10px 8px;
+  font-weight: 600;
+  color: #cbd5e1; /* slate-300 */
+  border-bottom: 1px solid #1e293b; /* separador topo */
+  position: sticky;
+  top: 0;
+  background: #0b1220;      /* mantém o cabeçalho legível quando gruda */
+  z-index: 2;
+  box-shadow: 0 1px 0 0 #1e293b; /* linha de separação mais nítida */
+}
+
+.admin-row td,
+.admin-td {
+  padding: 10px 8px;
+  color: #e2e8f0; /* slate-200 */
+  border-bottom: 1px solid #1e293b; /* separador linhas */
+}
+
+/* Zebra rows e hover */
+.admin-table tbody tr:nth-child(even) {
+  background: rgba(51, 65, 85, 0.20); /* slate-700/20 - contraste melhor */
+}
+
+.admin-table tbody tr:hover {
+  background: rgba(71, 85, 105, 0.30); /* slate-600/30 - hover mais visível */
+}
+
+/* Ações */
+.admin-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-btn {
+  background: #0b1220;
+  border: 1px solid #334155; /* slate-700 */
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 120ms ease, border-color 120ms ease, transform 60ms ease;
+}
+
+.admin-btn:hover {
+  background: #0f172a; /* slate-900 */
+  border-color: #475569; /* slate-600 */
+}
+
+.admin-btn:active {
+  transform: translateY(1px);
+}
+
+.admin-btn:focus-visible {
+  outline: 2px solid #22c55e;   /* green-500 */
+  outline-offset: 2px;
+}
+
+/* Ajustes de tipografia para <code> dentro de slug */
+.admin-td code {
+  background: rgba(2, 6, 23, 0.65);
+  border: 1px solid #1e293b;
+  border-radius: 6px;
+  padding: 2px 6px;
+  color: #a5b4fc; /* indigo-300 */
+}
+
+/* Responsividade básica */
+@media (max-width: 720px) {
+  .admin-title { font-size: 22px; }
+  .admin-table { min-width: 680px; }
+}
+
+/* Compactação progressiva */
+@media (max-width: 900px) {
+  .admin-th, .admin-td { padding: 8px 6px; }
+}
+
+@media (max-width: 720px) {
+  .admin-title { font-size: 22px; }
+  .admin-th, .admin-td { padding: 6px 6px; font-size: 14px; }
+  .admin-btn { padding: 5px 8px; font-size: 13px; }
+}
+/* ===== Admin – Indicadores (cards) ===== */
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 12px 0 16px;
+}
+
+.stat-card {
+  background: #0b1220; /* dark card */
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.stat-title {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: #94a3b8;
+}
+
+.stat-number {
+  font-size: 28px;
+  font-weight: 800;
+  margin-top: 4px;
+}
+
+.stat-muted {
+  color: #94a3b8;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+@media (max-width: 900px) {
+  .admin-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 560px) {
+  .admin-stats { grid-template-columns: 1fr; }
+}
+
+/* ===== Admin – Ordenação (th clicável) ===== */
+.admin-th--sortable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.admin-th--sortable:hover {
+  color: #e2e8f0; /* slate-200 */
+}
+
+.admin-th--sortable:focus-visible {
+  outline: 2px solid #22c55e; /* green-500 */
+  outline-offset: 2px;
+}
+
+/* ===== Admin – Badge de participação ===== */
+.badge-participacao {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  line-height: 1;
+  border: 1px solid transparent;
+}
+
+.badge-low {
+  background: rgba(239, 68, 68, 0.15); /* red-500/15 */
+  color: #fecaca; /* red-200 */
+  border-color: rgba(239, 68, 68, 0.35);
+}
+
+.badge-med {
+  background: rgba(245, 158, 11, 0.15); /* amber-500/15 */
+  color: #fde68a; /* amber-200 */
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.badge-high {
+  background: rgba(34, 197, 94, 0.15); /* green-500/15 */
+  color: #bbf7d0; /* green-200 */
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+/* ===== Admin – Resumo por cidade ===== */
+.admin-city-summary {
+  margin-top: 18px;
+}
+
+.admin-h2 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.city-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.city-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #0b1220;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.city-name { color: #e2e8f0; }
+.city-metrics { color: #94a3b8; }
+
+@media (max-width: 720px) {
+  .city-list { grid-template-columns: 1fr; }
+}
+/* ===== Admin – Filtros (cidade e participação) ===== */
+.admin-search {
+  flex-wrap: wrap;               /* quebra para segunda linha no mobile */
+}
+
+.admin-filter-select {
+  background: #0b1220;          /* dark card */
+  border: 1px solid #1e293b;    /* slate-800 */
+  color: #e2e8f0;               /* slate-200 */
+  border-radius: 8px;
+  padding: 10px 12px;
+  height: 40px;
+}
+
+.admin-filter-select:focus-visible {
+  outline: 2px solid #22c55e;   /* green-500 */
+  outline-offset: 2px;
+}
+
+/* Larguras padrão das caixas de seleção */
+.admin-filter-city { min-width: 220px; }
+.admin-filter-part { min-width: 220px; }
+
+/* Em telas menores, filtros ocupam a largura toda abaixo do input */
+@media (max-width: 860px) {
+  .admin-filter-city,
+  .admin-filter-part {
+    flex: 1 1 100%;
+  }
+}
+
+/* Alinhar números à direita para leitura mais fácil */
+.admin-table td:nth-child(5),  /* Membros (prev.) */
+.admin-table td:nth-child(6),  /* Respostas */
+.admin-table td:nth-child(7)   /* Participação */
+{ text-align: right; }
+
+/* Diminuir fontes nas colunas densas quando a tela estiver mais estreita */
+@media (max-width: 900px) {
+  .admin-table td:nth-child(2), /* Slug */
+  .admin-table td:nth-child(3), /* Cidade */
+  .admin-table td:nth-child(4)  /* Líder */
+  { font-size: 14px; }
+}
