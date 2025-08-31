@@ -19,6 +19,7 @@ import Plataforma from "./pages/plataforma/plataforma";
 import LoginAluno from "./pages/plataforma/loginAluno";
 import StreamerApostolo from "./pages/plataforma/streamerApostolo";
 import StreamerMestre from "./pages/plataforma/streamerMestre";
+import ChurchReport from "./pages/ChurchReport";
 
 import "./App.css";
 
@@ -45,6 +46,8 @@ function AppContent() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
+            <Route path="/relatorio/:slug" element={<ChurchReport />} />
+            <Route path="/r/:slug" element={<ChurchReport />} />
             <Route path="/quem-somos" element={<About />} />
             <Route path="/teste-dons" element={<Quiz />} />
             <Route path="/quiz" element={<Quiz />} />
