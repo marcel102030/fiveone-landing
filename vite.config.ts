@@ -8,7 +8,9 @@ export default defineConfig({
   server: {
     proxy: {
       "/api": {
-        target: "https://fiveonemovement.com",
+        // Permite trocar o alvo do proxy via env ao desenvolver.
+        // Ex.: VITE_API_TARGET=http://127.0.0.1:8788 para usar wrangler pages dev
+        target: process.env.VITE_API_TARGET || "https://fiveonemovement.com",
         changeOrigin: true,
         secure: false,
       },
