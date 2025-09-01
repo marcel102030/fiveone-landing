@@ -124,10 +124,20 @@ export default function ChurchReport() {
           <button className="btn pill" onClick={() => { setFrom(thirtyDaysAgoIso); setTo(todayIso); }}>Últimos 30 dias</button>
           <button className="btn pill ghost" onClick={() => { setFrom("" as any); setTo("" as any); }}>Tudo</button>
         </div>
-        <div className="toolbar-right">
-          <Link to={`/c/${data?.slug || slug}`} target="_blank" rel="noopener noreferrer">
-            <button className="btn">Abrir teste</button>
+        <div className="toolbar-right" style={{ display: 'flex', gap: 8 }}>
+          <Link to="/admin/igrejas">
+            <button className="btn ghost">Voltar</button>
           </Link>
+          {(() => {
+            const s = data?.slug || slug;
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
+            return (
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                <button className="btn">Abrir teste</button>
+              </a>
+            );
+          })()}
         </div>
       </div>
 
@@ -150,7 +160,7 @@ export default function ChurchReport() {
                   hint={bars[1] ? `+${bars[0].pct - bars[1].pct}% vs 2º (${bars[1].label})` : undefined}
                 />
               )}
-              <Card title="Apostólico" value={summary.apostolo} />
+              <Card title="Apostolo" value={summary.apostolo} />
               <Card title="Profeta" value={summary.profeta} />
               <Card title="Evangelista" value={summary.evangelista} />
               <Card title="Pastor" value={summary.pastor} />
