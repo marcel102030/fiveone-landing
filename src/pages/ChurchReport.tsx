@@ -53,11 +53,14 @@ export default function ChurchReport() {
   const [to, setTo] = useState<string>(query.get("to") || todayIso);
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
+  const distRef = useRef<HTMLDivElement>(null);
+  const isPublic = useLocation().pathname.startsWith('/r');
   const [metricMode, setMetricMode] = useState<'pct' | 'count'>('pct');
   const [visibleDoms, setVisibleDoms] = useState<Record<string, boolean>>({ Apostólico: true, Profeta: true, Evangelista: true, Pastor: true, Mestre: true });
 
   // Slug pode vir por /relatorio/:slug OU por ?churchSlug=
   const slug = params.slug || query.get("churchSlug") || "";
+  const tokenParam = query.get("token") || "";
 
   useEffect(() => {
     let cancelled = false;
@@ -67,7 +70,9 @@ export default function ChurchReport() {
       setError(null);
       try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-        const qs = new URLSearchParams({ churchSlug: slug, from, to, tz, includePeople: 'true' }).toString();
+        const qsObj = { churchSlug: slug, from, to, tz, includePeople: 'true' } as Record<string,string>;
+        if (tokenParam) (qsObj as any).token = tokenParam;
+        const qs = new URLSearchParams(qsObj).toString();
         const res = await fetch(`/api/church-summary?${qs}`);
         const json: ApiResponse = await res.json();
         if (!res.ok || !json.ok) throw new Error(json?.error || `Erro ${res.status}`);
@@ -126,6 +131,85 @@ export default function ChurchReport() {
     return dict[key] ?? [];
   }, [data?.peopleByDom, modalDom]);
 
+  // Controles e dados do modal
+  const [includeTies, setIncludeTies] = useState(false);
+  const [showContacts, setShowContacts] = useState(false);
+  const [search, setSearch] = useState('');
+  const [sortKey, setSortKey] = useState<'name'|'date'>('name');
+  const [sortDir, setSortDir] = useState<'asc'|'desc'>('asc');
+  const [list, setList] = useState<{ id?: string; name: string; date: string; email?: string; phone?: string }[]>([]);
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(false);
+
+  useEffect(() => {
+    if (modalOpen) {
+      // inicia com o snapshot do summary
+      setList(participants as any);
+      setPage(0);
+      setHasMore((participants?.length || 0) >= 200);
+    }
+  }, [modalOpen, participants]);
+
+  async function refetchPeopleFromSummary() {
+    if (!modalDom) return;
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+    const qs = new URLSearchParams({
+      churchSlug: slug,
+      from: from || '',
+      to: to || '',
+      tz,
+      includePeople: 'true',
+      includeTies: includeTies ? 'true' : 'false',
+      includeContacts: showContacts ? 'true' : 'false'
+    }).toString();
+    const res = await fetch(`/api/church-summary?${qs}`);
+    const j = await res.json();
+    if (!res.ok || !j.ok) return;
+    const map: any = { 'Apostólico':'apostolo','Profeta':'profeta','Evangelista':'evangelista','Pastor':'pastor','Mestre':'mestre' };
+    const key = map[modalDom];
+    const arr = (j.peopleByDom && j.peopleByDom[key]) ? j.peopleByDom[key] : [];
+    setList(arr);
+    setPage(0);
+    setHasMore((arr?.length || 0) >= 200);
+  }
+
+  async function loadMorePeople() {
+    if (!modalDom) return;
+    const map: any = { 'Apostólico':'apostolo','Profeta':'profeta','Evangelista':'evangelista','Pastor':'pastor','Mestre':'mestre' };
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+    const qs = new URLSearchParams({
+      churchSlug: slug,
+      dom: map[modalDom],
+      from: from || '',
+      to: to || '',
+      tz,
+      includeTies: includeTies ? 'true' : 'false',
+      includeContacts: showContacts ? 'true' : 'false',
+      page: String(page + 1),
+      limit: '50'
+    }).toString();
+    const res = await fetch(`/api/church-people?${qs}`);
+    const j = await res.json();
+    if (!res.ok || !j.ok) return;
+    setList(prev => [...prev, ...j.items]);
+    setPage(j.page);
+    setHasMore(j.hasMore);
+  }
+
+  const filteredSorted = useMemo(() => {
+    let arr = list;
+    if (search.trim()) {
+      const s = search.toLowerCase();
+      arr = arr.filter(it => it.name.toLowerCase().includes(s));
+    }
+    const mul = sortDir === 'asc' ? 1 : -1;
+    arr = [...arr].sort((a,b) => {
+      if (sortKey === 'name') return a.name.localeCompare(b.name,'pt-BR')*mul;
+      return (a.date<b.date?-1:1)*mul;
+    });
+    return arr;
+  }, [list, search, sortKey, sortDir]);
+
   return (
     <div className="report-wrap">
       <h1 className="report-title">Relatório por Igreja</h1>
@@ -149,19 +233,26 @@ export default function ChurchReport() {
           <button className="btn pill ghost" onClick={() => { setFrom("" as any); setTo("" as any); }}>Tudo</button>
         </div>
         <div className="toolbar-right" style={{ display: 'flex', gap: 8 }}>
-          <Link to="/admin/igrejas">
-            <button className="btn ghost">Voltar</button>
-          </Link>
-          {(() => {
-            const s = data?.slug || slug;
-            const origin = typeof window !== 'undefined' ? window.location.origin : '';
-            const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
-            return (
-              <a href={href} target="_blank" rel="noopener noreferrer">
-                <button className="btn">Abrir teste</button>
-              </a>
-            );
-          })()}
+          <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to)}>
+            Compartilhar Relatório
+          </button>
+          {!isPublic && (
+            <>
+              <Link to="/admin/igrejas">
+                <button className="btn ghost">Voltar</button>
+              </Link>
+              {(() => {
+                const s = data?.slug || slug;
+                const origin = typeof window !== 'undefined' ? window.location.origin : '';
+                const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
+                return (
+                  <a href={href} target="_blank" rel="noopener noreferrer">
+                    <button className="btn">Abrir teste</button>
+                  </a>
+                );
+              })()}
+            </>
+          )}
         </div>
       </div>
 
@@ -239,7 +330,7 @@ export default function ChurchReport() {
           {bars.length === 0 ? (
             <p>Nenhum dado suficiente para mostrar gráfico.</p>
           ) : (
-            <div style={{ display: "grid", gap: 12 }}>
+            <div style={{ display: "grid", gap: 12 }} ref={distRef}>
               {(() => {
                 const filtered = bars.filter(b => visibleDoms[b.label] !== false);
                 const maxCount = Math.max(...filtered.map(b => b.value), 1);
@@ -263,34 +354,71 @@ export default function ChurchReport() {
           {/* Exportações */}
           <div className="export-row">
             <button className="btn" onClick={() => downloadCSV(slug, data)}>Exportar CSV</button>
-            <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF</button>
+            <button className="btn" onClick={() => exportExecutivePDF(slug, data, pageRef.current, distRef.current)}>PDF Executivo</button>
+            <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF (cartões)</button>
+            {!isPublic && (
+              <button className="btn ghost" onClick={() => copyPublicLink(slug, from, to)}>Copiar link público</button>
+            )}
             <button className="btn ghost" onClick={() => downloadPNG(containerRef.current)}>Baixar imagem dos cartões</button>
           </div>
           {/* Modal de participantes por dom */}
           {modalOpen && modalDom && (
             <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setModalOpen(false)}>
               <div className="modal-card" onClick={(e) => e.stopPropagation()}>
-                <div className="modal-head" style={{ borderColor: domColors[modalDom] }}>
-                  <h3 className="modal-title">Participantes — {modalDom}</h3>
+                <div className="modal-head" style={{ borderColor: domColors[modalDom], boxShadow: `inset 0 3px 0 0 ${domColors[modalDom]}66` }}>
+                  <h3 className="modal-title">Participantes — {modalDom} ({filteredSorted.length})</h3>
                   <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Fechar">×</button>
                 </div>
                 <div className="modal-body">
-                  {participants.length === 0 ? (
+                  <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:10 }}>
+                    <label className="field"><span>Buscar</span><input className="input-date" type="text" value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Nome"/></label>
+                    <label className="field" style={{ alignItems:'center', flexDirection:'row', gap:6 }}>
+                      <input type="checkbox" checked={includeTies} onChange={(e)=>{setIncludeTies(e.target.checked); refetchPeopleFromSummary();}}/>
+                      <span>Incluir empatados</span>
+                    </label>
+                    <label className="field" style={{ alignItems:'center', flexDirection:'row', gap:6 }}>
+                      <input type="checkbox" checked={showContacts} onChange={(e)=>{setShowContacts(e.target.checked); refetchPeopleFromSummary();}}/>
+                      <span>Mostrar contatos</span>
+                    </label>
+                    <div style={{ marginLeft:'auto', display:'inline-flex', gap:6 }}>
+                      <button className={`btn pill ${sortKey==='name'?'':'ghost'}`} onClick={()=>setSortKey('name')}>Ordenar por nome</button>
+                      <button className={`btn pill ${sortKey==='date'?'':'ghost'}`} onClick={()=>setSortKey('date')}>Ordenar por data</button>
+                      <button className={`btn pill ${sortDir==='asc'?'':'ghost'}`} onClick={()=>setSortDir(sortDir==='asc'?'desc':'asc')}>{sortDir==='asc'?'↑':'↓'}</button>
+                    </div>
+                  </div>
+                  {filteredSorted.length === 0 ? (
                     <p className="muted">Nenhum participante neste período.</p>
                   ) : (
                     <ul className="people-list">
-                      {participants.map((p: { name: string; date: string }, i: number) => (
-                        <li key={`${p.name}-${i}`}>
-                          <span className="person-name">{p.name}</span>
+                      {filteredSorted.map((p, i) => (
+                        <li key={`${p.name}-${p.date}-${i}`}>
+                          <div>
+                            <span className="person-name">{p.name}</span>
+                            {showContacts && (
+                              <div className="muted" style={{ fontSize:12 }}>
+                                {p.email || '—'} • {p.phone || '—'}
+                              </div>
+                            )}
+                          </div>
                           <span className="person-date">{formatPtDate(p.date)}</span>
                         </li>
                       ))}
                     </ul>
                   )}
+                  {hasMore && (
+                    <div style={{ display:'flex', justifyContent:'center', marginTop:10 }}>
+                      <button className="btn" onClick={loadMorePeople}>Carregar mais</button>
+                    </div>
+                  )}
                 </div>
                 <div className="modal-actions">
-                  {participants.length > 0 && (
-                    <button className="btn" onClick={() => exportPeopleCSV(slug, modalDom!, participants)}>Exportar CSV</button>
+                  {filteredSorted.length > 0 && (
+                    <>
+                      <button className="btn" onClick={() => exportPeopleCSV(slug, modalDom!, filteredSorted)}>Exportar CSV</button>
+                      {showContacts && filteredSorted.some(p => p.email) && (
+                        <button className="btn" onClick={() => copyEmails(filteredSorted)}>Copiar e-mails</button>
+                      )}
+                    </>
                   )}
                   <button className="btn ghost" onClick={() => setModalOpen(false)}>Fechar</button>
                 </div>
@@ -466,6 +594,97 @@ async function exportPDF(el: HTMLElement | null) {
   pdf.save('relatorio.pdf');
 }
 
+async function exportExecutivePDF(slug: string, data: ApiResponse | null, cardsEl: HTMLElement | null, distEl: HTMLElement | null) {
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  let y = 16;
+  // Capa
+  pdf.setFont('helvetica', 'bold');
+  pdf.setFontSize(18);
+  pdf.text('Relatório por Igreja', pageWidth/2, y, { align:'center' });
+  y += 10;
+  pdf.setFontSize(12);
+  pdf.setFont('helvetica','normal');
+  const church = data?.churchName || slug || '(não informado)';
+  const period = data?.period ? `${data.period.from || '—'} a ${data.period.to || '—'}` : '—';
+  pdf.text(`Igreja: ${church}`, pageWidth/2, y, { align:'center' }); y+=6;
+  pdf.text(`Período: ${period}`, pageWidth/2, y, { align:'center' }); y+=10;
+  pdf.setDrawColor(30,41,59); pdf.line(20,y, pageWidth-20,y); y+=8;
+  // KPIs
+  const kpis = [
+    `Respostas (período): ${data?.summary.total ?? 0}`,
+    `Participação (período): ${data?.participation?.periodPct ?? 0}%`,
+    `Empates: ${data?.summary.ties ?? 0}`,
+  ];
+  pdf.setFont('helvetica','normal');
+  kpis.forEach((t) => { pdf.text(t, 20, y); y+=6; });
+  y+=4;
+  // Top participantes (opcional)
+  const people = data?.peopleByDom || undefined;
+  if (people) {
+    const flatten: { name:string; date:string; dom:string }[] = [];
+    const map: Record<string,string> = { apostolo:'Apostólico', profeta:'Profeta', evangelista:'Evangelista', pastor:'Pastor', mestre:'Mestre' };
+    Object.entries(people).forEach(([k, arr]) => {
+      arr.forEach((p:any)=> flatten.push({ name:p.name, date:String(p.date||''), dom: map[k]||k }));
+    });
+    flatten.sort((a,b)=> (a.date<b.date?1:-1));
+    const top = flatten.slice(0,10);
+    if (top.length>0) {
+      pdf.setFont('helvetica','bold'); pdf.text('Top 10 participantes (recentes)', 20, y); y+=6; pdf.setFont('helvetica','normal');
+      top.forEach((p)=> { pdf.text(`• ${p.name} — ${p.dom} — ${p.date}`, 22, y); y+=6; if (y>270){ pdf.addPage(); y=16;} });
+    }
+  }
+  // Nova página: cartões (snapshot)
+  if (cardsEl) {
+    pdf.addPage();
+    const canvas = await html2canvas(cardsEl, { scale:2 });
+    const img = canvas.toDataURL('image/png');
+    const w = pageWidth-20; const h = (canvas.height * w) / canvas.width;
+    pdf.addImage(img, 'PNG', 10, 10, w, Math.min(h, 260));
+  }
+  // Nova página: distribuição por dom
+  if (distEl) {
+    pdf.addPage();
+    const canvas = await html2canvas(distEl, { scale:2, backgroundColor:null });
+    const img = canvas.toDataURL('image/png');
+    const w = pageWidth-20; const h = (canvas.height * w) / canvas.width;
+    pdf.setFont('helvetica','bold'); pdf.text('Distribuição por dom', 10, 10);
+    pdf.addImage(img, 'PNG', 10, 14, w, Math.min(h, 260));
+  }
+  pdf.save(`relatorio_${slug||'igreja'}.pdf`);
+}
+
+function copyPublicLink(slug: string, from: string, to: string) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const url = `${origin}/#/r/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url);
+  else {
+    const ta = document.createElement('textarea'); ta.value=url; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  }
+}
+
+function shareReportLink(slug: string, from: string, to: string) {
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const url = `${origin}/#/relatorio/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
+  const title = `Relatório — ${slug}`;
+  if ((navigator as any).share) {
+    (navigator as any).share({ title, url }).catch(() => copyToClipboard(url));
+  } else {
+    copyToClipboard(url);
+  }
+
+  function copyToClipboard(text: string) {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(()=> alert('Link do relatório copiado!')).catch(()=> fallback(text));
+    } else fallback(text);
+  }
+  function fallback(t: string) {
+    const ta = document.createElement('textarea'); ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert('Link do relatório copiado!'); } catch {}
+    document.body.removeChild(ta);
+  }
+}
 /* function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: string }[]) {
   const lines = ['nome,data,dom'];
   for (const p of list) {
@@ -496,6 +715,35 @@ function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: 
   document.body.appendChild(a);
   a.click();
   a.remove();
+}
+
+function copyEmails(list: { email?: string | null }[]) {
+  // Extrai e deduplica e-mails válidos
+  const emails = Array.from(new Set(
+    (list || [])
+      .map((p) => (p.email || '').trim())
+      .filter((e): e is string => !!e && /@/.test(e))
+  ));
+  if (emails.length === 0) {
+    alert('Nenhum e-mail disponível para copiar.');
+    return;
+  }
+  const text = emails.join('; ');
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(text).then(() => {
+      alert(`${emails.length} e-mail(s) copiados.`);
+    }).catch(() => fallbackCopy(text));
+  } else {
+    fallbackCopy(text);
+  }
+
+  function fallbackCopy(t: string) {
+    const ta = document.createElement('textarea');
+    ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    try { document.execCommand('copy'); alert(`${emails.length} e-mail(s) copiados.`); } catch {}
+    document.body.removeChild(ta);
+  }
 }
 
 // (removido) função de copiar link do relatório — não utilizada

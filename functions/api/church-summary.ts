@@ -31,6 +31,8 @@ export const onRequestGet = async (ctx: any) => {
       tz: url.searchParams.get('tz') ?? undefined,
     };
     const includePeople = (url.searchParams.get('includePeople') || '').toLowerCase() === 'true';
+    const includeTies = (url.searchParams.get('includeTies') || '').toLowerCase() === 'true';
+    const includeContacts = (url.searchParams.get('includeContacts') || '').toLowerCase() === 'true';
 
     if (!q.churchId && !q.churchSlug) {
       return new Response(JSON.stringify({ error: 'informe churchId ou churchSlug' }), { status: 400 });
@@ -81,10 +83,24 @@ export const onRequestGet = async (ctx: any) => {
     const fromIso = q.from ? `${q.from}T00:00:00.000Z` : undefined;
     const toIso = q.to ? `${q.to}T23:59:59.999Z` : undefined;
 
+    // Validação de token público (se presente)
+    const token = url.searchParams.get('token') || undefined;
+    if (token) {
+      const allowed = await verifyToken(token, ctx.env.REPORT_SHARE_SECRET as string | undefined);
+      if (!allowed.ok) return new Response(JSON.stringify({ error: allowed.error || 'token inválido' }), { status: 403, headers: { 'content-type': 'application/json' } });
+      if (q.churchSlug && (allowed.payload as any)?.slug && (allowed.payload as any).slug !== q.churchSlug) {
+        return new Response(JSON.stringify({ error: 'token não permite este slug' }), { status: 403, headers: { 'content-type': 'application/json' } });
+      }
+    }
+
     // Busca respostas (com colunas necessárias) aplicando período quando houver
     let builder = admin
       .from('quiz_response')
-      .select(includePeople ? 'top_dom, created_at, ties, person_name' : 'top_dom, created_at, ties')
+      .select(includePeople
+        ? (includeContacts
+            ? 'id, top_dom, created_at, ties, person_name, person_email, person_phone'
+            : 'id, top_dom, created_at, ties, person_name')
+        : 'top_dom, created_at, ties')
       .eq('church_id', churchId!);
 
     if (fromIso) builder = builder.gte('created_at', fromIso);
@@ -222,9 +238,9 @@ export const onRequestGet = async (ctx: any) => {
     const periodPct = members > 0 ? Math.round((summary.total / members) * 100) : 0;
 
     // Opcional: lista de pessoas por dom (até 200 por dom)
-    let peopleByDom: Record<string, { name: string; date: string }[]> | undefined;
+    let peopleByDom: Record<string, { id?: string; name: string; date: string; email?: string; phone?: string }[]> | undefined;
     if (includePeople) {
-      const buckets: Record<string, { name: string; date: string }[]> = {
+      const buckets: Record<string, { id?: string; name: string; date: string; email?: string; phone?: string }[]> = {
         apostolo: [], profeta: [], evangelista: [], pastor: [], mestre: [],
       };
       for (const r of rowsFiltered) {
@@ -235,11 +251,23 @@ export const onRequestGet = async (ctx: any) => {
         else if (key.includes('evangel')) k = 'evangelista';
         else if (key.includes('past')) k = 'pastor';
         else if (key.includes('mestre')) k = 'mestre';
+        // incluir empatados (ties) se solicitado
+        if (!k && includeTies) {
+          const ties = (r as any)?.ties;
+          const t = Array.isArray(ties) ? ties.join(' ').toLowerCase() : '';
+          if (t.includes('apost')) k = 'apostolo';
+          else if (t.includes('profe')) k = 'profeta';
+          else if (t.includes('evangel')) k = 'evangelista';
+          else if (t.includes('past')) k = 'pastor';
+          else if (t.includes('mestre')) k = 'mestre';
+        }
         if (!k) continue;
         const nm = (r as any).person_name ? String((r as any).person_name) : '(Sem nome)';
         const dtIso = (r as any)[tsField] ? String((r as any)[tsField]) : '';
         const dt = dtIso ? dayKey(dtIso) : '';
-        if (buckets[k].length < 200) buckets[k].push({ name: nm, date: dt });
+        const item: any = { id: (r as any).id, name: nm, date: dt };
+        if (includeContacts) { item.email = (r as any).person_email ?? undefined; item.phone = (r as any).person_phone ?? undefined; }
+        if (buckets[k].length < 200) buckets[k].push(item);
       }
       for (const arr of Object.values(buckets)) arr.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR'));
       peopleByDom = buckets;
@@ -266,3 +294,22 @@ export const onRequestGet = async (ctx: any) => {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
   }
 };
+
+
+async function verifyToken(token: string, secret?: string) {
+  try {
+    if (!secret) return { ok: false, error: 'secret ausente' };
+    const [p64, s64] = token.split('.');
+    if (!p64 || !s64) return { ok: false, error: 'token malformado' };
+    const payloadStr = atob(p64.replace(/-/g, '+').replace(/_/g, '/'));
+    const payload = JSON.parse(payloadStr);
+    if (payload.exp && Date.now()/1000 > payload.exp) return { ok: false, error: 'token expirado' };
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'] );
+    const data = enc.encode(JSON.stringify(payload));
+    const sig = await crypto.subtle.sign('HMAC', key, data);
+    const sigB64 = btoa(String.fromCharCode(*new Uint8Array(sig))).replace('+','-').replace('/','_').replace('=','');
+    if (sigB64 != s64) return { ok: false, error: 'assinatura inválida' };
+    return { ok: true, payload };
+  } catch (e) { return { ok: false, error: String(e) }; }
+}
