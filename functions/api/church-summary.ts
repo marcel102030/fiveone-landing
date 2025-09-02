@@ -308,7 +308,8 @@ async function verifyToken(token: string, secret?: string) {
     const key = await crypto.subtle.importKey('raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'] );
     const data = enc.encode(JSON.stringify(payload));
     const sig = await crypto.subtle.sign('HMAC', key, data);
-    const sigB64 = btoa(String.fromCharCode(*new Uint8Array(sig))).replace('+','-').replace('/','_').replace('=','');
+    const sigB64 = btoa(String.fromCharCode(...new Uint8Array(sig as ArrayBuffer)))
+      .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/g,'');
     if (sigB64 != s64) return { ok: false, error: 'assinatura inválida' };
     return { ok: true, payload };
   } catch (e) { return { ok: false, error: String(e) }; }
