@@ -2,6 +2,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import "./ChurchReport.css";
 
 // Tipagens simples do retorno da API
@@ -24,6 +25,9 @@ type ApiResponse = {
   summary: Summary & { ties?: number };
   series?: { date: string; total: number }[];
   participation?: { overallTotal: number; overallPct: number; periodTotal: number; periodPct: number };
+  extra?: { lastTimestamp: string | null; activeDays: number; peak: { date: string; total: number } | null };
+  previous?: { summary: Summary & { ties?: number }; participationPct: number; from: string; to: string } | null;
+  peopleByDom?: Record<string, { name: string; date: string }[]>;
   error?: string;
 };
 
@@ -48,6 +52,9 @@ export default function ChurchReport() {
   const [from, setFrom] = useState<string>(query.get("from") || thirtyDaysAgoIso);
   const [to, setTo] = useState<string>(query.get("to") || todayIso);
   const containerRef = useRef<HTMLDivElement>(null);
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [metricMode, setMetricMode] = useState<'pct' | 'count'>('pct');
+  const [visibleDoms, setVisibleDoms] = useState<Record<string, boolean>>({ Apostólico: true, Profeta: true, Evangelista: true, Pastor: true, Mestre: true });
 
   // Slug pode vir por /relatorio/:slug OU por ?churchSlug=
   const slug = params.slug || query.get("churchSlug") || "";
@@ -60,7 +67,7 @@ export default function ChurchReport() {
       setError(null);
       try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-        const qs = new URLSearchParams({ churchSlug: slug, from, to, tz }).toString();
+        const qs = new URLSearchParams({ churchSlug: slug, from, to, tz, includePeople: 'true' }).toString();
         const res = await fetch(`/api/church-summary?${qs}`);
         const json: ApiResponse = await res.json();
         if (!res.ok || !json.ok) throw new Error(json?.error || `Erro ${res.status}`);
@@ -101,6 +108,23 @@ export default function ChurchReport() {
     "Pastor": "#f59e0b",       // âmbar
     "Mestre": "#60a5fa",       // azul
   };
+
+  // Modal de participantes
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalDom, setModalDom] = useState<"Apostólico" | "Profeta" | "Evangelista" | "Pastor" | "Mestre" | null>(null);
+  const participants = useMemo((): { name: string; date: string }[] => {
+    if (!data?.peopleByDom || !modalDom) return [] as { name: string; date: string }[];
+    const mapKeys: Record<'Apostólico' | 'Profeta' | 'Evangelista' | 'Pastor' | 'Mestre', 'apostolo' | 'profeta' | 'evangelista' | 'pastor' | 'mestre'> = {
+      Apostólico: 'apostolo',
+      Profeta: 'profeta',
+      Evangelista: 'evangelista',
+      Pastor: 'pastor',
+      Mestre: 'mestre',
+    };
+    const key = mapKeys[modalDom];
+    const dict = data.peopleByDom as Record<string, { name: string; date: string }[]>;
+    return dict[key] ?? [];
+  }, [data?.peopleByDom, modalDom]);
 
   return (
     <div className="report-wrap">
@@ -149,53 +173,80 @@ export default function ChurchReport() {
           {/* Cards de totais */}
           <div className="cards-wrap" ref={containerRef}>
             {/* Grupo 1: Dons */}
-            <h3 className="group-title">Dons</h3>
-            <div className="cards cards-doms">
+            <h3 className="group-title sticky">Dons</h3>
+            <div className="cards-doms" ref={pageRef}>
               {bars.length > 0 && (
-                <HighlightCard
-                  title="Maior dom"
-                  label={bars[0].label}
-                  percent={bars[0].pct}
-                  color={domColors[bars[0].label] || "#22c55e"}
-                  hint={bars[1] ? `+${bars[0].pct - bars[1].pct}% vs 2º (${bars[1].label})` : undefined}
-                />
+                <div className="cards cards-doms-top">
+                  <HighlightCard
+                    title="Maior dom"
+                    label={bars[0].label}
+                    percent={bars[0].pct}
+                    color={domColors[bars[0].label] || "#22c55e"}
+                    hint={bars[1] ? `+${bars[0].pct - bars[1].pct}% vs 2º (${bars[1].label})` : undefined}
+                  />
+                </div>
               )}
-              <Card title="Apostolo" value={summary.apostolo} />
-              <Card title="Profeta" value={summary.profeta} />
-              <Card title="Evangelista" value={summary.evangelista} />
-              <Card title="Pastor" value={summary.pastor} />
-              <Card title="Mestre" value={summary.mestre} />
+              <div className="cards-row-5">
+                <CardClickable title="Apóstolo" value={summary.apostolo} color={domColors['Apostólico']} onClick={() => { setModalDom('Apostólico'); setModalOpen(true); }} />
+                <CardClickable title="Profeta" value={summary.profeta} color={domColors['Profeta']} onClick={() => { setModalDom('Profeta'); setModalOpen(true); }} />
+                <CardClickable title="Evangelista" value={summary.evangelista} color={domColors['Evangelista']} onClick={() => { setModalDom('Evangelista'); setModalOpen(true); }} />
+                <CardClickable title="Pastor" value={summary.pastor} color={domColors['Pastor']} onClick={() => { setModalDom('Pastor'); setModalOpen(true); }} />
+                <CardClickable title="Mestre" value={summary.mestre} color={domColors['Mestre']} onClick={() => { setModalDom('Mestre'); setModalOpen(true); }} />
+              </div>
             </div>
 
             {/* Separador visual entre grupos */}
             <div className="cards-separator" role="separator" aria-label="Separador de seções" />
 
             {/* Grupo 2: Métricas gerais */}
-            <h3 className="group-title">Resultados</h3>
+            <h3 className="group-title sticky">Resultados</h3>
             <div className="cards cards-metrics">
-              <Card title="Respostas (período)" value={summary.total} />
-              <Card title="Participação (período)" value={(data?.participation?.periodPct ?? 0)} suffix="%" />
-              <Card title="Empates" value={summary.ties ?? 0} />
+              <Card title="Respostas (período)" value={summary.total} delta={(summary.total - (data?.previous?.summary.total || 0))} />
+              <Card title="Participação (período)" value={(data?.participation?.periodPct ?? 0)} suffix="%" delta={((data?.participation?.periodPct ?? 0) - (data?.previous?.participationPct ?? 0))} deltaIsPercent />
+              <Card title="Empates" value={summary.ties ?? 0} delta={((summary.ties ?? 0) - (data?.previous?.summary.ties ?? 0))} />
+              {data?.extra?.lastTimestamp && (
+                <Card title="Última resposta" valueLabel={formatRelTime(data.extra.lastTimestamp)} />
+              )}
+              {typeof data?.extra?.activeDays === 'number' && (
+                <Card title="Dias ativos" value={data.extra.activeDays} />
+              )}
+              {data?.extra?.peak && (
+                <Card title="Pico de respostas" value={data.extra.peak.total} />
+              )}
             </div>
           </div>
 
           {/* Barras */}
           <h2 className="section-title">Distribuição por dom</h2>
           <div className="legend">
-            {Object.entries(domColors).map(([name, color]) => (
-              <div key={name} className="legend-item">
-                <span className="legend-dot" style={{ background: color }} />
-                <span>{name}</span>
-              </div>
-            ))}
+            {Object.entries(domColors).map(([name, color]) => {
+              const active = visibleDoms[name] !== false;
+              return (
+                <button key={name}
+                        className={`legend-item ${active ? 'active' : 'muted'}`}
+                        onClick={() => setVisibleDoms(v => ({ ...v, [name]: !active }))}
+                        title={active ? `Ocultar ${name}` : `Mostrar ${name}`}>
+                  <span className="legend-dot" style={{ background: color, opacity: active ? 1 : .35 }} />
+                  <span>{name}</span>
+                </button>
+              );
+            })}
+            <div style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6 }}>
+              <button className={`btn pill ${metricMode === 'pct' ? '' : 'ghost'}`} onClick={() => setMetricMode('pct')}>% Percentual</button>
+              <button className={`btn pill ${metricMode === 'count' ? '' : 'ghost'}`} onClick={() => setMetricMode('count')}># Contagem</button>
+            </div>
           </div>
           {bars.length === 0 ? (
             <p>Nenhum dado suficiente para mostrar gráfico.</p>
           ) : (
             <div style={{ display: "grid", gap: 12 }}>
-              {bars.map((b) => (
-                <BarRow key={b.label} label={b.label} value={b.value} pct={b.pct} color={domColors[b.label] || '#22c55e'} />
-              ))}
+              {(() => {
+                const filtered = bars.filter(b => visibleDoms[b.label] !== false);
+                const maxCount = Math.max(...filtered.map(b => b.value), 1);
+                return filtered.map((b) => (
+                  <BarRow key={b.label} label={b.label} value={b.value} pct={b.pct} mode={metricMode} maxCount={maxCount} color={domColors[b.label] || '#22c55e'} />
+                ));
+              })()}
             </div>
           )}
 
@@ -212,8 +263,40 @@ export default function ChurchReport() {
           {/* Exportações */}
           <div className="export-row">
             <button className="btn" onClick={() => downloadCSV(slug, data)}>Exportar CSV</button>
+            <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF</button>
             <button className="btn ghost" onClick={() => downloadPNG(containerRef.current)}>Baixar imagem dos cartões</button>
           </div>
+          {/* Modal de participantes por dom */}
+          {modalOpen && modalDom && (
+            <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setModalOpen(false)}>
+              <div className="modal-card" onClick={(e) => e.stopPropagation()}>
+                <div className="modal-head" style={{ borderColor: domColors[modalDom] }}>
+                  <h3 className="modal-title">Participantes — {modalDom}</h3>
+                  <button className="modal-close" onClick={() => setModalOpen(false)} aria-label="Fechar">×</button>
+                </div>
+                <div className="modal-body">
+                  {participants.length === 0 ? (
+                    <p className="muted">Nenhum participante neste período.</p>
+                  ) : (
+                    <ul className="people-list">
+                      {participants.map((p: { name: string; date: string }, i: number) => (
+                        <li key={`${p.name}-${i}`}>
+                          <span className="person-name">{p.name}</span>
+                          <span className="person-date">{formatPtDate(p.date)}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+                <div className="modal-actions">
+                  {participants.length > 0 && (
+                    <button className="btn" onClick={() => exportPeopleCSV(slug, modalDom!, participants)}>Exportar CSV</button>
+                  )}
+                  <button className="btn ghost" onClick={() => setModalOpen(false)}>Fechar</button>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
 
@@ -224,12 +307,45 @@ export default function ChurchReport() {
   );
 }
 
-function Card({ title, value, suffix }: { title: string; value: number; suffix?: string }) {
+function Card({ title, value, suffix, valueLabel, delta, deltaIsPercent }: { title: string; value?: number; suffix?: string; valueLabel?: string; delta?: number; deltaIsPercent?: boolean }) {
+  let deltaNode: JSX.Element | null = null;
+  if (typeof delta === 'number' && !Number.isNaN(delta)) {
+    const up = delta > 0; const flat = delta === 0;
+    const color = flat ? '#9fb2c5' : up ? '#22c55e' : '#ef4444';
+    const sign = flat ? '' : up ? '+' : '';
+    const text = `${sign}${deltaIsPercent ? Math.round(delta) : delta}${deltaIsPercent ? '%' : ''}`;
+    deltaNode = (
+      <span style={{
+        marginLeft: 8,
+        fontSize: 12,
+        padding: '2px 6px',
+        borderRadius: 999,
+        border: `1px solid ${color}66`,
+        color,
+        background: `${color}1A`,
+      }} aria-label={flat ? 'sem variação' : up ? 'aumento' : 'queda'}>
+        {up ? '▲' : (flat ? '■' : '▼')} {text}
+      </span>
+    );
+  }
   return (
     <div style={cardStyle} title={title}>
       <div style={cardTitle}>{title}</div>
-      <div style={cardNumber}>{value}{suffix ? suffix : ''}</div>
+      <div style={cardNumber}>
+        {valueLabel ?? value}{suffix && value !== undefined ? suffix : ''}
+        {deltaNode}
+      </div>
     </div>
+  );
+}
+
+function CardClickable({ title, value, color, onClick }: { title: string; value: number; color: string; onClick: () => void }) {
+  return (
+    <button className="card-clickable" onClick={onClick} title="Ver participantes" aria-label={`Ver participantes do dom ${title}`}>
+      <div className="card-clickable-title">{title}</div>
+      <div className="card-clickable-value">{value}</div>
+      <div className="card-clickable-hint" style={{ color }}>Ver participantes</div>
+    </button>
   );
 }
 
@@ -311,13 +427,87 @@ async function downloadPNG(el: HTMLElement | null) {
   link.click();
 }
 
+async function exportPDF(el: HTMLElement | null) {
+  if (!el) return;
+  const canvas = await html2canvas(el, { scale: 2 });
+  const imgData = canvas.toDataURL('image/png');
+  const pdf = new jsPDF('p', 'mm', 'a4');
+  const pageWidth = pdf.internal.pageSize.getWidth();
+  const pageHeight = pdf.internal.pageSize.getHeight();
+  const imgWidth = pageWidth - 20; // 10mm margin
+  const imgHeight = (canvas.height * imgWidth) / canvas.width;
+  let y = 10;
+  if (imgHeight <= pageHeight - 20) {
+    pdf.addImage(imgData, 'PNG', 10, y, imgWidth, imgHeight);
+  } else {
+    let remaining = imgHeight;
+    let position = 10;
+    const sliceHeight = pageHeight - 20; // per page usable height
+    const ratio = imgWidth / canvas.width;
+    const srcHeight = Math.floor((sliceHeight / ratio) * (canvas.width / imgWidth));
+    const tempCanvas = document.createElement('canvas');
+    const ctx = tempCanvas.getContext('2d')!;
+    tempCanvas.width = canvas.width;
+    tempCanvas.height = srcHeight;
+    let srcY = 0;
+    while (remaining > 0) {
+      ctx.clearRect(0, 0, tempCanvas.width, tempCanvas.height);
+      ctx.drawImage(canvas, 0, srcY, canvas.width, srcHeight, 0, 0, tempCanvas.width, tempCanvas.height);
+      const part = tempCanvas.toDataURL('image/png');
+      pdf.addImage(part, 'PNG', 10, position, imgWidth, sliceHeight);
+      remaining -= sliceHeight;
+      srcY += srcHeight;
+      if (remaining > 0) {
+        pdf.addPage();
+        position = 10;
+      }
+    }
+  }
+  pdf.save('relatorio.pdf');
+}
+
+/* function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: string }[]) {
+  const lines = ['nome,data,dom'];
+  for (const p of list) {
+    const nome = p.name.replace(/"/g, """");
+    lines.push(`"${nome}",${p.date},${dom}`);
+  }
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `participantes_${slug}_${dom}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+} */
+
+function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: string }[]) {
+  const lines: string[] = ['nome,data,dom'];
+  for (const p of list) {
+    const nome = String(p.name || '').replace(/"/g, '""');
+    lines.push(`"${nome}",${p.date},${dom}`);
+  }
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `participantes_${slug}_${dom}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+// (removido) função de copiar link do relatório — não utilizada
+
 // Linha de barra com rótulo interno e tooltip
-function BarRow({ label, value, pct, color }: { label: string; value: number; pct: number; color?: string }) {
+function BarRow({ label, value, pct, mode = 'pct', maxCount = 1, color }: { label: string; value: number; pct: number; mode?: 'pct' | 'count'; maxCount?: number; color?: string }) {
   const barColor = color || '#22c55e';
   const bgColor = '#0f172a';
   const border = '#1e293b';
   const text = '#e5f3ff';
-  const small = pct < 12;
+  const widthPct = mode === 'pct' ? pct : Math.round((value / Math.max(1, maxCount)) * 100);
+  const small = widthPct < 12;
   return (
     <div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -326,14 +516,14 @@ function BarRow({ label, value, pct, color }: { label: string; value: number; pc
       </div>
       <div style={{ position: 'relative', background: bgColor, borderRadius: 8, height: 18, overflow: 'hidden', border: `1px solid ${border}` }}
            title={`${label}: ${value} (${pct}%)`}>
-        <div style={{ width: `${pct}%`, height: '100%', background: barColor, transition: 'width 300ms ease' }} />
+        <div style={{ width: `${widthPct}%`, height: '100%', background: barColor, transition: 'width 300ms ease' }} />
         {!small ? (
           <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', paddingLeft: 8, color: text, fontSize: 12, fontWeight: 700 as const }}>
-            {pct}%
+            {mode === 'pct' ? `${pct}%` : value}
           </div>
         ) : (
           <div style={{ position: 'absolute', right: 8, top: 0, bottom: 0, display: 'flex', alignItems: 'center', color: '#9fb2c5', fontSize: 12 }}>
-            {pct}%
+            {mode === 'pct' ? `${pct}%` : value}
           </div>
         )}
       </div>
@@ -347,10 +537,25 @@ function formatPtDate(d: string) {
   return dt.toLocaleDateString('pt-BR', { timeZone: 'UTC' });
 }
 
+function formatRelTime(iso: string) {
+  try {
+    const dt = new Date(iso);
+    const diffMs = Date.now() - dt.getTime();
+    const minutes = Math.round(diffMs / 60000);
+    const rtf = new Intl.RelativeTimeFormat('pt-BR', { numeric: 'auto' });
+    if (Math.abs(minutes) < 60) return rtf.format(-minutes, 'minute');
+    const hours = Math.round(minutes / 60);
+    if (Math.abs(hours) < 48) return rtf.format(-hours, 'hour');
+    const days = Math.round(hours / 24);
+    return rtf.format(-days, 'day');
+  } catch { return ''; }
+}
+
 // Card de destaque para o maior dom
-function HighlightCard({ title, label, percent, color, hint }: { title: string; label: string; percent: number; color: string; hint?: string }) {
+function HighlightCard({ title, label, percent, color, hint, className }: { title: string; label: string; percent: number; color: string; hint?: string; className?: string }) {
   return (
-    <div style={{
+    <div className={className}
+         style={{
       borderRadius: 12,
       padding: 16,
       background: `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`,

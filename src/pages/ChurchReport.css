@@ -18,15 +18,27 @@
 .cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
 .cards-wrap { display: grid; gap: 12px; }
 .group-title { margin: 8px 2px 2px; font-size: 14px; color: #9fb2c5; text-transform: uppercase; letter-spacing: .6px; }
-.cards-doms { align-items: stretch; }
+.group-title.sticky { position: sticky; top: 64px; z-index: 4; background: #0b1220; padding: 6px 0 4px; border-bottom: 1px solid #1e293b; }
+.cards-doms { display: grid; gap: 12px; }
+.cards-doms-top { grid-template-columns: 1fr; }
+.cards-row-5 { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 1024px) { .cards-row-5 { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .cards-row-5 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 420px) { .cards-row-5 { grid-template-columns: 1fr; } }
 .cards-metrics { align-items: stretch; }
 .cards-separator { height: 1px; background: linear-gradient(90deg, transparent 0%, #1e293b 20%, #1e293b 80%, transparent 100%); margin: 4px 0 6px; }
 
 .section-title { margin-top: 32px; }
 
 .legend { display: flex; flex-wrap: wrap; gap: 8px 12px; margin: 6px 0 8px; color: #9fb2c5; }
-.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; }
+.legend-item { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; background: transparent; border: 1px solid transparent; color: inherit; cursor: pointer; padding: 4px 8px; border-radius: 999px; }
+.legend-item.active { border-color: #1e293b; }
+.legend-item.muted { opacity: .6; }
 .legend-dot { width: 10px; height: 10px; border-radius: 999px; border: 1px solid #1e293b; display: inline-block; }
+
+/* Destaque do card "Maior dom" em 2 colunas (desktop) */
+.cards-doms > .highlight { grid-column: span 2; }
+@media (max-width: 700px) { .cards-doms > .highlight { grid-column: span 1; } }
 
 .export-row { display: flex; gap: 8px; margin-top: 16px; }
 
@@ -34,3 +46,24 @@
   .toolbar { align-items: flex-start; }
   .toolbar-right { width: 100%; display: flex; justify-content: flex-end; }
 }
+
+/* Modal básico */
+.modal-backdrop { position: fixed; inset: 0; background: rgba(2, 6, 23, .75); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 16px; }
+.modal-card { width: 100%; max-width: 640px; background: #0b1220; border: 1px solid #1e293b; border-radius: 12px; box-shadow: 0 20px 50px rgba(0,0,0,.4); display: grid; grid-template-rows: auto 1fr auto; }
+.modal-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #1e293b; }
+.modal-title { margin: 0; font-size: 16px; color: #e2e8f0; }
+.modal-close { background: transparent; border: 1px solid #334155; color: #e2e8f0; border-radius: 999px; width: 28px; height: 28px; cursor: pointer; }
+.modal-body { max-height: 60vh; overflow: auto; padding: 12px 14px; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 10px 14px; border-top: 1px solid #1e293b; }
+.people-list { list-style: none; padding: 0; margin: 0; display: grid; gap: 6px; }
+.people-list li { display: flex; align-items: center; justify-content: space-between; background: #0b1220; border: 1px solid #1e293b; border-radius: 8px; padding: 8px 10px; }
+.person-name { color: #e2e8f0; }
+.person-date { color: #9fb2c5; font-size: 12px; }
+.muted { color: #9fb2c5; }
+
+/* Cards clicáveis dos dons (linha de 5) */
+.card-clickable { background: #0b1220; border: 1px solid #1e293b; color: #e2e8f0; border-radius: 12px; padding: 16px; text-align: left; cursor: pointer; display: grid; gap: 6px; }
+.card-clickable:hover { background: #0f172a; border-color: #334155; }
+.card-clickable-title { font-size: 12px; letter-spacing: .5px; text-transform: uppercase; color: #9fb2c5; }
+.card-clickable-value { font-size: 28px; font-weight: 800; }
+.card-clickable-hint { font-size: 12px; }
