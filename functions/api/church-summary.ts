@@ -151,6 +151,9 @@ export const onRequestGet = async (ctx: any) => {
       .sort((a, b) => (a[0] < b[0] ? -1 : 1))
       .map(([date, total]) => ({ date, total }));
 
+    // Número de membros previstos (usado em várias métricas)
+    const members = Number(expected_members || 0);
+
     // Extras: última resposta, dias ativos, pico
     let lastTimestamp: string | null = null;
     let activeDays = 0;
@@ -215,7 +218,6 @@ export const onRequestGet = async (ctx: any) => {
       previous = { summary: prevSummary, participationPct: prevPct, from: prevFromIso.slice(0,10), to: prevToIso.slice(0,10) };
     }
 
-    const members = Number(expected_members || 0);
     const overallPct = members > 0 ? Math.round((overallTotal / members) * 100) : 0;
     const periodPct = members > 0 ? Math.round((summary.total / members) * 100) : 0;
 
