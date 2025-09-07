@@ -111,7 +111,8 @@ export default function ChurchCreateInvite() {
           body: JSON.stringify({
             to: form.email.trim(),
             church: { name, slug },
-            links: { testUrl, reportUrl, whatsappUrl }
+            links: { testUrl, reportUrl, whatsappUrl },
+            responsibleName: form.leader_name?.trim() || undefined
           })
         });
         if (!resp.ok) {
@@ -154,7 +155,8 @@ export default function ChurchCreateInvite() {
               <p className="option-desc">Este é o link para que sua igreja faça o Teste dos 5 Ministérios.</p>
             </div>
             <div className="option-actions">
-              <button className="admin-btn primary" onClick={() => copy(quizLink)}>Copiar link do teste</button>
+              <a className="admin-btn primary" href={quizLink} target="_blank" rel="noreferrer">Abrir link do teste</a>
+              <button className="admin-btn" onClick={() => copy(quizLink)}>Copiar link</button>
             </div>
           </section>
 

@@ -11,6 +11,7 @@ type Payload = {
   to: string;
   church: { name: string; slug: string };
   links?: { testUrl?: string; reportUrl?: string; whatsappUrl?: string };
+  responsibleName?: string; // opcional, para saudação
 };
 
 const CORS = {
@@ -43,14 +44,18 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     }
 
     const site = env.SITE_URL || `https://${request.headers.get("host")}`;
-    const testUrl = body?.links?.testUrl || `${site}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
-    const reportUrl = body?.links?.reportUrl || `${site}/#/relatorio/${encodeURIComponent(slug)}`;
+    const baseTest = body?.links?.testUrl || `${site}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
+    const baseReport = body?.links?.reportUrl || `${site}/#/relatorio/${encodeURIComponent(slug)}`;
     const whatsappUrl = body?.links?.whatsappUrl || `https://wa.me/5583989004764`;
+
+    const testUrl = withUtm(baseTest);
+    const reportUrl = withUtm(baseReport);
+    const plain = renderText({ name, churchSlug: slug, testUrl, reportUrl, whatsappUrl, responsibleName: body?.responsibleName });
 
     const from = env.RESEND_FROM?.trim() || "Five One <resultado5ministerios@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
 
-    const html = renderHtml({ name, testUrl, reportUrl, whatsappUrl });
+    const html = renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName: body?.responsibleName });
 
     if (!env.RESEND_API_KEY) {
       return new Response(JSON.stringify({ ok: false, error: "Missing RESEND_API_KEY env" }), { status: 500, headers: { "content-type": "application/json", ...CORS } });
@@ -59,7 +64,14 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ from, to, subject: `Bem-vindo(a)! Sua igreja foi cadastrada — ${name}`, html, reply_to }),
+      body: JSON.stringify({
+        from,
+        to,
+        subject: "Igreja criada! Aqui está o link do Teste dos 5 Ministérios",
+        html,
+        text: plain,
+        reply_to,
+      }),
     });
     const data = await r.json().catch(() => ({}));
     if (!r.ok) {
@@ -71,36 +83,88 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   }
 };
 
-function renderHtml({ name, testUrl, reportUrl, whatsappUrl }: { name: string; testUrl: string; reportUrl: string; whatsappUrl: string }) {
+function renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName }: { name: string; testUrl: string; reportUrl: string; whatsappUrl: string; responsibleName?: string }) {
+  const displayName = responsibleName?.trim() || name;
+  const preheader = "Copie e compartilhe com sua igreja. Veja também o relatório em tempo real.";
+  const visibleTest = shortUrl(testUrl);
+  const visibleReport = shortUrl(reportUrl);
   return `
   <div style="font-family: Arial, Helvetica, sans-serif; max-width: 640px; margin:0 auto; color:#0f172a;">
+    <div style="display:none; visibility:hidden; opacity:0; height:0; overflow:hidden; color:transparent; line-height:0; max-height:0;">${escapeHtml(preheader)}</div>
     <div style="text-align:center; padding: 8px 0 0;">
       <h1 style="margin:0 0 8px; font-size:22px; color:#0f172a;">Igreja criada com sucesso</h1>
-      <p style="margin:0 0 18px; color:#475569;">${escapeHtml(name)} foi cadastrada no sistema Five One.</p>
+      <p style="margin:0 0 4px; color:#475569;">${escapeHtml(name)} foi cadastrada no sistema Five One.</p>
+      <p style="margin:0 0 16px; color:#334155;">Olá, ${escapeHtml(displayName)}!</p>
+      <p style="margin:0 18px 22px; color:#475569;">Seu cadastro foi concluído. Abaixo estão os links para divulgar o teste e acompanhar os resultados.</p>
     </div>
 
-    ${option("🎯", "Compartilhar link de teste", "Este é o link para que sua igreja faça o Teste dos 5 Ministérios.", testUrl, "Abrir link")}
-    ${option("📊", "Abrir relatório", "Acompanhe o resultado geral da sua comunidade: porcentagem de dons, volume de respostas e mais.", reportUrl, "Abrir relatório")}
-    ${option("💬", "Dúvidas", "Fale com a equipe Five One pelo WhatsApp para tirar dúvidas.", whatsappUrl, "Abrir WhatsApp")}
+    ${optionPrimary({
+      emoji: '🎯',
+      label: 'Compartilhar link de teste',
+      desc: 'Este é o link para que sua igreja faça o Teste dos 5 Ministérios. O link abre o teste sem login.',
+      href: testUrl,
+      cta: 'Abrir link',
+      linkCopy: visibleTest,
+    })}
+    ${optionSecondary({
+      emoji: '📊',
+      label: 'Abrir relatório',
+      desc: 'Acompanhe o resultado geral da sua comunidade: porcentagem de dons, volume de respostas e mais.',
+      href: reportUrl,
+      cta: 'Abrir relatório',
+      linkCopy: visibleReport,
+    })}
+    ${optionSecondary({
+      emoji: '💬',
+      label: 'Dúvidas',
+      desc: 'Fale com a equipe Five One pelo WhatsApp para tirar dúvidas.',
+      href: whatsappUrl,
+      cta: 'Abrir WhatsApp',
+    })}
 
+    <div style="margin:18px 0 6px;">
+      <div style="font-weight:700; margin:0 0 8px 0;">Próximos passos</div>
+      <ol style="margin:0; padding-left: 18px; color:#475569; line-height:1.6;">
+        <li>Copie o link do teste e compartilhe com sua igreja.</li>
+        <li>Defina um prazo (ex.: 7 dias) para todos responderem.</li>
+        <li>Monitore o relatório e planeje os próximos encontros.</li>
+      </ol>
+    </div>
+
+    <p style="font-size:14px; color:#475569; margin-top:16px;">Precisa de ajuda? Responda este e-mail ou fale pelo WhatsApp.</p>
     <p style="font-size:12px; color:#64748b; text-align:center; margin-top:18px;">Se você não solicitou este cadastro, pode ignorar este e-mail.</p>
     <div style="text-align:center; margin-top:16px; font-size:12px; color:#94a3b8;">© 2025 Five One — Todos os direitos reservados</div>
   </div>`;
 }
 
-function option(emoji: string, title: string, desc: string, href: string, cta: string) {
+function optionPrimary({ emoji, label, desc, href, cta, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; linkCopy?: string }) {
+  return baseOption({ emoji, label, desc, href, cta, linkCopy, primary: true });
+}
+
+function optionSecondary({ emoji, label, desc, href, cta, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; linkCopy?: string }) {
+  return baseOption({ emoji, label, desc, href, cta, linkCopy, primary: false });
+}
+
+function baseOption({ emoji, label, desc, href, cta, primary, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; primary: boolean; linkCopy?: string }) {
+  const btnBg = primary ? '#16a34a' : '#0b1220';
+  const btnColor = '#ffffff';
+  const btnStyle = `background:${btnBg}; color:${btnColor}; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; display:inline-block; min-height:44px; line-height:20px;`;
+  const boxStyle = 'margin:0 0 12px; border-collapse:separate; border:1px solid #e2e8f0; border-radius:12px;';
+  const emojiSpan = `<span role="img" aria-label="">${emoji}</span>`;
+  const linkText = linkCopy ? `<div style="margin-top:8px; font-size:13px;"><a href="${href}" style="color:#0b1220; text-decoration:underline;">${escapeHtml(linkCopy)}</a></div>` : '';
   return `
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 0 12px; border-collapse:separate; border:1px solid #e2e8f0; border-radius:12px;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${boxStyle}">
     <tr>
       <td style="padding:14px 16px;">
         <div style="display:flex; align-items:center; gap:12px;">
-          <div style="font-size:20px;">${emoji}</div>
+          <div style="font-size:20px;">${emojiSpan}</div>
           <div style="flex:1;">
-            <div style="font-weight:700;">${escapeHtml(title)}</div>
+            <div style="font-weight:700;">${escapeHtml(label)}</div>
             <div style="color:#475569; font-size:14px;">${escapeHtml(desc)}</div>
           </div>
-          <a href="${href}" style="background:#0b1220; color:#fff; text-decoration:none; padding:8px 12px; border-radius:8px; font-size:14px;">${escapeHtml(cta)}</a>
+          <a href="${href}" style="${btnStyle}">${escapeHtml(cta)}</a>
         </div>
+        ${linkText}
       </td>
     </tr>
   </table>`;
@@ -113,4 +177,50 @@ function escapeHtml(str: string){
     .replaceAll(">","&gt;")
     .replaceAll('"','&quot;')
     .replaceAll("'","&#39;");
+}
+
+function withUtm(url: string){
+  try {
+    const u = new URL(url);
+    u.searchParams.set('utm_source','email');
+    u.searchParams.set('utm_medium','transactional');
+    u.searchParams.set('utm_campaign','church_created');
+    return u.toString();
+  } catch { return url; }
+}
+
+function shortUrl(url: string){
+  try {
+    const u = new URL(url);
+    const path = `${u.hostname}${u.pathname}${u.search ? '' : ''}`;
+    return (u.protocol === 'https:' ? 'https://' : 'http://') + path + (u.search ? '' : '');
+  } catch { return url; }
+}
+
+function renderText({ name, churchSlug, testUrl, reportUrl, whatsappUrl, responsibleName }: { name: string; churchSlug: string; testUrl: string; reportUrl: string; whatsappUrl: string; responsibleName?: string; }) {
+  const greeting = responsibleName?.trim() || name;
+  return [
+    'Igreja criada! Aqui está o link do Teste dos 5 Ministérios',
+    '',
+    `Olá, ${greeting}!`,
+    '',
+    'Seu cadastro foi concluído. Abaixo estão os links para divulgar o teste e acompanhar os resultados.',
+    '',
+    '1) Compartilhar link do teste (principal)',
+    `Abrir: ${testUrl}`,
+    'Dica: o teste é rápido e não precisa de login.',
+    '',
+    '2) Acompanhar relatório',
+    `Abrir: ${reportUrl}`,
+    '',
+    'Próximos passos:',
+    ' - Copie o link do teste e compartilhe com sua igreja.',
+    ' - Defina um prazo (ex.: 7 dias) para todos responderem.',
+    ' - Monitore o relatório e planeje os próximos encontros.',
+    '',
+    `Dúvidas: ${whatsappUrl}`,
+    '',
+    'Se você não solicitou este cadastro, pode ignorar este e-mail.',
+    '© 2025 Five One — Todos os direitos reservados',
+  ].join('\n');
 }
