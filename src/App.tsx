@@ -23,6 +23,7 @@ import StreamerMestre from "./pages/plataforma/streamerMestre";
 import AdminChurches from "./pages/AdminChurches";
 import ChurchReport from "./pages/ChurchReport";
 import ChurchCreateInvite from "./pages/ChurchCreateInvite";
+import CopyLink from "./pages/CopyLink";
 
 import "./App.css";
 
@@ -51,6 +52,7 @@ function AppContent() {
     location.pathname.startsWith("/relatorio") ||
     location.pathname.startsWith("/r") ||
     location.pathname === "/cadastrar-igreja" ||
+    location.pathname === "/copiar" ||
     isInviteTest;
 
   return (
@@ -65,6 +67,7 @@ function AppContent() {
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
+            <Route path="/copiar" element={<CopyLink />} />
             <Route path="/quem-somos" element={<About />} />
             <Route path="/teste-dons" element={<Quiz />} />
             <Route path="/quiz" element={<Quiz />} />

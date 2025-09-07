@@ -132,7 +132,7 @@ export default function ChurchCreateInvite() {
 
   if (success) {
     const origin = (typeof window !== "undefined") ? window.location.origin : "";
-    const quizLink = success.quiz_url || `${origin}/#/teste-dons?churchSlug=${success.slug}`;
+    const quizLink = `${origin}/#/teste-dons?churchSlug=${success.slug}`;
     // const reportLink = success.report_url || `${origin}/#/relatorio/${success.slug}`;
     // const inviteLink = success.invite_url || `${origin}/c/${success.slug}`;
     return (

@@ -105,6 +105,7 @@ function renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName }: 
       href: testUrl,
       cta: 'Abrir link',
       linkCopy: visibleTest,
+      copyHref: withUtm(`${originOf(testUrl)}/#/copiar?u=${encodeURIComponent(testUrl)}`),
     })}
     ${optionSecondary({
       emoji: '📊',
@@ -137,21 +138,22 @@ function renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName }: 
   </div>`;
 }
 
-function optionPrimary({ emoji, label, desc, href, cta, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; linkCopy?: string }) {
-  return baseOption({ emoji, label, desc, href, cta, linkCopy, primary: true });
+function optionPrimary({ emoji, label, desc, href, cta, linkCopy, copyHref }: { emoji: string; label: string; desc: string; href: string; cta: string; linkCopy?: string; copyHref?: string }) {
+  return baseOption({ emoji, label, desc, href, cta, linkCopy, copyHref, primary: true });
 }
 
 function optionSecondary({ emoji, label, desc, href, cta, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; linkCopy?: string }) {
   return baseOption({ emoji, label, desc, href, cta, linkCopy, primary: false });
 }
 
-function baseOption({ emoji, label, desc, href, cta, primary, linkCopy }: { emoji: string; label: string; desc: string; href: string; cta: string; primary: boolean; linkCopy?: string }) {
+function baseOption({ emoji, label, desc, href, cta, primary, linkCopy, copyHref }: { emoji: string; label: string; desc: string; href: string; cta: string; primary: boolean; linkCopy?: string; copyHref?: string }) {
   const btnBg = primary ? '#16a34a' : '#0b1220';
   const btnColor = '#ffffff';
   const btnStyle = `background:${btnBg}; color:${btnColor}; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; display:inline-block; min-height:44px; line-height:20px;`;
   const boxStyle = 'margin:0 0 12px; border-collapse:separate; border:1px solid #e2e8f0; border-radius:12px;';
   const emojiSpan = `<span role="img" aria-label="">${emoji}</span>`;
   const linkText = linkCopy ? `<div style="margin-top:8px; font-size:13px;"><a href="${href}" style="color:#0b1220; text-decoration:underline;">${escapeHtml(linkCopy)}</a></div>` : '';
+  const copyBtn = copyHref ? `<a href="${copyHref}" style="background:#0b1220; color:#fff; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; display:inline-block; min-height:44px; line-height:20px; margin-left:8px;">Copiar link</a>` : '';
   return `
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="${boxStyle}">
     <tr>
@@ -162,7 +164,10 @@ function baseOption({ emoji, label, desc, href, cta, primary, linkCopy }: { emoj
             <div style="font-weight:700;">${escapeHtml(label)}</div>
             <div style="color:#475569; font-size:14px;">${escapeHtml(desc)}</div>
           </div>
-          <a href="${href}" style="${btnStyle}">${escapeHtml(cta)}</a>
+          <div>
+            <a href="${href}" style="${btnStyle}">${escapeHtml(cta)}</a>
+            ${copyBtn}
+          </div>
         </div>
         ${linkText}
       </td>
@@ -195,6 +200,10 @@ function shortUrl(url: string){
     const path = `${u.hostname}${u.pathname}${u.search ? '' : ''}`;
     return (u.protocol === 'https:' ? 'https://' : 'http://') + path + (u.search ? '' : '');
   } catch { return url; }
+}
+
+function originOf(url: string){
+  try { const u = new URL(url); return `${u.protocol}//${u.host}`; } catch { return ''; }
 }
 
 function renderText({ name, churchSlug, testUrl, reportUrl, whatsappUrl, responsibleName }: { name: string; churchSlug: string; testUrl: string; reportUrl: string; whatsappUrl: string; responsibleName?: string; }) {

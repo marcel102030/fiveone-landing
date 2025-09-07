@@ -53,7 +53,8 @@ export const onRequestPost = async (ctx: any) => {
     const site = (ctx.env.SITE_URL as string) || 'https://seusite.com';
     const inviteUrl = `${site}/c/${data.slug}`;
     const reportUrl = `${site}/#/relatorio/${data.slug}`;
-    const quizUrl = `${site}/#/c/${data.slug}`;
+    // Corrigido: link correto do teste com churchSlug
+    const quizUrl = `${site}/#/teste-dons?churchSlug=${encodeURIComponent(data.slug)}`;
 
     return new Response(
       JSON.stringify({
