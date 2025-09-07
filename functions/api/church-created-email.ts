@@ -127,7 +127,7 @@ function renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName }: 
       <ol style="margin:0; padding-left: 18px; color:#475569; line-height:1.6;">
         <li>Copie o link do teste e compartilhe com sua igreja.</li>
         <li>Defina um prazo (ex.: 7 dias) para todos responderem.</li>
-        <li>Monitore o relatório e planeje os próximos encontros.</li>
+        <li>Monitore o relatório e, caso ainda não tenha marcado, procure nossa equipe para planejar um treinamento ou palestra com sua igreja.</li>
       </ol>
     </div>
 
