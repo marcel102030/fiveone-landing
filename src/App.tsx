@@ -22,6 +22,7 @@ import StreamerApostolo from "./pages/plataforma/streamerApostolo";
 import StreamerMestre from "./pages/plataforma/streamerMestre";
 import AdminChurches from "./pages/AdminChurches";
 import ChurchReport from "./pages/ChurchReport";
+import ChurchCreateInvite from "./pages/ChurchCreateInvite";
 
 import "./App.css";
 
@@ -49,6 +50,7 @@ function AppContent() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/relatorio") ||
     location.pathname.startsWith("/r") ||
+    location.pathname === "/cadastrar-igreja" ||
     isInviteTest;
 
   return (
@@ -62,6 +64,7 @@ function AppContent() {
             <Route path="/admin/igrejas" element={<AdminChurches />} />
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
+            <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
             <Route path="/quem-somos" element={<About />} />
             <Route path="/teste-dons" element={<Quiz />} />
             <Route path="/quiz" element={<Quiz />} />

@@ -147,16 +147,16 @@ export const onRequestGet = async (ctx: any) => {
       }
     }
 
-    for (const r of rows ?? []) {
+    for (const r of rowsFiltered as any[]) {
       summary.total += 1;
-      const key = String(r.top_dom || '').toLowerCase();
+      const key = String((r as any).top_dom || '').toLowerCase();
       if (key.includes('apost')) summary.apostolo += 1;
       else if (key.includes('profe')) summary.profeta += 1;
       else if (key.includes('evangel')) summary.evangelista += 1;
       else if (key.includes('past')) summary.pastor += 1;
       else if (key.includes('mestre')) summary.mestre += 1;
 
-      const k = dayKey(String(r.created_at));
+      const k = dayKey(String((r as any).created_at));
       byDay.set(k, (byDay.get(k) || 0) + 1);
 
       const ties = (r as any)?.ties;

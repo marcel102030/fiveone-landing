@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import "./AdminChurches.css";
 
@@ -20,11 +20,17 @@ type Row = {
 
 type ApiOut = { ok: boolean; churches: Row[]; error?: string };
 
+type Summary = { total: number; apostolo: number; profeta: number; evangelista: number; pastor: number; mestre: number };
+
 export default function AdminChurches() {
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [from, setFrom] = useState<string>("");
+  const [to, setTo] = useState<string>("");
+  const [page, setPage] = useState(0);
+  const pageSize = 20;
   // Ordenação
   const [sortKey, setSortKey] = useState<
     "name" | "total_responses" | "city" | "expected_members" | "participacao"
@@ -108,9 +114,25 @@ export default function AdminChurches() {
     }
   }
 
+  // carregar/persistir preferências
   useEffect(() => {
+    try {
+      const p = JSON.parse(localStorage.getItem("adminChurchesPrefs") || "{}");
+      if (p.q) setQ(p.q);
+      if (p.filterCity) setFilterCity(p.filterCity);
+      if (p.filterPart) setFilterPart(p.filterPart);
+      if (p.sortKey) setSortKey(p.sortKey);
+      if (p.sortDir) setSortDir(p.sortDir);
+      if (p.from) setFrom(p.from);
+      if (p.to) setTo(p.to);
+    } catch {}
     loadChurches();
   }, []);
+
+  useEffect(() => {
+    const p = { q, filterCity, filterPart, sortKey, sortDir, from, to };
+    try { localStorage.setItem("adminChurchesPrefs", JSON.stringify(p)); } catch {}
+  }, [q, filterCity, filterPart, sortKey, sortDir, from, to]);
 
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -262,6 +284,76 @@ export default function AdminChurches() {
     return 0;
   });
 
+  // paginação
+  const totalPages = Math.max(1, Math.ceil(rowsSorted.length / pageSize));
+  useEffect(() => { if (page >= totalPages) setPage(Math.max(0, totalPages - 1)); }, [totalPages]);
+  const pageRows = useMemo(() => rowsSorted.slice(page * pageSize, page * pageSize + pageSize), [rowsSorted, page]);
+
+  // drawer de detalhes por igreja
+  const [openSlug, setOpenSlug] = useState<string | null>(null);
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(false);
+  useEffect(() => {
+    (async () => {
+      if (!openSlug) return;
+      setSummaryLoading(true);
+      try {
+        const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+        const qsObj: Record<string,string> = { churchSlug: openSlug, tz };
+        if (from) qsObj.from = from; if (to) qsObj.to = to;
+        const res = await fetch(`/api/church-summary?${new URLSearchParams(qsObj)}`);
+        const j = await res.json();
+        if (res.ok && j?.ok) setSummary(j.summary as Summary);
+        else setSummary(null);
+      } catch { setSummary(null); }
+      finally { setSummaryLoading(false); }
+    })();
+  }, [openSlug, from, to]);
+
+  function onShareWhatsApp(slug: string, name: string) {
+    const origin = (typeof window !== 'undefined') ? window.location.origin : '';
+    const link = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
+    const text = encodeURIComponent(`Olá! Segue o link do Teste dos 5 Ministérios para a igreja "${name}": ${link}`);
+    window.open(`https://wa.me/?text=${text}`, '_blank');
+  }
+
+  async function onSharePublicReport(slug: string) {
+    try {
+      const res = await fetch('/api/report-share', { method: 'POST', headers: { 'content-type':'application/json' }, body: JSON.stringify({ slug, from, to }) });
+      const j = await res.json();
+      if (!res.ok || !j?.ok) throw new Error(j?.error || `Erro ${res.status}`);
+      const url = j.url as string;
+      if ((navigator as any).share) (navigator as any).share({ title:`Relatório — ${slug}`, url }).catch(()=>copy(url));
+      else copy(url);
+    } catch(e:any){ alert(e?.message || String(e)); }
+    function copy(t:string){ if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(()=>alert('Link público copiado!')); else {
+      const ta = document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Link público copiado!');
+    }}
+  }
+
+  function exportCSV(list: Row[]) {
+    const lines = ["name,slug,city,leader,expected_members,total_responses,quiz_url,invite_url,report_url"]; 
+    list.forEach(r=> lines.push(`${safe(r.name)},${r.slug},${safe(r.city||'')},${safe(r.leader_name||'')},${r.expected_members||0},${r.total_responses||0},${r.quiz_url},${r.invite_url},${r.report_url}`));
+    const csv = lines.join('\n'); const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' }); const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'igrejas.csv'; document.body.appendChild(a); a.click(); a.remove();
+    function safe(s:string){ return `"${String(s).replace(/"/g,'""')}"`; }
+  }
+
+  async function onImportCSV(file: File){
+    try{
+      const txt = await file.text();
+      const lines = txt.split(/\r?\n/).filter(Boolean);
+      // cabeçalho opcional: name,leader,city,expected_members
+      for (let i=0;i<lines.length;i++){
+        const cols = lines[i].split(',').map(c=>c.replace(/^\"|\"$/g,'').trim());
+        const [name, leader_name, city, expected_members] = cols;
+        if (!name) continue;
+        await fetch('/api/church-create',{ method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ name, leader_name: leader_name||null, city: city||null, expected_members: Number(expected_members||0) })});
+      }
+      await loadChurches();
+      alert('Importação concluída.');
+    }catch(e:any){ alert(e?.message || String(e)); }
+  }
+
   const handleSort = (
     key: "name" | "total_responses" | "city" | "expected_members" | "participacao"
   ) => {
@@ -301,8 +393,22 @@ export default function AdminChurches() {
         </div>
       </div>
 
-      <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 8, marginBottom: 8 }}>
-        <button className="admin-btn" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
+      {/* Toolbar */}
+      <div className="admin-toolbar">
+        <div className="admin-toolbar-left">
+          <label className="admin-field">De
+            <input className="admin-input" type="date" value={from} onChange={e=>{setFrom(e.target.value); setPage(0);}} />
+          </label>
+          <label className="admin-field">Até
+            <input className="admin-input" type="date" value={to} onChange={e=>{setTo(e.target.value); setPage(0);}} />
+          </label>
+        </div>
+        <div className="admin-toolbar-right">
+          <input type="file" accept=".csv" id="importCsv" style={{ display:'none' }} onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onImportCSV(f); }} />
+          <button className="admin-btn" onClick={()=>document.getElementById('importCsv')?.click()}>Importar CSV</button>
+          <button className="admin-btn" onClick={()=>exportCSV(rowsSorted)}>Exportar CSV</button>
+          <button className="admin-btn" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
+        </div>
       </div>
 
       {createSuccess && (
@@ -418,14 +524,18 @@ export default function AdminChurches() {
               </tr>
             </thead>
             <tbody>
-              {rowsSorted.map((r) => {
+              {pageRows.map((r) => {
                 const part = getParticipacao(r);
                 let badgeClass = "badge-participacao badge-low";
                 if (part >= 70) badgeClass = "badge-participacao badge-high";
                 else if (part >= 30) badgeClass = "badge-participacao badge-med";
                 return (
                   <tr key={r.id} className="admin-row">
-                    <td className="admin-td">{r.name}</td>
+                    <td className="admin-td admin-name-cell">
+                      <button className="linklike" onClick={()=> setOpenSlug(r.slug)} title="Ver detalhes">
+                        {r.name}
+                      </button>
+                    </td>
                     <td className="admin-td"><code>{r.slug}</code></td>
                     <td className="admin-td">{r.city || "—"}</td>
                     <td className="admin-td">{r.leader_name || "—"}</td>
@@ -439,6 +549,8 @@ export default function AdminChurches() {
                         <Link to={`/relatorio/${r.slug}`}>
                           <button className="admin-btn">Relatório</button>
                         </Link>
+                        <button className="admin-btn" onClick={()=> onShareWhatsApp(r.slug, r.name)}>WhatsApp</button>
+                        <button className="admin-btn" onClick={()=> onSharePublicReport(r.slug)}>Link público</button>
                         <div className="copy-wrap">
                           <button
                             className="admin-btn"
@@ -488,6 +600,47 @@ export default function AdminChurches() {
               </li>
             ))}
           </ul>
+        </div>
+      )}
+
+      {/* Paginação */}
+      {!loading && !error && totalPages > 1 && (
+        <div className="admin-pagination">
+          <button className="admin-btn" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>Anterior</button>
+          <span>Página {page+1} de {totalPages}</span>
+          <button className="admin-btn" disabled={page>=totalPages-1} onClick={()=>setPage(p=>Math.min(totalPages-1,p+1))}>Próxima</button>
+        </div>
+      )}
+
+      {/* Drawer de detalhes */}
+      {openSlug && (
+        <div className="drawer-backdrop" onClick={()=> setOpenSlug(null)}>
+          <aside className="drawer" onClick={e=> e.stopPropagation()}>
+            <div className="drawer-head">
+              <h3>Detalhes — {openSlug}</h3>
+              <button className="drawer-close" onClick={()=> setOpenSlug(null)}>×</button>
+            </div>
+            <div className="drawer-body">
+              {summaryLoading && <p className="admin-msg">Carregando…</p>}
+              {summary && (
+                <div className="drawer-kpis">
+                  <div className="stat-card"><div className="stat-title">Respostas</div><div className="stat-number">{summary.total}</div></div>
+                  <div className="stat-card"><div className="stat-title">Apostólico</div><div className="stat-number">{summary.apostolo}</div></div>
+                  <div className="stat-card"><div className="stat-title">Profeta</div><div className="stat-number">{summary.profeta}</div></div>
+                  <div className="stat-card"><div className="stat-title">Evangelista</div><div className="stat-number">{summary.evangelista}</div></div>
+                  <div className="stat-card"><div className="stat-title">Pastor</div><div className="stat-number">{summary.pastor}</div></div>
+                  <div className="stat-card"><div className="stat-title">Mestre</div><div className="stat-number">{summary.mestre}</div></div>
+                </div>
+              )}
+              {!summaryLoading && !summary && (
+                <p className="admin-msg">Nenhum dado para o período.</p>
+              )}
+              <div className="drawer-actions">
+                <Link to={`/relatorio/${openSlug}${from||to?`?from=${from}&to=${to}`:''}`}><button className="admin-btn">Abrir relatório</button></Link>
+                <button className="admin-btn" onClick={()=> onSharePublicReport(openSlug)}>Gerar link público</button>
+              </div>
+            </div>
+          </aside>
         </div>
       )}
 
@@ -556,6 +709,17 @@ export default function AdminChurches() {
 
               <div className="modal-actions">
                 <button type="button" className="admin-btn" onClick={() => setShowCreate(false)}>Cancelar</button>
+                <button
+                  type="button"
+                  className="admin-btn"
+                  onClick={() => {
+                    const origin = (typeof window !== 'undefined') ? window.location.origin : '';
+                    copyToClipboard(`${origin}/#/cadastrar-igreja`);
+                  }}
+                  title="Copiar link para o líder preencher o cadastro da igreja"
+                >
+                  Gerar Formulário
+                </button>
                 <button type="submit" className="admin-btn" disabled={creating}>{creating ? "Criando..." : "Criar"}</button>
               </div>
             </form>

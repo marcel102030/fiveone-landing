@@ -42,6 +42,14 @@
   border-color: #334155; /* slate-700 */
 }
 
+/* Toolbar */
+.admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0 12px; flex-wrap: wrap; }
+.admin-toolbar-left { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.admin-toolbar-right { display: inline-flex; align-items: center; gap: 8px; }
+.admin-field { display: inline-flex; flex-direction: column; gap: 4px; color: #9fb2c5; font-size: 12px; }
+.admin-input { background: #0b1220; border: 1px solid #1e293b; color: #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+.admin-input:focus { outline: 2px solid #22c55e; outline-offset: 2px; }
+
 /* Mensagens */
 .admin-msg {
   margin: 8px 0 16px;
@@ -103,6 +111,9 @@
   gap: 8px;
   flex-wrap: wrap;
 }
+
+.linklike { background: none; border: none; color: #93c5fd; cursor: pointer; text-align: left; padding: 0; }
+.linklike:hover { text-decoration: underline; }
 
 .admin-btn {
   background: #0b1220;
@@ -498,6 +509,19 @@
   85%  { opacity: 1; }
   100% { opacity: 0; transform: translateY(-2px) scale(0.98); }
 }
+
+/* Paginação */
+.admin-pagination { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px 0; }
+
+/* Drawer Detalhes */
+.drawer-backdrop { position: fixed; inset: 0; background: rgba(2,6,23,0.7); display: flex; justify-content: flex-end; z-index: 60; }
+.drawer { width: min(480px, 100%); background: #0b1220; border-left: 1px solid #1e293b; box-shadow: -12px 0 40px rgba(0,0,0,.4); display: grid; grid-template-rows: auto 1fr; }
+.drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-bottom: 1px solid #1e293b; }
+.drawer-close { background: transparent; border: 1px solid #334155; color: #e2e8f0; border-radius: 999px; width: 28px; height: 28px; cursor: pointer; }
+.drawer-body { padding: 12px 14px; overflow: auto; }
+.drawer-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.drawer-actions { margin-top: 12px; display: flex; gap: 8px; }
+@media (max-width: 720px){ .drawer-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 
 /* ===== Admin – Wrapper e tooltip flutuante alinhado ===== */
 .copy-wrap {

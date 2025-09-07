@@ -1,0 +1,114 @@
+/* Public Church Create Invite page */
+
+.invite-wrap {
+  min-height: 100vh;
+  padding: 56px 16px 32px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  gap: 16px;
+}
+
+.invite-hero {
+  margin: 0 auto;
+  width: min(980px, 100%);
+  text-align: center;
+}
+
+.invite-title {
+  margin: 0 0 6px 0;
+  font-size: clamp(22px, 3.4vw, 34px);
+  font-weight: 800;
+}
+
+.invite-sub {
+  margin: 0 auto;
+  color: #94a3b8;
+  max-width: 780px;
+}
+
+.invite-card {
+  margin: 0 auto;
+  width: min(820px, 100%);
+  background: #0b1220;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 18px 16px;
+  box-shadow: 0 16px 40px rgba(0,0,0,.35);
+}
+
+/* Success options layout */
+.invite-options {
+  margin: 0 auto;
+  width: min(980px, 100%);
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.option-card {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 14px;
+  background: #0b1220;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 14px 16px;
+  box-shadow: 0 8px 30px rgba(0,0,0,.25);
+}
+
+.option-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.option-title { margin: 0 0 2px 0; font-weight: 800; font-size: 18px; }
+.option-desc { margin: 0; color: #94a3b8; }
+
+.option-actions { display: inline-flex; gap: 8px; }
+
+.invite-footer-actions {
+  margin: 12px auto 0;
+  width: min(980px, 100%);
+  display: flex;
+  justify-content: center;
+}
+
+/* Reaproveita grid e campos do modal do admin */
+.invite-card .modal-form { grid-template-columns: 1fr 1fr; }
+.invite-card .form-row--full { grid-column: 1 / -1; }
+
+.invite-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.invite-alert {
+  margin: 4px 0 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid transparent;
+}
+
+.invite-alert--success {
+  color: #bbf7d0; /* green-200 */
+  background: rgba(34,197,94,.12);
+  border-color: rgba(34,197,94,.35);
+}
+
+.invite-alert--error {
+  color: #fecaca; /* red-200 */
+  background: rgba(239,68,68,.12);
+  border-color: rgba(239,68,68,.35);
+}
+
+@media (max-width: 720px){
+  .invite-wrap { padding-top: 28px; }
+  .invite-card .modal-form { grid-template-columns: 1fr; }
+  .invite-actions { justify-content: stretch; }
+  .invite-actions .admin-btn { width: 100%; }
+  .option-card { grid-template-columns: 1fr; text-align: center; }
+  .option-actions { justify-content: center; }
+}
