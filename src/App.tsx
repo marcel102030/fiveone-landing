@@ -21,6 +21,8 @@ import LoginAluno from "./pages/plataforma/loginAluno";
 import StreamerApostolo from "./pages/plataforma/streamerApostolo";
 import StreamerMestre from "./pages/plataforma/streamerMestre";
 import AdminChurches from "./pages/AdminChurches";
+import AdminLogin from "./pages/AdminLogin";
+import AdminGuard from "./components/auth/AdminGuard";
 import ChurchReport from "./pages/ChurchReport";
 import ChurchCreateInvite from "./pages/ChurchCreateInvite";
 import CopyLink from "./pages/CopyLink";
@@ -63,7 +65,15 @@ function AppContent() {
         <main>
           <Routes>
             <Route path="/" element={<Home />} />
-            <Route path="/admin/igrejas" element={<AdminChurches />} />
+            <Route path="/admin" element={<AdminLogin />} />
+            <Route
+              path="/admin/igrejas"
+              element={
+                <AdminGuard>
+                  <AdminChurches />
+                </AdminGuard>
+              }
+            />
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />

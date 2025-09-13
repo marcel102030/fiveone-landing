@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import './streamerApostolo.css';
+import '../../components/Streamer/streamerShared.css';
+import ReactionBar from '../../components/Streamer/ReactionBar';
+import CommentSection from '../../components/Streamer/CommentSection';
 import Header from './Header';
 
 const StreamerApostolo = () => {
@@ -48,6 +51,8 @@ const StreamerApostolo = () => {
                 allowFullScreen
               />
             </div>
+            <ReactionBar videoId={currentVideo.url} />
+            <CommentSection videoId={currentVideo.url} />
             <div className="next-button-container">
               {currentIndex > 0 && (
                 <button className="prev-lesson-button" onClick={handlePrevious}>

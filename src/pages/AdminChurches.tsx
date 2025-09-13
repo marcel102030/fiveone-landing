@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./AdminChurches.css";
+import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
 
 const PROD_ORIGIN = "https://fiveonemovement.com";
 
@@ -23,6 +24,7 @@ type ApiOut = { ok: boolean; churches: Row[]; error?: string };
 type Summary = { total: number; apostolo: number; profeta: number; evangelista: number; pastor: number; mestre: number };
 
 export default function AdminChurches() {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [rows, setRows] = useState<Row[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -367,7 +369,13 @@ export default function AdminChurches() {
 
   return (
     <div className="admin-wrap">
-      <h1 className="admin-title">Painel de Igrejas</h1>
+      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
+        <h1 className="admin-title">Painel de Igrejas</h1>
+        <div style={{display:'flex', alignItems:'center', gap:8}}>
+          <span style={{color:'#a9c4d4', fontSize:12}}>{getAdminEmail() || ''}</span>
+          <button className="admin-btn" onClick={()=>{ clearAdminAuthenticated(); navigate('/admin', { replace:true }); }}>Sair</button>
+        </div>
+      </div>
       <p className="admin-subtitle">
         Visualize todas as igrejas cadastradas e acesse seus relatórios.
       </p>

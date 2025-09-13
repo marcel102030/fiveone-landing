@@ -1,5 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import './streamerMestre.css';
+import '../../components/Streamer/streamerShared.css';
+import ReactionBar from '../../components/Streamer/ReactionBar';
+import CommentSection from '../../components/Streamer/CommentSection';
 import Header from './Header';
 
 const StreamerMestre = () => {
@@ -99,21 +102,53 @@ const StreamerMestre = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
 
 
-  useEffect(() => {
-    const resizeSidebar = () => {
-      if (videoRef.current && sidebarRef.current) {
-        const videoHeight = videoRef.current.offsetHeight;
-        sidebarRef.current.style.height = `${videoHeight}px`;
+  // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
+  useLayoutEffect(() => {
+    const el = videoRef.current;
+    const side = sidebarRef.current;
+    if (!el || !side) return;
+
+    const mq = window.matchMedia('(max-width: 1024px)');
+
+    const update = () => {
+      if (!sidebarRef.current) return;
+      const s = sidebarRef.current;
+      if (mq.matches) {
+        s.style.removeProperty('--sidebar-height');
+        s.style.height = 'auto';
+        s.style.marginTop = '0px';
+        return;
       }
+      const iframe = el.querySelector('iframe');
+      const rect = (iframe || el).getBoundingClientRect();
+      const content = el.closest('.video-content') as HTMLElement | null;
+      const contentRect = content ? content.getBoundingClientRect() : { top: rect.top } as any;
+      const h = Math.max(320, Math.round(rect.height));
+      s.style.setProperty('--sidebar-height', `${h}px`);
+      s.style.height = `${h}px`;
+      const offset = Math.max(0, Math.round(rect.top - contentRect.top));
+      s.style.marginTop = `${offset}px`;
     };
 
-    resizeSidebar();
-    window.addEventListener('resize', resizeSidebar);
+    // Observa tamanho do container do vídeo e também o iframe
+    const ro = new ResizeObserver(() => update());
+    ro.observe(el);
+    const iframe = el.querySelector('iframe');
+    if (iframe) iframe.addEventListener('load', update, { once: true });
+
+    window.addEventListener('resize', update);
+    // chama múltiplas vezes no primeiro segundo para garantir o acerto após layout
+    update();
+    const t1 = setTimeout(update, 50);
+    const t2 = setTimeout(update, 250);
+    const t3 = setTimeout(update, 600);
 
     return () => {
-      window.removeEventListener('resize', resizeSidebar);
+      ro.disconnect();
+      window.removeEventListener('resize', update);
+      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, []);
+  }, [isModuloAberto, currentIndex]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -330,6 +365,8 @@ const StreamerMestre = () => {
                     </div>
                   </div>
                 </div>
+                <ReactionBar videoId={currentVideo.url} />
+                <CommentSection videoId={currentVideo.url} />
               </div>
               <div className="video-sidebar" ref={sidebarRef}>
                 <h3 className="sidebar-title">Próximas Aulas</h3>
@@ -354,6 +391,7 @@ const StreamerMestre = () => {
                     </li>
                   ))}
                 </ul>
+                <button className="sidebar-cta" onClick={handleNext}>Ir para o próximo módulo</button>
               </div>
             </div>
           )}
