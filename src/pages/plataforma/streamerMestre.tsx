@@ -4,102 +4,143 @@ import '../../components/Streamer/streamerShared.css';
 import ReactionBar from '../../components/Streamer/ReactionBar';
 import CommentSection from '../../components/Streamer/CommentSection';
 import Header from './Header';
+import { useSearchParams } from 'react-router-dom';
+import { getCurrentUserId } from '../../utils/user';
+import { upsertProgress, fetchUserProgress } from '../../services/progress';
 
 const StreamerMestre = () => {
   const videoList = [
     {
+      id: 'mestre-01',
       url: 'https://player.vimeo.com/video/1100734000',
       title: 'Aula 01 – Introdução à História da Igreja',
       thumbnail: '/assets/images/Introducao_historia_igreja.png',
       pdfUrl: '/assets/pdfs/aula01.pdf',
     },
     {
+      id: 'mestre-02',
       url: 'https://www.youtube.com/embed/XQEGw923yD0',
       title: 'Aula 02 – A Igreja Primitiva',
       pdfUrl: '/assets/pdfs/aula02.pdf',
     },
     {
+      id: 'mestre-03',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 03 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-04',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 04 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-05',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 05 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-06',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 06 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-07',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 07 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-08',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 08 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-09',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 09 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-10',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 10 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-11',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 11 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-12',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 12 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-13',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 13 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-14',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 14 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-15',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 15 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-16',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 16 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
     {
+      id: 'mestre-17',
       url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
       title: 'Aula 17 – Concílios e Doutrinas',
       thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
     },
   ];
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [searchParams] = useSearchParams();
+  function resolveIndexFromParams(): number {
+    const vid = searchParams.get('vid');
+    const i = searchParams.get('i');
+    const v = searchParams.get('v');
+    if (vid) {
+      const idx = videoList.findIndex(x => x.id === vid);
+      if (idx >= 0) return idx;
+    }
+    if (i) {
+      const idx = Number(i); if (!Number.isNaN(idx) && idx >= 0 && idx < videoList.length) return idx;
+    }
+    if (v) {
+      const url = decodeURIComponent(v);
+      const idx = videoList.findIndex(x => x.url === url || url.includes(x.url) || x.url.includes(url));
+      if (idx >= 0) return idx;
+    }
+    return 0;
+  }
+  const initialIndex = resolveIndexFromParams();
+  const [currentIndex, setCurrentIndex] = useState(initialIndex);
   const [completedVideos, setCompletedVideos] = useState<number[]>([]);
   const [isModuloAberto, setIsModuloAberto] = useState(false);
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  // searchParams já usado acima
 
 
   // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
@@ -154,31 +195,49 @@ const StreamerMestre = () => {
     const interval = setInterval(() => {
       const iframe = videoRef.current?.querySelector('iframe');
       if (iframe) {
-        // Attempt to get current time from the iframe's contentWindow if same-origin (likely not possible)
-        // So for Vimeo/YouTube, we would need to use their APIs, but since it's not set up, we'll skip direct time reading.
-        // Instead, as a workaround, we can save a dummy progress or assume the video is being watched when the iframe is present.
+        const key = `fiveone_progress::${currentVideo.url}`;
+        const now = Date.now();
+        let state: any = {};
+        try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+        const watched = Number(state.watchedSeconds || 0) + 5; // +5s a cada intervalo
+        const duration = Number(state.durationSeconds || 0); // se um dia vier das APIs
+        const payload = { watchedSeconds: watched, durationSeconds: duration, lastAt: now };
+        try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
 
-        // For demonstration, save a dummy progress of 1 (or you can implement API integration)
-        // But here, we just store that user has started watching.
-        localStorage.setItem('progress_mestre_aula_01', '1');
-        localStorage.setItem('has_mestre_progress', 'true');
         const currentVideoData = {
           title: currentVideo.title,
-          thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_apostololicos.png',
-          url: currentVideo.url
+          thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_mestre.png',
+          url: currentVideo.url,
+          index: currentIndex,
+          id: currentVideo.id,
+          watchedSeconds: watched,
+          durationSeconds: duration,
+          lastAt: now
         };
         const existingWatched = JSON.parse(localStorage.getItem('videos_assistidos') || '[]');
-
-        // Remove duplicatas com base na URL
         const filteredWatched = existingWatched.filter((video: any) => video.url !== currentVideoData.url);
-
-        // Adiciona o vídeo atual ao início da lista
         const updatedWatched = [currentVideoData, ...filteredWatched];
+        const limitedWatched = updatedWatched.slice(0, 12);
+        try { localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched)); } catch {}
 
-        // Limita a lista a no máximo 10 vídeos
-        const limitedWatched = updatedWatched.slice(0, 10);
-
-        localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+        // Persistir no Supabase (a cada ~15s)
+        const userId = getCurrentUserId();
+        if (userId) {
+          const lastSyncKey = `fiveone_progress_sync_${currentVideo.id || currentVideo.url}`;
+          const lastSync = Number(sessionStorage.getItem(lastSyncKey) || 0);
+          if (Date.now() - lastSync > 15000) {
+            sessionStorage.setItem(lastSyncKey, String(Date.now()));
+            upsertProgress({
+              user_id: userId,
+              video_id: currentVideo.id || currentVideo.url,
+              last_at: new Date(now).toISOString(),
+              watched_seconds: watched,
+              duration_seconds: duration || null,
+              title: currentVideo.title,
+              thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_mestre.png',
+            }).catch(()=>{});
+          }
+        }
       }
     }, 5000);
 
@@ -197,11 +256,34 @@ const StreamerMestre = () => {
     }
   };
 
+  // já abrimos direto com os estados iniciais
+
   const handlePrevious = () => {
     if (currentIndex > 0) {
       setCurrentIndex(currentIndex - 1);
     }
   };
+
+  async function jumpToLastWatchedIfAny(){
+    try {
+      const uid = getCurrentUserId();
+      if (!uid) return;
+      const rows = await fetchUserProgress(uid, 50);
+      if (!rows || !rows.length) return;
+      const ids = new Map<string, number>();
+      videoList.forEach((v,i)=> ids.set(v.id, i));
+      let bestIndex: number | null = null;
+      let bestAt = 0;
+      rows.forEach(r=>{
+        const idx = ids.get(r.video_id);
+        if (typeof idx === 'number'){
+          const at = new Date(r.last_at).getTime();
+          if (at > bestAt){ bestAt = at; bestIndex = idx; }
+        }
+      });
+      if (bestIndex !== null) setCurrentIndex(bestIndex);
+    } catch {}
+  }
 
   return (
     <>
@@ -214,11 +296,12 @@ const StreamerMestre = () => {
                 className="modulo-card"
                 role="button"
                 tabIndex={0}
-                onClick={() => setIsModuloAberto(true)}
+                onClick={() => { setIsModuloAberto(true); jumpToLastWatchedIfAny(); }}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     setIsModuloAberto(true);
+                    jumpToLastWatchedIfAny();
                   }
                 }}
                 style={{ transition: 'all 0.3s ease', cursor: 'pointer' }}
@@ -375,6 +458,7 @@ const StreamerMestre = () => {
                     <li
                       key={index}
                       className={`sidebar-item ${index === currentIndex ? 'active' : ''}`}
+                      title={video.title}
                       onClick={() => setCurrentIndex(index)}
                     >
                       <img

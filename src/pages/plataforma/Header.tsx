@@ -1,5 +1,5 @@
 
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const logoSmall = "/assets/images/logo-fiveone-white-small.png";
 const perfilLogo = "/assets/images/logo_maior.png";
@@ -26,14 +26,28 @@ const Header = () => {
     };
   }, []);
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  function onLogoClick() {
+    if (location.pathname === "/plataforma") {
+      const el = document.getElementById("inicio");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      navigate("/plataforma");
+      setTimeout(() => {
+        const el = document.getElementById("inicio");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 50);
+    }
+  }
+
   return (
     <header className="header">
       <div className="header-left">
-        <img
-          src={logoSmall}
-          alt="Logo Five One"
-          className="header-logo"
-        />
+        <button onClick={onLogoClick} className="header-logo-btn" aria-label="Ir para o início">
+          <img src={logoSmall} alt="Logo Five One" className="header-logo" />
+        </button>
         <nav className="header-nav">
           <Link
             to="/plataforma"

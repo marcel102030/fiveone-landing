@@ -282,16 +282,16 @@
     padding: 2rem 1rem;
   }
   
-  .button-wrapper {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    width: 100%;
-    margin-top: 1rem;
-    padding: 0 1rem;
-  }
+.button-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: nowrap;
+  width: 100%;
+  margin-top: 1rem;
+  padding: 0 1rem;
+}
 
 .button-wrapper .pdf-view-button {
   margin-top: 0.3rem;
@@ -304,12 +304,12 @@
     align-self: flex-start;
   }
 
-  .button-group-center {
-    display: flex;
-    justify-content: center;
-    gap: 1rem;
-    width: 100%;
-  }
+.button-group-center {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+}
 
   .complete-lesson-button {
     margin-left: auto;
@@ -719,11 +719,15 @@
 /* Added or replaced .button-group-row */
 .button-group-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
   align-items: center;
   width: 100%;
-  flex-wrap: wrap;
   gap: 16px;
+  background: rgba(15, 35, 48, 0.8);
+  border: 1px solid #274154;
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 10px 22px rgba(0,0,0,.25);
 }
 
 /* Added new button wrapper classes */

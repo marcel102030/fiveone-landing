@@ -1,6 +1,7 @@
 import { useState } from "react";
 import "./loginAluno.css";
 import logoSmall from "./assets/images/logo-fiveone-white-small.png";
+import { setCurrentUser } from "../../utils/user";
 
 const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState("");
@@ -23,6 +24,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
     }
 
     setErro("");
+    try { setCurrentUser(email); } catch {}
     onLogin();
   };
 
