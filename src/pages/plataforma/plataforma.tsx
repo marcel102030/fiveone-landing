@@ -3,7 +3,8 @@ import "./plataforma.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { getCurrentUserId } from "../../utils/user";
-import { fetchUserProgress } from "../../services/progress";
+import { fetchUserProgress, deleteAllProgressForUser } from "../../services/progress";
+import { mestreModulo1Videos } from "./data/mestreModule1";
 
 const PaginaInicial = () => {
   const [modalContent, setModalContent] = useState("");
@@ -14,45 +15,60 @@ const PaginaInicial = () => {
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
   useEffect(() => {
     let active = true;
-    async function load() {
+    // 1) carrega localStorage imediatamente para evitar atraso
+    try {
+      const raw = localStorage.getItem('videos_assistidos');
+      const parsed = raw ? JSON.parse(raw) : [];
+      const byKey = new Map<string, any>();
+      (parsed as any[]).forEach(v => {
+        const key = v.id || v.url;
+        const prev = byKey.get(key);
+        if (!prev || (v.lastAt || 0) > (prev.lastAt || 0)) byKey.set(key, v);
+      });
+      const localArr = Array.from(byKey.values());
+      localArr.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
+      if (localArr.length) setLastWatchedArray(localArr);
+    } catch {}
+
+    // 2) busca remota em background e atualiza caso tenha dados
+    (async () => {
       const uid = getCurrentUserId();
-      if (uid) {
-        try {
-          const rows = await fetchUserProgress(uid, 24);
-          if (!active) return;
-          if (rows && rows.length) {
-            setLastWatchedArray(rows.map(r => ({
-              id: r.video_id,
-              url: '',
-              index: undefined,
-              title: r.title,
-              thumbnail: r.thumbnail,
-              watchedSeconds: r.watched_seconds,
-              durationSeconds: r.duration_seconds || undefined,
-              lastAt: new Date(r.last_at).getTime(),
-            })));
-            return;
-          }
-        } catch {}
-      }
-      // fallback localStorage
+      if (!uid) return;
       try {
-        const raw = localStorage.getItem('videos_assistidos');
-        const parsed = raw ? JSON.parse(raw) : [];
-        const byKey = new Map<string, any>();
-        (parsed as any[]).forEach(v => {
-          const key = v.id || v.url;
-          const prev = byKey.get(key);
-          if (!prev || (v.lastAt || 0) > (prev.lastAt || 0)) byKey.set(key, v);
-        });
-        const arr = Array.from(byKey.values());
-        arr.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
-        if (active) setLastWatchedArray(arr);
-      } catch { if (active) setLastWatchedArray([]); }
-    }
-    load();
+        const rows = await fetchUserProgress(uid, 24);
+        if (!active) return;
+        if (rows && rows.length) {
+          const subjectById = new Map(mestreModulo1Videos.map(v => [v.id, v.subjectName] as const));
+          const remote = rows.map(r => ({
+            id: r.video_id,
+            url: '',
+            index: undefined,
+            title: r.title,
+            thumbnail: r.thumbnail,
+            watchedSeconds: r.watched_seconds,
+            durationSeconds: r.duration_seconds || undefined,
+            lastAt: new Date(r.last_at).getTime(),
+            subjectName: subjectById.get(r.video_id),
+          }));
+          setLastWatchedArray(remote);
+        }
+      } catch {}
+    })();
+
     return () => { active = false; };
   }, []);
+
+  const handleClearContinue = async () => {
+    try {
+      localStorage.removeItem('videos_assistidos');
+      const uid = getCurrentUserId();
+      if (uid) {
+        try { await deleteAllProgressForUser(uid); } catch {}
+      }
+    } finally {
+      setLastWatchedArray([]);
+    }
+  };
 
   const scrollCarousel = (direction: number) => {
     if (carouselRef.current) {
@@ -93,6 +109,9 @@ const PaginaInicial = () => {
             <div className="continuar-banner-info">
               <div className="cb-title">Última Aula Assistida</div>
               <div className="cb-sub">{lastWatchedArray[0].title}</div>
+              {lastWatchedArray[0].subjectName && (
+                <div className="cb-pill">{lastWatchedArray[0].subjectName}</div>
+              )}
             </div>
             <button className="cb-btn" onClick={() => {
               const v:any = lastWatchedArray[0];
@@ -141,6 +160,7 @@ const PaginaInicial = () => {
           <section id="sec-continuar" className="continuar-assistindo">
             <div className="continuar-seta">↓</div>
             <h2>Continuar Assistindo</h2>
+            <button className="clear-continue-btn" onClick={handleClearContinue}>Limpar histórico</button>
             <div className="carousel-wrapper">
               <button className="arrow left" onClick={() => scrollCarousel(-1)}>‹</button>
               <div className="continuar-container" ref={carouselRef}>
@@ -159,6 +179,7 @@ const PaginaInicial = () => {
                   >
                     <div className="continuar-overlay">
                       <p>{video.title}</p>
+                      {video.subjectName && <span className="continuar-subject">{video.subjectName}</span>}
                       <div className="continuar-meta">
                         {typeof video.durationSeconds === 'number' && video.durationSeconds > 0 ? (
                           <span className="dur">{Math.floor(video.durationSeconds/60)}:{String(Math.floor(video.durationSeconds%60)).padStart(2,'0')}</span>
@@ -184,7 +205,7 @@ const PaginaInicial = () => {
           </section>
         ) : null}
       <section id="sec-formacao" className="formacao-ministerial">
-        <div className="arrow-icon">↓</div>
+        {/* <div className="arrow-icon">↓</div> */}
         <h2>Sua Formação Ministerial</h2>
         <div className="formacao-container">
           <div
@@ -216,7 +237,7 @@ const PaginaInicial = () => {
             tabIndex={0}
           />
           <Link
-            to="/streamer-mestre"
+            to="/modulos-mestre"
             className="formacao-item"
             style={{ backgroundImage: "url('/assets/images/mestre.png')" }}
           />

@@ -1,119 +1,17 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import './streamerMestre.css';
 import '../../components/Streamer/streamerShared.css';
 import ReactionBar from '../../components/Streamer/ReactionBar';
 import CommentSection from '../../components/Streamer/CommentSection';
 import Header from './Header';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
-import { upsertProgress, fetchUserProgress } from '../../services/progress';
+import { upsertProgress } from '../../services/progress';
+import { mestreModulo1Videos } from './data/mestreModule1';
+import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
 
 const StreamerMestre = () => {
-  const videoList = [
-    {
-      id: 'mestre-01',
-      url: 'https://player.vimeo.com/video/1100734000',
-      title: 'Aula 01 – Introdução à História da Igreja',
-      thumbnail: '/assets/images/Introducao_historia_igreja.png',
-      pdfUrl: '/assets/pdfs/aula01.pdf',
-    },
-    {
-      id: 'mestre-02',
-      url: 'https://www.youtube.com/embed/XQEGw923yD0',
-      title: 'Aula 02 – A Igreja Primitiva',
-      pdfUrl: '/assets/pdfs/aula02.pdf',
-    },
-    {
-      id: 'mestre-03',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 03 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-04',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 04 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-05',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 05 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-06',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 06 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-07',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 07 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-08',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 08 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-09',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 09 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-10',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 10 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-11',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 11 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-12',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 12 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-13',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 13 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-14',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 14 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-15',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 15 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-16',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 16 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-    {
-      id: 'mestre-17',
-      url: 'https://www.youtube.com/embed/4KatysePW3U?start=2148',
-      title: 'Aula 17 – Concílios e Doutrinas',
-      thumbnail: '/assets/images/miniatura_fundamentos_mestre.png',
-    },
-  ];
+  const videoList = mestreModulo1Videos;
 
   const [searchParams] = useSearchParams();
   function resolveIndexFromParams(): number {
@@ -136,8 +34,9 @@ const StreamerMestre = () => {
   }
   const initialIndex = resolveIndexFromParams();
   const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const [completedVideos, setCompletedVideos] = useState<number[]>([]);
-  const [isModuloAberto, setIsModuloAberto] = useState(false);
+  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  // Página de player não mostra mais a grade de módulos
+  const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   // searchParams já usado acima
@@ -189,7 +88,7 @@ const StreamerMestre = () => {
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, [isModuloAberto, currentIndex]);
+  }, [currentIndex]);
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -210,6 +109,8 @@ const StreamerMestre = () => {
           url: currentVideo.url,
           index: currentIndex,
           id: currentVideo.id,
+          subjectName: (currentVideo as any).subjectName,
+          subjectId: (currentVideo as any).subjectId,
           watchedSeconds: watched,
           durationSeconds: duration,
           lastAt: now
@@ -245,11 +146,43 @@ const StreamerMestre = () => {
   }, [currentIndex]);
 
   const handleMarkAsCompleted = () => {
-    if (!completedVideos.includes(currentIndex)) {
-      setCompletedVideos([...completedVideos, currentIndex]);
+    const id = videoList[currentIndex].id;
+    if (!completedIds.has(id)) {
+      const next = new Set(completedIds); next.add(id); setCompletedIds(next);
     }
   };
+  useEffect(()=>{
+    const uid = getCurrentUserId();
+    if (!uid) return;
+    const id = videoList[currentIndex].id;
+    if (completedIds.has(id)){
+      import('../../services/completions').then(m=> m.upsertCompletion(uid, id)).catch(()=>{});
+    }
+  }, [completedIds, currentIndex]);
+
+  // Load completions for user once
+  useEffect(()=>{
+    const uid = getCurrentUserId();
+    if (!uid) return;
+    import('../../services/completions').then(async (m)=>{
+      try { const list = await m.fetchCompletionsForUser(uid); setCompletedIds(new Set(list)); } catch {}
+    });
+  }, []);
   const currentVideo = videoList[currentIndex];
+  const navigate = useNavigate();
+  // Filtro por matéria na sidebar
+  const subjectOrder = ['biblia','fundamentos','ministerios','historia'];
+  const subjects: SubjectOption[] = useMemo(() => {
+    const map = new Map<string, string>();
+    videoList.forEach(v => map.set(v.subjectId as string, v.subjectName as string));
+    const arr = Array.from(map.entries()).map(([id, name]) => ({ id, name, count: videoList.filter(v => v.subjectId === id).length }));
+    arr.sort((a,b)=> (subjectOrder.indexOf(a.id) === -1 ? 999 : subjectOrder.indexOf(a.id)) - (subjectOrder.indexOf(b.id) === -1 ? 999 : subjectOrder.indexOf(b.id)));
+    return [{ id: 'all', name: 'Todas', count: videoList.length }, ...arr];
+  }, [videoList]);
+  const [filterSubject, setFilterSubject] = useState<string>('all');
+  const filteredList = useMemo(() => filterSubject === 'all' ? videoList : videoList.filter(v => v.subjectId === filterSubject), [videoList, filterSubject]);
+  useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
+  useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   const handleNext = () => {
     if (currentIndex < videoList.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -264,142 +197,25 @@ const StreamerMestre = () => {
     }
   };
 
-  async function jumpToLastWatchedIfAny(){
-    try {
-      const uid = getCurrentUserId();
-      if (!uid) return;
-      const rows = await fetchUserProgress(uid, 50);
-      if (!rows || !rows.length) return;
-      const ids = new Map<string, number>();
-      videoList.forEach((v,i)=> ids.set(v.id, i));
-      let bestIndex: number | null = null;
-      let bestAt = 0;
-      rows.forEach(r=>{
-        const idx = ids.get(r.video_id);
-        if (typeof idx === 'number'){
-          const at = new Date(r.last_at).getTime();
-          if (at > bestAt){ bestAt = at; bestIndex = idx; }
-        }
-      });
-      if (bestIndex !== null) setCurrentIndex(bestIndex);
-    } catch {}
-  }
+  // jumpToLastWatchedIfAny removido ao separar a página de módulos
 
   return (
     <>
       <Header />
       <div className="wrapper-central">
-        {!isModuloAberto && (
-          <div className="modulos-wrapper">
-            <div className="modulos-container">
-              <div
-                className="modulo-card"
-                role="button"
-                tabIndex={0}
-                onClick={() => { setIsModuloAberto(true); jumpToLastWatchedIfAny(); }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    setIsModuloAberto(true);
-                    jumpToLastWatchedIfAny();
-                  }
-                }}
-                style={{ transition: 'all 0.3s ease', cursor: 'pointer' }}
-              >
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo01.png"
-                    alt="Módulo 01"
-                    className="modulo-card-image"
-                  />
-                  <div className="modulo-card-label">Módulo 01</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo02.png"
-                    alt="Módulo 02"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 02</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo03.png"
-                    alt="Módulo 03"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 03</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo04.png"
-                    alt="Módulo 04"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 04</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo05.png"
-                    alt="Módulo 05"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 05</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo06.png"
-                    alt="Módulo 06"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 06</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo07.png"
-                    alt="Módulo 07"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 07</div>
-                </div>
-              </div>
-              <div className="modulo-card" style={{ transition: 'all 0.3s ease' }}>
-                <div className="aula-card">
-                  <img
-                    src="/assets/images/modulo08.png"
-                    alt="Módulo 08"
-                    className="modulo-card-image"
-                  />
-                  <div className="badge-embreve">Em Breve</div>
-                  <div className="modulo-card-label">Módulo 08</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
         <main className="streamer-video-area">
           {isModuloAberto && (
             <div className="video-and-sidebar">
               <div className="video-content">
+                <div className="back-row">
+                  <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
+                </div>
                 <h2 className="streamer-titulo">{currentVideo.title}</h2>
+                <div className="subject-info">
+                  <span className="subject-pill" title={`${currentVideo.subjectName} • ${currentVideo.subjectTeacher}`}>
+                    {currentVideo.subjectName} • {currentVideo.subjectTeacher}
+                  </span>
+                </div>
                 <div className="video-container" ref={videoRef}>
                   <iframe
                     src={currentVideo.url}
@@ -409,71 +225,82 @@ const StreamerMestre = () => {
                     allowFullScreen
                   />
                 </div>
-                <div className="button-wrapper">
-                  <div className="button-area">
-                    <div className="button-group-row">
-                      {currentVideo.pdfUrl && (
-                        <div className="left-button-wrapper">
-                          <button
-                            className="lesson-button pdf-view-button"
-                            onClick={() => window.open(currentVideo.pdfUrl, '_blank')}
-                          >
-                            Baixar PDF da Aula
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="center-buttons-wrapper">
-                        {currentIndex > 0 && (
-                          <button className="lesson-button prev-lesson-button" onClick={handlePrevious}>
-                            Anterior
-                          </button>
-                        )}
-                        {currentIndex < videoList.length - 1 && (
-                          <button className="lesson-button next-lesson-button" onClick={handleNext}>
-                            Próxima
-                          </button>
-                        )}
-                      </div>
-
-                      <div className="right-button-wrapper">
-                        {!completedVideos.includes(currentIndex) ? (
-                          <button className="lesson-button complete-lesson-button" onClick={handleMarkAsCompleted}>
-                            Concluir
-                          </button>
-                        ) : (
-                          <div className="completed-indicator">Concluída</div>
-                        )}
-                      </div>
-                    </div>
+                <div className="action-bar" role="toolbar" aria-label="Controles da aula">
+                  <div className="action-left">
+                    <ReactionBar videoId={currentVideo.id || currentVideo.url} />
+                  </div>
+                  <div className="action-center">
+                    {currentIndex > 0 && (
+                      <button className="action-btn prev" onClick={handlePrevious}>Anterior</button>
+                    )}
+                    {currentIndex < videoList.length - 1 && (
+                      <button className="action-btn next" onClick={handleNext}>Próxima</button>
+                    )}
+                  </div>
+                  <div className="action-right">
+                    {!completedIds.has(videoList[currentIndex].id) ? (
+                      <button className="action-btn complete" onClick={handleMarkAsCompleted}>Concluir</button>
+                    ) : (
+                      <div className="completed-indicator">Concluída</div>
+                    )}
                   </div>
                 </div>
-                <ReactionBar videoId={currentVideo.url} />
-                <CommentSection videoId={currentVideo.url} />
-              </div>
-              <div className="video-sidebar" ref={sidebarRef}>
-                <h3 className="sidebar-title">Próximas Aulas</h3>
-                <ul className="sidebar-list">
-                  {videoList.map((video, index) => (
-                    <li
-                      key={index}
-                      className={`sidebar-item ${index === currentIndex ? 'active' : ''}`}
-                      title={video.title}
-                      onClick={() => setCurrentIndex(index)}
-                    >
-                      <img
-                        src={video.thumbnail || '/assets/images/miniatura_fundamentos_apostololicos.png'}
-                        alt={`Miniatura ${video.title}`}
-                        className="sidebar-thumbnail"
-                      />
-                      <div className="sidebar-video-info">
-                        <div className="sidebar-video-title">{video.title}</div>
-                        <div className="status-indicator">
-                          {completedVideos.includes(index) ? '✔️ Concluído' : ''}
-                        </div>
+
+                {currentVideo.pdfUrl && (
+                  <div className="material-card">
+                    <div className="material-info">
+                      <div className="material-icon" aria-hidden />
+                      <div className="material-text">
+                        <div className="material-title">Material complementar <span className="badge-pdf">PDF</span></div>
+                        <div className="material-sub">{(() => { try { return (currentVideo.pdfUrl||'').split('/').pop() || 'Conteúdo de apoio em PDF'; } catch { return 'Conteúdo de apoio em PDF'; } })()}</div>
                       </div>
-                    </li>
-                  ))}
+                    </div>
+                    <button className="material-btn" onClick={() => window.open(currentVideo.pdfUrl!, '_blank')}>Ver/baixar PDF</button>
+                  </div>
+                )}
+                <div className="engagement-panel">
+                  <CommentSection videoId={currentVideo.id || currentVideo.url} />
+                </div>
+              </div>
+              <div className="video-sidebar" ref={sidebarRef} data-filtered={filterSubject !== 'all'}>
+                <h3 className="sidebar-title">Próximas Aulas</h3>
+                <SubjectDropdown
+                  label="Matéria"
+                  value={filterSubject}
+                  onChange={setFilterSubject}
+                  options={subjects}
+                />
+                <ul className="sidebar-list">
+                  {(() => {
+                    const items: JSX.Element[] = [];
+                    filteredList.forEach((video, index) => {
+                      const globalIndex = videoList.findIndex(v => v.id === video.id);
+                      items.push(
+                        <li
+                          key={`${video.id}-${index}`}
+                          className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''}`}
+                          title={video.title}
+                          onClick={() => setCurrentIndex(globalIndex)}
+                        >
+                          <img
+                            src={video.thumbnail || '/assets/images/miniatura_fundamentos_apostololicos.png'}
+                            alt={`Miniatura ${video.title}`}
+                            className="sidebar-thumbnail"
+                          />
+                          <div className="sidebar-video-info">
+                            <div className="sidebar-video-title">{video.title}</div>
+                            <div className="sidebar-video-subject">{video.subjectName}</div>
+                            <div className="status-indicator">
+                              {completedIds.has(video.id) && (
+                                <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      );
+                    });
+                    return items;
+                  })()}
                 </ul>
                 <button className="sidebar-cta" onClick={handleNext}>Ir para o próximo módulo</button>
               </div>

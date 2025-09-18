@@ -28,6 +28,14 @@ export async function upsertProgress(row: ProgressRow): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteAllProgressForUser(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_progress')
+    .delete()
+    .eq('user_id', userId);
+  if (error) throw error;
+}
+
 export function toLocalRow(row: any): ProgressRow {
   return {
     user_id: row.user_id,
@@ -39,4 +47,3 @@ export function toLocalRow(row: any): ProgressRow {
     thumbnail: row.thumbnail || null,
   };
 }
-

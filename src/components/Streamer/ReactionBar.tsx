@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
+import { getCurrentUserId } from "../../utils/user";
+import { fetchReactionState, setReaction } from "../../services/reactions";
 
-type Counts = { like: number; love: number; dislike: number };
+type Counts = { like: number; dislike: number };
 
 function keyFor(videoId: string) {
   return `fiveone_stream_reactions::${videoId}`;
@@ -11,15 +13,41 @@ function userKeyFor(videoId: string) {
 }
 
 export default function ReactionBar({ videoId }: { videoId: string }) {
-  const [counts, setCounts] = useState<Counts>({ like: 0, love: 0, dislike: 0 });
+  const [counts, setCounts] = useState<Counts>({ like: 0, dislike: 0 });
   const [selected, setSelected] = useState<keyof Counts | null>(null);
 
   useEffect(() => {
+    (async () => {
+      try {
+        const uid = getCurrentUserId();
+        if (uid) {
+          const s = await fetchReactionState(uid, videoId);
+          setCounts(s.counts);
+          setSelected(s.selected);
+        } else {
+          const saved = localStorage.getItem(keyFor(videoId));
+          if (saved) {
+            const obj = JSON.parse(saved);
+            const next: Counts = { like: Number(obj.like||0), dislike: Number(obj.dislike||0) };
+            setCounts(next);
+          }
+          const savedUser = localStorage.getItem(userKeyFor(videoId));
+          if (savedUser) setSelected(savedUser as keyof Counts);
+        }
+      } catch {}
+    })();
+  }, [videoId]);
+
+  // se antes salvamos por URL e agora usamos ID, tenta migrar uma vez
+  useEffect(()=>{
     try {
-      const saved = localStorage.getItem(keyFor(videoId));
-      if (saved) setCounts(JSON.parse(saved));
-      const savedUser = localStorage.getItem(userKeyFor(videoId));
-      if (savedUser) setSelected(savedUser as keyof Counts);
+      if (/^mestre-/.test(videoId)) {
+        const legacy = localStorage.getItem(keyFor((videoId as any).url || ''));
+        if (legacy) {
+          localStorage.setItem(keyFor(videoId), legacy);
+          localStorage.removeItem(keyFor((videoId as any).url || ''));
+        }
+      }
     } catch {}
   }, [videoId]);
 
@@ -31,7 +59,7 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
     } catch {}
   }
 
-  function toggle(type: keyof Counts) {
+  async function toggle(type: keyof Counts) {
     const prevSelected = selected;
     const next: Counts = { ...counts };
     if (prevSelected === type) {
@@ -39,6 +67,8 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
       setSelected(null);
       setCounts(next);
       persist(next, null);
+      const uid = getCurrentUserId();
+      if (uid) setReaction(uid, videoId, null).catch(()=>{});
       return;
     }
     if (prevSelected) next[prevSelected] = Math.max(0, next[prevSelected] - 1);
@@ -46,14 +76,20 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
     setSelected(type);
     setCounts(next);
     persist(next, type);
+    const uid = getCurrentUserId();
+    if (uid) setReaction(uid, videoId, type as any).catch(()=>{});
   }
 
   return (
-    <div className="reaction-bar">
-      <button className={`react-btn ${selected === "love" ? "active" : ""}`} onClick={() => toggle("love")}>❤️ {counts.love}</button>
-      <button className={`react-btn ${selected === "like" ? "active" : ""}`} onClick={() => toggle("like")}>👍 {counts.like}</button>
-      <button className={`react-btn ${selected === "dislike" ? "active" : ""}`} onClick={() => toggle("dislike")}>👎 {counts.dislike}</button>
+    <div className="reaction-bar reaction-modern">
+      <button className={`react-btn thumb up ${selected === "like" ? "active" : ""}`} onClick={() => toggle("like")} aria-label="Curtir">
+        <span className="icon" aria-hidden />
+        <span className="react-count">{counts.like}</span>
+      </button>
+      <button className={`react-btn thumb down ${selected === "dislike" ? "active" : ""}`} onClick={() => toggle("dislike")} aria-label="Não curtir">
+        <span className="icon" aria-hidden />
+        <span className="react-count">{counts.dislike}</span>
+      </button>
     </div>
   );
 }
-

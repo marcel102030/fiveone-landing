@@ -254,6 +254,7 @@ html {
 .continuar-banner .cb-sub { opacity: .85; font-size: .95rem; }
 .continuar-banner .cb-btn { background:#1e81b0; color:#fff; border:none; border-radius:10px; padding:10px 14px; font-weight:700; cursor:pointer; }
 .continuar-banner .cb-btn:hover { filter: brightness(1.05); }
+.continuar-banner .cb-pill { margin-top:4px; display:inline-block; background:#0f1d27; color:#bfe9ff; border:1px solid #274154; border-radius:999px; padding:4px 10px; font-size:.85rem; }
 
 .bem-vindos h2 {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
@@ -716,15 +717,13 @@ html {
   flex-direction: row;
   gap: clamp(0.75rem, 2vw, 1.5rem);
   overflow-x: auto;
-  padding: 0 0.5rem;
+  padding: 0 1rem; /* espaço interno p/ não cortar o 1º card */
   margin-top: clamp(0.75rem, 2vw, 1.5rem);
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
   flex-wrap: nowrap;
-  justify-content: center;
-  scroll-padding-left: 2.5rem;
+  justify-content: flex-start; /* evita centralização que corta o 1º item */
   max-width: 100%;
-  justify-content: center;
 }
 
 @media screen and (max-width: 768px) {
@@ -788,4 +787,25 @@ html {
   .arrow {
     font-size: 2.5rem;
   }
+}
+
+/* util: botão limpar histórico */
+.clear-continue-btn {
+  background: #102a3b;
+  border: 1px solid #274154;
+  color: #bfe9ff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-size: 0.9rem;
+  margin-left: 10px;
+}
+
+.continuar-subject {
+  display: inline-block;
+  margin-top: 4px;
+  font-size: 0.85rem;
+  color: #bfe9ff;
+  background: rgba(0,0,0,.35);
+  padding: 2px 8px;
+  border-radius: 10px;
 }

@@ -2,14 +2,16 @@ import { useState } from "react";
 import "./loginAluno.css";
 import logoSmall from "./assets/images/logo-fiveone-white-small.png";
 import { setCurrentUser } from "../../utils/user";
+import { createUser, verifyUser } from "../../services/userAccount";
 
 const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
+  const [modo, setModo] = useState<'login' | 'cadastro'>('login');
   const [tocado, setTocado] = useState({ email: false, senha: false });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTocado({ email: true, senha: true });
 
@@ -17,15 +19,19 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
       setErro("Informe o seu e-mail e senha.");
       return;
     }
-
-    if (email !== "escolafiveone@gmail.com" || senha !== "M@r102030") {
-      setErro("E-mail ou senha inválidos.");
-      return;
+    try {
+      if (modo === 'cadastro') {
+        await createUser({ email, password: senha, name: null });
+      } else {
+        const ok = await verifyUser(email, senha);
+        if (!ok) { setErro('E-mail ou senha inválidos.'); return; }
+      }
+      setErro("");
+      try { setCurrentUser(email); } catch {}
+      onLogin();
+    } catch (err: any) {
+      setErro(err?.message || 'Falha ao processar.');
     }
-
-    setErro("");
-    try { setCurrentUser(email); } catch {}
-    onLogin();
   };
 
   return (
@@ -56,6 +62,14 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
               }}
             />
             {erro && <div className="mensagem-erro">{erro}</div>}
+            <div style={{ display:'flex', gap:8, justifyContent:'center', marginTop:6 }}>
+              <label style={{ color:'#cde' }}>
+                <input type="radio" name="modo" checked={modo==='login'} onChange={()=>setModo('login')} /> Entrar
+              </label>
+              <label style={{ color:'#cde' }}>
+                <input type="radio" name="modo" checked={modo==='cadastro'} onChange={()=>setModo('cadastro')} /> Cadastrar
+              </label>
+            </div>
             <div className="login-options">
               <div className="login-lembrar">
                 <label className="checkbox-container">
