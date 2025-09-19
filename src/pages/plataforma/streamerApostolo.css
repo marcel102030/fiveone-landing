@@ -227,6 +227,12 @@
     max-width: 100%;
   }
 }
+
+/* Telas com pouca altura (ex.: notebooks 1366x768) */
+@media (max-height: 700px) and (min-width: 768px) {
+  .streamer-titulo { margin-top: 1rem; margin-bottom: 0.75rem; font-size: 1.5rem; }
+  .next-button-container { margin-top: 0.5rem; }
+}
 .wrapper-central {
   display: flex;
   justify-content: center;
@@ -257,6 +263,7 @@
   font-size: 0.95rem;
   box-shadow: 0 4px 8px rgba(0, 188, 212, 0.3);
   transition: transform 0.2s ease, background-color 0.3s ease;
+  min-height: var(--tap-min);
 }
 
 .next-lesson-button:hover {
@@ -275,9 +282,16 @@
   font-size: 0.95rem;
   box-shadow: 0 4px 8px rgba(0, 188, 212, 0.3);
   transition: transform 0.2s ease, background-color 0.3s ease;
+  min-height: var(--tap-min);
 }
 
 .prev-lesson-button:hover {
   background: linear-gradient(135deg, #00acc1, #00796b);
   transform: translateY(-2px);
+}
+
+.next-lesson-button:focus-visible,
+.prev-lesson-button:focus-visible {
+  outline: 2px solid #00e5ff;
+  outline-offset: 2px;
 }

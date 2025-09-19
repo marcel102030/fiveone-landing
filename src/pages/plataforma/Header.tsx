@@ -8,6 +8,7 @@ import { useState, useEffect, useRef } from "react";
 
 const Header = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
+  const [isMenuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -30,6 +31,7 @@ const Header = () => {
   const location = useLocation();
 
   function onLogoClick() {
+    setMenuOpen(false);
     if (location.pathname === "/plataforma") {
       const el = document.getElementById("inicio");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -48,10 +50,22 @@ const Header = () => {
         <button onClick={onLogoClick} className="header-logo-btn" aria-label="Ir para o início">
           <img src={logoSmall} alt="Logo Five One" className="header-logo" />
         </button>
-        <nav className="header-nav">
+        <button
+          className="pl-hamburger"
+          aria-label="Abrir menu"
+          aria-expanded={isMenuOpen}
+          aria-controls="plataforma-nav"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <span className="pl-hamburger-bar" />
+          <span className="pl-hamburger-bar" />
+          <span className="pl-hamburger-bar" />
+        </button>
+        <nav id="plataforma-nav" className={`header-nav ${isMenuOpen ? "open" : ""}`}>
           <Link
             to="/plataforma"
             className="header-link"
+            onClick={() => setMenuOpen(false)}
           >
             Início
           </Link>
@@ -60,6 +74,7 @@ const Header = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="header-link"
+            onClick={() => setMenuOpen(false)}
           >
             Comunidade Five One
           </a>
@@ -68,6 +83,7 @@ const Header = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="header-link"
+            onClick={() => setMenuOpen(false)}
           >
             Descubra o seu Dom Ministerial
           </a>
@@ -76,6 +92,7 @@ const Header = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="header-link"
+            onClick={() => setMenuOpen(false)}
           >
             Site Five One
           </a>
@@ -96,6 +113,9 @@ const Header = () => {
           )}
         </div>
       </div>
+      {isMenuOpen && (
+        <button className="mobile-nav-backdrop" aria-label="Fechar menu" onClick={() => setMenuOpen(false)} />
+      )}
     </header>
   );
 };
