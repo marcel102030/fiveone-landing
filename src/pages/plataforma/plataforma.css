@@ -79,10 +79,10 @@ html {
 
 .inicio-container {
   background-image: url('/assets/images/banner-login-fiveone.png');
-  min-height: 100vh;
+  min-height: clamp(62vh, 72vh, 82vh);
   width: 100%;
   background-size: cover;
-  background-position: center center;
+  background-position: center 15%;
   background-repeat: no-repeat;
   background-color: #0c1f33;
   display: flex;
@@ -91,14 +91,40 @@ html {
   color: white;
   font-family: 'Inter', sans-serif;
   flex-direction: column;
-  text-align: center;
-  padding: clamp(6rem, 12vh, 12rem) 1rem 4rem 1rem;
+  text-align: left;
+  padding: clamp(2.2rem, 7vh, 7rem) 1rem 3rem 1rem;
   position: relative;
   z-index: 2;
   text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.7);
 }
-.inicio-container .section-arrow{ position:absolute; bottom: clamp(48px, 9vh, 84px); left:50%; transform: translateX(-50%); }
-.hero-caption { position:absolute; left:50%; transform: translateX(-50%); bottom: clamp(200px, 26vh, 300px); color:#e7f2f9; font-weight:900; letter-spacing:.02em; font-size: clamp(1rem, 2.2vw, 1.6rem); background: rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.22); padding: 10px 14px; border-radius: 12px; }
+/* camadas para dar sensação de fundo sem sumir a imagem */
+.inicio-container::before { content:""; position:absolute; inset:0; background: radial-gradient(65% 70% at 35% 40%, rgba(0,0,0,.25) 0%, rgba(0,0,0,.55) 100%); pointer-events:none; }
+.inicio-container::after { content:''; position:absolute; inset:0; background: linear-gradient(180deg, rgba(0,0,0,.15) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.28) 100%); pointer-events:none; }
+.inicio-container .section-arrow{ position:absolute; bottom: clamp(28px, 7vh, 64px); left:50%; transform: translateX(-50%); }
+
+/* Slider de destaques no hero */
+.hero-slider { position:absolute; left: clamp(20px, 7vw, 180px); top: clamp(24%, 32vh, 38%); transform: translateY(-50%); width: min(44%, 760px); }
+.hs-track { position: relative; min-height: clamp(140px, 22vh, 220px); }
+.hs-slide { position:absolute; inset:0; opacity:0; transform: translateY(8px); transition: opacity .35s ease, transform .35s ease; border-radius: 18px; padding: 0; display:flex; flex-direction:column; justify-content:center; }
+.hs-slide::before { content:""; position:absolute; inset:0; background: rgba(6,16,28,.58); border-radius:18px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); box-shadow: inset 0 0 0 1px rgba(191,233,255,.18), 0 14px 28px rgba(0,0,0,.28); }
+.hs-slide::after { content:""; position:absolute; left:0; top:0; bottom:0; width: 6px; border-radius:18px 0 0 18px; background: linear-gradient(180deg, #00e5ff, #1e81b0); box-shadow: 0 0 12px rgba(0,229,255,.35); }
+.hs-slide.active { opacity:1; transform: translateY(0); }
+.hs-title { margin: 0 0 6px 16px; font-size: clamp(1.4rem, 2.8vw, 2rem); font-weight: 900; letter-spacing:.02em; position: relative; z-index:1; }
+.hs-text { margin: 0 16px; font-size: clamp(1rem, 1.9vw, 1.2rem); color: #e7f2f9; opacity:.95; position:relative; z-index:1; }
+.hs-actions { display:flex; justify-content:flex-start; gap:12px; margin:12px 0 0 16px; position:relative; z-index:1; }
+.hs-btn { border:none; border-radius: 999px; padding: 10px 16px; font-weight: 800; cursor: pointer; }
+.hs-btn.primary { background: linear-gradient(135deg, #1a73e8, #0059c1); color:#fff; box-shadow: 0 10px 24px rgba(26,115,232,.25); }
+.hs-btn.outline { background: transparent; color:#bfe9ff; box-shadow: inset 0 0 0 2px rgba(191,233,255,.35); }
+.hs-dots { display:flex; justify-content:flex-start; gap:10px; margin-top: 12px; margin-left: 16px; }
+.hs-dot { width: 10px; height: 10px; border-radius: 50%; border:1px solid #bfe9ff; background: transparent; cursor:pointer; }
+.hs-dot.active { background: #00e5ff; border-color: #00e5ff; box-shadow: 0 0 0 3px rgba(0,229,255,.18); }
+
+/* Ajustes por largura para controlar o tamanho do banner de fundo */
+/* em larguras menores mantemos a imagem cover para ocupar a área, em grandes telas aumentamos o respiro mas dando sensação de fundo */
+@media (min-width: 1600px) { 
+  .inicio-container { background-position: center 10%; }
+  .hero-slider { left: 10vw; width: min(40%, 820px); top: 34%; }
+}
 
 .section-arrow-wrap { display:flex; justify-content:center; margin: 1.5rem 0 0.5rem 0; }
 .section-arrow { position: relative; width: 56px; height: 56px; border-radius: 50%; border: 1px solid #2a6d8e; background: radial-gradient(90px 90px at 50% 20%, rgba(0,229,255,.25), rgba(0,0,0,0)); color:#00e5ff; display:grid; place-items:center; box-shadow: 0 10px 22px rgba(0,0,0,.35); cursor:pointer; transition: transform .2s ease, box-shadow .2s ease; }
@@ -208,6 +234,9 @@ html {
 
 @media screen and (max-width: 768px) {
   .container { padding: 0 1rem; }
+  .hero-slider { width: 92%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+  .hs-dots { justify-content: center; margin-left: 0; }
+  .hs-actions { justify-content: center; margin-left: 0; }
   .bem-vindos-container,
   .formacao-container {
     flex-direction: row;
@@ -424,9 +453,12 @@ html {
 
 .formacao-item {
   width: 100%;
-  aspect-ratio: 2 / 3;
+  /* As artes têm proporção mais alta (aprox. 1:1.93).
+     Usamos 1/2 para evitar corte da parte inferior (títulos). */
+  aspect-ratio: 1 / 2;
   background-size: cover;
-  background-position: center;
+  /* Garante visibilidade do rodapé da arte (onde está o título) */
+  background-position: center bottom;
   border-radius: 12px;
   box-shadow: 0 4px 8px rgba(0,0,0,0.4);
   cursor: pointer;

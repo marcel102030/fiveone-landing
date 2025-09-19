@@ -778,6 +778,33 @@
   transform: translateY(-2px);
 }
 
+/* --- Overlay de sinopse para os módulos na grade --- */
+.aula-card.modulo { overflow: hidden; position: relative; transition: transform .18s ease, box-shadow .2s ease; }
+.modulo-card.clickable .aula-card.modulo:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,.45), 0 0 0 3px rgba(0,229,255,.22); }
+.aula-card.modulo .modulo-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, rgba(2,12,22,0.08) 0%, rgba(2,12,22,0.65) 45%, rgba(2,12,22,0.92) 100%);
+  color: #e7f2f9;
+  transform: translateY(60%);
+  opacity: 0;
+  transition: transform .25s ease, opacity .25s ease;
+  display: flex; flex-direction: column; justify-content: flex-end; padding: 18px 16px;
+}
+.aula-card.modulo:hover .modulo-overlay { transform: translateY(0); opacity: 1; }
+.aula-card.modulo:focus-within .modulo-overlay { transform: translateY(0); opacity: 1; }
+.modulo-overlay .mo-panel { backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); background: rgba(10,26,38,.5); border: 1px solid rgba(191,233,255,.22); border-radius: 12px; padding: 12px 12px 12px; box-shadow: inset 0 0 0 1px rgba(0,229,255,.08); }
+.modulo-overlay .mo-title { font-weight: 900; letter-spacing: .03em; margin: 2px 0 8px; color:#bfe9ff; text-transform: uppercase; font-size: .85rem; }
+.modulo-overlay .mo-list { list-style: none; padding: 0; margin: 0 0 10px 0; display: grid; grid-template-columns: 1fr; gap: 6px; }
+.modulo-overlay .mo-item { position: relative; font-size: .92rem; line-height: 1.25rem; color:#eaf7ff; padding-left: 18px; }
+.modulo-overlay .mo-item::before { content: ""; position: absolute; left: 0; top: 6px; width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(135deg,#00e5ff,#1e81b0); box-shadow: 0 0 0 2px rgba(0,229,255,.18); }
+.modulo-overlay .mo-cta { align-self: flex-end; background: linear-gradient(135deg, #1a73e8, #0059c1); color:#fff; border:none; border-radius:10px; padding:8px 14px; font-weight:800; cursor:pointer; box-shadow: 0 8px 20px rgba(26,115,232,.25); }
+.modulo-overlay .mo-cta:hover { filter: brightness(1.05); transform: translateY(-1px); }
+.modulo-overlay .mo-disabled { align-self:flex-end; background:#2a3b47; color:#c7d7e2; border-radius:10px; padding:6px 12px; font-weight:800; border:1px solid rgba(255,255,255,.12); }
+
+@media (min-width: 700px) {
+  .modulo-overlay .mo-list { grid-template-columns: 1fr 1fr; }
+}
+
 /* Added button layout styles */
 .button-layout {
   display: flex;

@@ -94,11 +94,58 @@ const PaginaInicial = () => {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const heroSlides = [
+    { title: 'Escola de Formação Ministerial', text: 'Conteúdos bíblicos e ministeriais para sua jornada.' },
+    { title: 'Estude no seu ritmo', text: 'Aulas organizadas por módulos, com histórico e materiais.' },
+    { title: 'Faça parte da comunidade', text: 'Conecte-se e cresça junto com outros alunos.' },
+  ];
+  const [hsIndex, setHsIndex] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setHsIndex((i) => (i + 1) % heroSlides.length), 5000);
+    return () => clearInterval(id);
+  }, []);
+
   return (
     <>
       <Header />
       <div id="inicio" className="inicio-container">
-        <div className="hero-caption">Escola de Formação Ministerial</div>
+        <div className="hero-slider" role="region" aria-label="Destaques">
+          <div className="hs-track">
+            {heroSlides.map((s, i) => (
+              <div key={i} className={`hs-slide ${i === hsIndex ? 'active' : ''}`} aria-hidden={i !== hsIndex}>
+                <h2 className="hs-title">{s.title}</h2>
+                <p className="hs-text">{s.text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="hs-actions">
+            <button className="hs-btn primary" onClick={() => scrollToId('sec-formacao')}>Explorar módulos</button>
+            {lastWatchedArray.length > 0 && (
+              <button
+                className="hs-btn outline"
+                onClick={() => {
+                  const v:any = lastWatchedArray[0];
+                  if (v.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(v.id)}`);
+                  else if (typeof v.index === 'number') navigate(`/streamer-mestre?i=${v.index}`);
+                  else navigate(`/streamer-mestre?v=${encodeURIComponent(v.url)}`);
+                }}
+              >
+                Retomar aula
+              </button>
+            )}
+          </div>
+          <div className="hs-dots" role="tablist">
+            {heroSlides.map((_, i) => (
+              <button
+                key={i}
+                className={`hs-dot ${i === hsIndex ? 'active' : ''}`}
+                aria-label={`Ir para slide ${i + 1}`}
+                aria-selected={i === hsIndex}
+                onClick={() => setHsIndex(i)}
+              />
+            ))}
+          </div>
+        </div>
         <button className="section-arrow" aria-label="Ir para Bem-vindos" onClick={() => scrollToId(lastWatchedArray.length ? 'sec-bem-vindos' : 'sec-formacao')}>
           <span className="chevron" />
         </button>
