@@ -81,7 +81,7 @@
     margin: 0 auto;
     width: 100%;
     max-width: min(1600px, 94vw);
-    padding: clamp(1rem, 2vw, 2rem) 1rem;
+    padding: clamp(0.75rem, 1.6vw, 1.5rem) 1rem;
   }
   
 .video-wrapper {
@@ -205,6 +205,13 @@
     .streamer-titulo { margin-top: 1rem; margin-bottom: 0.75rem; font-size: 1.5rem; }
     .action-bar { padding: 8px 12px; gap: 10px; }
     .engagement-panel { padding: 10px 12px; }
+  }
+
+  /* Notebooks até 820px de altura: diminui gaps e paddings globais */
+  @media (max-height: 820px) and (min-width: 900px) {
+    .video-and-sidebar { gap: 1rem; padding: 0 2vw; }
+    .action-bar { padding: 8px 12px; }
+    .material-card { padding: 8px 12px; }
   }
   .streamer-main-wrapper {
     display: flex;

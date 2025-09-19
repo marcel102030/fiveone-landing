@@ -79,7 +79,7 @@
   margin: 0 auto;
   width: 100%;
   max-width: 90vw;
-  padding: 2rem 1rem;
+  padding: 1.25rem 1rem;
 }
 
 .video-wrapper {
@@ -231,6 +231,12 @@
 /* Telas com pouca altura (ex.: notebooks 1366x768) */
 @media (max-height: 700px) and (min-width: 768px) {
   .streamer-titulo { margin-top: 1rem; margin-bottom: 0.75rem; font-size: 1.5rem; }
+  .next-button-container { margin-top: 0.5rem; }
+}
+
+/* Até 820px de altura: reduzir espaçamentos gerais */
+@media (max-height: 820px) and (min-width: 900px) {
+  .streamer-video-area { padding-top: 0.75rem; }
   .next-button-container { margin-top: 0.5rem; }
 }
 .wrapper-central {

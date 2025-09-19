@@ -201,6 +201,18 @@ html {
   }
 }
 
+/* Notebooks 14"–15" (altura baixa ~768–820px): reduzir espaços e títulos */
+@media (max-height: 820px) and (min-width: 900px) {
+  .header { min-height: 56px; padding: 0.45rem 1rem; }
+  .header nav a { font-size: clamp(0.9rem, 1.3vw, 1.02rem); }
+  .inicio-container { padding-top: 5rem; }
+  .hero-caption { bottom: clamp(120px, 18vh, 180px); font-size: clamp(0.9rem, 1.6vw, 1.2rem); }
+  .inicio-container .section-arrow { bottom: clamp(36px, 6vh, 64px); }
+  .bem-vindos { padding-top: 4rem; }
+  .formacao-ministerial { padding-top: 3rem; padding-bottom: 4rem; }
+  .continuar-assistindo { padding-top: 2rem; padding-bottom: 2rem; }
+}
+
 @media screen and (max-width: 768px) {
   .container { padding: 0 1rem; }
   .bem-vindos-container,
@@ -273,6 +285,13 @@ html {
 /* Telas com pouca altura: ajuste de preenchimento para não cortar conteúdo */
 @media (max-height: 700px) and (min-width: 768px) {
   .inicio-container { padding-top: 5rem; }
+}
+
+/* Grandes telas (>= 1920px): manter legibilidade e limite de largura */
+@media (min-width: 1920px) {
+  .container { max-width: 1600px; }
+  .inicio-container h1 { font-size: clamp(2.2rem, 3.6vw, 4.2rem); }
+  .formacao-ministerial h2, .bem-vindos h2, .continuar-assistindo h2 { font-size: clamp(1.6rem, 3vw, 3rem); }
 }
 
 
