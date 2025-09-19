@@ -66,7 +66,9 @@ const StreamerMestre = () => {
       const h = Math.max(320, Math.round(rect.height));
       s.style.setProperty('--sidebar-height', `${h}px`);
       s.style.height = `${h}px`;
-      const offset = Math.max(0, Math.round(rect.top - contentRect.top));
+      // Alinha exatamente ao topo do vídeo
+      const rawOffset = Math.round(rect.top - contentRect.top);
+      const offset = Math.max(0, rawOffset);
       s.style.marginTop = `${offset}px`;
     };
 
@@ -74,7 +76,12 @@ const StreamerMestre = () => {
     const ro = new ResizeObserver(() => update());
     ro.observe(el);
     const iframe = el.querySelector('iframe');
-    if (iframe) iframe.addEventListener('load', update, { once: true });
+    if (iframe) {
+      // Observa mudanças no tamanho do iframe (ex.: player ajustando altura)
+      const roIframe = new ResizeObserver(() => update());
+      roIframe.observe(iframe);
+      iframe.addEventListener('load', update, { once: true });
+    }
 
     window.addEventListener('resize', update);
     // chama múltiplas vezes no primeiro segundo para garantir o acerto após layout

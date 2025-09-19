@@ -311,8 +311,8 @@
 }
 
 /* Ensure a balanced layout similar to the reference UI */
-.video-content { flex: 1 1 900px; min-width: 0; }
-.video-sidebar { flex: 0 0 340px; }
+.video-content { flex: 1 1 0; min-width: 0; }
+.video-sidebar { flex: 0 0 clamp(280px, 22vw, 360px); }
   
   @media (max-width: 768px) {
     .video-container iframe {
@@ -425,12 +425,24 @@
   flex-direction: row;
   justify-content: center;
   align-items: flex-start;
-  gap: 1.5rem;
+  gap: clamp(12px, 1.5vw, 24px);
   max-width: 1500px;
   margin: 2rem auto 0 auto;
   padding: 0 4vw;
   width: 100%;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+}
+
+/* Garante side-by-side até 1366px sem quebrar */
+@media (max-width: 1366px) and (min-width: 1025px) {
+  .video-and-sidebar { padding: 0 2.5vw; gap: clamp(10px, 1.2vw, 16px); }
+  .video-sidebar { flex-basis: clamp(280px, 22vw, 300px); }
+}
+
+/* Salvaguarda: 1025–1280px, mais compacto ainda */
+@media (max-width: 1280px) and (min-width: 1025px) {
+  .video-and-sidebar { padding: 0 2vw; }
+  .video-sidebar { flex-basis: clamp(270px, 24vw, 300px); }
 }
 
 .sidebar-title {

@@ -152,8 +152,6 @@ html {
 }
 
 /* Added general rule for large screens */
-.bem-vindos-container,
-.formacao-container,
 .continuar-container {
   flex-wrap: wrap;
   justify-content: center;
@@ -172,16 +170,9 @@ html {
   .header { flex-wrap: wrap; row-gap: 8px; }
   .header-left { width: 100%; justify-content: space-between; }
   .header nav { flex-wrap: wrap; }
-  .bem-vindos-container {
-    gap: clamp(0.75rem, 2vw, 1.5rem);
-    padding: 0 1.5rem;
-  }
-
-  .formacao-container {
-    gap: clamp(0.75rem, 2vw, 1.5rem);
-    padding: 0 1.5rem;
-  }
-
+  /* Mobile/tablet: volta ao carrossel/scroll e permite wrap */
+  .bem-vindos-container,
+  .formacao-container { display: flex; flex-wrap: nowrap; gap: clamp(0.75rem, 2vw, 1.5rem); padding: 0 1.5rem; overflow-x: auto; }
   .continuar-container {
     gap: clamp(0.75rem, 2vw, 1.5rem);
     padding: 0 1.5rem;
@@ -211,6 +202,8 @@ html {
   .bem-vindos { padding-top: 4rem; }
   .formacao-ministerial { padding-top: 3rem; padding-bottom: 4rem; }
   .continuar-assistindo { padding-top: 2rem; padding-bottom: 2rem; }
+  /* Cartões menores para caber sem scroll excessivo */
+  .formacao-item { height: clamp(300px, 34vw, 380px); }
 }
 
 @media screen and (max-width: 768px) {
@@ -337,19 +330,18 @@ html {
 }
 
 .bem-vindos-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: clamp(0.75rem, 2vw, 1.5rem);
-  padding-bottom: 0.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 20px);
+  padding: 0 1rem 0.5rem 1rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  align-items: stretch;
 }
 
 .bem-vindos-item {
-  flex: 0 0 auto;
-  width: 280px;
-  height: 250px;
+  width: 100%;
+  aspect-ratio: 16 / 10;
   background-size: cover;
   background-position: center;
   border-radius: 12px;
@@ -409,14 +401,16 @@ html {
 }
 
 .formacao-container {
-  display: flex;
-  flex-direction: row;
-  justify-content: center;
-  gap: clamp(0.75rem, 2vw, 1.5rem);
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: clamp(12px, 1.6vw, 20px);
   padding: 0 1rem;
   padding-bottom: clamp(0.75rem, 2vw, 1.5rem);
-  margin-top: 3rem; /* added this line */
-  flex-wrap: wrap;
+  margin-top: 3rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+  align-items: stretch;
 }
 
 .formacao-container::-webkit-scrollbar {
@@ -429,9 +423,8 @@ html {
 }
 
 .formacao-item {
-  flex: 0 0 auto;
-  width: clamp(220px, 18vw, 260px);
-  height: clamp(360px, 38vw, 460px);
+  width: 100%;
+  aspect-ratio: 2 / 3;
   background-size: cover;
   background-position: center;
   border-radius: 12px;
