@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   createUser,
   listUsersPage,
@@ -12,7 +12,6 @@ import {
   updateUserFormation,
   FormationKey,
   getUserComments,
-  deleteUserComment,
   setUsersActive,
   updateUsersFormation,
   resetUsersPasswords,

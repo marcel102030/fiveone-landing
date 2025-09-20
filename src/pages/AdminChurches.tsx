@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./AdminChurches.css";
-import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
+// import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
 
 const PROD_ORIGIN = "https://fiveonemovement.com";
 
