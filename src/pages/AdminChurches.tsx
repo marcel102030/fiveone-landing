@@ -370,7 +370,7 @@ export default function AdminChurches() {
   return (
     <div className="admin-wrap">
       <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
-        <h1 className="admin-title">Painel de Igrejas</h1>
+        <h1 className="admin-title">Painel de Igrejas - Quiz</h1>
         <div style={{display:'flex', alignItems:'center', gap:8}}>
           <button className="admin-btn" onClick={()=> navigate('/admin/administracao')}>← Voltar ao hub</button>
         </div>

@@ -7,11 +7,15 @@ import "./AdministracaoFiveOne.css";
 export default function AdministracaoFiveOne() {
   document.title = "Administração | Five One";
   const navigate = useNavigate();
+  const [showProfiles, setShowProfiles] = useState(false);
 
   const name = useMemo(() => {
-    const email = getAdminEmail() || "Member";
-    const first = email.split("@")[0];
-    return first.charAt(0).toUpperCase() + first.slice(1);
+    const email = (getAdminEmail() || "").toLowerCase();
+    if (email === "marcelojunio75@hotmail.com") return "Marcelo Silva";
+    if (email === "sueniakarcia@gmail.com") return "Suenia Karcia";
+    if (!email) return "Member";
+    const first = email.split("@")[0].replace(/[._-]+/g, " ");
+    return first.split(" ").map(s => s ? s[0].toUpperCase()+s.slice(1) : s).join(" ");
   }, []);
 
   // Mock data
@@ -53,9 +57,17 @@ export default function AdministracaoFiveOne() {
         <div>
           <h1 className="adm5-title">Olá, {name}!</h1>
           <p className="adm5-sub">Configure ou acesse os dados da sua plataforma por aqui.</p>
+          <div className="adm5-quicklinks">
+            <a className="adm5-link" href="https://fiveonemovement.com/" target="_blank" rel="noopener noreferrer">
+              <span className="dot" /> Acessar Site
+            </a>
+            <a className="adm5-link primary" href="https://fiveonemovement.com/#/login-aluno" target="_blank" rel="noopener noreferrer">
+              <span className="dot" /> Acessar Plataforma
+            </a>
+          </div>
         </div>
         <div className="adm5-actions">
-          <span className="adm5-pill" style={{cursor:'default'}}>{getAdminEmail() || 'admin'}</span>
+          <button className="adm5-pill" onClick={()=> setShowProfiles(true)}>Perfil de Usuário</button>
           <button className="adm5-pill" onClick={()=>{ clearAdminAuthenticated(); navigate('/admin', { replace:true }); }}>Sair</button>
         </div>
       </div>
@@ -89,6 +101,24 @@ export default function AdministracaoFiveOne() {
           </Link>
         ))}
       </div>
+
+      {showProfiles && (
+        <div className="custom-modal-overlay" onClick={()=> setShowProfiles(false)}>
+          <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
+            <h3>Perfis</h3>
+            <p style={{marginTop:-6, color:'#9fb2c5'}}>Selecione um perfil de acesso. (Em breve, mais perfis)</p>
+            <div className="prof-grid">
+              <button className="prof-item active" aria-current>
+                ADMIN
+                <span className="prof-tag">Atual</span>
+              </button>
+            </div>
+            <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop:12}}>
+              <button className="adm5-pill" onClick={()=> setShowProfiles(false)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="adm5-stats-row">
         <div className="adm5-panel">
