@@ -27,11 +27,6 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
         const row = await getUserByEmail(email);
         const formation = (row?.formation as any) || 'MESTRE';
         localStorage.setItem('platform_user_formation', String(formation));
-        // Direcionamento por formação (hoje master é o foco)
-        if (formation === 'MESTRE') {
-          window.location.hash = '#/modulos-mestre';
-          return;
-        }
       } catch {}
       onLogin();
     } catch (err: any) {
