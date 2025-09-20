@@ -24,6 +24,11 @@ import ModulosMestre from "./pages/plataforma/modulosMestre";
 import AdminChurches from "./pages/AdminChurches";
 import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
+import AdministracaoFiveOne from "./pages/AdministracaoFiveOne";
+import AdminAlunos from "./pages/admin/Alunos";
+import AdminConteudoPlataforma from "./pages/admin/ConteudoPlataforma";
+import AdminRelatorioQuiz from "./pages/admin/RelatorioQuiz";
+import AdminBlogSite from "./pages/admin/BlogSite";
 import ChurchReport from "./pages/ChurchReport";
 import ChurchCreateInvite from "./pages/ChurchCreateInvite";
 import CopyLink from "./pages/CopyLink";
@@ -69,10 +74,50 @@ function AppContent() {
             <Route path="/" element={<Home />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
+              path="/admin/administracao"
+              element={
+                <AdminGuard>
+                  <AdministracaoFiveOne />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/alunos"
+              element={
+                <AdminGuard>
+                  <AdminAlunos />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/conteudo"
+              element={
+                <AdminGuard>
+                  <AdminConteudoPlataforma />
+                </AdminGuard>
+              }
+            />
+            <Route
               path="/admin/igrejas"
               element={
                 <AdminGuard>
                   <AdminChurches />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/relatorio-quiz"
+              element={
+                <AdminGuard>
+                  <AdminRelatorioQuiz />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/blog"
+              element={
+                <AdminGuard>
+                  <AdminBlogSite />
                 </AdminGuard>
               }
             />

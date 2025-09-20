@@ -19,7 +19,7 @@ export default function AdminLogin() {
     document.title = "Administração | Five One";
     // If already logged in, push to dashboard
     if (isAdminAuthenticated()) {
-      navigate("/admin/igrejas", { replace: true });
+      navigate("/admin/administracao", { replace: true });
     }
   }, [navigate]);
 
@@ -44,7 +44,7 @@ export default function AdminLogin() {
       // Front-only auth for this phase
       if (email === DEFAULT_EMAIL && password === DEFAULT_PASSWORD) {
         setAdminAuthenticated(email);
-        const to = location?.state?.from?.pathname || "/admin/igrejas";
+        const to = location?.state?.from?.pathname || "/admin/administracao";
         navigate(to, { replace: true });
       } else {
         setError("E-mail ou senha incorretos.");
@@ -93,4 +93,3 @@ export default function AdminLogin() {
     </div>
   );
 }
-

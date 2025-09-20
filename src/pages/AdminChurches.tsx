@@ -372,8 +372,7 @@ export default function AdminChurches() {
       <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
         <h1 className="admin-title">Painel de Igrejas</h1>
         <div style={{display:'flex', alignItems:'center', gap:8}}>
-          <span style={{color:'#a9c4d4', fontSize:12}}>{getAdminEmail() || ''}</span>
-          <button className="admin-btn" onClick={()=>{ clearAdminAuthenticated(); navigate('/admin', { replace:true }); }}>Sair</button>
+          <button className="admin-btn" onClick={()=> navigate('/admin/administracao')}>← Voltar ao hub</button>
         </div>
       </div>
       <p className="admin-subtitle">
