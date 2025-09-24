@@ -19,7 +19,7 @@ import {
   createInvite,
 } from "../../services/userAccount";
 import "../AdministracaoFiveOne.css";
-import "../AdminChurches.css";
+import "./Admin.css";
 
 export default function AdminAlunos() {
   document.title = "Administração | Five One — Alunos";
@@ -28,6 +28,7 @@ export default function AdminAlunos() {
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", formation: '' as '' | FormationKey });
+  const [sendEmail, setSendEmail] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
@@ -81,8 +82,20 @@ export default function AdminAlunos() {
     if (!validPassword(form.password)) return alert('Senha fraca: use ao menos 8 caracteres com letras e números.');
     if (await emailExists(form.email)) return alert('E-mail já cadastrado.');
     await createUser({ email: form.email, password: form.password, name: form.name, formation: form.formation as FormationKey });
+    if (sendEmail) {
+      try {
+        await fetch('/api/student-created-email', {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ to: form.email, name: form.name, user: form.email, password: form.password }),
+        });
+      } catch (e) {
+        console.error('Falha ao enviar e-mail de credenciais', e);
+      }
+    }
     setShowNew(false);
     setForm({ name: "", email: "", password: "", formation: '' });
+    setSendEmail(true);
     await load();
     alert("Aluno criado com sucesso.");
   }
@@ -272,6 +285,10 @@ export default function AdminAlunos() {
                   <option value="PASTOR">Pastor</option>
                   <option value="MESTRE">Mestre</option>
                 </select>
+              </label>
+              <label style={{display:'inline-flex', alignItems:'center', gap:8, marginTop:4}}>
+                <input type="checkbox" checked={sendEmail} onChange={(e)=> setSendEmail(e.target.checked)} />
+                Enviar e-mail de boas-vindas com usuário e senha
               </label>
               <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop:6}}>
                 <button type="button" className="admin-btn" onClick={()=> setShowNew(false)}>Cancelar</button>
