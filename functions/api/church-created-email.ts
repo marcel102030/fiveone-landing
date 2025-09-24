@@ -52,7 +52,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const reportUrl = withUtm(baseReport);
     const plain = renderText({ name, churchSlug: slug, testUrl, reportUrl, whatsappUrl, responsibleName: body?.responsibleName });
 
-    const from = env.RESEND_FROM?.trim() || "Five One <resultado5ministerios@fiveonemovement.com>";
+    const from = env.RESEND_FROM?.trim() || "Five One <bemvindofiveone@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
 
     const html = renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName: body?.responsibleName });
