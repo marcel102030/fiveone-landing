@@ -4,6 +4,8 @@ type Env = {
   RESEND_API_KEY: string;
   RESEND_FROM?: string;
   RESEND_REPLY_TO?: string;
+  RESEND_FROM_ALUNO?: string;
+  RESEND_REPLY_TO_ALUNO?: string;
   SITE_URL?: string;
 };
 
@@ -52,8 +54,8 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const site = env.SITE_URL || `https://${request.headers.get("host")}`;
     const loginUrl = withUtm(`${site}/#/login-aluno`);
 
-    const from = env.RESEND_FROM?.trim() || "Five One <bemvindofiveone@fiveonemovement.com>";
-    const reply_to = env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
+    const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Five One <bemvindofiveone@fiveonemovement.com>";
+    const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
 
     const subject = "Bem-vindo à plataforma Five One — suas credenciais";
     const html = renderHtml({ name, user, password, loginUrl, site });
