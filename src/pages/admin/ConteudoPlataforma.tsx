@@ -69,7 +69,7 @@ const defaultLessonForm = (): LessonFormState => ({
   contentType: "VIDEO",
   sourceType: "YOUTUBE",
   videoUrl: "",
-  status: "draft",
+  status: "published",
   releaseAt: "",
   materialFile: null,
   bannerContinue: null,
@@ -82,11 +82,17 @@ export default function AdminConteudoPlataforma() {
   const content = usePlatformContent();
   const [activeTab, setActiveTab] = useState<"modules" | "info" | "certificate">("modules");
   const [selectedMinistryId, setSelectedMinistryId] = useState<MinistryKey>(() => content.ministries[0]?.id || "MESTRE");
+  const [isHydrating, setIsHydrating] = useState(!content.ministries.length);
   useEffect(() => {
     if (!content.ministries.some((m) => m.id === selectedMinistryId) && content.ministries[0]) {
       setSelectedMinistryId(content.ministries[0].id);
     }
   }, [content.ministries, selectedMinistryId]);
+  useEffect(() => {
+    if (content.ministries.length) {
+      setIsHydrating(false);
+    }
+  }, [content.ministries.length]);
 
   const selectedMinistry = useMemo(() => {
     return content.ministries.find((m) => m.id === selectedMinistryId) || content.ministries[0] || null;
@@ -120,6 +126,10 @@ export default function AdminConteudoPlataforma() {
   const [lessonModuleId, setLessonModuleId] = useState<string | null>(null);
   const [lessonForm, setLessonForm] = useState<LessonFormState>(() => defaultLessonForm());
   const [editingLesson, setEditingLesson] = useState<LessonRef | null>(null);
+  const [openMenu, setOpenMenu] = useState<null | { moduleId: string; lessonId: string }>(null);
+  const [moduleActionId, setModuleActionId] = useState<string | null>(null);
+  const [lessonActionId, setLessonActionId] = useState<string | null>(null);
+  const [lessonSubmitting, setLessonSubmitting] = useState(false);
 
   const resetLessonForm = () => {
     setLessonForm(defaultLessonForm());
@@ -128,6 +138,8 @@ export default function AdminConteudoPlataforma() {
 
   const openLessonModal = (moduleId: string, lesson?: LessonRef) => {
     setLessonModuleId(moduleId);
+    setOpenMenu(null);
+    setLessonSubmitting(false);
     if (lesson) {
       setEditingLesson(lesson);
       setLessonForm({
@@ -157,6 +169,7 @@ export default function AdminConteudoPlataforma() {
   const closeLessonModal = () => {
     setShowLessonModal(false);
     setLessonModuleId(null);
+    setLessonSubmitting(false);
     resetLessonForm();
   };
 
@@ -232,23 +245,101 @@ export default function AdminConteudoPlataforma() {
     setLessonForm((prev) => ({ ...prev, [field]: null }));
   };
 
-  const handleToggleLessonStatus = (moduleId: string, lesson: LessonRef) => {
+  const handleModuleTitleCommit = async (moduleId: string) => {
+    if (!selectedMinistry) return;
+    const currentModule = selectedMinistry.modules.find((mod) => mod.id === moduleId);
+    const desiredTitle = (moduleDraftTitles[moduleId] ?? currentModule?.title ?? "Módulo").trim();
+    if (!currentModule || desiredTitle === currentModule.title) return;
+    try {
+      setModuleActionId(moduleId);
+      await setModuleTitle(selectedMinistry.id, moduleId, desiredTitle);
+    } catch (error) {
+      console.error("Erro ao atualizar título do módulo", error);
+      alert("Não foi possível salvar o título do módulo. Tente novamente.");
+      setModuleDraftTitles((prev) => ({
+        ...prev,
+        [moduleId]: currentModule.title,
+      }));
+    } finally {
+      setModuleActionId(null);
+    }
+  };
+
+  const handleToggleModuleStatus = async (moduleId: string) => {
+    if (!selectedMinistry) return;
+    try {
+      setModuleActionId(moduleId);
+      await toggleModuleStatus(selectedMinistry.id, moduleId);
+    } catch (error) {
+      console.error("Erro ao alternar status do módulo", error);
+      alert("Não foi possível atualizar o status do módulo. Tente novamente.");
+    } finally {
+      setModuleActionId(null);
+    }
+  };
+
+  const handleToggleLessonStatus = async (moduleId: string, lesson: LessonRef) => {
     if (!selectedMinistry) return;
     const nextStatus: LessonStatus = lesson.status === "published" ? "draft" : "published";
-    setLessonStatus(selectedMinistry.id, moduleId, lesson.id, nextStatus);
+    try {
+      setLessonActionId(lesson.id);
+      await setLessonStatus(selectedMinistry.id, moduleId, lesson.id, nextStatus);
+    } catch (error) {
+      console.error("Erro ao alternar status da aula", error);
+      alert("Não foi possível atualizar o status da aula. Tente novamente.");
+    } finally {
+      setLessonActionId(null);
+      setOpenMenu(null);
+    }
   };
 
-  const handleToggleLessonActive = (moduleId: string, lesson: LessonRef) => {
+  const handleToggleLessonActive = async (moduleId: string, lesson: LessonRef) => {
     if (!selectedMinistry) return;
-    setLessonActive(selectedMinistry.id, moduleId, lesson.id, !lesson.isActive);
+    try {
+      setLessonActionId(lesson.id);
+      await setLessonActive(selectedMinistry.id, moduleId, lesson.id, !lesson.isActive);
+    } catch (error) {
+      console.error("Erro ao alternar disponibilidade da aula", error);
+      alert("Não foi possível atualizar a disponibilidade da aula. Tente novamente.");
+    } finally {
+      setLessonActionId(null);
+      setOpenMenu(null);
+    }
   };
 
-  const handleDeleteLesson = (moduleId: string, lesson: LessonRef) => {
+  const handleDeleteLesson = async (moduleId: string, lesson: LessonRef) => {
     if (!selectedMinistry) return;
     if (!confirm(`Remover a aula "${lesson.title}"?`)) return;
-    deleteLesson(selectedMinistry.id, moduleId, lesson.id);
-    alert("Aula removida com sucesso.");
+    try {
+      setLessonActionId(lesson.id);
+      await deleteLesson(selectedMinistry.id, moduleId, lesson.id);
+      alert("Aula removida com sucesso.");
+    } catch (error) {
+      console.error("Erro ao excluir aula", error);
+      alert("Não foi possível remover a aula. Tente novamente.");
+    } finally {
+      setLessonActionId(null);
+      setOpenMenu(null);
+    }
   };
+
+  useEffect(() => {
+    const onClickAway = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (!target.closest('.lesson-menu') && !target.closest('.lesson-menu-trigger')) {
+        setOpenMenu(null);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setOpenMenu(null);
+    };
+    document.addEventListener('click', onClickAway);
+    document.addEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('click', onClickAway);
+      document.removeEventListener('keydown', onKey);
+    };
+  }, []);
 
   const selectedModule = lessonModuleId && selectedMinistry
     ? selectedMinistry.modules.find((m) => m.id === lessonModuleId) || null
@@ -263,7 +354,7 @@ export default function AdminConteudoPlataforma() {
     return listLessons({ ministryId: selectedMinistry.id });
   }, [selectedMinistry?.id, content.updatedAt]);
 
-  const handleSubmitLesson = (event: React.FormEvent) => {
+  const handleSubmitLesson = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!selectedMinistry || !lessonModuleId) return;
     if (!getModule(selectedMinistry.id, lessonModuleId)) return;
@@ -295,22 +386,36 @@ export default function AdminConteudoPlataforma() {
       isActive: lessonForm.isActive,
     };
 
-    if (editingLesson) {
-      updateLesson(selectedMinistry.id, lessonModuleId, editingLesson.id, basePayload);
-      alert("Aula atualizada com sucesso.");
-    } else {
-      const created = createLesson(selectedMinistry.id, lessonModuleId, basePayload as LessonInput);
-      if (!created) {
-        alert("Não foi possível criar a aula. Tente novamente.");
-        return;
+    try {
+      setLessonSubmitting(true);
+      if (editingLesson) {
+        await updateLesson(selectedMinistry.id, lessonModuleId, editingLesson.id, basePayload);
+        alert("Aula atualizada com sucesso.");
+      } else {
+        const created = await createLesson(selectedMinistry.id, lessonModuleId, basePayload as LessonInput);
+        if (!created) {
+          alert("Não foi possível criar a aula. Tente novamente.");
+          return;
+        }
+        alert("Aula criada com sucesso!");
       }
-      alert("Aula criada com sucesso!");
+      closeLessonModal();
+    } catch (error) {
+      console.error("Erro ao salvar aula", error);
+      alert("Não foi possível salvar a aula. Verifique os dados e tente novamente.");
+    } finally {
+      setLessonSubmitting(false);
     }
-    closeLessonModal();
   };
 
   return (
     <div className="adm5-wrap">
+      {isHydrating && (
+        <div className="adm5-loading" role="status" aria-live="polite">
+          <span className="spinner" aria-hidden="true" />
+          <span>Carregando conteúdo da plataforma...</span>
+        </div>
+      )}
       <div className="adm5-topbar" style={{ marginBottom: 12 }}>
         <h1 className="adm5-title">Conteúdo da Plataforma</h1>
         <button
@@ -401,9 +506,13 @@ export default function AdminConteudoPlataforma() {
             <div className="modules-list">
               {selectedMinistry.modules.map((module) => {
                 const isOpen = expandedModuleId === module.id;
+                const moduleMenuOpen = openMenu?.moduleId === module.id;
                 const lessons = moduleLessons.filter((lesson) => lesson.moduleId === module.id);
                 return (
-                  <div key={module.id} className={`module-card ${isOpen ? "open" : ""}`}>
+                  <div
+                    key={module.id}
+                    className={`module-card ${isOpen ? "open" : ""} ${moduleMenuOpen ? 'module-card--menu-open' : ''}`}
+                  >
                     <div className="module-header">
                       <div className="module-left">
                         <button
@@ -420,24 +529,27 @@ export default function AdminConteudoPlataforma() {
                             const { value } = event.target;
                             setModuleDraftTitles((prev) => ({ ...prev, [module.id]: value }));
                           }}
-                          onBlur={() => {
-                            const value = moduleDraftTitles[module.id] ?? module.title;
-                            setModuleTitle(selectedMinistry.id, module.id, value);
-                          }}
+                          onBlur={() => handleModuleTitleCommit(module.id)}
                           onKeyDown={(event) => {
                             if (event.key === "Enter") {
                               event.currentTarget.blur();
                             }
                           }}
+                          disabled={moduleActionId === module.id}
                         />
                       </div>
                       <div className="module-actions">
                         <span className={`status-pill ${module.status}`}>{moduleStatusLabel[module.status]}</span>
                         <button
                           className="adm5-pill"
-                          onClick={() => toggleModuleStatus(selectedMinistry.id, module.id)}
+                          onClick={() => handleToggleModuleStatus(module.id)}
+                          disabled={moduleActionId === module.id}
                         >
-                          {module.status === "published" ? "Despublicar" : "Publicar"}
+                          {moduleActionId === module.id
+                            ? "Atualizando..."
+                            : module.status === "published"
+                            ? "Despublicar"
+                            : "Publicar"}
                         </button>
                         <button className="adm5-pill" onClick={() => openLessonModal(module.id)}>
                           Nova aula
@@ -450,8 +562,14 @@ export default function AdminConteudoPlataforma() {
                           {lessons.map((lesson) => {
                             const thumb = lesson.bannerContinue?.dataUrl || lesson.bannerPlayer?.dataUrl || lesson.thumbnailUrl;
                             const sourceLabel = sourceTypeOptions.find((opt) => opt.value === lesson.sourceType)?.label;
+                            const isMenuOpen = openMenu?.lessonId === lesson.id && openMenu?.moduleId === module.id;
                             return (
-                              <div key={lesson.id} className={`lesson-row ${lesson.isActive ? '' : 'lesson-row--inactive'}`}>
+                              <div
+                                key={lesson.id}
+                                className={`lesson-row ${lesson.isActive ? '' : 'lesson-row--inactive'} ${
+                                  isMenuOpen ? 'lesson-row--menu-open' : ''
+                                } ${lessonActionId === lesson.id ? 'lesson-row--loading' : ''}`}
+                              >
                                 <div className="lesson-thumb">
                                   {thumb ? (
                                     <img src={thumb} alt={lesson.title} />
@@ -473,16 +591,65 @@ export default function AdminConteudoPlataforma() {
                                     <span className={`status-pill ${lesson.status}`}>{lessonStatusLabel[lesson.status]}</span>
                                     {!lesson.isActive && <span className="status-pill inactive">Inativa</span>}
                                   </div>
-                                  <button type="button" onClick={() => openLessonModal(module.id, lesson)}>Editar</button>
-                                  <button type="button" onClick={() => handleToggleLessonStatus(module.id, lesson)}>
-                                    {lesson.status === "published" ? "Despublicar" : "Publicar"}
+                                  <button
+                                    type="button"
+                                    className="lesson-menu-trigger"
+                                    onClick={(event) => {
+                                      event.stopPropagation();
+                                      setOpenMenu((prev) =>
+                                        prev && prev.lessonId === lesson.id && prev.moduleId === module.id
+                                          ? null
+                                          : { moduleId: module.id, lessonId: lesson.id }
+                                      );
+                                    }}
+                                    aria-haspopup="menu"
+                                    aria-expanded={isMenuOpen}
+                                    disabled={lessonActionId === lesson.id}
+                                  >
+                                    <span className="dots" aria-hidden>⋯</span>
+                                    <span className="sr-only">Abrir opções da aula</span>
                                   </button>
-                                  <button type="button" onClick={() => handleToggleLessonActive(module.id, lesson)}>
-                                    {lesson.isActive ? "Desativar" : "Ativar"}
-                                  </button>
-                                  <button type="button" className="danger" onClick={() => handleDeleteLesson(module.id, lesson)}>
-                                    Excluir
-                                  </button>
+                                  {isMenuOpen && (
+                                    <div className="lesson-menu" role="menu">
+                                      <button type="button" role="menuitem" onClick={() => openLessonModal(module.id, lesson)}>Editar</button>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => {
+                                          const url = lesson.videoId ? `/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}` : '/streamer-mestre';
+                                          window.open(`#${url}`, '_blank', 'noopener');
+                                          setOpenMenu(null);
+                                        }}
+                                      >
+                                        Abrir player
+                                      </button>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => handleToggleLessonStatus(module.id, lesson)}
+                                        disabled={lessonActionId === lesson.id}
+                                      >
+                                        {lesson.status === "published" ? "Despublicar" : "Publicar"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => handleToggleLessonActive(module.id, lesson)}
+                                        disabled={lessonActionId === lesson.id}
+                                      >
+                                        {lesson.isActive ? "Desativar" : "Ativar"}
+                                      </button>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        className="danger"
+                                        onClick={() => handleDeleteLesson(module.id, lesson)}
+                                        disabled={lessonActionId === lesson.id}
+                                      >
+                                        Excluir
+                                      </button>
+                                    </div>
+                                  )}
                                 </div>
                               </div>
                             );
@@ -734,11 +901,20 @@ export default function AdminConteudoPlataforma() {
               </div>
 
               <div className="lesson-modal-actions">
-                <button type="button" className="adm5-pill" onClick={closeLessonModal}>
+                <button type="button" className="adm5-pill" onClick={closeLessonModal} disabled={lessonSubmitting}>
                   Cancelar
                 </button>
-                <button type="submit" className="adm5-pill primary">
-                  {editingLesson ? "Salvar alterações" : "Salvar aula"}
+                <button
+                  type="submit"
+                  className="adm5-pill primary"
+                  disabled={lessonSubmitting}
+                  aria-busy={lessonSubmitting}
+                >
+                  {lessonSubmitting
+                    ? "Salvando..."
+                    : editingLesson
+                    ? "Salvar alterações"
+                    : "Salvar aula"}
                 </button>
               </div>
             </form>
