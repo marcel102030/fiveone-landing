@@ -102,6 +102,23 @@
     flex: 1;
   }
 
+.video-banner {
+  width: 100%;
+  max-width: 980px;
+  border-radius: 16px;
+  overflow: hidden;
+  margin: 12px auto 18px;
+  border: 1px solid rgba(39, 65, 84, 0.55);
+  background: rgba(10, 26, 38, 0.6);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.25);
+}
+
+.video-banner img {
+  width: 100%;
+  display: block;
+  object-fit: cover;
+}
+
 .engagement-panel {
   width: 100%;
   max-width: 980px;
@@ -779,7 +796,7 @@
 }
 
 /* --- Overlay de sinopse para os módulos na grade --- */
-.aula-card.modulo { overflow: hidden; position: relative; transition: transform .18s ease, box-shadow .2s ease; }
+.aula-card.modulo { overflow: hidden; position: relative; transition: transform .18s ease, box-shadow .2s ease; background-size: cover; background-position: center; background-repeat: no-repeat; }
 .modulo-card.clickable .aula-card.modulo:hover { transform: translateY(-2px); box-shadow: 0 8px 26px rgba(0,0,0,.45), 0 0 0 3px rgba(0,229,255,.22); }
 .aula-card.modulo .modulo-overlay {
   position: absolute; inset: 0;

@@ -106,7 +106,7 @@ export default function AdministracaoFiveOne() {
         <div className="custom-modal-overlay" onClick={()=> setShowProfiles(false)}>
           <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
             <h3>Perfis</h3>
-            <p style={{marginTop:-6, color:'#9fb2c5'}}>Selecione um perfil de acesso. (Em breve, mais perfis)</p>
+            <p style={{marginTop:-6, color:'#9fb2c5'}}>Selecione um perfil de acesso</p>
             <div className="prof-grid">
               <button className="prof-item active" aria-current>
                 ADMIN

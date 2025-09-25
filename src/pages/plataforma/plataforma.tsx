@@ -1,10 +1,10 @@
 import Header from "./Header";
 import "./plataforma.css";
 import { Link, useNavigate } from "react-router-dom";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { getCurrentUserId } from "../../utils/user";
 import { fetchUserProgress, deleteAllProgressForUser } from "../../services/progress";
-import { mestreModulo1Videos } from "./data/mestreModule1";
+import { listLessons, LessonRef, subscribePlatformContent } from "../../services/platformContent";
 
 const PaginaInicial = () => {
   const [modalContent, setModalContent] = useState("");
@@ -12,7 +12,22 @@ const PaginaInicial = () => {
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() => listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
+  useEffect(() => {
+    setMestreLessons(listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
+    const unsubscribe = subscribePlatformContent(() => {
+      setMestreLessons(listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
+    });
+    return () => unsubscribe();
+  }, []);
+  const lessonByVideoId = useMemo(() => {
+    const map = new Map<string, LessonRef>();
+    mestreLessons.forEach((lesson) => {
+      map.set(lesson.videoId, lesson);
+    });
+    return map;
+  }, [mestreLessons]);
   useEffect(() => {
     let active = true;
     // 1) carrega localStorage imediatamente para evitar atraso
@@ -27,7 +42,17 @@ const PaginaInicial = () => {
       });
       const localArr = Array.from(byKey.values());
       localArr.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
-      if (localArr.length) setLastWatchedArray(localArr);
+      if (localArr.length) {
+        const enrichedLocal = localArr.map((item: any) => {
+          const lesson = lessonByVideoId.get(item.id || item.videoId || item.url);
+          return {
+            ...item,
+            subjectName: item.subjectName || lesson?.subjectName,
+            bannerContinue: item.bannerContinue || lesson?.bannerContinue?.dataUrl || null,
+          };
+        });
+        setLastWatchedArray(enrichedLocal);
+      }
     } catch {}
 
     // 2) busca remota em background e atualiza caso tenha dados
@@ -38,7 +63,6 @@ const PaginaInicial = () => {
         const rows = await fetchUserProgress(uid, 24);
         if (!active) return;
         if (rows && rows.length) {
-          const subjectById = new Map(mestreModulo1Videos.map(v => [v.id, v.subjectName] as const));
           const remote = rows.map(r => ({
             id: r.video_id,
             url: '',
@@ -48,7 +72,8 @@ const PaginaInicial = () => {
             watchedSeconds: r.watched_seconds,
             durationSeconds: r.duration_seconds || undefined,
             lastAt: new Date(r.last_at).getTime(),
-            subjectName: subjectById.get(r.video_id),
+            subjectName: lessonByVideoId.get(r.video_id)?.subjectName,
+            bannerContinue: lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl,
           }));
           setLastWatchedArray(remote);
         }
@@ -56,7 +81,7 @@ const PaginaInicial = () => {
     })();
 
     return () => { active = false; };
-  }, []);
+  }, [lessonByVideoId]);
 
   const handleClearContinue = async () => {
     try {
@@ -153,7 +178,10 @@ const PaginaInicial = () => {
       <section id="sec-bem-vindos" className="bem-vindos">
         {lastWatchedArray.length ? (
           <div className="continuar-banner">
-            <div className="continuar-banner-info">
+            <div
+              className="continuar-banner-info"
+              style={lastWatchedArray[0].bannerContinue ? { backgroundImage: `url(${lastWatchedArray[0].bannerContinue})` } : undefined}
+            >
               <div className="cb-title">Última Aula Assistida</div>
               <div className="cb-sub">{lastWatchedArray[0].title}</div>
               {lastWatchedArray[0].subjectName && (

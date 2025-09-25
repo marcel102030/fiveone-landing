@@ -160,7 +160,7 @@ export default function AdminAlunos() {
           <input type="file" id="alunosCsv" accept=".csv" style={{display:'none'}} onChange={(e)=>{ const f=e.target.files?.[0]; if (f) importCSV(f); }}/>
           <button className="admin-btn" onClick={()=> document.getElementById('alunosCsv')?.click()}>Importar de CSV</button>
           <button className="admin-btn" onClick={()=> setShowInvite(true)}>Gerar convite</button>
-          <button className="admin-btn primary" onClick={()=> setShowNew(true)}>+ Novo</button>
+          <button className="admin-btn primary" onClick={()=> setShowNew(true)}>+ CADASTRAR ALUNO</button>
         </div>
       </div>
 

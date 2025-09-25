@@ -7,33 +7,49 @@ import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
 import { upsertProgress } from '../../services/progress';
-import { mestreModulo1Videos } from './data/mestreModule1';
+import { LessonRef, listLessons, subscribePlatformContent } from '../../services/platformContent';
 import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
 
 const StreamerMestre = () => {
-  const videoList = mestreModulo1Videos;
+  const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
 
   const [searchParams] = useSearchParams();
-  function resolveIndexFromParams(): number {
-    const vid = searchParams.get('vid');
-    const i = searchParams.get('i');
-    const v = searchParams.get('v');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const searchKey = searchParams.toString();
+  useEffect(() => {
+    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+    const unsubscribe = subscribePlatformContent(() => {
+      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+    });
+    return () => unsubscribe();
+  }, []);
+  useEffect(() => {
+    if (!videoList.length) return;
+    const params = new URLSearchParams(searchKey);
+    const vid = params.get('vid');
+    const idxParam = params.get('i');
+    const urlParam = params.get('v');
+    let resolved = 0;
     if (vid) {
-      const idx = videoList.findIndex(x => x.id === vid);
-      if (idx >= 0) return idx;
+      const idx = videoList.findIndex(item => item.videoId === vid);
+      if (idx >= 0) resolved = idx;
+    } else if (idxParam) {
+      const idx = Number(idxParam);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < videoList.length) resolved = idx;
+    } else if (urlParam) {
+      const decoded = decodeURIComponent(urlParam);
+      const idx = videoList.findIndex(item => {
+        const url = item.videoUrl || '';
+        return url === decoded || (url && (decoded.includes(url) || url.includes(decoded)));
+      });
+      if (idx >= 0) resolved = idx;
     }
-    if (i) {
-      const idx = Number(i); if (!Number.isNaN(idx) && idx >= 0 && idx < videoList.length) return idx;
-    }
-    if (v) {
-      const url = decodeURIComponent(v);
-      const idx = videoList.findIndex(x => x.url === url || url.includes(x.url) || x.url.includes(url));
-      if (idx >= 0) return idx;
-    }
-    return 0;
-  }
-  const initialIndex = resolveIndexFromParams();
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
+    setCurrentIndex(prev => (resolved !== prev ? resolved : prev));
+  }, [videoList, searchKey]);
+  useEffect(() => {
+    if (!videoList.length) return;
+    setCurrentIndex(prev => Math.min(prev, videoList.length - 1));
+  }, [videoList.length]);
   const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
   // Página de player não mostra mais a grade de módulos
   const isModuloAberto = true;
@@ -100,72 +116,81 @@ const StreamerMestre = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       const iframe = videoRef.current?.querySelector('iframe');
-      if (iframe) {
-        const key = `fiveone_progress::${currentVideo.url}`;
-        const now = Date.now();
-        let state: any = {};
-        try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
-        const watched = Number(state.watchedSeconds || 0) + 5; // +5s a cada intervalo
-        const duration = Number(state.durationSeconds || 0); // se um dia vier das APIs
-        const payload = { watchedSeconds: watched, durationSeconds: duration, lastAt: now };
-        try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
+      const currentVideo = videoList[currentIndex];
+      if (!iframe || !currentVideo) return;
+      const progressKeyBase = currentVideo.videoUrl || currentVideo.videoId;
+      if (!progressKeyBase) return;
+      const key = `fiveone_progress::${progressKeyBase}`;
+      const now = Date.now();
+      let state: any = {};
+      try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
+      const watched = Number(state.watchedSeconds || 0) + 5;
+      const duration = Number(state.durationSeconds || 0);
+      const payload = { watchedSeconds: watched, durationSeconds: duration, lastAt: now };
+      try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
 
-        const currentVideoData = {
-          title: currentVideo.title,
-          thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_mestre.png',
-          url: currentVideo.url,
-          index: currentIndex,
-          id: currentVideo.id,
-          subjectName: (currentVideo as any).subjectName,
-          subjectId: (currentVideo as any).subjectId,
-          watchedSeconds: watched,
-          durationSeconds: duration,
-          lastAt: now
-        };
-        const existingWatched = JSON.parse(localStorage.getItem('videos_assistidos') || '[]');
-        const filteredWatched = existingWatched.filter((video: any) => video.url !== currentVideoData.url);
-        const updatedWatched = [currentVideoData, ...filteredWatched];
-        const limitedWatched = updatedWatched.slice(0, 12);
-        try { localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched)); } catch {}
+      const bannerContinue = currentVideo.bannerContinue?.dataUrl || null;
+      const bannerPlayer = currentVideo.bannerPlayer?.dataUrl || null;
+      const previewImage = bannerContinue || bannerPlayer || currentVideo.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
 
-        // Persistir no Supabase (a cada ~15s)
-        const userId = getCurrentUserId();
-        if (userId) {
-          const lastSyncKey = `fiveone_progress_sync_${currentVideo.id || currentVideo.url}`;
-          const lastSync = Number(sessionStorage.getItem(lastSyncKey) || 0);
-          if (Date.now() - lastSync > 15000) {
-            sessionStorage.setItem(lastSyncKey, String(Date.now()));
-            upsertProgress({
-              user_id: userId,
-              video_id: currentVideo.id || currentVideo.url,
-              last_at: new Date(now).toISOString(),
-              watched_seconds: watched,
-              duration_seconds: duration || null,
-              title: currentVideo.title,
-              thumbnail: currentVideo.thumbnail || '/assets/images/miniatura_fundamentos_mestre.png',
-            }).catch(()=>{});
-          }
+      const currentVideoData = {
+        title: currentVideo.title,
+        thumbnail: previewImage,
+        url: currentVideo.videoUrl || currentVideo.videoId,
+        index: currentIndex,
+        id: currentVideo.videoId,
+        subjectName: currentVideo.subjectName,
+        subjectId: currentVideo.subjectId,
+        bannerContinue,
+        watchedSeconds: watched,
+        durationSeconds: duration,
+        lastAt: now,
+      };
+      const existingWatched = JSON.parse(localStorage.getItem('videos_assistidos') || '[]');
+      const filteredWatched = existingWatched.filter((video: any) => video.url !== currentVideoData.url);
+      const updatedWatched = [currentVideoData, ...filteredWatched];
+      const limitedWatched = updatedWatched.slice(0, 12);
+      try { localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched)); } catch {}
+
+      const userId = getCurrentUserId();
+      if (userId) {
+        const lastSyncKey = `fiveone_progress_sync_${currentVideo.videoId || currentVideo.videoUrl}`;
+        const lastSync = Number(sessionStorage.getItem(lastSyncKey) || 0);
+        if (Date.now() - lastSync > 15000) {
+          sessionStorage.setItem(lastSyncKey, String(Date.now()));
+          upsertProgress({
+            user_id: userId,
+            video_id: currentVideo.videoId || currentVideo.videoUrl || currentVideo.title,
+            last_at: new Date(now).toISOString(),
+            watched_seconds: watched,
+            duration_seconds: duration || null,
+            title: currentVideo.title,
+            thumbnail: previewImage,
+          }).catch(()=>{});
         }
       }
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentIndex]);
+  }, [currentIndex, videoList]);
 
   const handleMarkAsCompleted = () => {
-    const id = videoList[currentIndex].id;
-    if (!completedIds.has(id)) {
-      const next = new Set(completedIds); next.add(id); setCompletedIds(next);
+    const lesson = videoList[currentIndex];
+    if (!lesson) return;
+    if (!completedIds.has(lesson.videoId)) {
+      const next = new Set(completedIds); next.add(lesson.videoId); setCompletedIds(next);
     }
   };
   useEffect(()=>{
     const uid = getCurrentUserId();
     if (!uid) return;
-    const id = videoList[currentIndex].id;
+    const lesson = videoList[currentIndex];
+    if (!lesson) return;
+    const id = lesson.videoId;
     if (completedIds.has(id)){
       import('../../services/completions').then(m=> m.upsertCompletion(uid, id)).catch(()=>{});
     }
-  }, [completedIds, currentIndex]);
+  }, [completedIds, currentIndex, videoList]);
 
   // Load completions for user once
   useEffect(()=>{
@@ -181,14 +206,15 @@ const StreamerMestre = () => {
   const subjectOrder = ['biblia','fundamentos','ministerios','historia'];
   const subjects: SubjectOption[] = useMemo(() => {
     const map = new Map<string, string>();
-    videoList.forEach(v => map.set(v.subjectId as string, v.subjectName as string));
+    videoList.forEach(v => {
+      if (v.subjectId) map.set(v.subjectId, v.subjectName || v.subjectId);
+    });
     const arr = Array.from(map.entries()).map(([id, name]) => ({ id, name, count: videoList.filter(v => v.subjectId === id).length }));
     arr.sort((a,b)=> (subjectOrder.indexOf(a.id) === -1 ? 999 : subjectOrder.indexOf(a.id)) - (subjectOrder.indexOf(b.id) === -1 ? 999 : subjectOrder.indexOf(b.id)));
     return [{ id: 'all', name: 'Todas', count: videoList.length }, ...arr];
   }, [videoList]);
   const [filterSubject, setFilterSubject] = useState<string>('all');
   const filteredList = useMemo(() => filterSubject === 'all' ? videoList : videoList.filter(v => v.subjectId === filterSubject), [videoList, filterSubject]);
-  useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   const handleNext = () => {
     if (currentIndex < videoList.length - 1) {
@@ -211,30 +237,58 @@ const StreamerMestre = () => {
       <Header />
       <div className="wrapper-central">
         <main className="streamer-video-area">
-          {isModuloAberto && (
+          {!videoList.length && (
             <div className="video-and-sidebar">
               <div className="video-content">
                 <div className="back-row">
                   <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
                 </div>
+                <h2 className="streamer-titulo">Conteúdo em preparação</h2>
+                <p style={{ color: '#94a3b8', marginTop: 12 }}>
+                  Nenhuma aula publicada para esta formação ainda. Assim que novas aulas forem disponibilizadas, elas aparecerão aqui automaticamente.
+                </p>
+              </div>
+            </div>
+          )}
+          {isModuloAberto && currentVideo && (
+            <div className="video-and-sidebar">
+              <div className="video-content">
+                <div className="back-row">
+                  <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
+                </div>
+                {currentVideo.bannerPlayer?.dataUrl && (
+                  <div className="video-banner">
+                    <img src={currentVideo.bannerPlayer.dataUrl} alt={`Banner da aula ${currentVideo.title}`} />
+                  </div>
+                )}
                 <h2 className="streamer-titulo">{currentVideo.title}</h2>
                 <div className="subject-info">
-                  <span className="subject-pill" title={`${currentVideo.subjectName} • ${currentVideo.subjectTeacher}`}>
-                    {currentVideo.subjectName} • {currentVideo.subjectTeacher}
-                  </span>
+                  {currentVideo.subjectName && currentVideo.instructor && (
+                    <span className="subject-pill" title={`${currentVideo.subjectName} • ${currentVideo.instructor}`}>
+                      {currentVideo.subjectName} • {currentVideo.instructor}
+                    </span>
+                  )}
+                  {currentVideo.subjectName && !currentVideo.instructor && (
+                    <span className="subject-pill">{currentVideo.subjectName}</span>
+                  )}
                 </div>
                 <div className="video-container" ref={videoRef}>
-                  <iframe
-                    src={currentVideo.url}
-                    title={currentVideo.title}
-                    frameBorder="0"
-                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    allowFullScreen
-                  />
+                  {currentVideo.embedCode ? (
+                    <div className="embed-wrapper" dangerouslySetInnerHTML={{ __html: currentVideo.embedCode }} />
+                  ) : (
+                    <iframe
+                      key={currentVideo.videoId}
+                      src={currentVideo.videoUrl || ''}
+                      title={currentVideo.title}
+                      frameBorder="0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                    />
+                  )}
                 </div>
                 <div className="action-bar" role="toolbar" aria-label="Controles da aula">
                   <div className="action-left">
-                    <ReactionBar videoId={currentVideo.id || currentVideo.url} />
+                    <ReactionBar videoId={currentVideo.videoId || currentVideo.videoUrl || currentVideo.title} />
                   </div>
                   <div className="action-center">
                     {currentIndex > 0 && (
@@ -245,7 +299,7 @@ const StreamerMestre = () => {
                     )}
                   </div>
                   <div className="action-right">
-                    {!completedIds.has(videoList[currentIndex].id) ? (
+                    {!completedIds.has(videoList[currentIndex].videoId) ? (
                       <button className="action-btn complete" onClick={handleMarkAsCompleted}>Concluir</button>
                     ) : (
                       <div className="completed-indicator">Concluída</div>
@@ -253,20 +307,20 @@ const StreamerMestre = () => {
                   </div>
                 </div>
 
-                {currentVideo.pdfUrl && (
+                {currentVideo.materialFile && (
                   <div className="material-card">
                     <div className="material-info">
                       <div className="material-icon" aria-hidden />
                       <div className="material-text">
                         <div className="material-title">Material complementar <span className="badge-pdf">PDF</span></div>
-                        <div className="material-sub">{(() => { try { return (currentVideo.pdfUrl||'').split('/').pop() || 'Conteúdo de apoio em PDF'; } catch { return 'Conteúdo de apoio em PDF'; } })()}</div>
+                        <div className="material-sub">{currentVideo.materialFile.name}</div>
                       </div>
                     </div>
-                    <button className="material-btn" onClick={() => window.open(currentVideo.pdfUrl!, '_blank')}>Ver/baixar PDF</button>
+                    <button className="material-btn" onClick={() => window.open(currentVideo.materialFile?.dataUrl, '_blank')}>Ver/baixar PDF</button>
                   </div>
                 )}
                 <div className="engagement-panel">
-                  <CommentSection videoId={currentVideo.id || currentVideo.url} />
+                  <CommentSection videoId={currentVideo.videoId || currentVideo.videoUrl || currentVideo.title} />
                 </div>
               </div>
               <div className="video-sidebar" ref={sidebarRef} data-filtered={filterSubject !== 'all'}>
@@ -281,16 +335,17 @@ const StreamerMestre = () => {
                   {(() => {
                     const items: JSX.Element[] = [];
                     filteredList.forEach((video, index) => {
-                      const globalIndex = videoList.findIndex(v => v.id === video.id);
+                      const globalIndex = videoList.findIndex(v => v.videoId === video.videoId);
+                      if (globalIndex === -1) return;
                       items.push(
                         <li
-                          key={`${video.id}-${index}`}
+                          key={`${video.videoId}-${index}`}
                           className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''}`}
                           title={video.title}
                           onClick={() => setCurrentIndex(globalIndex)}
                         >
                           <img
-                            src={video.thumbnail || '/assets/images/miniatura_fundamentos_apostololicos.png'}
+                            src={video.bannerContinue?.dataUrl || video.bannerPlayer?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'}
                             alt={`Miniatura ${video.title}`}
                             className="sidebar-thumbnail"
                           />
@@ -298,7 +353,7 @@ const StreamerMestre = () => {
                             <div className="sidebar-video-title">{video.title}</div>
                             <div className="sidebar-video-subject">{video.subjectName}</div>
                             <div className="status-indicator">
-                              {completedIds.has(video.id) && (
+                              {completedIds.has(video.videoId) && (
                                 <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
                               )}
                             </div>
