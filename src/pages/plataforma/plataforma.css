@@ -189,7 +189,8 @@ html {
 .bem-vindos-item,
 .formacao-item {
   width: 100%;
-  max-width: 300px;
+  max-width: clamp(220px, 18vw, 300px);
+  min-width: clamp(200px, 16vw, 260px);
 }
 
 @media screen and (max-width: 1024px) {
@@ -206,7 +207,8 @@ html {
 
   .bem-vindos-item,
   .formacao-item {
-    max-width: 280px;
+    flex: 0 0 clamp(200px, 40vw, 260px);
+    max-width: clamp(200px, 40vw, 260px);
   }
 
   .inicio-container h1 {
@@ -229,7 +231,7 @@ html {
   .formacao-ministerial { padding-top: 3rem; padding-bottom: 4rem; }
   .continuar-assistindo { padding-top: 2rem; padding-bottom: 2rem; }
   /* Cartões menores para caber sem scroll excessivo */
-  .formacao-item { height: clamp(300px, 34vw, 380px); }
+  .formacao-item { max-height: clamp(300px, 34vw, 380px); }
 }
 
 @media screen and (max-width: 768px) {
@@ -428,6 +430,17 @@ html {
   margin-top: -6rem;
 }
 
+.platform-user-profile-banner {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin: clamp(1.5rem, 3vw, 2.5rem) auto 0;
+}
+
+.platform-user-profile-banner .platform-user-profile {
+  width: min(460px, 92vw);
+}
+
 .formacao-ministerial h2 {
   font-size: clamp(1.5rem, 4vw, 2.5rem);
   margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
@@ -465,29 +478,32 @@ html {
 
 .formacao-item {
   width: 100%;
-  /* As artes têm proporção mais alta (aprox. 1:1.93).
-     Usamos 1/2 para evitar corte da parte inferior (títulos). */
-  aspect-ratio: 1 / 2;
-  background-size: cover;
-  /* Garante visibilidade do rodapé da arte (onde está o título) */
-  background-position: center bottom;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  aspect-ratio: 125 / 242;
+  position: relative;
+  border-radius: 14px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
-  padding-bottom: 1rem;
-  font-size: 1.2rem;
-  font-weight: bold;
-  text-shadow: 1px 1px 2px rgba(0,0,0,0.6);
-  max-width: 100%;
+  padding: clamp(10px, 2vw, 18px);
+  overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, rgba(33, 74, 105, 0.55), rgba(7, 20, 32, 0.9));
+  border: 1px solid rgba(36, 74, 97, 0.55);
+}
+
+.formacao-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center;
+  display: block;
 }
 
 .formacao-item:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 12px rgba(0,255,255,0.5);
+  transform: scale(1.04);
+  box-shadow: 0 12px 18px rgba(0, 229, 255, 0.32);
 }
 
 @media screen and (max-width: 768px) {
@@ -506,38 +522,59 @@ html {
   scrollbar-width: none;
 }
 
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 
 /* --- Perfil Menu & Dropdown Styles --- */
 .perfil-menu {
   position: relative;
   display: inline-block;
   margin-left: clamp(0.75rem, 2vw, 1.5rem);
-  text-align: center;
 }
 
 .perfil-button {
-  background-color: transparent;
+  background: transparent;
   border: none;
-  color: white;
-  font-weight: 600;
-  font-size: 1.1rem;
   cursor: pointer;
-  padding: 0.5rem 1rem;
-  transition: color 0.3s ease;
-  position: relative;
+  padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 0.3rem;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background-color: white;
-  overflow: hidden;
 }
 
-.perfil-button:hover {
-  color: #00ffff;
+.perfil-button:focus-visible {
+  outline: 2px solid #00bcd4;
+  outline-offset: 3px;
+}
+
+.perfil-avatar {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  letter-spacing: 0.04em;
+  color: #04101a;
+  background: linear-gradient(135deg, #00bcd4, #0a6b88);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+}
+
+.perfil-avatar--large {
+  width: 56px;
+  height: 56px;
+  font-size: 1.1rem;
 }
 
 .perfil-dropdown-menu {
@@ -545,32 +582,79 @@ html {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
-  background-color: #001a33;
+  background-color: #001b33;
   border: 1px solid #244a61;
-  border-radius: 10px;
-  min-width: 160px;
+  border-radius: 12px;
+  min-width: 220px;
   z-index: 99;
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.2s ease, transform 0.2s ease;
   transform: translateY(-8px);
-  box-shadow: 0 14px 28px rgba(0,0,0,.35);
+  box-shadow: 0 18px 32px rgba(0,0,0,.35);
 }
 
 .perfil-dropdown-menu.active { opacity: 1; transform: translateY(0); pointer-events: auto; }
 
-.perfil-dropdown-menu a { color:#fff; padding: 0.55rem 0.8rem; font-size: 0.9rem; display:flex; align-items:center; min-height: var(--tap-min); text-decoration:none; font-weight:600; text-align:left; border-radius:8px; transition: background-color .2s ease, transform .15s ease; background-color:#002b4d; margin: 6px; }
+.perfil-dropdown-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid #143147;
+  background: rgba(0, 32, 53, 0.96);
+}
+
+.perfil-dropdown-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  text-align: left;
+}
+
+.perfil-dropdown-name {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #f1fbff;
+}
+
+.perfil-dropdown-email {
+  font-size: 0.82rem;
+  color: #9cb4c4;
+}
+
+.perfil-dropdown-formation {
+  align-self: flex-start;
+  margin-top: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(0, 188, 212, 0.2);
+  border: 1px solid rgba(0, 188, 212, 0.45);
+  color: #85eaff;
+}
+
+.perfil-dropdown-menu a {
+  color:#fff;
+  padding: 0.55rem 0.8rem;
+  font-size: 0.9rem;
+  display:flex;
+  align-items:center;
+  min-height: var(--tap-min);
+  text-decoration:none;
+  font-weight:600;
+  text-align:left;
+  border-radius:8px;
+  transition: background-color .2s ease, transform .15s ease;
+  background-color:#002b4d;
+  margin: 6px;
+}
 
 .perfil-dropdown-menu a:hover {
   background-color: #003f66;
   transform: translateY(-2px);
-}
-.perfil-button img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: 50%;
-  transform: translateX(8px);
 }
 
 /* Responsividade adicional para tablets */
@@ -591,8 +675,8 @@ html {
 
   .bem-vindos-item,
   .formacao-item {
-    width: 180px;
-    height: 360px;
+    flex: 0 0 clamp(180px, 42vw, 240px);
+    max-width: clamp(180px, 42vw, 240px);
   }
 
   .inicio-container h1 {
@@ -619,6 +703,21 @@ html {
     margin-top: 0.5rem;
   }
 
+  .perfil-avatar {
+    width: 40px;
+    height: 40px;
+    font-size: 0.85rem;
+  }
+
+  .platform-user-profile-banner {
+    margin: 1.2rem auto 0;
+    padding: 0 1rem;
+  }
+
+  .platform-user-profile-banner .platform-user-profile {
+    width: 100%;
+  }
+
   .bem-vindos-container,
   .formacao-container {
     flex-direction: row;
@@ -628,13 +727,8 @@ html {
 
   .bem-vindos-item,
   .formacao-item {
-    flex: 0 0 auto;
-  }
-
-  .bem-vindos-item,
-  .formacao-item {
-    width: 90%;
-    max-width: 350px;
+    flex: 0 0 clamp(220px, 70vw, 320px);
+    max-width: clamp(220px, 70vw, 320px);
   }
 
   .inicio-container {

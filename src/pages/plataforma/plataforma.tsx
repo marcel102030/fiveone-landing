@@ -14,6 +14,14 @@ const PaginaInicial = () => {
   const navigate = useNavigate();
   const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() => listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
   useEffect(() => {
     setMestreLessons(listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
     const unsubscribe = subscribePlatformContent(() => {
@@ -48,7 +56,16 @@ const PaginaInicial = () => {
           return {
             ...item,
             subjectName: item.subjectName || lesson?.subjectName,
-            bannerContinue: item.bannerContinue || lesson?.bannerContinue?.dataUrl || null,
+            bannerContinue: item.bannerContinue || lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || null,
+            bannerMobile: item.bannerMobile || lesson?.bannerMobile?.url || lesson?.bannerMobile?.dataUrl || null,
+            thumbnail:
+              item.thumbnail ||
+              lesson?.bannerContinue?.url ||
+              lesson?.bannerContinue?.dataUrl ||
+              lesson?.bannerMobile?.url ||
+              lesson?.bannerMobile?.dataUrl ||
+              lesson?.thumbnailUrl ||
+              item.bannerContinue,
           };
         });
         setLastWatchedArray(enrichedLocal);
@@ -73,7 +90,14 @@ const PaginaInicial = () => {
             durationSeconds: r.duration_seconds || undefined,
             lastAt: new Date(r.last_at).getTime(),
             subjectName: lessonByVideoId.get(r.video_id)?.subjectName,
-            bannerContinue: lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl,
+            bannerContinue:
+              lessonByVideoId.get(r.video_id)?.bannerContinue?.url ||
+              lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl ||
+              null,
+            bannerMobile:
+              lessonByVideoId.get(r.video_id)?.bannerMobile?.url ||
+              lessonByVideoId.get(r.video_id)?.bannerMobile?.dataUrl ||
+              null,
           }));
           setLastWatchedArray(remote);
         }
@@ -178,10 +202,7 @@ const PaginaInicial = () => {
       <section id="sec-bem-vindos" className="bem-vindos">
         {lastWatchedArray.length ? (
           <div className="continuar-banner">
-            <div
-              className="continuar-banner-info"
-              style={lastWatchedArray[0].bannerContinue ? { backgroundImage: `url(${lastWatchedArray[0].bannerContinue})` } : undefined}
-            >
+            <div className="continuar-banner-info">
               <div className="cb-title">Última Aula Assistida</div>
               <div className="cb-sub">{lastWatchedArray[0].title}</div>
               {lastWatchedArray[0].subjectName && (
@@ -239,36 +260,42 @@ const PaginaInicial = () => {
             <div className="carousel-wrapper">
               <button className="arrow left" onClick={() => scrollCarousel(-1)}>‹</button>
               <div className="continuar-container" ref={carouselRef}>
-                {lastWatchedArray.map((video: any, index: number) => (
-                  <div
-                    key={index}
-                    className="continuar-card"
-                    style={{ backgroundImage: `url('${video.thumbnail}')` }}
-                    role="button"
-                    title={video.title}
-                    onClick={() => {
-                      if (video.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(video.id)}`);
-                      else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`);
-                      else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`);
-                    }}
-                  >
-                    <div className="continuar-overlay">
-                      <p>{video.title}</p>
-                      {video.subjectName && <span className="continuar-subject">{video.subjectName}</span>}
-                      <div className="continuar-meta">
-                        {typeof video.durationSeconds === 'number' && video.durationSeconds > 0 ? (
-                          <span className="dur">{Math.floor(video.durationSeconds/60)}:{String(Math.floor(video.durationSeconds%60)).padStart(2,'0')}</span>
-                        ) : (
-                          <span className="dur">{Math.max(1, Math.floor((video.watchedSeconds||0)/60))} min vistos</span>
-                        )}
-                      </div>
-                      <div className="play-badge" aria-hidden>▶</div>
-                      <div className="continuar-progress">
-                        <div className="bar" style={{ width: `${Math.min(100, Math.round(((video.watchedSeconds||0) / (video.durationSeconds||1800)) * 100))}%` }} />
+                {lastWatchedArray.map((video: any, index: number) => {
+                  const desktopImage = video.thumbnail || video.bannerContinue || video.bannerMobile || '/assets/images/miniatura_fundamentos_mestre.png';
+                  const mobileImage = video.bannerMobile || video.bannerContinue || video.thumbnail || desktopImage;
+                  const selectedImage = isMobile ? mobileImage : desktopImage;
+                  const cardStyle = selectedImage ? { backgroundImage: `url('${selectedImage}')` } : undefined;
+                  return (
+                    <div
+                      key={index}
+                      className="continuar-card"
+                      style={cardStyle}
+                      role="button"
+                      title={video.title}
+                      onClick={() => {
+                        if (video.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(video.id)}`);
+                        else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`);
+                        else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`);
+                      }}
+                    >
+                      <div className="continuar-overlay">
+                        <p>{video.title}</p>
+                        {video.subjectName && <span className="continuar-subject">{video.subjectName}</span>}
+                        <div className="continuar-meta">
+                          {typeof video.durationSeconds === 'number' && video.durationSeconds > 0 ? (
+                            <span className="dur">{Math.floor(video.durationSeconds/60)}:{String(Math.floor(video.durationSeconds%60)).padStart(2,'0')}</span>
+                          ) : (
+                            <span className="dur">{Math.max(1, Math.floor((video.watchedSeconds||0)/60))} min vistos</span>
+                          )}
+                        </div>
+                        <div className="play-badge" aria-hidden>▶</div>
+                        <div className="continuar-progress">
+                          <div className="bar" style={{ width: `${Math.min(100, Math.round(((video.watchedSeconds||0) / (video.durationSeconds||1800)) * 100))}%` }} />
+                        </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
               <button className="arrow right" onClick={() => scrollCarousel(1)}>›</button>
             </div>
@@ -285,37 +312,63 @@ const PaginaInicial = () => {
         <div className="formacao-container">
           <div
             className="formacao-item"
-            style={{ backgroundImage: "url('/assets/images/apostolo.png')" }}
             onClick={() => handleShowModal('Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.')}
             role="button"
             tabIndex={0}
-          />
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleShowModal('Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.');
+              }
+            }}
+          >
+            <img src="/assets/images/apostolo.png" alt="Formação Apostólica em breve" loading="lazy" />
+          </div>
           <div
             className="formacao-item"
-            style={{ backgroundImage: "url('/assets/images/profeta.png')" }}
             onClick={() => handleShowModal('Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.')}
             role="button"
             tabIndex={0}
-          />
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleShowModal('Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.');
+              }
+            }}
+          >
+            <img src="/assets/images/profeta.png" alt="Formação Profética em breve" loading="lazy" />
+          </div>
           <div
             className="formacao-item"
-            style={{ backgroundImage: "url('/assets/images/evangelista.png')" }}
             onClick={() => handleShowModal('Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.')}
             role="button"
             tabIndex={0}
-          />
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleShowModal('Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.');
+              }
+            }}
+          >
+            <img src="/assets/images/evangelista.png" alt="Formação Evangelística em breve" loading="lazy" />
+          </div>
           <div
             className="formacao-item"
-            style={{ backgroundImage: "url('/assets/images/pastor.png')" }}
             onClick={() => handleShowModal('Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.')}
             role="button"
             tabIndex={0}
-          />
-          <Link
-            to="/modulos-mestre"
-            className="formacao-item"
-            style={{ backgroundImage: "url('/assets/images/mestre.png')" }}
-          />
+            onKeyDown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                handleShowModal('Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.');
+              }
+            }}
+          >
+            <img src="/assets/images/pastor.png" alt="Formação Pastoral em breve" loading="lazy" />
+          </div>
+          <Link to="/modulos-mestre" className="formacao-item" aria-label="Acessar formação Mestre">
+            <img src="/assets/images/mestre.png" alt="Formação Mestre" loading="lazy" />
+          </Link>
         </div>
         {showModal && (
           <div className="modal-overlay" onClick={handleCloseModal}>

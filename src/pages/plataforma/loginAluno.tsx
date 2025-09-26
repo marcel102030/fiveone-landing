@@ -2,7 +2,9 @@ import { useState } from "react";
 import "./loginAluno.css";
 import logoSmall from "./assets/images/logo-fiveone-white-small.png";
 import { setCurrentUser } from "../../utils/user";
-import { getUserByEmail, verifyUser } from "../../services/userAccount";
+import { FormationKey, getUserByEmail, verifyUser } from "../../services/userAccount";
+import { storePlatformProfile } from "../../hooks/usePlatformUserProfile";
+import { getUserProfileDetails } from "../../services/userProfile";
 
 const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState("");
@@ -24,10 +26,33 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
       setErro("");
       try { setCurrentUser(email); } catch {}
       try {
-        const row = await getUserByEmail(email);
-        const formation = (row?.formation as any) || 'MESTRE';
+        const normalizedEmail = email.trim().toLowerCase();
+        const [row, details] = await Promise.all([
+          getUserByEmail(normalizedEmail),
+          getUserProfileDetails(normalizedEmail).catch(() => null),
+        ]);
+        const formation = (row?.formation as FormationKey | null) || 'MESTRE';
         localStorage.setItem('platform_user_formation', String(formation));
-      } catch {}
+        storePlatformProfile({
+          email: normalizedEmail,
+          name: (details?.display_name || [details?.first_name, details?.last_name].filter(Boolean).join(' ') || row?.name || null),
+          formation,
+          firstName: details?.first_name || null,
+          lastName: details?.last_name || null,
+          displayName: details?.display_name || null,
+        });
+      } catch {
+        try {
+          storePlatformProfile({
+            email: email.trim().toLowerCase(),
+            name: null,
+            formation: null,
+            firstName: null,
+            lastName: null,
+            displayName: null,
+          });
+        } catch {}
+      }
       onLogin();
     } catch (err: any) {
       setErro(err?.message || 'Falha ao processar.');

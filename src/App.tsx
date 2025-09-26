@@ -21,6 +21,7 @@ import LoginAluno from "./pages/plataforma/loginAluno";
 import StreamerApostolo from "./pages/plataforma/streamerApostolo";
 import StreamerMestre from "./pages/plataforma/streamerMestre";
 import ModulosMestre from "./pages/plataforma/modulosMestre";
+import PerfilAluno from "./pages/plataforma/PerfilAluno";
 import AdminChurches from "./pages/AdminChurches";
 import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
@@ -57,6 +58,7 @@ function AppContent() {
     location.pathname === "/streamer-apostolo" ||
     location.pathname === "/streamer-mestre" ||
     location.pathname === "/modulos-mestre" ||
+    location.pathname === "/perfil" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/relatorio") ||
     location.pathname.startsWith("/r") ||
@@ -138,6 +140,7 @@ function AppContent() {
             <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
             <Route path="/streamer-mestre" element={<StreamerMestre />} />
             <Route path="/modulos-mestre" element={<ModulosMestre />} />
+            <Route path="/perfil" element={<PerfilAluno />} />
             <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
           </Routes>
         </main>

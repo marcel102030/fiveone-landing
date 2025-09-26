@@ -9,6 +9,7 @@ import { getCurrentUserId } from '../../utils/user';
 import { upsertProgress } from '../../services/progress';
 import { LessonRef, listLessons, subscribePlatformContent } from '../../services/platformContent';
 import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
+import { openStoredFile } from '../../utils/storedFile';
 
 const StreamerMestre = () => {
   const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
@@ -56,6 +57,15 @@ const StreamerMestre = () => {
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
   // searchParams já usado acima
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 640px)');
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
 
 
   // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
@@ -88,15 +98,36 @@ const StreamerMestre = () => {
       s.style.marginTop = `${offset}px`;
     };
 
-    // Observa tamanho do container do vídeo e também o iframe
+    const observers: ResizeObserver[] = [];
+    const cleanups: Array<() => void> = [];
+
+    // Observa tamanho/posição do container do vídeo
     const ro = new ResizeObserver(() => update());
     ro.observe(el);
+    observers.push(ro);
+
     const iframe = el.querySelector('iframe');
     if (iframe) {
       // Observa mudanças no tamanho do iframe (ex.: player ajustando altura)
       const roIframe = new ResizeObserver(() => update());
       roIframe.observe(iframe);
+      observers.push(roIframe);
       iframe.addEventListener('load', update, { once: true });
+    }
+
+    const content = el.closest('.video-content') as HTMLElement | null;
+    if (content) {
+      const roContent = new ResizeObserver(() => update());
+      roContent.observe(content);
+      observers.push(roContent);
+
+      const imgs = Array.from(content.querySelectorAll('img')) as HTMLImageElement[];
+      imgs.forEach((img) => {
+        if (img.complete) return;
+        const handleLoad = () => update();
+        img.addEventListener('load', handleLoad);
+        cleanups.push(() => img.removeEventListener('load', handleLoad));
+      });
     }
 
     window.addEventListener('resize', update);
@@ -107,7 +138,8 @@ const StreamerMestre = () => {
     const t3 = setTimeout(update, 600);
 
     return () => {
-      ro.disconnect();
+      observers.forEach((observer) => observer.disconnect());
+      cleanups.forEach((fn) => fn());
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
@@ -129,9 +161,17 @@ const StreamerMestre = () => {
       const payload = { watchedSeconds: watched, durationSeconds: duration, lastAt: now };
       try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
 
-      const bannerContinue = currentVideo.bannerContinue?.dataUrl || null;
-      const bannerPlayer = currentVideo.bannerPlayer?.dataUrl || null;
-      const previewImage = bannerContinue || bannerPlayer || currentVideo.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
+      const bannerContinue = currentVideo.bannerContinue;
+      const bannerPlayer = currentVideo.bannerPlayer;
+      const bannerMobile = currentVideo.bannerMobile;
+      const resolvedBannerContinue = bannerContinue?.url || bannerContinue?.dataUrl || null;
+      const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
+      const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
+      const previewImage =
+        (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
+        resolvedBannerMobile ||
+        currentVideo.thumbnailUrl ||
+        '/assets/images/miniatura_fundamentos_mestre.png';
 
       const currentVideoData = {
         title: currentVideo.title,
@@ -141,7 +181,8 @@ const StreamerMestre = () => {
         id: currentVideo.videoId,
         subjectName: currentVideo.subjectName,
         subjectId: currentVideo.subjectId,
-        bannerContinue,
+        bannerContinue: resolvedBannerContinue,
+        bannerMobile: resolvedBannerMobile,
         watchedSeconds: watched,
         durationSeconds: duration,
         lastAt: now,
@@ -172,7 +213,7 @@ const StreamerMestre = () => {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [currentIndex, videoList]);
+  }, [currentIndex, videoList, isMobile]);
 
   const handleMarkAsCompleted = () => {
     const lesson = videoList[currentIndex];
@@ -256,11 +297,14 @@ const StreamerMestre = () => {
                 <div className="back-row">
                   <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
                 </div>
-                {currentVideo.bannerPlayer?.dataUrl && (
+                {(() => {
+                  const heroBanner = currentVideo.bannerPlayer?.url || currentVideo.bannerPlayer?.dataUrl;
+                  return heroBanner ? (
                   <div className="video-banner">
-                    <img src={currentVideo.bannerPlayer.dataUrl} alt={`Banner da aula ${currentVideo.title}`} />
+                    <img src={heroBanner} alt={`Banner da aula ${currentVideo.title}`} />
                   </div>
-                )}
+                  ) : null;
+                })()}
                 <h2 className="streamer-titulo">{currentVideo.title}</h2>
                 <div className="subject-info">
                   {currentVideo.subjectName && currentVideo.instructor && (
@@ -316,7 +360,7 @@ const StreamerMestre = () => {
                         <div className="material-sub">{currentVideo.materialFile.name}</div>
                       </div>
                     </div>
-                    <button className="material-btn" onClick={() => window.open(currentVideo.materialFile?.dataUrl, '_blank')}>Ver/baixar PDF</button>
+                    <button className="material-btn" onClick={() => openStoredFile(currentVideo.materialFile)}>Ver/baixar PDF</button>
                   </div>
                 )}
                 <div className="engagement-panel">
@@ -345,7 +389,11 @@ const StreamerMestre = () => {
                           onClick={() => setCurrentIndex(globalIndex)}
                         >
                           <img
-                            src={video.bannerContinue?.dataUrl || video.bannerPlayer?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'}
+                            src={
+                              isMobile
+                                ? video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
+                                : video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.bannerPlayer?.url || video.bannerPlayer?.dataUrl || video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
+                            }
                             alt={`Miniatura ${video.title}`}
                             className="sidebar-thumbnail"
                           />

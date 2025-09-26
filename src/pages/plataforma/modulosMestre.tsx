@@ -101,7 +101,10 @@ const ModulosMestre = () => {
       const publishedLessons = lessons.filter((lesson) => lesson.moduleId === module.id);
       const topics = publishedLessons.slice(0, 4).map((lesson) => lesson.title);
       const order = module.order + 1;
-      const banner = publishedLessons.find((lesson) => lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl || null;
+      const banner =
+        publishedLessons.find((lesson) => lesson.bannerPlayer?.url || lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.url ||
+        publishedLessons.find((lesson) => lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl ||
+        null;
       const image = banner || `/assets/images/modulo${String(order).padStart(2, '0')}.png`;
       return {
         id: order,

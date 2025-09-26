@@ -14,10 +14,14 @@ export interface StoredFile {
   name: string;
   size: number;
   type: string;
-  dataUrl: string;
+  dataUrl: string | null;
   uploadedAt: string;
   width?: number;
   height?: number;
+  storageBucket?: string | null;
+  storagePath?: string | null;
+  url?: string | null;
+  file?: File;
 }
 
 export interface Lesson {
@@ -35,6 +39,7 @@ export interface Lesson {
   materialFile?: StoredFile | null;
   bannerContinue?: StoredFile | null;
   bannerPlayer?: StoredFile | null;
+  bannerMobile?: StoredFile | null;
   subjectId?: string;
   subjectName?: string;
   subjectType?: string;
@@ -101,6 +106,7 @@ export interface LessonInput {
   materialFile?: StoredFile | null;
   bannerContinue?: StoredFile | null;
   bannerPlayer?: StoredFile | null;
+  bannerMobile?: StoredFile | null;
   subjectId?: string;
   subjectName?: string;
   subjectType?: string;
@@ -122,6 +128,93 @@ export interface LessonRef extends Lesson {
 }
 
 const CURRENT_VERSION = 1;
+const STORAGE_BUCKET = "lesson-assets";
+
+let bucketEnsured = false;
+
+async function ensureStorageBucket(): Promise<void> {
+  if (bucketEnsured) return;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).list('', { limit: 1 });
+  if (error) {
+    if (error.message?.toLowerCase().includes('bucket not found')) {
+      throw new Error(
+        `Bucket de storage "${STORAGE_BUCKET}" não encontrado. Confirme no dashboard do Supabase se ele foi criado e está público.`,
+      );
+    }
+    console.error('Falha ao consultar bucket de storage', error);
+    throw error;
+  }
+  bucketEnsured = true;
+}
+
+function slugify(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .toLowerCase();
+}
+
+async function uploadStoredFileToBucket(
+  kind: "material" | "banner" | "mobile",
+  file: File,
+  ctx: { ministryId: MinistryKey; moduleId: string; lessonId: string },
+  originalName: string,
+) {
+  await ensureStorageBucket();
+  const extension = (() => {
+    const fromName = originalName?.split(".").pop();
+    if (fromName) return fromName.toLowerCase();
+    const mimeExt = file.type?.split("/").pop();
+    return mimeExt ? mimeExt.toLowerCase() : "bin";
+  })();
+  const timestamp = Date.now();
+  const safeName = slugify(originalName || `${kind}-${timestamp}`) || `${kind}-${timestamp}`;
+  const path = `${ctx.ministryId}/${ctx.moduleId}/${ctx.lessonId}/${safeName}-${timestamp}.${extension}`;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file, {
+    cacheControl: "3600",
+    upsert: true,
+    contentType: file.type,
+  });
+  if (error) throw error;
+  const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return {
+    storageBucket: STORAGE_BUCKET,
+    storagePath: path,
+    url: publicUrlData.publicUrl,
+  };
+}
+
+async function deleteStoredFileFromBucket(file?: StoredFile | null) {
+  if (!file?.storageBucket || !file.storagePath) return;
+  try {
+    await ensureStorageBucket();
+    await supabase.storage.from(file.storageBucket).remove([file.storagePath]);
+  } catch (error) {
+    console.warn("Não foi possível remover arquivo do storage", error);
+  }
+}
+
+async function prepareStoredFile(
+  field: "materialFile" | "bannerContinue" | "bannerPlayer" | "bannerMobile",
+  file: StoredFile | null | undefined,
+  ctx: { ministryId: MinistryKey; moduleId: string; lessonId: string },
+): Promise<StoredFile | null> {
+  if (!file) return null;
+  if (file.file) {
+    const kind = field === "materialFile" ? "material" : field === "bannerMobile" ? "mobile" : "banner";
+    const upload = await uploadStoredFileToBucket(kind, file.file, ctx, file.name);
+    return {
+      ...file,
+      ...upload,
+      dataUrl: null,
+      file: undefined,
+      uploadedAt: new Date().toISOString(),
+    };
+  }
+  return file;
+}
 
 const ministryPresets: MinistryMeta[] = [
   {
@@ -182,10 +275,13 @@ function mapStoredFile(file: any): StoredFile | null {
       name: parsed.name,
       size: parsed.size,
       type: parsed.type,
-      dataUrl: parsed.dataUrl,
+      dataUrl: parsed.dataUrl ?? null,
       uploadedAt: parsed.uploadedAt,
       width: parsed.width,
       height: parsed.height,
+      storageBucket: parsed.storageBucket ?? parsed.storage_bucket ?? null,
+      storagePath: parsed.storagePath ?? parsed.storage_path ?? null,
+      url: parsed.url ?? null,
     };
   } catch {
     return null;
@@ -212,6 +308,7 @@ function mapLesson(row: any): Lesson {
     materialFile: mapStoredFile(row.material_file),
     bannerContinue: mapStoredFile(row.banner_continue),
     bannerPlayer: mapStoredFile(row.banner_player),
+    bannerMobile: mapStoredFile(row.banner_mobile) || mapStoredFile(row.banner_player),
     subjectId: row.subject_id ?? undefined,
     subjectName: row.subject_name ?? undefined,
     subjectType: row.subject_type ?? undefined,
@@ -270,10 +367,7 @@ let loadPromise: Promise<void> | null = null;
 const listeners = new Set<(content: PlatformContent) => void>();
 
 async function fetchContent(): Promise<void> {
-  const { data, error } = await supabase
-    .from("platform_ministry")
-    .select(
-      `
+  const baseSelect = `
         id,
         title,
         tagline,
@@ -302,6 +396,7 @@ async function fetchContent(): Promise<void> {
             material_file,
             banner_continue,
             banner_player,
+            banner_mobile,
             subject_id,
             subject_name,
             subject_type,
@@ -315,11 +410,26 @@ async function fetchContent(): Promise<void> {
             updated_at
           )
         )
-      `
-    )
-    .order("id", { ascending: true })
-    .order("order_index", { foreignTable: "platform_module", ascending: true })
-    .order("order_index", { foreignTable: "platform_module.platform_lesson", ascending: true });
+      `;
+
+  const fallbackSelect = baseSelect.replace(",\n            banner_mobile", "");
+
+  const execSelect = async (fields: string) =>
+    supabase
+      .from("platform_ministry")
+      .select(fields)
+      .order("id", { ascending: true })
+      .order("order_index", { foreignTable: "platform_module", ascending: true })
+      .order("order_index", { foreignTable: "platform_module.platform_lesson", ascending: true });
+
+  let { data, error } = await execSelect(baseSelect);
+
+  if (error && error.message?.includes("banner_mobile")) {
+    console.warn("Coluna banner_mobile ausente. Reexecutando consulta sem o campo (execute a migração).", error);
+    const fallback = await execSelect(fallbackSelect);
+    data = fallback.data;
+    error = fallback.error;
+  }
 
   if (error) {
     console.error("Falha ao carregar conteúdo da plataforma", error);
@@ -327,6 +437,13 @@ async function fetchContent(): Promise<void> {
   }
 
   const ministries = (data ?? []).map(mapMinistry);
+  const orderIndex = new Map<string, number>(ministryPresets.map((preset, index) => [preset.id, index]));
+  ministries.sort((a, b) => {
+    const aIdx = orderIndex.has(a.id) ? orderIndex.get(a.id)! : Number.MAX_SAFE_INTEGER;
+    const bIdx = orderIndex.has(b.id) ? orderIndex.get(b.id)! : Number.MAX_SAFE_INTEGER;
+    if (aIdx !== bIdx) return aIdx - bIdx;
+    return a.name.localeCompare(b.name);
+  });
   cache = {
     version: CURRENT_VERSION,
     updatedAt: new Date().toISOString(),
@@ -454,10 +571,13 @@ function serializeStoredFile(file?: StoredFile | null) {
     name: file.name,
     size: file.size,
     type: file.type,
-    dataUrl: file.dataUrl,
+    dataUrl: file.storagePath ? null : file.dataUrl,
     uploadedAt: file.uploadedAt,
     width: file.width,
     height: file.height,
+    storageBucket: file.storageBucket ?? null,
+    storagePath: file.storagePath ?? null,
+    url: file.url ?? null,
   };
 }
 
@@ -504,6 +624,27 @@ export async function createLesson(
   const lessonId = (input.id || generateLessonId(ministryId, module.order)).trim();
   const videoId = (input.videoId || lessonId).trim();
 
+  const materialFile = await prepareStoredFile("materialFile", input.materialFile ?? null, {
+    ministryId,
+    moduleId,
+    lessonId,
+  });
+  const bannerContinue = await prepareStoredFile("bannerContinue", input.bannerContinue ?? null, {
+    ministryId,
+    moduleId,
+    lessonId,
+  });
+  const bannerPlayer = await prepareStoredFile("bannerPlayer", input.bannerPlayer ?? null, {
+    ministryId,
+    moduleId,
+    lessonId,
+  });
+  const bannerMobile = await prepareStoredFile("bannerMobile", input.bannerMobile ?? null, {
+    ministryId,
+    moduleId,
+    lessonId,
+  });
+
   const payload = {
     id: lessonId,
     module_id: moduleId,
@@ -516,15 +657,24 @@ export async function createLesson(
     video_url: input.videoUrl || null,
     external_url: input.externalUrl || null,
     embed_code: input.embedCode || null,
-    material_file: serializeStoredFile(input.materialFile),
-    banner_continue: serializeStoredFile(input.bannerContinue),
-    banner_player: serializeStoredFile(input.bannerPlayer),
+    material_file: serializeStoredFile(materialFile),
+    banner_continue: serializeStoredFile(bannerContinue),
+    banner_player: serializeStoredFile(bannerPlayer),
+    banner_mobile: serializeStoredFile(bannerMobile),
     subject_id: input.subjectId || null,
     subject_name: input.subjectName || null,
     subject_type: input.subjectType || null,
     instructor: input.instructor || null,
     duration_minutes: input.durationMinutes ?? null,
-    thumbnail_url: input.thumbnailUrl || (input.bannerContinue?.dataUrl || input.bannerPlayer?.dataUrl) || null,
+    thumbnail_url:
+      input.thumbnailUrl ||
+      bannerContinue?.url ||
+      bannerMobile?.url ||
+      bannerPlayer?.url ||
+      input.bannerContinue?.dataUrl ||
+      input.bannerMobile?.dataUrl ||
+      input.bannerPlayer?.dataUrl ||
+      null,
     status: input.status || "draft",
     release_at: input.releaseAt ? new Date(input.releaseAt).toISOString() : null,
     is_active: input.isActive ?? true,
@@ -542,11 +692,12 @@ export async function createLesson(
 }
 
 export async function updateLesson(
-  _ministryId: MinistryKey,
-  _moduleId: string,
+  ministryId: MinistryKey,
+  moduleId: string,
   lessonId: string,
   patch: Partial<LessonInput>,
 ): Promise<Lesson | null> {
+  const existing = findLessonById(lessonId);
   const updates: Record<string, any> = {
     updated_at: new Date().toISOString(),
   };
@@ -558,9 +709,52 @@ export async function updateLesson(
   if (patch.videoUrl !== undefined) updates.video_url = patch.videoUrl || null;
   if (patch.externalUrl !== undefined) updates.external_url = patch.externalUrl || null;
   if (patch.embedCode !== undefined) updates.embed_code = patch.embedCode || null;
-  if (patch.materialFile !== undefined) updates.material_file = serializeStoredFile(patch.materialFile);
-  if (patch.bannerContinue !== undefined) updates.banner_continue = serializeStoredFile(patch.bannerContinue);
-  if (patch.bannerPlayer !== undefined) updates.banner_player = serializeStoredFile(patch.bannerPlayer);
+  const context = { ministryId, moduleId: moduleId || existing?.moduleId || "", lessonId };
+  if (patch.materialFile !== undefined) {
+    if (!patch.materialFile) {
+      await deleteStoredFileFromBucket(existing?.materialFile ?? null);
+      updates.material_file = null;
+    } else {
+      const processed = await prepareStoredFile("materialFile", patch.materialFile, context);
+      updates.material_file = serializeStoredFile(processed);
+    }
+  }
+  if (patch.bannerContinue !== undefined) {
+    if (!patch.bannerContinue) {
+      await deleteStoredFileFromBucket(existing?.bannerContinue ?? null);
+      updates.banner_continue = null;
+    } else {
+      const processed = await prepareStoredFile("bannerContinue", patch.bannerContinue, context);
+      updates.banner_continue = serializeStoredFile(processed);
+      if (!patch.thumbnailUrl && !patch.bannerPlayer && !patch.bannerMobile) {
+        updates.thumbnail_url = processed?.url || processed?.dataUrl || updates.thumbnail_url || null;
+      }
+    }
+  }
+  if (patch.bannerPlayer !== undefined) {
+    if (!patch.bannerPlayer) {
+      await deleteStoredFileFromBucket(existing?.bannerPlayer ?? null);
+      updates.banner_player = null;
+    } else {
+      const processed = await prepareStoredFile("bannerPlayer", patch.bannerPlayer, context);
+      updates.banner_player = serializeStoredFile(processed);
+      if (!patch.thumbnailUrl && !patch.bannerContinue && !patch.bannerMobile) {
+        updates.thumbnail_url = processed?.url || processed?.dataUrl || updates.thumbnail_url || null;
+      }
+    }
+  }
+  if (patch.bannerMobile !== undefined) {
+    if (!patch.bannerMobile) {
+      await deleteStoredFileFromBucket(existing?.bannerMobile ?? null);
+      updates.banner_mobile = null;
+    } else {
+      const processed = await prepareStoredFile("bannerMobile", patch.bannerMobile, context);
+      updates.banner_mobile = serializeStoredFile(processed);
+      if (!patch.thumbnailUrl) {
+        updates.thumbnail_url = processed?.url || processed?.dataUrl || updates.thumbnail_url || null;
+      }
+    }
+  }
   if (patch.subjectId !== undefined) updates.subject_id = patch.subjectId || null;
   if (patch.subjectName !== undefined) updates.subject_name = patch.subjectName || null;
   if (patch.subjectType !== undefined) updates.subject_type = patch.subjectType || null;
@@ -578,6 +772,11 @@ export async function updateLesson(
 }
 
 export async function deleteLesson(_ministryId: MinistryKey, _moduleId: string, lessonId: string): Promise<void> {
+  const existing = findLessonById(lessonId);
+  await deleteStoredFileFromBucket(existing?.materialFile ?? null);
+  await deleteStoredFileFromBucket(existing?.bannerContinue ?? null);
+  await deleteStoredFileFromBucket(existing?.bannerPlayer ?? null);
+  await deleteStoredFileFromBucket(existing?.bannerMobile ?? null);
   const { error } = await supabase.from("platform_lesson").delete().eq("id", lessonId);
   if (error) throw error;
   await refreshContent();

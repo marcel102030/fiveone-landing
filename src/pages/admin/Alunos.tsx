@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, ReactNode } from "react";
 import {
   createUser,
   listUsersPage,
@@ -20,6 +20,7 @@ import {
 } from "../../services/userAccount";
 import "../AdministracaoFiveOne.css";
 import "./Admin.css";
+import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
 
 export default function AdminAlunos() {
   document.title = "Administração | Five One — Alunos";
@@ -46,6 +47,7 @@ export default function AdminAlunos() {
   const someChecked = rows.some(r=> selected[r.email]);
   const [showInvite, setShowInvite] = useState(false);
   const [invite, setInvite] = useState({ email:'', formation: '' as ''|FormationKey, days: 7, link:'' });
+  const [details, setDetails] = useState<null | { email: string; loading: boolean; data: UserProfileDetails | null }>(null);
 
   async function load() {
     setLoading(true);
@@ -226,6 +228,15 @@ export default function AdminAlunos() {
                   <td className="admin-td" style={{whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:8}}>
                     <input type="checkbox" checked={!!selected[u.email]} onChange={(e)=> setSelected(s=> ({...s, [u.email]: e.target.checked}))} />
                     <button className="admin-btn" onClick={()=> { setEdit({ email: u.email, name: u.name }); loadUserComments(u.email); }}>Gerenciar</button>
+                    <button className="admin-btn" onClick={()=> {
+                      const normalized = u.email.toLowerCase();
+                      setDetails({ email: normalized, loading: true, data: null });
+                      getUserProfileDetails(normalized).then((info) => {
+                        setDetails({ email: normalized, loading: false, data: info });
+                      }).catch(() => {
+                        setDetails({ email: normalized, loading: false, data: null });
+                      });
+                    }}>Detalhes</button>
                     <button className="admin-btn" onClick={()=> setReset({ email: u.email })}>Redefinir senha</button>
                     <button className="admin-btn" onClick={()=> setConfirmDel({ email: u.email })}>Remover</button>
                   </td>
@@ -295,6 +306,43 @@ export default function AdminAlunos() {
                 <button type="submit" className="admin-btn primary" disabled={!form.name || !form.email || !form.password || !form.formation || !validPassword(form.password)}>Criar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {details && (
+        <div className="custom-modal-overlay" onClick={()=> setDetails(null)}>
+          <div className="custom-modal" style={{ maxWidth: 600, width: '100%', display:'flex', flexDirection:'column', gap:14 }} onClick={(e)=> e.stopPropagation()}>
+            <h3>Detalhes do aluno</h3>
+            <p style={{ marginTop: -6, color: '#9fb2c5' }}>{details.email}</p>
+            {details.loading ? (
+              <div style={{ padding: '12px 0', color: '#9fb2c5' }}>Carregando informações preenchidas pelo aluno…</div>
+            ) : details.data ? (
+              <div className="admin-details-grid">
+                <DetailRow label="Nome preferido" value={details.data.display_name} />
+                <DetailRow label="Nome" value={details.data.first_name} />
+                <DetailRow label="Sobrenome" value={details.data.last_name} />
+                <DetailRow label="CPF" value={details.data.cpf} />
+                <DetailRow label="Celular" value={details.data.phone} />
+                <DetailRow label="Gênero" value={details.data.gender} formatter={formatDetailGender} />
+                <DetailRow label="Data de nascimento" value={details.data.birthdate} formatter={formatDetailDate} />
+                <DetailRow label="Endereço" value={details.data.address} />
+                <DetailRow label="Cidade" value={details.data.city} />
+                <DetailRow label="Estado" value={details.data.state} />
+                <DetailRow label="País" value={details.data.country} />
+                <DetailRow label="CEP" value={details.data.zip_code} />
+                <DetailRow label="Instagram" value={details.data.instagram} formatter={formatDetailLink} />
+                <DetailRow label="Facebook" value={details.data.facebook} formatter={formatDetailLink} />
+                <DetailRow label="LinkedIn" value={details.data.linkedin} formatter={formatDetailLink} />
+                <DetailRow label="TikTok" value={details.data.tiktok} formatter={formatDetailLink} />
+                <DetailRow label="Descrição" value={details.data.bio} className="admin-details-row--full" />
+              </div>
+            ) : (
+              <div style={{ padding: '12px 0', color: '#9fb2c5' }}>O aluno ainda não preencheu as informações do perfil.</div>
+            )}
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button className="adm5-pill" onClick={()=> setDetails(null)}>Fechar</button>
+            </div>
           </div>
         </div>
       )}
@@ -477,6 +525,48 @@ function renderAvatar(name: string, email: string) {
     <div style={{width:28,height:28,borderRadius:'50%',display:'grid',placeItems:'center',background:bg,border:`1px solid ${border}`}}>
       <span style={{fontSize:12, color:'#e7f2f9'}}>{initials}</span>
     </div>
+  );
+}
+
+type DetailFormatter = (value: string | null | undefined) => ReactNode;
+
+function DetailRow({ label, value, formatter, className }: { label: string; value: string | null | undefined; formatter?: DetailFormatter; className?: string }) {
+  const resolved = formatter ? formatter(value) : (value && value.toString().trim().length ? value : null);
+  return (
+    <div className={`admin-details-row ${className || ''}`}>
+      <span className="admin-details-label">{label}</span>
+      <span className="admin-details-value">{resolved ?? <em>Não informado</em>}</span>
+    </div>
+  );
+}
+
+function formatDetailGender(value: string | null | undefined): ReactNode {
+  if (!value) return null;
+  switch (value) {
+    case 'feminino': return 'Feminino';
+    case 'masculino': return 'Masculino';
+    case 'nao_informar': return 'Prefere não informar';
+    case 'outro': return 'Outro';
+    default: return value;
+  }
+}
+
+function formatDetailDate(value: string | null | undefined): ReactNode {
+  if (!value) return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString('pt-BR');
+}
+
+function formatDetailLink(value: string | null | undefined): ReactNode {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const href = trimmed.startsWith('http') ? trimmed : `https://${trimmed}`;
+  return (
+    <a href={href} target="_blank" rel="noreferrer" className="admin-details-link">
+      {trimmed}
+    </a>
   );
 }
 

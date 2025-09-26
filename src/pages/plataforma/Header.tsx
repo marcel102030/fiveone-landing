@@ -2,14 +2,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 const logoSmall = "/assets/images/logo-fiveone-white-small.png";
-const perfilLogo = "/assets/images/logo_maior.png";
 import "./plataforma.css";
 import { useState, useEffect, useRef } from "react";
+import { usePlatformUserProfile } from "../../hooks/usePlatformUserProfile";
+import { clearCurrentUser } from "../../utils/user";
 
 const Header = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
   const [isMenuOpen, setMenuOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { profile } = usePlatformUserProfile();
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -103,12 +105,47 @@ const Header = () => {
           <button
             className="perfil-button"
             onClick={() => setDropdownOpen(!isDropdownOpen)}
+            aria-haspopup="true"
+            aria-expanded={isDropdownOpen}
+            aria-label="Abrir menu do perfil"
           >
-            <img src={perfilLogo} alt="Perfil" className="perfil-logo" />
+            <span className="perfil-avatar" aria-hidden>
+              {profile?.initials || "F1"}
+            </span>
+            <span className="sr-only">Abrir menu do perfil</span>
           </button>
           {isDropdownOpen && (
             <div className="perfil-dropdown-menu active">
-              <a href="/#/login-aluno" className="perfil-dropdown-item">Sair</a>
+              <div className="perfil-dropdown-header">
+                <div className="perfil-avatar perfil-avatar--large" aria-hidden>{profile?.initials || "F1"}</div>
+                <div className="perfil-dropdown-info">
+                  <strong className="perfil-dropdown-name">{profile?.displayName || "Aluno Five One"}</strong>
+                  <span className="perfil-dropdown-email">{profile?.email || ""}</span>
+                  {profile?.formationLabel && (
+                    <span className="perfil-dropdown-formation">{profile.formationLabel}</span>
+                  )}
+                </div>
+              </div>
+              <Link
+                to="/perfil"
+                className="perfil-dropdown-item"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  setMenuOpen(false);
+                }}
+              >
+                Meu perfil
+              </Link>
+              <a
+                href="/#/login-aluno"
+                className="perfil-dropdown-item"
+                onClick={() => {
+                  clearCurrentUser();
+                  setDropdownOpen(false);
+                }}
+              >
+                Sair
+              </a>
             </div>
           )}
         </div>

@@ -20,6 +20,7 @@ import {
   updateLesson,
   usePlatformContent,
 } from "../../services/platformContent";
+import { openStoredFile } from "../../utils/storedFile";
 
 const moduleStatusLabel: Record<ModuleStatus, string> = {
   draft: "Rascunho",
@@ -39,6 +40,9 @@ const sourceTypeOptions: { value: LessonSourceType; label: string; helper: strin
   { value: "VIMEO", label: "Vimeo", helper: "Cole o link público do Vimeo." },
 ];
 
+const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50 MB — alinhado ao limite padrão de upload do Supabase Storage
+const MAX_IMAGE_SIZE = 4 * 1024 * 1024; // 4 MB — banners em linha ficam dentro de limites confortáveis
+
 type LessonFormState = {
   title: string;
   subtitle: string;
@@ -55,6 +59,7 @@ type LessonFormState = {
   materialFile: StoredFile | null;
   bannerContinue: StoredFile | null;
   bannerPlayer: StoredFile | null;
+  bannerMobile: StoredFile | null;
   isActive: boolean;
 };
 
@@ -74,6 +79,7 @@ const defaultLessonForm = (): LessonFormState => ({
   materialFile: null,
   bannerContinue: null,
   bannerPlayer: null,
+  bannerMobile: null,
   isActive: true,
 });
 
@@ -131,8 +137,20 @@ export default function AdminConteudoPlataforma() {
   const [lessonActionId, setLessonActionId] = useState<string | null>(null);
   const [lessonSubmitting, setLessonSubmitting] = useState(false);
 
+  const cleanupPreview = (file?: StoredFile | null) => {
+    if (file?.dataUrl && file.dataUrl.startsWith("blob:")) {
+      URL.revokeObjectURL(file.dataUrl);
+    }
+  };
+
   const resetLessonForm = () => {
-    setLessonForm(defaultLessonForm());
+    setLessonForm((prev) => {
+      cleanupPreview(prev.materialFile || undefined);
+      cleanupPreview(prev.bannerContinue || undefined);
+      cleanupPreview(prev.bannerMobile || undefined);
+      cleanupPreview(prev.bannerPlayer || undefined);
+      return defaultLessonForm();
+    });
     setEditingLesson(null);
   };
 
@@ -158,6 +176,7 @@ export default function AdminConteudoPlataforma() {
         materialFile: lesson.materialFile || null,
         bannerContinue: lesson.bannerContinue || null,
         bannerPlayer: lesson.bannerPlayer || null,
+        bannerMobile: lesson.bannerMobile || null,
         isActive: lesson.isActive,
       });
     } else {
@@ -200,13 +219,15 @@ export default function AdminConteudoPlataforma() {
   }
 
   async function buildStoredFile(file: File): Promise<StoredFile> {
-    const dataUrl = await readFileAsDataUrl(file);
+    const isPdf = file.type === "application/pdf";
+    const dataUrl = isPdf ? URL.createObjectURL(file) : await readFileAsDataUrl(file);
     const stored: StoredFile = {
       name: file.name,
       size: file.size,
       type: file.type,
       dataUrl,
       uploadedAt: new Date().toISOString(),
+      file,
     };
     if (file.type.startsWith("image/")) {
       const dims = await getImageDimensions(dataUrl);
@@ -219,7 +240,7 @@ export default function AdminConteudoPlataforma() {
   }
 
   async function handleFileSelection(
-    field: "materialFile" | "bannerContinue" | "bannerPlayer",
+    field: "materialFile" | "bannerContinue" | "bannerPlayer" | "bannerMobile",
     files: FileList | null,
   ) {
     if (!files || !files.length) return;
@@ -228,8 +249,16 @@ export default function AdminConteudoPlataforma() {
       alert("Envie um arquivo PDF.");
       return;
     }
+    if (field === "materialFile" && file.size > MAX_PDF_SIZE) {
+      alert("O PDF excede o limite de 50 MB permitido. Reduza o tamanho ou utilize um serviço externo.");
+      return;
+    }
     if (field !== "materialFile" && !file.type.startsWith("image/")) {
       alert("Envie uma imagem nos formatos PNG ou JPG.");
+      return;
+    }
+    if (field !== "materialFile" && file.size > MAX_IMAGE_SIZE) {
+      alert("A imagem selecionada é muito pesada. Utilize um arquivo de até 4 MB.");
       return;
     }
     try {
@@ -241,8 +270,12 @@ export default function AdminConteudoPlataforma() {
     }
   }
 
-  const handleRemoveFile = (field: "materialFile" | "bannerContinue" | "bannerPlayer") => {
-    setLessonForm((prev) => ({ ...prev, [field]: null }));
+  const handleRemoveFile = (field: "materialFile" | "bannerContinue" | "bannerPlayer" | "bannerMobile") => {
+    setLessonForm((prev) => {
+      const next = { ...prev, [field]: null } as LessonFormState;
+      cleanupPreview(prev[field]);
+      return next;
+    });
   };
 
   const handleModuleTitleCommit = async (moduleId: string) => {
@@ -381,6 +414,7 @@ export default function AdminConteudoPlataforma() {
       materialFile: lessonForm.materialFile,
       bannerContinue: lessonForm.bannerContinue,
       bannerPlayer: lessonForm.bannerPlayer,
+      bannerMobile: lessonForm.bannerMobile,
       status: lessonForm.status,
       releaseAt: lessonForm.releaseAt ? new Date(lessonForm.releaseAt).toISOString() : null,
       isActive: lessonForm.isActive,
@@ -560,7 +594,14 @@ export default function AdminConteudoPlataforma() {
                       {lessons.length ? (
                         <div className="lessons-list">
                           {lessons.map((lesson) => {
-                            const thumb = lesson.bannerContinue?.dataUrl || lesson.bannerPlayer?.dataUrl || lesson.thumbnailUrl;
+                            const thumb =
+                              lesson.bannerContinue?.url ||
+                              lesson.bannerContinue?.dataUrl ||
+                              lesson.bannerMobile?.url ||
+                              lesson.bannerMobile?.dataUrl ||
+                              lesson.bannerPlayer?.url ||
+                              lesson.bannerPlayer?.dataUrl ||
+                              lesson.thumbnailUrl;
                             const sourceLabel = sourceTypeOptions.find((opt) => opt.value === lesson.sourceType)?.label;
                             const isMenuOpen = openMenu?.lessonId === lesson.id && openMenu?.moduleId === module.id;
                             return (
@@ -617,7 +658,9 @@ export default function AdminConteudoPlataforma() {
                                         role="menuitem"
                                         onClick={() => {
                                           const url = lesson.videoId ? `/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}` : '/streamer-mestre';
-                                          window.open(`#${url}`, '_blank', 'noopener');
+                                          const base = `${window.location.origin}${window.location.pathname}`;
+                                          const cleaned = url.startsWith('#') ? url.slice(1) : url;
+                                          window.open(`${base}#${cleaned}`, '_blank', 'noopener');
                                           setOpenMenu(null);
                                         }}
                                       >
@@ -834,71 +877,77 @@ export default function AdminConteudoPlataforma() {
                 </div>
               </div>
 
-              <div className="lesson-field">
-                <label>Material complementar (PDF)</label>
-                <div className="upload-group">
-                  <label className="upload-box">
-                    <input type="file" accept="application/pdf" onChange={(event) => handleFileSelection("materialFile", event.target.files)} />
-                    <span>Selecionar PDF</span>
-                  </label>
-                  {lessonForm.materialFile && (
-                    <div className="file-info">
-                      <div>
-                        <strong>{lessonForm.materialFile.name}</strong>
-                        <span>{Math.round(lessonForm.materialFile.size / 1024)} KB</span>
-                      </div>
-                      <div className="file-actions">
-                        <button type="button" className="linklike" onClick={() => window.open(lessonForm.materialFile?.dataUrl, "_blank")}>Abrir</button>
-                        <button type="button" className="linklike" onClick={() => handleRemoveFile("materialFile")}>Remover</button>
-                      </div>
-                    </div>
-                  )}
-                  <p className="lesson-hint">Formato PDF. O material ficará disponível na área de materiais complementares da plataforma.</p>
-                </div>
-              </div>
-
-              <div className="form-two-col">
                 <div className="lesson-field">
-                  <label>Banner "Continuar assistindo" (300x580px)</label>
+                  <label>Material complementar (PDF)</label>
                   <div className="upload-group">
                     <label className="upload-box">
-                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerContinue", event.target.files)} />
-                      <span>Selecionar imagem</span>
+                      <input type="file" accept="application/pdf" onChange={(event) => handleFileSelection("materialFile", event.target.files)} />
+                      <span>Selecionar PDF</span>
                     </label>
+                    {lessonForm.materialFile && (
+                      <div className="file-info">
+                        <div>
+                          <strong>{lessonForm.materialFile.name}</strong>
+                          <span>{Math.round(lessonForm.materialFile.size / 1024)} KB</span>
+                        </div>
+                        <div className="file-actions">
+                          <button
+                            type="button"
+                            className="linklike"
+                            onClick={() => openStoredFile(lessonForm.materialFile)}
+                          >
+                            Abrir
+                          </button>
+                          <button type="button" className="linklike" onClick={() => handleRemoveFile("materialFile")}>Remover</button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="lesson-hint">Formato PDF. O material ficará disponível na área de materiais complementares da plataforma.</p>
+                  </div>
+                </div>
+
+                <div className="form-two-col">
+                  <div className="lesson-field">
+                    <label>Banner "Continuar assistindo" (300x580px)</label>
+                    <div className="upload-group">
+                      <label className="upload-box">
+                        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerContinue", event.target.files)} />
+                        <span>Selecionar imagem</span>
+                      </label>
                     {lessonForm.bannerContinue && (
                       <div className="file-preview">
-                        <img src={lessonForm.bannerContinue.dataUrl} alt="Pré-visualização banner continuar" />
+                        <img src={lessonForm.bannerContinue.dataUrl || lessonForm.bannerContinue.url || ''} alt="Pré-visualização banner continuar" />
                         <div className="file-info">
                           <strong>{lessonForm.bannerContinue.name}</strong>
                           <span>{lessonForm.bannerContinue.width && lessonForm.bannerContinue.height ? `${lessonForm.bannerContinue.width}x${lessonForm.bannerContinue.height}px` : null}</span>
                           <button type="button" className="linklike" onClick={() => handleRemoveFile("bannerContinue")}>Remover</button>
                         </div>
-                      </div>
-                    )}
-                    <p className="lesson-hint">Recomendado 300x580 px, proporção vertical.</p>
-                  </div>
-                </div>
-                <div className="lesson-field">
-                  <label>Banner da aula (1200x768px)</label>
-                  <div className="upload-group">
-                    <label className="upload-box">
-                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerPlayer", event.target.files)} />
-                      <span>Selecionar imagem</span>
-                    </label>
-                    {lessonForm.bannerPlayer && (
-                      <div className="file-preview">
-                        <img src={lessonForm.bannerPlayer.dataUrl} alt="Pré-visualização banner da aula" />
-                        <div className="file-info">
-                          <strong>{lessonForm.bannerPlayer.name}</strong>
-                          <span>{lessonForm.bannerPlayer.width && lessonForm.bannerPlayer.height ? `${lessonForm.bannerPlayer.width}x${lessonForm.bannerPlayer.height}px` : null}</span>
-                          <button type="button" className="linklike" onClick={() => handleRemoveFile("bannerPlayer")}>Remover</button>
                         </div>
-                      </div>
-                    )}
-                    <p className="lesson-hint">Recomendado 1200x768 px, formato horizontal.</p>
+                      )}
+                      <p className="lesson-hint">Recomendado 300x580 px, proporção vertical.</p>
+                    </div>
+                  </div>
+                  <div className="lesson-field">
+                    <label>Imagem para mobile (opcional)</label>
+                    <div className="upload-group">
+                      <label className="upload-box">
+                        <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerMobile", event.target.files)} />
+                        <span>Selecionar imagem</span>
+                      </label>
+                      {lessonForm.bannerMobile && (
+                        <div className="file-preview">
+                          <img src={lessonForm.bannerMobile.dataUrl || lessonForm.bannerMobile.url || ''} alt="Pré-visualização imagem mobile" />
+                          <div className="file-info">
+                            <strong>{lessonForm.bannerMobile.name}</strong>
+                            <span>{lessonForm.bannerMobile.width && lessonForm.bannerMobile.height ? `${lessonForm.bannerMobile.width}x${lessonForm.bannerMobile.height}px` : null}</span>
+                            <button type="button" className="linklike" onClick={() => handleRemoveFile("bannerMobile")}>Remover</button>
+                          </div>
+                        </div>
+                      )}
+                      <p className="lesson-hint">Sugestão: 1:1 ou 4:5 — será utilizada em telas menores.</p>
+                    </div>
                   </div>
                 </div>
-              </div>
 
               <div className="lesson-modal-actions">
                 <button type="button" className="adm5-pill" onClick={closeLessonModal} disabled={lessonSubmitting}>
