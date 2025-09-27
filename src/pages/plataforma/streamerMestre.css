@@ -308,23 +308,27 @@
   }
   
 .video-container {
-    width: 100%;
-    display: flex;
-    justify-content: flex-start;
-    align-items: center;
-    text-align: center;
-    padding: 1rem 0;
-  }
-  
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: stretch;
+  margin: 1rem 0;
+  background: #050b16;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
 .video-container iframe {
+  flex: 1 1 auto;
   width: 100%;
   max-width: 100%;
   aspect-ratio: 16 / 9;
   border: none;
-  border-radius: 10px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  border-radius: inherit;
+  box-shadow: 0 8px 20px rgba(3, 10, 30, 0.45);
   display: block;
-  margin: 0 auto;
+  background: #000;
 }
 
 /* Ensure a balanced layout similar to the reference UI */
@@ -621,13 +625,7 @@
   }
 
   .video-container {
-    width: 100%;
-    padding: 1rem 0;
-  }
-
-  .video-container iframe {
-    max-width: 100%;
-    width: 100%;
+    margin: 1rem 0;
   }
 
   .video-sidebar {

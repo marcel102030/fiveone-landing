@@ -259,12 +259,19 @@ const PaginaInicial = () => {
             <button className="clear-continue-btn" onClick={handleClearContinue}>Limpar histórico</button>
             <div className="carousel-wrapper">
               <button className="arrow left" onClick={() => scrollCarousel(-1)}>‹</button>
-              <div className="continuar-container" ref={carouselRef}>
+              <div
+                className={`continuar-container ${lastWatchedArray.length <= 1 ? 'single' : ''}`}
+                ref={carouselRef}
+              >
                 {lastWatchedArray.map((video: any, index: number) => {
                   const desktopImage = video.thumbnail || video.bannerContinue || video.bannerMobile || '/assets/images/miniatura_fundamentos_mestre.png';
                   const mobileImage = video.bannerMobile || video.bannerContinue || video.thumbnail || desktopImage;
                   const selectedImage = isMobile ? mobileImage : desktopImage;
                   const cardStyle = selectedImage ? { backgroundImage: `url('${selectedImage}')` } : undefined;
+                  const watchedSeconds = Number(video.watchedSeconds || 0);
+                  const durationSeconds = Number(video.durationSeconds || 0);
+                  const effectiveDuration = durationSeconds > 0 ? durationSeconds : Math.max(watchedSeconds, 1);
+                  const progressPercent = effectiveDuration > 0 ? Math.min(100, Math.round((watchedSeconds / effectiveDuration) * 100)) : 0;
                   return (
                     <div
                       key={index}
@@ -282,15 +289,15 @@ const PaginaInicial = () => {
                         <p>{video.title}</p>
                         {video.subjectName && <span className="continuar-subject">{video.subjectName}</span>}
                         <div className="continuar-meta">
-                          {typeof video.durationSeconds === 'number' && video.durationSeconds > 0 ? (
-                            <span className="dur">{Math.floor(video.durationSeconds/60)}:{String(Math.floor(video.durationSeconds%60)).padStart(2,'0')}</span>
+                          {durationSeconds > 0 ? (
+                            <span className="dur">{Math.floor(durationSeconds/60)}:{String(Math.floor(durationSeconds%60)).padStart(2,'0')}</span>
                           ) : (
-                            <span className="dur">{Math.max(1, Math.floor((video.watchedSeconds||0)/60))} min vistos</span>
+                            <span className="dur">{Math.max(1, Math.floor(watchedSeconds/60))} min vistos</span>
                           )}
                         </div>
                         <div className="play-badge" aria-hidden>▶</div>
                         <div className="continuar-progress">
-                          <div className="bar" style={{ width: `${Math.min(100, Math.round(((video.watchedSeconds||0) / (video.durationSeconds||1800)) * 100))}%` }} />
+                          <div className="bar" style={{ width: `${progressPercent}%` }} />
                         </div>
                       </div>
                     </div>

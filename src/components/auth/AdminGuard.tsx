@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { isAdminAuthenticated } from "../../utils/adminAuth";
+import { AdminToastProvider } from "../AdminToast";
 
 type Props = {
   children: ReactNode;
@@ -14,6 +15,5 @@ export default function AdminGuard({ children }: Props) {
     return <Navigate to="/admin" replace state={{ from: location }} />;
     }
 
-  return <>{children}</>;
+  return <AdminToastProvider>{children}</AdminToastProvider>;
 }
-

@@ -21,6 +21,7 @@ import {
   usePlatformContent,
 } from "../../services/platformContent";
 import { openStoredFile } from "../../utils/storedFile";
+import { useAdminToast } from "../../components/AdminToast";
 
 const moduleStatusLabel: Record<ModuleStatus, string> = {
   draft: "Rascunho",
@@ -37,7 +38,7 @@ const lessonStatusLabel: Record<LessonStatus, string> = {
 
 const sourceTypeOptions: { value: LessonSourceType; label: string; helper: string }[] = [
   { value: "YOUTUBE", label: "YouTube", helper: "Cole a URL do vídeo do YouTube." },
-  { value: "VIMEO", label: "Vimeo", helper: "Cole o link público do Vimeo." },
+  { value: "VIMEO", label: "Vimeo", helper: "Cole o link público ou o código de incorporação do Vimeo." },
 ];
 
 const MAX_PDF_SIZE = 50 * 1024 * 1024; // 50 MB — alinhado ao limite padrão de upload do Supabase Storage
@@ -54,6 +55,7 @@ type LessonFormState = {
   contentType: LessonInput["contentType"];
   sourceType: LessonSourceType;
   videoUrl: string;
+  embedCode: string;
   status: LessonStatus;
   releaseAt: string;
   materialFile: StoredFile | null;
@@ -74,6 +76,7 @@ const defaultLessonForm = (): LessonFormState => ({
   contentType: "VIDEO",
   sourceType: "YOUTUBE",
   videoUrl: "",
+  embedCode: "",
   status: "published",
   releaseAt: "",
   materialFile: null,
@@ -136,6 +139,8 @@ export default function AdminConteudoPlataforma() {
   const [moduleActionId, setModuleActionId] = useState<string | null>(null);
   const [lessonActionId, setLessonActionId] = useState<string | null>(null);
   const [lessonSubmitting, setLessonSubmitting] = useState(false);
+  const toast = useAdminToast();
+  const [pendingLessonRemoval, setPendingLessonRemoval] = useState<null | { moduleId: string; lesson: LessonRef }>(null);
 
   const cleanupPreview = (file?: StoredFile | null) => {
     if (file?.dataUrl && file.dataUrl.startsWith("blob:")) {
@@ -171,6 +176,7 @@ export default function AdminConteudoPlataforma() {
         contentType: lesson.contentType || "VIDEO",
         sourceType: lesson.sourceType || "YOUTUBE",
         videoUrl: lesson.videoUrl || "",
+        embedCode: lesson.embedCode || "",
         status: lesson.status,
         releaseAt: lesson.releaseAt ? lesson.releaseAt.slice(0, 10) : "",
         materialFile: lesson.materialFile || null,
@@ -194,6 +200,30 @@ export default function AdminConteudoPlataforma() {
 
   const handleLessonFormChange = (field: keyof LessonFormState, value: string) => {
     setLessonForm((prev) => ({ ...prev, [field]: value } as LessonFormState));
+  };
+
+  const extractVimeoEmbedSrc = (value: string): string | null => {
+    const trimmed = value.trim();
+    if (!trimmed) return null;
+    const doubleQuoteMatch = trimmed.match(/src\s*=\s*"([^"]+)"/i);
+    if (doubleQuoteMatch?.[1]) return doubleQuoteMatch[1];
+    const singleQuoteMatch = trimmed.match(/src\s*=\s*'([^']+)'/i);
+    if (singleQuoteMatch?.[1]) return singleQuoteMatch[1];
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return null;
+  };
+
+  const handleEmbedCodeChange = (value: string) => {
+    setLessonForm((prev) => {
+      const next: LessonFormState = { ...prev, embedCode: value };
+      const prevVideoUrl = prev.videoUrl.trim();
+      const prevExtracted = extractVimeoEmbedSrc(prev.embedCode);
+      const shouldSyncVideoUrl = !prevVideoUrl || (prevExtracted && prevVideoUrl === prevExtracted);
+      if (shouldSyncVideoUrl) {
+        next.videoUrl = extractVimeoEmbedSrc(value) || "";
+      }
+      return next;
+    });
   };
 
   const handleLessonStatusChange = (status: LessonStatus) => {
@@ -246,19 +276,19 @@ export default function AdminConteudoPlataforma() {
     if (!files || !files.length) return;
     const file = files[0];
     if (field === "materialFile" && file.type !== "application/pdf") {
-      alert("Envie um arquivo PDF.");
+      toast.error('Arquivo inválido', 'Envie um material complementar em PDF.');
       return;
     }
     if (field === "materialFile" && file.size > MAX_PDF_SIZE) {
-      alert("O PDF excede o limite de 50 MB permitido. Reduza o tamanho ou utilize um serviço externo.");
+      toast.error('PDF muito grande', 'Envie um arquivo de até 50 MB.');
       return;
     }
     if (field !== "materialFile" && !file.type.startsWith("image/")) {
-      alert("Envie uma imagem nos formatos PNG ou JPG.");
+      toast.error('Imagem inválida', 'Envie arquivos PNG ou JPG para os banners.');
       return;
     }
     if (field !== "materialFile" && file.size > MAX_IMAGE_SIZE) {
-      alert("A imagem selecionada é muito pesada. Utilize um arquivo de até 4 MB.");
+      toast.error('Imagem muito pesada', 'Utilize imagens de até 4 MB.');
       return;
     }
     try {
@@ -266,7 +296,7 @@ export default function AdminConteudoPlataforma() {
       setLessonForm((prev) => ({ ...prev, [field]: stored }));
     } catch (error) {
       console.error("Falha ao ler arquivo", error);
-      alert("Não foi possível processar o arquivo selecionado.");
+      toast.error('Não foi possível processar', 'Tente selecionar o arquivo novamente.');
     }
   }
 
@@ -286,9 +316,10 @@ export default function AdminConteudoPlataforma() {
     try {
       setModuleActionId(moduleId);
       await setModuleTitle(selectedMinistry.id, moduleId, desiredTitle);
+      toast.success('Título atualizado', 'O módulo foi renomeado com sucesso.');
     } catch (error) {
       console.error("Erro ao atualizar título do módulo", error);
-      alert("Não foi possível salvar o título do módulo. Tente novamente.");
+      toast.error('Não foi possível salvar', 'Tente novamente em instantes.');
       setModuleDraftTitles((prev) => ({
         ...prev,
         [moduleId]: currentModule.title,
@@ -302,10 +333,12 @@ export default function AdminConteudoPlataforma() {
     if (!selectedMinistry) return;
     try {
       setModuleActionId(moduleId);
-      await toggleModuleStatus(selectedMinistry.id, moduleId);
+      const status = await toggleModuleStatus(selectedMinistry.id, moduleId);
+      const label = status === "published" ? "publicado" : status === "draft" ? "marcado como rascunho" : "atualizado";
+      toast.success('Status do módulo atualizado', `O módulo foi ${label}.`);
     } catch (error) {
       console.error("Erro ao alternar status do módulo", error);
-      alert("Não foi possível atualizar o status do módulo. Tente novamente.");
+      toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
     } finally {
       setModuleActionId(null);
     }
@@ -317,9 +350,10 @@ export default function AdminConteudoPlataforma() {
     try {
       setLessonActionId(lesson.id);
       await setLessonStatus(selectedMinistry.id, moduleId, lesson.id, nextStatus);
+      toast.success('Status da aula atualizado', nextStatus === 'published' ? 'A aula foi publicada.' : 'A aula voltou para rascunho.');
     } catch (error) {
       console.error("Erro ao alternar status da aula", error);
-      alert("Não foi possível atualizar o status da aula. Tente novamente.");
+      toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
     } finally {
       setLessonActionId(null);
       setOpenMenu(null);
@@ -331,27 +365,35 @@ export default function AdminConteudoPlataforma() {
     try {
       setLessonActionId(lesson.id);
       await setLessonActive(selectedMinistry.id, moduleId, lesson.id, !lesson.isActive);
+      toast.info('Disponibilidade atualizada', !lesson.isActive ? 'A aula foi reativada na plataforma.' : 'A aula foi desativada para os alunos.');
     } catch (error) {
       console.error("Erro ao alternar disponibilidade da aula", error);
-      alert("Não foi possível atualizar a disponibilidade da aula. Tente novamente.");
+      toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
     } finally {
       setLessonActionId(null);
       setOpenMenu(null);
     }
   };
 
-  const handleDeleteLesson = async (moduleId: string, lesson: LessonRef) => {
+  const handleDeleteLesson = (moduleId: string, lesson: LessonRef) => {
     if (!selectedMinistry) return;
-    if (!confirm(`Remover a aula "${lesson.title}"?`)) return;
+    setLessonActionId(lesson.id);
+    setOpenMenu(null);
+    setPendingLessonRemoval({ moduleId, lesson });
+  };
+
+  const confirmDeleteLesson = async () => {
+    if (!selectedMinistry || !pendingLessonRemoval) return;
+    const { moduleId, lesson } = pendingLessonRemoval;
     try {
-      setLessonActionId(lesson.id);
       await deleteLesson(selectedMinistry.id, moduleId, lesson.id);
-      alert("Aula removida com sucesso.");
+      toast.info('Aula removida', 'O conteúdo foi excluído da formação.');
     } catch (error) {
       console.error("Erro ao excluir aula", error);
-      alert("Não foi possível remover a aula. Tente novamente.");
+      toast.error('Não foi possível remover', 'Tente novamente em instantes.');
     } finally {
       setLessonActionId(null);
+      setPendingLessonRemoval(null);
       setOpenMenu(null);
     }
   };
@@ -392,11 +434,18 @@ export default function AdminConteudoPlataforma() {
     if (!selectedMinistry || !lessonModuleId) return;
     if (!getModule(selectedMinistry.id, lessonModuleId)) return;
     if (!lessonForm.title.trim()) {
-      alert("Informe o nome da aula.");
+      toast.warning('Informe o nome da aula', 'Digite um título para continuar.');
       return;
     }
-    if (!lessonForm.videoUrl.trim()) {
-      alert("Informe o link do vídeo (YouTube ou Vimeo).");
+    const trimmedVideoUrl = lessonForm.videoUrl.trim();
+    const trimmedEmbedCode = lessonForm.embedCode.trim();
+    const requiresVideoUrl = lessonForm.sourceType !== "VIMEO";
+    if (requiresVideoUrl && !trimmedVideoUrl) {
+      toast.warning('Link do vídeo obrigatório', 'Cole o link do YouTube para continuar.');
+      return;
+    }
+    if (!requiresVideoUrl && !trimmedVideoUrl && !trimmedEmbedCode) {
+      toast.warning('Informe o vídeo', 'Use o link público ou o código de incorporação do Vimeo.');
       return;
     }
 
@@ -410,7 +459,8 @@ export default function AdminConteudoPlataforma() {
       description: lessonForm.description,
       contentType: lessonForm.contentType,
       sourceType: lessonForm.sourceType,
-      videoUrl: lessonForm.videoUrl,
+      videoUrl: trimmedVideoUrl,
+      embedCode: trimmedEmbedCode,
       materialFile: lessonForm.materialFile,
       bannerContinue: lessonForm.bannerContinue,
       bannerPlayer: lessonForm.bannerPlayer,
@@ -424,19 +474,19 @@ export default function AdminConteudoPlataforma() {
       setLessonSubmitting(true);
       if (editingLesson) {
         await updateLesson(selectedMinistry.id, lessonModuleId, editingLesson.id, basePayload);
-        alert("Aula atualizada com sucesso.");
+        toast.success('Aula atualizada', 'As alterações foram salvas.');
       } else {
         const created = await createLesson(selectedMinistry.id, lessonModuleId, basePayload as LessonInput);
         if (!created) {
-          alert("Não foi possível criar a aula. Tente novamente.");
+          toast.error('Não foi possível criar a aula', 'Tente novamente em instantes.');
           return;
         }
-        alert("Aula criada com sucesso!");
+        toast.success('Aula criada', 'O conteúdo foi adicionado ao módulo.');
       }
       closeLessonModal();
     } catch (error) {
       console.error("Erro ao salvar aula", error);
-      alert("Não foi possível salvar a aula. Verifique os dados e tente novamente.");
+      toast.error('Não foi possível salvar', 'Verifique os dados e tente novamente.');
     } finally {
       setLessonSubmitting(false);
     }
@@ -502,13 +552,13 @@ export default function AdminConteudoPlataforma() {
             <div className="ministry-actions">
               <button
                 className="adm5-pill"
-                onClick={() => alert("Recurso de criação de módulos ficará disponível em breve.")}
+                onClick={() => toast.info('Em breve', 'A criação de módulos será liberada nas próximas atualizações.')}
               >
                 Criar módulo
               </button>
               <button
                 className="adm5-pill"
-                onClick={() => alert("Em breve você poderá exportar um relatório da formação.")}
+                onClick={() => toast.info('Exportação disponível em breve', 'Estamos finalizando o relatório completo da formação.')}
               >
                 Exportar visão
               </button>
@@ -780,15 +830,39 @@ export default function AdminConteudoPlataforma() {
               </div>
 
               <div className="lesson-field">
-                <label>Link do vídeo*</label>
+                <label>
+                  Link do vídeo{lessonForm.sourceType === "VIMEO" ? "" : "*"}
+                </label>
                 <input
                   className="lesson-input"
                   value={lessonForm.videoUrl}
                   onChange={(event) => handleLessonFormChange("videoUrl", event.target.value)}
-                  placeholder="Cole a URL do vídeo (YouTube ou Vimeo)"
-                  required
+                  placeholder={lessonForm.sourceType === "VIMEO" ? "Cole a URL pública do vídeo no Vimeo" : "Cole a URL do vídeo no YouTube"}
+                  required={lessonForm.sourceType !== "VIMEO" || !lessonForm.embedCode.trim()}
                 />
+                {lessonForm.sourceType === "VIMEO" && (
+                  <p className="lesson-hint" style={{ marginTop: 4 }}>
+                    Se preferir, deixe o link vazio e informe o código de incorporação do Vimeo abaixo.
+                  </p>
+                )}
               </div>
+
+              {lessonForm.sourceType === "VIMEO" && (
+                <div className="lesson-field">
+                  <label>Código de incorporação (iframe)</label>
+                  <textarea
+                    className="lesson-textarea"
+                    value={lessonForm.embedCode}
+                    onChange={(event) => handleEmbedCodeChange(event.target.value)}
+                    placeholder="Cole o snippet &lt;iframe&gt; gerado pelo Vimeo"
+                    spellCheck={false}
+                    rows={lessonForm.embedCode ? 5 : 3}
+                  />
+                  <p className="lesson-hint" style={{ marginTop: 4 }}>
+                    Usaremos este player embutido quando preenchido. Prefira colar apenas o iframe do Vimeo.
+                  </p>
+                </div>
+              )}
 
               <div className="form-two-col">
                 <div className="lesson-field">
@@ -967,6 +1041,21 @@ export default function AdminConteudoPlataforma() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {pendingLessonRemoval && (
+        <div className="lesson-modal-overlay" onClick={()=> { setPendingLessonRemoval(null); setLessonActionId(null); }}>
+          <div className="lesson-modal" onClick={(event) => event.stopPropagation()}>
+            <h3>Remover aula</h3>
+            <p style={{ color: '#94a3b8', marginTop: 8 }}>
+              Tem certeza de que deseja remover a aula "{pendingLessonRemoval.lesson.title}" do módulo?
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
+              <button className="admin-btn" onClick={()=> { setPendingLessonRemoval(null); setLessonActionId(null); }}>Cancelar</button>
+              <button className="admin-btn primary" onClick={confirmDeleteLesson}>Remover</button>
+            </div>
           </div>
         </div>
       )}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./AdminChurches.css";
+import { useAdminToast } from "../components/AdminToast";
 // import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
 
 const PROD_ORIGIN = "https://fiveonemovement.com";
@@ -53,18 +54,7 @@ export default function AdminChurches() {
     expected_members: "" as number | string,
     notes: ""
   });
-  // Sucesso na criação (toast com links)
-  const [createSuccess, setCreateSuccess] = useState<
-    | null
-    | {
-        name: string;
-        slug: string;
-        invite_url?: string;
-        report_url?: string;
-        quiz_url?: string;
-      }
-  >(null);
-  const [copied, setCopied] = useState(false);
+  const toast = useAdminToast();
   const [copiedRowSlug, setCopiedRowSlug] = useState<string | null>(null);
   function makeUrlsFromSlug(slug: string) {
     return {
@@ -90,10 +80,9 @@ export default function AdminChurches() {
         document.execCommand("copy");
         document.body.removeChild(ta);
       }
-      setCopied(true);
-      setTimeout(() => setCopied(false), 1500);
+      toast.success('Link copiado', 'O link foi copiado para a área de transferência.');
     } catch (e) {
-      alert("Não foi possível copiar o link");
+      toast.error('Não foi possível copiar', 'Copie manualmente no navegador e tente novamente.');
     }
   }
 
@@ -139,7 +128,7 @@ export default function AdminChurches() {
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      alert("Nome é obrigatório");
+      toast.warning('Informe o nome', 'Preencha o nome da igreja para continuar.');
       return;
     }
 
@@ -171,16 +160,6 @@ export default function AdminChurches() {
       // Tenta extrair slug e URLs do backend; se não vier, cria a partir do nome
       const slugFromApi = payload?.church?.slug || payload?.slug;
       const nameFromApi = payload?.church?.name || form.name.trim();
-      let urls = { invite_url: undefined as string | undefined, report_url: undefined as string | undefined, quiz_url: undefined as string | undefined };
-      if (payload?.invite_url || payload?.report_url || payload?.quiz_url) {
-        urls = {
-          invite_url: payload.invite_url,
-          report_url: payload.report_url,
-          quiz_url: payload.quiz_url,
-        };
-      } else if (slugFromApi) {
-        urls = makeUrlsFromSlug(slugFromApi);
-      }
 
       const slugFinal = slugFromApi || nameFromApi
         .toLowerCase()
@@ -188,17 +167,12 @@ export default function AdminChurches() {
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)+/g, "");
 
-      setCreateSuccess({
-        name: nameFromApi,
-        slug: slugFinal,
-        ...urls,
-      });
-
       setShowCreate(false);
       setForm({ name: "", leader_name: "", city: "", expected_members: "", notes: "" });
       await loadChurches();
+      toast.success('Igreja criada', `Slug: ${slugFinal}`);
     } catch (err: any) {
-      alert(err?.message ?? "Falha ao criar igreja");
+      toast.error('Não foi possível criar a igreja', err?.message ?? 'Tente novamente em instantes.');
     } finally {
       setCreating(false);
     }
@@ -327,10 +301,17 @@ export default function AdminChurches() {
       const url = j.url as string;
       if ((navigator as any).share) (navigator as any).share({ title:`Relatório — ${slug}`, url }).catch(()=>copy(url));
       else copy(url);
-    } catch(e:any){ alert(e?.message || String(e)); }
-    function copy(t:string){ if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(()=>alert('Link público copiado!')); else {
-      const ta = document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); alert('Link público copiado!');
-    }}
+    } catch(e:any){
+      toast.error('Não foi possível gerar o link público', e?.message || String(e));
+    }
+    function copy(t:string){
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(t).then(()=> toast.success('Link público copiado', 'Compartilhe com a igreja.'));
+      } else {
+        const ta = document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+        toast.success('Link público copiado', 'Compartilhe com a igreja.');
+      }
+    }
   }
 
   function exportCSV(list: Row[]) {
@@ -352,8 +333,10 @@ export default function AdminChurches() {
         await fetch('/api/church-create',{ method:'POST', headers:{'content-type':'application/json'}, body: JSON.stringify({ name, leader_name: leader_name||null, city: city||null, expected_members: Number(expected_members||0) })});
       }
       await loadChurches();
-      alert('Importação concluída.');
-    }catch(e:any){ alert(e?.message || String(e)); }
+      toast.success('Importação concluída', 'As igrejas foram adicionadas à lista.');
+    }catch(e:any){
+      toast.error('Não foi possível importar', e?.message || String(e));
+    }
   }
 
   const handleSort = (
@@ -417,29 +400,6 @@ export default function AdminChurches() {
           <button className="admin-btn" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
         </div>
       </div>
-
-      {createSuccess && (
-        <div className="toast-success">
-          <div className="toast-body">
-            <div>
-              <div className="toast-title">Igreja criada com sucesso</div>
-              <div className="toast-sub">{createSuccess.name} (slug: <code>{createSuccess.slug}</code>)</div>
-            </div>
-            <div className="toast-actions">
-              {(createSuccess.slug) && (
-                <button
-                  className="admin-btn"
-                  onClick={() => copyToClipboard(`${PROD_ORIGIN}/c/${createSuccess.slug}`)}
-                  title="Copiar link do teste (5 Ministérios)"
-                >
-                  {copied ? "Copiado!" : "Copiar Link Teste 5 Ministérios"}
-                </button>
-              )}
-              <button className="admin-btn" onClick={() => setCreateSuccess(null)}>Fechar</button>
-            </div>
-          </div>
-        </div>
-      )}
 
       <div className="admin-search">
         <input

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import "./AdminChurches.css";
 import "./ChurchCreateInvite.css";
+import { AdminToastProvider, useAdminToast } from "../components/AdminToast";
 
 type FormState = {
   name: string;
@@ -21,7 +22,7 @@ type SuccessState = null | {
   responsibleEmail?: string;
 };
 
-export default function ChurchCreateInvite() {
+function ChurchCreateInviteInner() {
   const [form, setForm] = useState<FormState>({
     name: "",
     email: "",
@@ -33,31 +34,32 @@ export default function ChurchCreateInvite() {
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "success" | "error"; msg: string } | null>(null);
   const [success, setSuccess] = useState<SuccessState>(null);
+  const toast = useAdminToast();
 
   async function copy(text: string) {
     try {
       if (navigator.clipboard && window.isSecureContext) {
         await navigator.clipboard.writeText(text);
-        alert("Link copiado!");
+        toast.success('Link copiado', 'O link foi copiado para a área de transferência.');
       } else {
         const ta = document.createElement("textarea");
         ta.value = text; ta.style.position = "fixed"; ta.style.opacity = "0";
         document.body.appendChild(ta); ta.select(); document.execCommand("copy"); document.body.removeChild(ta);
-        alert("Link copiado!");
+        toast.success('Link copiado', 'O link foi copiado para a área de transferência.');
       }
     } catch {
-      alert("Não foi possível copiar o link");
+      toast.error('Não foi possível copiar', 'Copie o endereço manualmente e tente novamente.');
     }
   }
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name.trim()) {
-      alert("Informe o nome da igreja");
+      toast.warning('Informe o nome', 'Preencha o nome da igreja para continuar.');
       return;
     }
     if (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      alert("Informe um e-mail válido");
+      toast.warning('Informe um e-mail válido', 'Digite um e-mail no formato nome@dominio.com.');
       return;
     }
     try {
@@ -98,6 +100,7 @@ export default function ChurchCreateInvite() {
       };
       setSuccess(successData);
       setFeedback({ type: "success", msg: "Igreja cadastrada com sucesso!" });
+      toast.success('Igreja cadastrada', 'Os links de acesso estão prontos para compartilhar.');
 
       // dispara email com instruções para o responsável
       try {
@@ -124,7 +127,9 @@ export default function ChurchCreateInvite() {
         console.warn("Falha ao enviar e-mail de instruções", e);
       }
     } catch (e: any) {
-      setFeedback({ type: "error", msg: e?.message || "Falha ao criar igreja" });
+      const msg = e?.message || "Falha ao criar igreja";
+      setFeedback({ type: "error", msg });
+      toast.error('Não foi possível cadastrar', msg);
     } finally {
       setSubmitting(false);
     }
@@ -279,5 +284,13 @@ export default function ChurchCreateInvite() {
         </form>
       </div>
     </div>
+  );
+}
+
+export default function ChurchCreateInvite() {
+  return (
+    <AdminToastProvider>
+      <ChurchCreateInviteInner />
+    </AdminToastProvider>
   );
 }

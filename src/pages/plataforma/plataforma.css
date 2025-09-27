@@ -927,6 +927,10 @@ html {
   max-width: 100%;
 }
 
+.continuar-container.single {
+  justify-content: center;
+}
+
 @media screen and (max-width: 768px) {
   .continuar-container {
     flex-wrap: nowrap;

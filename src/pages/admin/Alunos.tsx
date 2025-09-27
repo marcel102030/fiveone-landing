@@ -21,6 +21,7 @@ import {
 import "../AdministracaoFiveOne.css";
 import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
+import { useAdminToast } from "../../components/AdminToast";
 
 export default function AdminAlunos() {
   document.title = "Administração | Five One — Alunos";
@@ -48,6 +49,9 @@ export default function AdminAlunos() {
   const [showInvite, setShowInvite] = useState(false);
   const [invite, setInvite] = useState({ email:'', formation: '' as ''|FormationKey, days: 7, link:'' });
   const [details, setDetails] = useState<null | { email: string; loading: boolean; data: UserProfileDetails | null }>(null);
+  const [bulkPassword, setBulkPassword] = useState<null | { emails: string[] }>(null);
+  const [bulkRemove, setBulkRemove] = useState<null | { emails: string[] }>(null);
+  const toast = useAdminToast();
 
   async function load() {
     setLoading(true);
@@ -80,9 +84,18 @@ export default function AdminAlunos() {
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.formation) return alert('Preencha todos os campos.');
-    if (!validPassword(form.password)) return alert('Senha fraca: use ao menos 8 caracteres com letras e números.');
-    if (await emailExists(form.email)) return alert('E-mail já cadastrado.');
+    if (!form.name || !form.email || !form.password || !form.formation) {
+      toast.warning('Campos obrigatórios', 'Informe nome, e-mail, senha e formação para cadastrar o aluno.');
+      return;
+    }
+    if (!validPassword(form.password)) {
+      toast.error('Senha muito fraca', 'Use ao menos 8 caracteres com letras e números.');
+      return;
+    }
+    if (await emailExists(form.email)) {
+      toast.error('E-mail já cadastrado', 'Escolha outro endereço de e-mail.');
+      return;
+    }
     await createUser({ email: form.email, password: form.password, name: form.name, formation: form.formation as FormationKey });
     if (sendEmail) {
       try {
@@ -99,7 +112,7 @@ export default function AdminAlunos() {
     setForm({ name: "", email: "", password: "", formation: '' });
     setSendEmail(true);
     await load();
-    alert("Aluno criado com sucesso.");
+    toast.success('Aluno cadastrado', 'O aluno já pode acessar a plataforma.');
   }
 
   function importCSV(file: File) {
@@ -111,7 +124,7 @@ export default function AdminAlunos() {
         await createUser({ email, password, name: name || null, formation: (formation as any) || 'MESTRE' });
       }
       await load();
-      alert('Importação concluída.');
+      toast.success('Importação concluída', 'Os alunos do arquivo foram cadastrados.');
     });
   }
   return (
@@ -180,7 +193,18 @@ export default function AdminAlunos() {
           <div className="admin-toolbar-left" style={{gap:12}}>
             <div className="adm5-pill">Selecionados: {selectedEmails.length}</div>
             <label className="admin-field">Mudar formação
-              <select className="admin-input" onChange={async (e)=>{ const v=e.target.value as any; if(!v) return; await updateUsersFormation(selectedEmails, v); setSelected({}); await load(); }}>
+              <select className="admin-input" onChange={async (e)=>{
+                const v = e.target.value as any;
+                if(!v) return;
+                try {
+                  await updateUsersFormation(selectedEmails, v);
+                  setSelected({});
+                  await load();
+                  toast.success('Formação atualizada', 'Os alunos selecionados foram movidos para a nova formação.');
+                } catch {
+                  toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
+                }
+              }}>
                 <option value="">—</option>
                 <option value="APOSTOLO">Apóstolo</option>
                 <option value="PROFETA">Profeta</option>
@@ -189,10 +213,28 @@ export default function AdminAlunos() {
                 <option value="MESTRE">Mestre</option>
               </select>
             </label>
-            <button className="admin-btn" onClick={async ()=>{ await setUsersActive(selectedEmails, true); setSelected({}); await load(); }}>Ativar</button>
-            <button className="admin-btn" onClick={async ()=>{ await setUsersActive(selectedEmails, false); setSelected({}); await load(); }}>Desativar</button>
-            <button className="admin-btn" onClick={async ()=>{ const pw=prompt('Nova senha temporária (min 8):','Temp1234'); if(!pw) return; await resetUsersPasswords(selectedEmails, pw); setSelected({}); alert('Senhas atualizadas.'); }}>Senha temporária</button>
-            <button className="admin-btn" onClick={async ()=>{ if(!confirm('Remover usuários selecionados?')) return; await deleteUsers(selectedEmails); setSelected({}); await load(); }}>Remover</button>
+            <button className="admin-btn" onClick={async ()=>{
+              try {
+                await setUsersActive(selectedEmails, true);
+                setSelected({});
+                await load();
+                toast.success('Alunos ativados', 'Os alunos selecionados voltaram a ter acesso.');
+              } catch {
+                toast.error('Não foi possível ativar', 'Tente novamente em instantes.');
+              }
+            }}>Ativar</button>
+            <button className="admin-btn" onClick={async ()=>{
+              try {
+                await setUsersActive(selectedEmails, false);
+                setSelected({});
+                await load();
+                toast.info('Alunos desativados', 'Os alunos selecionados foram desativados.');
+              } catch {
+                toast.error('Não foi possível desativar', 'Tente novamente em instantes.');
+              }
+            }}>Desativar</button>
+            <button className="admin-btn" onClick={()=> setBulkPassword({ emails: selectedEmails })}>Senha temporária</button>
+            <button className="admin-btn" onClick={()=> setBulkRemove({ emails: selectedEmails })}>Remover</button>
           </div>
         </div>
       )}
@@ -356,13 +398,20 @@ export default function AdminAlunos() {
               const newName = (document.getElementById('editName') as HTMLInputElement).value;
               const newEmail = (document.getElementById('editEmail') as HTMLInputElement).value;
               const newFormation = (document.getElementById('editFormation') as HTMLSelectElement).value as any;
-              if (!newName || !newEmail || !newFormation) return alert('Preencha todos os campos.');
-              if (newEmail !== edit.email && await emailExists(newEmail)) return alert('E-mail já cadastrado.');
+              if (!newName || !newEmail || !newFormation) {
+                toast.warning('Campos obrigatórios', 'Informe nome, e-mail e formação para salvar.');
+                return;
+              }
+              if (newEmail !== edit.email && await emailExists(newEmail)) {
+                toast.error('E-mail já cadastrado', 'Esse endereço já está em uso por outro aluno.');
+                return;
+              }
               if (newEmail !== edit.email) await updateUserEmail(edit.email, newEmail);
               await updateUserName(newEmail, newName || null);
               await updateUserFormation(newEmail, newFormation);
               setEdit(null);
               await load();
+              toast.success('Cadastro atualizado', 'Dados do aluno salvos com sucesso.');
             }} style={{display:'grid', gap:10}}>
               <input id="editName" className="admin-input" defaultValue={edit.name || ''} placeholder="Nome" />
               <input id="editEmail" className="admin-input" defaultValue={edit.email} placeholder="E-mail" />
@@ -423,10 +472,13 @@ export default function AdminAlunos() {
             <form onSubmit={async (e)=>{
               e.preventDefault();
               const pw = (document.getElementById('newPw') as HTMLInputElement).value;
-              if (!validPassword(pw)) return alert('Senha fraca: use ao menos 8 caracteres com letras e números.');
+              if (!validPassword(pw)) {
+                toast.error('Senha muito fraca', 'Use ao menos 8 caracteres com letras e números.');
+                return;
+              }
               await resetUserPassword(reset.email, pw);
               setReset(null);
-              alert('Senha atualizada.');
+              toast.success('Senha atualizada', 'O aluno receberá a nova senha no próximo acesso.');
             }} style={{display:'grid', gap:10}}>
               <input id="newPw" className="admin-input" type="password" placeholder="Nova senha" />
               <div style={{display:'flex', justifyContent:'flex-end', gap:8}}>
@@ -445,7 +497,16 @@ export default function AdminAlunos() {
             <p>Tem certeza que deseja remover o aluno {confirmDel.email}?</p>
             <div style={{display:'flex', justifyContent:'flex-end', gap:8}}>
               <button className="admin-btn" onClick={()=> setConfirmDel(null)}>Cancelar</button>
-              <button className="admin-btn primary" onClick={async ()=>{ await deleteUser(confirmDel.email); setConfirmDel(null); await load(); }}>Remover</button>
+              <button className="admin-btn primary" onClick={async ()=>{
+                try {
+                  await deleteUser(confirmDel.email);
+                  setConfirmDel(null);
+                  await load();
+                  toast.info('Aluno removido', 'O acesso foi revogado para este e-mail.');
+                } catch {
+                  toast.error('Não foi possível remover', 'Tente novamente em instantes.');
+                }
+              }}>Remover</button>
             </div>
           </div>
         </div>
@@ -458,10 +519,18 @@ export default function AdminAlunos() {
             {!invite.link ? (
               <form onSubmit={async (e)=>{
                 e.preventDefault();
-                if (!invite.email || !invite.formation) return alert('Informe e-mail e formação');
-                const res = await createInvite(invite.email, invite.formation as FormationKey, invite.days);
-                const url = `${location.origin}/#/login-aluno?token=${res.token}`;
-                setInvite({...invite, link: url});
+                if (!invite.email || !invite.formation) {
+                  toast.warning('Campos obrigatórios', 'Informe e-mail e formação para gerar o convite.');
+                  return;
+                }
+                try {
+                  const res = await createInvite(invite.email, invite.formation as FormationKey, invite.days);
+                  const url = `${location.origin}/#/login-aluno?token=${res.token}`;
+                  setInvite({...invite, link: url});
+                  toast.success('Convite gerado', 'Copie o link e envie ao aluno.');
+                } catch {
+                  toast.error('Não foi possível gerar o convite', 'Tente novamente em instantes.');
+                }
               }} style={{display:'grid', gap:10}}>
                 <input className="admin-input" placeholder="E-mail do convidado" value={invite.email} onChange={(e)=> setInvite(i=>({...i, email:e.target.value}))} />
                 <label className="admin-field">Formação
@@ -491,6 +560,64 @@ export default function AdminAlunos() {
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {bulkPassword && (
+        <div className="custom-modal-overlay" onClick={()=> setBulkPassword(null)}>
+          <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
+            <h3>Definir senha temporária</h3>
+            <p style={{ color: '#9fb2c5', marginTop: -6 }}>Alunos selecionados: {bulkPassword.emails.length}</p>
+            <form
+              onSubmit={async (event) => {
+                event.preventDefault();
+                const input = document.getElementById('bulkPasswordInput') as HTMLInputElement;
+                const value = input.value.trim();
+                if (!validPassword(value)) {
+                  toast.error('Senha muito fraca', 'Use ao menos 8 caracteres com letras e números.');
+                  return;
+                }
+                try {
+                  await resetUsersPasswords(bulkPassword.emails, value);
+                  setBulkPassword(null);
+                  setSelected({});
+                  toast.success('Senhas redefinidas', 'Os alunos terão acesso com a nova senha temporária.');
+                } catch {
+                  toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
+                }
+              }}
+              style={{ display: 'grid', gap: 10 }}
+            >
+              <input id="bulkPasswordInput" className="admin-input" type="password" placeholder="Nova senha temporária" />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                <button type="button" className="admin-btn" onClick={()=> setBulkPassword(null)}>Cancelar</button>
+                <button type="submit" className="admin-btn primary">Aplicar</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {bulkRemove && (
+        <div className="custom-modal-overlay" onClick={()=> setBulkRemove(null)}>
+          <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
+            <h3>Remover alunos</h3>
+            <p>Deseja remover {bulkRemove.emails.length} aluno(s) selecionado(s)? Esta ação não pode ser desfeita.</p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+              <button className="admin-btn" onClick={()=> setBulkRemove(null)}>Cancelar</button>
+              <button className="admin-btn primary" onClick={async ()=>{
+                try {
+                  await deleteUsers(bulkRemove.emails);
+                  setBulkRemove(null);
+                  setSelected({});
+                  await load();
+                  toast.info('Alunos removidos', 'Os acessos selecionados foram eliminados.');
+                } catch {
+                  toast.error('Não foi possível remover', 'Tente novamente em instantes.');
+                }
+              }}>Remover</button>
+            </div>
           </div>
         </div>
       )}

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import './streamerMestre.css';
 import '../../components/Streamer/streamerShared.css';
 import ReactionBar from '../../components/Streamer/ReactionBar';
@@ -11,8 +11,54 @@ import { LessonRef, listLessons, subscribePlatformContent } from '../../services
 import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
 import { openStoredFile } from '../../utils/storedFile';
 
+const extractEmbedSrc = (raw?: string | null): string | null => {
+  if (!raw) return null;
+  const trimmed = raw.trim();
+  if (!trimmed) return null;
+  const doubleMatch = trimmed.match(/src\s*=\s*"([^"]+)"/i);
+  if (doubleMatch?.[1]) return doubleMatch[1];
+  const singleMatch = trimmed.match(/src\s*=\s*'([^']+)'/i);
+  if (singleMatch?.[1]) return singleMatch[1];
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  return null;
+};
+
+type VimeoPlayer = import('@vimeo/player').default;
+
+type StoredProgress = {
+  watchedSeconds: number;
+  durationSeconds: number;
+  lastAt: number;
+};
+
+const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
+  if (!video) return null;
+  const base = video.videoUrl || video.videoId;
+  if (!base) return null;
+  const key = `fiveone_progress::${base}`;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+    if (!parsed) return null;
+    const watchedSeconds = Number(parsed.watchedSeconds || parsed.watched || 0);
+    const durationSeconds = Number(parsed.durationSeconds || parsed.duration || 0);
+    const lastAt = Number(parsed.lastAt || 0);
+    if (Number.isFinite(watchedSeconds)) {
+      return {
+        watchedSeconds: Math.max(0, watchedSeconds),
+        durationSeconds: Number.isFinite(durationSeconds) ? Math.max(0, durationSeconds) : 0,
+        lastAt: Number.isFinite(lastAt) ? lastAt : 0,
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+};
+
 const StreamerMestre = () => {
   const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+  const playerInstanceRef = useRef<VimeoPlayer | null>(null);
+  const lastProgressFlushRef = useRef<number>(0);
 
   const [searchParams] = useSearchParams();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -66,6 +112,96 @@ const StreamerMestre = () => {
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
   }, []);
+
+  const currentVideo = videoList[currentIndex];
+  const embedSrc = useMemo(() => {
+    if (!currentVideo) return '';
+    return extractEmbedSrc(currentVideo.embedCode) || currentVideo.videoUrl || '';
+  }, [currentVideo?.embedCode, currentVideo?.videoUrl]);
+  const persistProgress = useCallback(
+    (rawWatched: number, rawDuration?: number) => {
+      const lesson = videoList[currentIndex];
+      if (!lesson) return;
+      const keyBase = lesson.videoUrl || lesson.videoId;
+      if (!keyBase) return;
+
+      const stored = getStoredProgress(lesson);
+      const safeDurationSource = Number.isFinite(rawDuration) && (rawDuration || 0) > 0 ? rawDuration || 0 : stored?.durationSeconds || 0;
+      const safeWatched = Number.isFinite(rawWatched) ? Math.max(0, rawWatched) : 0;
+      const effectiveDuration = safeDurationSource > 0 ? safeDurationSource : safeWatched > 0 ? safeWatched : 0;
+      const clampedWatched = effectiveDuration > 0 ? Math.min(safeWatched, effectiveDuration) : safeWatched;
+      const durationSeconds = effectiveDuration > 0 ? effectiveDuration : clampedWatched;
+      const watchedSeconds = clampedWatched;
+      const now = Date.now();
+      const key = `fiveone_progress::${keyBase}`;
+      const payload: StoredProgress = {
+        watchedSeconds,
+        durationSeconds,
+        lastAt: now,
+      };
+      try {
+        localStorage.setItem(key, JSON.stringify(payload));
+      } catch {}
+
+      const bannerContinue = lesson.bannerContinue;
+      const bannerPlayer = lesson.bannerPlayer;
+      const bannerMobile = lesson.bannerMobile;
+      const resolvedBannerContinue = bannerContinue?.url || bannerContinue?.dataUrl || null;
+      const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
+      const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
+
+      const previewImage =
+        (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
+        resolvedBannerMobile ||
+        lesson.thumbnailUrl ||
+        '/assets/images/miniatura_fundamentos_mestre.png';
+
+      const currentVideoData = {
+        title: lesson.title,
+        thumbnail: previewImage,
+        url: lesson.videoUrl || lesson.videoId,
+        index: currentIndex,
+        id: lesson.videoId,
+        subjectName: lesson.subjectName,
+        subjectId: lesson.subjectId,
+        bannerContinue: resolvedBannerContinue,
+        bannerMobile: resolvedBannerMobile,
+        watchedSeconds,
+        durationSeconds,
+        lastAt: now,
+      };
+
+      try {
+        const existingWatchedRaw = localStorage.getItem('videos_assistidos');
+        const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
+        const filteredWatched = Array.isArray(existingWatched)
+          ? existingWatched.filter((video: any) => video.url !== currentVideoData.url)
+          : [];
+        const updatedWatched = [currentVideoData, ...filteredWatched];
+        const limitedWatched = updatedWatched.slice(0, 12);
+        localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+      } catch {}
+
+      const userId = getCurrentUserId();
+      if (userId) {
+        const syncKey = `fiveone_progress_sync_${lesson.videoId || lesson.videoUrl}`;
+        const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
+        if (now - lastSync > 15000) {
+          sessionStorage.setItem(syncKey, String(now));
+          upsertProgress({
+            user_id: userId,
+            video_id: lesson.videoId || lesson.videoUrl || lesson.title,
+            last_at: new Date(now).toISOString(),
+            watched_seconds: watchedSeconds,
+            duration_seconds: durationSeconds || null,
+            title: lesson.title,
+            thumbnail: previewImage,
+          }).catch(() => {});
+        }
+      }
+    },
+    [videoList, currentIndex, isMobile],
+  );
 
 
   // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
@@ -146,80 +282,140 @@ const StreamerMestre = () => {
   }, [currentIndex]);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const iframe = videoRef.current?.querySelector('iframe');
-      const currentVideo = videoList[currentIndex];
-      if (!iframe || !currentVideo) return;
-      const progressKeyBase = currentVideo.videoUrl || currentVideo.videoId;
-      if (!progressKeyBase) return;
-      const key = `fiveone_progress::${progressKeyBase}`;
-      const now = Date.now();
-      let state: any = {};
-      try { state = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
-      const watched = Number(state.watchedSeconds || 0) + 5;
-      const duration = Number(state.durationSeconds || 0);
-      const payload = { watchedSeconds: watched, durationSeconds: duration, lastAt: now };
-      try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
+    const lesson = videoList[currentIndex];
+    if (!lesson) return;
+    if (lesson.sourceType === 'VIMEO') return;
 
-      const bannerContinue = currentVideo.bannerContinue;
-      const bannerPlayer = currentVideo.bannerPlayer;
-      const bannerMobile = currentVideo.bannerMobile;
-      const resolvedBannerContinue = bannerContinue?.url || bannerContinue?.dataUrl || null;
-      const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
-      const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
-      const previewImage =
-        (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
-        resolvedBannerMobile ||
-        currentVideo.thumbnailUrl ||
-        '/assets/images/miniatura_fundamentos_mestre.png';
+    let destroyed = false;
+    let watchedBaseline = getStoredProgress(lesson)?.watchedSeconds || 0;
+    const durationBaseline = getStoredProgress(lesson)?.durationSeconds || 0;
 
-      const currentVideoData = {
-        title: currentVideo.title,
-        thumbnail: previewImage,
-        url: currentVideo.videoUrl || currentVideo.videoId,
-        index: currentIndex,
-        id: currentVideo.videoId,
-        subjectName: currentVideo.subjectName,
-        subjectId: currentVideo.subjectId,
-        bannerContinue: resolvedBannerContinue,
-        bannerMobile: resolvedBannerMobile,
-        watchedSeconds: watched,
-        durationSeconds: duration,
-        lastAt: now,
-      };
-      const existingWatched = JSON.parse(localStorage.getItem('videos_assistidos') || '[]');
-      const filteredWatched = existingWatched.filter((video: any) => video.url !== currentVideoData.url);
-      const updatedWatched = [currentVideoData, ...filteredWatched];
-      const limitedWatched = updatedWatched.slice(0, 12);
-      try { localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched)); } catch {}
+    const tick = () => {
+      if (destroyed) return;
+      watchedBaseline += 5;
+      persistProgress(watchedBaseline, durationBaseline);
+    };
 
-      const userId = getCurrentUserId();
-      if (userId) {
-        const lastSyncKey = `fiveone_progress_sync_${currentVideo.videoId || currentVideo.videoUrl}`;
-        const lastSync = Number(sessionStorage.getItem(lastSyncKey) || 0);
-        if (Date.now() - lastSync > 15000) {
-          sessionStorage.setItem(lastSyncKey, String(Date.now()));
-          upsertProgress({
-            user_id: userId,
-            video_id: currentVideo.videoId || currentVideo.videoUrl || currentVideo.title,
-            last_at: new Date(now).toISOString(),
-            watched_seconds: watched,
-            duration_seconds: duration || null,
-            title: currentVideo.title,
-            thumbnail: previewImage,
-          }).catch(()=>{});
-        }
+    const interval = window.setInterval(tick, 5000);
+    tick();
+    return () => {
+      destroyed = true;
+      window.clearInterval(interval);
+    };
+  }, [videoList, currentIndex, persistProgress]);
+
+  useEffect(() => {
+    const lesson = currentVideo;
+    const vimeoSrc = embedSrc;
+    if (!lesson || lesson.sourceType !== 'VIMEO' || !vimeoSrc || !/vimeo\.com/i.test(vimeoSrc)) {
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.destroy().catch(() => {});
+        playerInstanceRef.current = null;
       }
-    }, 5000);
+      return;
+    }
 
-    return () => clearInterval(interval);
-  }, [currentIndex, videoList, isMobile]);
+    let cancelled = false;
+    lastProgressFlushRef.current = 0;
+    (async () => {
+      try {
+        const iframe = videoRef.current?.querySelector('iframe');
+        if (!iframe) return;
+        const { default: Player } = await import('@vimeo/player');
+        if (cancelled) return;
+        playerInstanceRef.current?.destroy().catch(() => {});
+        const player = new Player(iframe);
+        playerInstanceRef.current = player;
+
+        const stored = getStoredProgress(lesson);
+        let pendingResume = stored?.watchedSeconds || 0;
+
+        const tryResume = async (durationHint?: number) => {
+          if (!pendingResume || pendingResume <= 5) return;
+          const duration = Number.isFinite(durationHint) && durationHint ? durationHint : stored?.durationSeconds || 0;
+          const maxSeek = duration > 6 ? Math.max(0, duration - 2) : undefined;
+          const target = maxSeek !== undefined ? Math.min(pendingResume, maxSeek) : pendingResume;
+          if (target > 5) {
+            try {
+              await player.setCurrentTime(target);
+            } catch {}
+          }
+          pendingResume = 0;
+        };
+
+        player.on('loaded', (data: any) => {
+          lastProgressFlushRef.current = 0;
+          tryResume(Number(data?.duration)).catch(() => {});
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          if (duration > 0) {
+            persistProgress(stored?.watchedSeconds || 0, duration);
+          }
+        });
+
+        player.on('durationchange', (data: any) => {
+          tryResume(Number(data?.duration)).catch(() => {});
+        });
+
+        player.on('timeupdate', (data: any) => {
+          const now = Date.now();
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          if (now - lastProgressFlushRef.current >= 5000) {
+            lastProgressFlushRef.current = now;
+            persistProgress(Number(data?.seconds || 0), duration);
+          }
+        });
+
+        player.on('seeked', (data: any) => {
+          lastProgressFlushRef.current = Date.now();
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          persistProgress(Number(data?.seconds || 0), duration);
+        });
+
+        player.on('ended', async () => {
+          lastProgressFlushRef.current = Date.now();
+          let duration = stored?.durationSeconds || 0;
+          try {
+            duration = await player.getDuration();
+          } catch {}
+          persistProgress(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
+        });
+      } catch (error) {
+        console.warn('Falha ao inicializar player Vimeo', error);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      if (playerInstanceRef.current) {
+        playerInstanceRef.current.destroy().catch(() => {});
+        playerInstanceRef.current = null;
+      }
+    };
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress]);
 
   const handleMarkAsCompleted = () => {
     const lesson = videoList[currentIndex];
     if (!lesson) return;
     if (!completedIds.has(lesson.videoId)) {
       const next = new Set(completedIds); next.add(lesson.videoId); setCompletedIds(next);
+    }
+    if (lesson.sourceType === 'VIMEO' && playerInstanceRef.current) {
+      playerInstanceRef.current.getDuration().then((duration) => {
+        const total = Number(duration) || getStoredProgress(lesson)?.durationSeconds || 0;
+        if (total > 0) {
+          persistProgress(total, total);
+        }
+      }).catch(() => {
+        const stored = getStoredProgress(lesson);
+        if (stored?.durationSeconds) {
+          persistProgress(stored.durationSeconds, stored.durationSeconds);
+        }
+      });
+    } else {
+      const stored = getStoredProgress(lesson);
+      if (stored?.durationSeconds) {
+        persistProgress(stored.durationSeconds, stored.durationSeconds);
+      }
     }
   };
   useEffect(()=>{
@@ -241,7 +437,6 @@ const StreamerMestre = () => {
       try { const list = await m.fetchCompletionsForUser(uid); setCompletedIds(new Set(list)); } catch {}
     });
   }, []);
-  const currentVideo = videoList[currentIndex];
   const navigate = useNavigate();
   // Filtro por matéria na sidebar
   const subjectOrder = ['biblia','fundamentos','ministerios','historia'];
@@ -272,6 +467,7 @@ const StreamerMestre = () => {
   };
 
   // jumpToLastWatchedIfAny removido ao separar a página de módulos
+
 
   return (
     <>
@@ -317,18 +513,15 @@ const StreamerMestre = () => {
                   )}
                 </div>
                 <div className="video-container" ref={videoRef}>
-                  {currentVideo.embedCode ? (
-                    <div className="embed-wrapper" dangerouslySetInnerHTML={{ __html: currentVideo.embedCode }} />
-                  ) : (
-                    <iframe
-                      key={currentVideo.videoId}
-                      src={currentVideo.videoUrl || ''}
-                      title={currentVideo.title}
-                      frameBorder="0"
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                    />
-                  )}
+                  <iframe
+                    key={currentVideo.videoId || embedSrc || currentVideo.videoUrl || currentVideo.id}
+                    src={embedSrc || 'about:blank'}
+                    title={currentVideo.title}
+                    frameBorder="0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    loading="lazy"
+                    allowFullScreen
+                  />
                 </div>
                 <div className="action-bar" role="toolbar" aria-label="Controles da aula">
                   <div className="action-left">

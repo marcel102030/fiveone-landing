@@ -4,6 +4,7 @@ import { useParams, useLocation, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import "./ChurchReport.css";
+import { AdminToastProvider, useAdminToast } from "../components/AdminToast";
 
 // Tipagens simples do retorno da API
 type Summary = {
@@ -31,13 +32,15 @@ type ApiResponse = {
   error?: string;
 };
 
+type AdminToastApi = ReturnType<typeof useAdminToast>;
+
 // Lê querystring do hash (HashRouter)
 function useHashQuery() {
   const { hash } = useLocation();
   return useMemo(() => new URLSearchParams(hash.includes("?") ? hash.split("?")[1] : ""), [hash]);
 }
 
-export default function ChurchReport() {
+function ChurchReportInner() {
   const params = useParams();
   const query = useHashQuery();
 
@@ -57,6 +60,7 @@ export default function ChurchReport() {
   const isPublic = useLocation().pathname.startsWith('/r');
   const [metricMode, setMetricMode] = useState<'pct' | 'count'>('pct');
   const [visibleDoms, setVisibleDoms] = useState<Record<string, boolean>>({ Apostólico: true, Profeta: true, Evangelista: true, Pastor: true, Mestre: true });
+  const toast = useAdminToast();
 
   // Slug pode vir por /relatorio/:slug OU por ?churchSlug=
   const slug = params.slug || query.get("churchSlug") || "";
@@ -233,7 +237,7 @@ export default function ChurchReport() {
           <button className="btn pill ghost" onClick={() => { setFrom("" as any); setTo("" as any); }}>Tudo</button>
         </div>
         <div className="toolbar-right" style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to)}>
+          <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to, toast)}>
             Compartilhar Relatório
           </button>
           {!isPublic && (
@@ -357,7 +361,7 @@ export default function ChurchReport() {
             <button className="btn" onClick={() => exportExecutivePDF(slug, data, pageRef.current, distRef.current)}>PDF Executivo</button>
             <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF (cartões)</button>
             {!isPublic && (
-              <button className="btn ghost" onClick={() => copyPublicLink(slug, from, to)}>Copiar link público</button>
+              <button className="btn ghost" onClick={() => copyPublicLink(slug, from, to, toast)}>Copiar link público</button>
             )}
             <button className="btn ghost" onClick={() => downloadPNG(containerRef.current)}>Baixar imagem dos cartões</button>
           </div>
@@ -416,7 +420,7 @@ export default function ChurchReport() {
                     <>
                       <button className="btn" onClick={() => exportPeopleCSV(slug, modalDom!, filteredSorted)}>Exportar CSV</button>
                       {showContacts && filteredSorted.some(p => p.email) && (
-                        <button className="btn" onClick={() => copyEmails(filteredSorted)}>Copiar e-mails</button>
+                        <button className="btn" onClick={() => copyEmails(filteredSorted, toast)}>Copiar e-mails</button>
                       )}
                     </>
                   )}
@@ -654,16 +658,35 @@ async function exportExecutivePDF(slug: string, data: ApiResponse | null, cardsE
   pdf.save(`relatorio_${slug||'igreja'}.pdf`);
 }
 
-function copyPublicLink(slug: string, from: string, to: string) {
+function copyPublicLink(slug: string, from: string, to: string, toast: AdminToastApi) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const url = `${origin}/#/r/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
-  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(url);
-  else {
-    const ta = document.createElement('textarea'); ta.value=url; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(url)
+      .then(() => toast.success('Link copiado', 'Compartilhe o painel público com a sua igreja.'))
+      .catch(() => fallback());
+  } else {
+    fallback();
+  }
+
+  function fallback() {
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast.success('Link copiado', 'Compartilhe o painel público com a sua igreja.');
+    } catch {
+      toast.error('Não foi possível copiar', 'Copie manualmente e tente novamente.');
+    }
+    document.body.removeChild(ta);
   }
 }
 
-function shareReportLink(slug: string, from: string, to: string) {
+function shareReportLink(slug: string, from: string, to: string, toast: AdminToastApi) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const url = `${origin}/#/relatorio/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
   const title = `Relatório — ${slug}`;
@@ -675,13 +698,27 @@ function shareReportLink(slug: string, from: string, to: string) {
 
   function copyToClipboard(text: string) {
     if (navigator.clipboard && window.isSecureContext) {
-      navigator.clipboard.writeText(text).then(()=> alert('Link do relatório copiado!')).catch(()=> fallback(text));
-    } else fallback(text);
+      navigator.clipboard.writeText(text)
+        .then(() => toast.success('Link copiado', 'O link do relatório foi copiado.'))
+        .catch(() => fallback(text));
+    } else {
+      fallback(text);
+    }
   }
+
   function fallback(t: string) {
-    const ta = document.createElement('textarea'); ta.value = t; ta.style.position='fixed'; ta.style.opacity='0';
-    document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); alert('Link do relatório copiado!'); } catch {}
+    const ta = document.createElement('textarea');
+    ta.value = t;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try {
+      document.execCommand('copy');
+      toast.success('Link copiado', 'O link do relatório foi copiado.');
+    } catch {
+      toast.error('Não foi possível copiar', 'Copie manualmente e tente novamente.');
+    }
     document.body.removeChild(ta);
   }
 }
@@ -717,7 +754,7 @@ function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: 
   a.remove();
 }
 
-function copyEmails(list: { email?: string | null }[]) {
+function copyEmails(list: { email?: string | null }[], toast: AdminToastApi) {
   // Extrai e deduplica e-mails válidos
   const emails = Array.from(new Set(
     (list || [])
@@ -725,14 +762,16 @@ function copyEmails(list: { email?: string | null }[]) {
       .filter((e): e is string => !!e && /@/.test(e))
   ));
   if (emails.length === 0) {
-    alert('Nenhum e-mail disponível para copiar.');
+    toast.info('Nenhum e-mail disponível', 'Cadastre participantes com e-mail para exportar.');
     return;
   }
   const text = emails.join('; ');
   if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(() => {
-      alert(`${emails.length} e-mail(s) copiados.`);
-    }).catch(() => fallbackCopy(text));
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        toast.success('E-mails copiados', `${emails.length} e-mail(s) prontos para uso.`);
+      })
+      .catch(() => fallbackCopy(text));
   } else {
     fallbackCopy(text);
   }
@@ -741,9 +780,22 @@ function copyEmails(list: { email?: string | null }[]) {
     const ta = document.createElement('textarea');
     ta.value = t; ta.style.position = 'fixed'; ta.style.opacity = '0';
     document.body.appendChild(ta); ta.select();
-    try { document.execCommand('copy'); alert(`${emails.length} e-mail(s) copiados.`); } catch {}
+    try {
+      document.execCommand('copy');
+      toast.success('E-mails copiados', `${emails.length} e-mail(s) prontos para uso.`);
+    } catch {
+      toast.error('Não foi possível copiar', 'Copie manualmente e tente novamente.');
+    }
     document.body.removeChild(ta);
   }
+}
+
+export default function ChurchReport() {
+  return (
+    <AdminToastProvider>
+      <ChurchReportInner />
+    </AdminToastProvider>
+  );
 }
 
 // (removido) função de copiar link do relatório — não utilizada
