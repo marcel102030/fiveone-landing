@@ -5,6 +5,7 @@ import {
   useLocation,
   useNavigate,
   useSearchParams,
+  Navigate,
 } from "react-router-dom";
 
 import BlogList from "./pages/BlogList";
@@ -52,6 +53,10 @@ function AppContent() {
     navigate("/plataforma");
   };
 
+  const isIgrejasStandalone =
+    location.pathname === "/igrejas" ||
+    location.pathname === "/rede-igrejas";
+
   const hideLayout =
     location.pathname === "/plataforma" ||
     location.pathname === "/login-aluno" ||
@@ -64,7 +69,8 @@ function AppContent() {
     location.pathname.startsWith("/r") ||
     location.pathname === "/cadastrar-igreja" ||
     location.pathname === "/copiar" ||
-    isInviteTest;
+    isInviteTest ||
+    isIgrejasStandalone;
 
   return (
     <>
@@ -135,7 +141,8 @@ function AppContent() {
             <Route path="/insights/:postId" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
-            <Route path="/igrejas" element={<IgrejaNasCasas />} />
+            <Route path="/rede-igrejas" element={<IgrejaNasCasas />} />
+            <Route path="/igrejas" element={<Navigate to="/rede-igrejas" replace />} />
             <Route path="/plataforma" element={<Plataforma />} />
             <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
             <Route path="/streamer-mestre" element={<StreamerMestre />} />
