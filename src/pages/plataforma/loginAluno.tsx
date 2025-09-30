@@ -40,6 +40,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
           firstName: details?.first_name || null,
           lastName: details?.last_name || null,
           displayName: details?.display_name || null,
+          avatarUrl: details?.avatar_url || null,
         });
       } catch {
         try {
@@ -50,6 +51,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
             firstName: null,
             lastName: null,
             displayName: null,
+            avatarUrl: null,
           });
         } catch {}
       }

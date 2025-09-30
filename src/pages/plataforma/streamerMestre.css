@@ -146,8 +146,21 @@
 /* .action-btn.next { } */
 .action-btn.complete { background: linear-gradient(135deg, #2e7d32, #1b5e20); box-shadow: 0 6px 14px rgba(76,175,80,.3); }
 .action-btn.pdf { background: linear-gradient(135deg, #c62828, #8e0000); box-shadow: 0 6px 14px rgba(244, 67, 54, .3); }
-.action-bar .completed-indicator { display:inline-flex; align-items:center; gap:8px; color:#0a2e14; font-weight: 900; background:#b9f6c1; border:1px solid #43a047; border-radius: 999px; padding:8px 14px; }
-.action-bar .completed-indicator::before { content:'✔'; font-weight:900; color:#1b5e20; }
+.action-bar .action-btn.complete.is-done {
+  background: #b9f6c1;
+  color: #0a2e14;
+  border: 1px solid #43a047;
+  font-weight: 700;
+}
+.action-bar .action-btn.complete.is-done::before {
+  content: '✔';
+  margin-right: 6px;
+  font-weight: 900;
+  color: #1b5e20;
+}
+.action-bar .action-btn.complete.is-done:hover {
+  background: #a8eeb0;
+}
 
 @media (max-width: 768px) {
   .action-bar { display:flex; flex-wrap: wrap; }
@@ -586,26 +599,6 @@
   transform: translateY(-2px);
 }
 
-
-/* --- Estilo para o estado "Aula Concluída" --- */
-.completed-indicator {
-  margin-left: auto;
-  background-color: transparent;
-  color: #66bb6a;
-  font-weight: bold;
-  font-size: 0.95rem;
-  padding: 0.6rem 1.4rem;
-  border: 2px solid #66bb6a;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.completed-indicator::before {
-  content: '✅';
-  font-size: 1.1rem;
-}
 
 @media (min-width: 1600px) {
   .streamer-content {

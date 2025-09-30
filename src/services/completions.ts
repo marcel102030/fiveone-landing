@@ -17,3 +17,20 @@ export async function fetchCompletionsForUser(userId: string): Promise<string[]>
   if (error) throw error;
   return (data || []).map((r: any) => r.video_id);
 }
+
+export async function deleteCompletion(userId: string, videoId: string): Promise<void> {
+  const { error } = await supabase
+    .from('video_completion')
+    .delete()
+    .eq('user_id', userId)
+    .eq('video_id', videoId);
+  if (error) throw error;
+}
+
+export async function deleteAllCompletionsForUser(userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('video_completion')
+    .delete()
+    .eq('user_id', userId);
+  if (error) throw error;
+}

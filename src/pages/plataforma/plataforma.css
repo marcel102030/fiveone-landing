@@ -571,6 +571,19 @@ html {
   box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
 }
 
+.perfil-avatar--image {
+  padding: 0;
+  background: #01263d;
+}
+
+.perfil-avatar--image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 2px rgba(0, 188, 212, 0.35);
+}
+
 .perfil-avatar--large {
   width: 56px;
   height: 56px;

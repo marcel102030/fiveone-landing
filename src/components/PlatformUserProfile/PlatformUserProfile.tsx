@@ -29,9 +29,16 @@ const PlatformUserProfile = ({ variant = 'card', showEmail = true, className }: 
   const classes = ['platform-user-profile', `platform-user-profile--${variant}`];
   if (className) classes.push(className);
 
+  const avatar = profile.avatarUrl || null;
+
   return (
     <div className={classes.join(' ')}>
-      <div className="platform-user-profile__avatar" aria-hidden>{profile.initials}</div>
+      <div
+        className={`platform-user-profile__avatar ${avatar ? 'platform-user-profile__avatar--image' : ''}`}
+        aria-hidden={avatar ? undefined : true}
+      >
+        {avatar ? <img src={avatar} alt={`Logo do aluno ${profile.displayName}`} /> : profile.initials}
+      </div>
       <div className="platform-user-profile__details">
         <span className="platform-user-profile__name">{profile.displayName}</span>
         {showEmail && <span className="platform-user-profile__email">{profile.email}</span>}
@@ -44,4 +51,3 @@ const PlatformUserProfile = ({ variant = 'card', showEmail = true, className }: 
 };
 
 export default PlatformUserProfile;
-

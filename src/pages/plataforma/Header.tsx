@@ -109,15 +109,31 @@ const Header = () => {
             aria-expanded={isDropdownOpen}
             aria-label="Abrir menu do perfil"
           >
-            <span className="perfil-avatar" aria-hidden>
-              {profile?.initials || "F1"}
+            <span
+              className={`perfil-avatar ${profile?.avatarUrl ? 'perfil-avatar--image' : ''}`}
+              aria-hidden={!profile?.avatarUrl}
+            >
+              {profile?.avatarUrl ? (
+                <img src={profile.avatarUrl} alt="Logo do aluno" />
+              ) : (
+                profile?.initials || "F1"
+              )}
             </span>
             <span className="sr-only">Abrir menu do perfil</span>
           </button>
           {isDropdownOpen && (
             <div className="perfil-dropdown-menu active">
               <div className="perfil-dropdown-header">
-                <div className="perfil-avatar perfil-avatar--large" aria-hidden>{profile?.initials || "F1"}</div>
+                <div
+                  className={`perfil-avatar perfil-avatar--large ${profile?.avatarUrl ? 'perfil-avatar--image' : ''}`}
+                  aria-hidden={!profile?.avatarUrl}
+                >
+                  {profile?.avatarUrl ? (
+                    <img src={profile.avatarUrl} alt="Logo do aluno" />
+                  ) : (
+                    profile?.initials || "F1"
+                  )}
+                </div>
                 <div className="perfil-dropdown-info">
                   <strong className="perfil-dropdown-name">{profile?.displayName || "Aluno Five One"}</strong>
                   <span className="perfil-dropdown-email">{profile?.email || ""}</span>

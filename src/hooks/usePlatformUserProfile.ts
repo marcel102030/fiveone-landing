@@ -10,6 +10,7 @@ export type StoredPlatformUserProfile = {
   firstName?: string | null;
   lastName?: string | null;
   displayName?: string | null;
+  avatarUrl?: string | null;
 };
 
 const STORAGE_KEY = 'platform_user_profile';
@@ -28,6 +29,7 @@ export function readStoredPlatformProfile(): StoredPlatformUserProfile | null {
         firstName: parsed.firstName ?? null,
         lastName: parsed.lastName ?? null,
         displayName: parsed.displayName ?? null,
+        avatarUrl: parsed.avatarUrl ?? null,
       };
     }
   } catch {
@@ -46,6 +48,7 @@ export function storePlatformProfile(profile: StoredPlatformUserProfile): void {
       firstName: profile.firstName ?? null,
       lastName: profile.lastName ?? null,
       displayName: profile.displayName ?? profile.name ?? null,
+      avatarUrl: profile.avatarUrl ?? null,
     }));
     window.dispatchEvent(new Event('fiveone-profile-refresh'));
   } catch {
@@ -128,6 +131,7 @@ export function usePlatformUserProfile() {
           firstName,
           lastName,
           displayName: preferredDisplayName,
+          avatarUrl: details?.avatar_url || null,
         };
         setProfile(next);
         setStatus('loaded');

@@ -7,6 +7,13 @@ import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
 import { upsertProgress } from '../../services/progress';
+import {
+  COMPLETED_EVENT,
+  listCompletedLessonIds,
+  mergeCompletedLessons,
+  removeLessonCompleted,
+  setLessonCompleted,
+} from '../../utils/completedLessons';
 import { LessonRef, listLessons, subscribePlatformContent } from '../../services/platformContent';
 import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
 import { openStoredFile } from '../../utils/storedFile';
@@ -97,7 +104,7 @@ const StreamerMestre = () => {
     if (!videoList.length) return;
     setCurrentIndex(prev => Math.min(prev, videoList.length - 1));
   }, [videoList.length]);
-  const [completedIds, setCompletedIds] = useState<Set<string>>(new Set());
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set(listCompletedLessonIds()));
   // Página de player não mostra mais a grade de módulos
   const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
@@ -111,6 +118,23 @@ const StreamerMestre = () => {
     update();
     mq.addEventListener('change', update);
     return () => mq.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    const sync = () => {
+      setCompletedIds(new Set(listCompletedLessonIds()));
+    };
+    sync();
+    const handler = () => sync();
+    window.addEventListener(COMPLETED_EVENT, handler);
+    const storageHandler = (event: StorageEvent) => {
+      if (event.key === 'fiveone_completed_lessons_v1') sync();
+    };
+    window.addEventListener('storage', storageHandler);
+    return () => {
+      window.removeEventListener(COMPLETED_EVENT, handler);
+      window.removeEventListener('storage', storageHandler);
+    };
   }, []);
 
   const currentVideo = videoList[currentIndex];
@@ -203,6 +227,28 @@ const StreamerMestre = () => {
     [videoList, currentIndex, isMobile],
   );
 
+  const alignSidebar = useCallback(() => {
+    const el = videoRef.current;
+    const side = sidebarRef.current;
+    if (!el || !side) return;
+    const mq = window.matchMedia('(max-width: 1024px)');
+    if (mq.matches) {
+      side.style.removeProperty('--sidebar-height');
+      side.style.height = 'auto';
+      side.style.marginTop = '0px';
+      return;
+    }
+    const iframe = el.querySelector('iframe');
+    const rect = (iframe || el).getBoundingClientRect();
+    const content = el.closest('.video-content') as HTMLElement | null;
+    const contentRect = content ? content.getBoundingClientRect() : rect;
+    const height = Math.max(320, Math.round(rect.height));
+    side.style.setProperty('--sidebar-height', `${height}px`);
+    side.style.height = `${height}px`;
+    const offset = Math.max(0, Math.round(rect.top - contentRect.top));
+    side.style.marginTop = `${offset}px`;
+  }, []);
+
 
   // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
   useLayoutEffect(() => {
@@ -210,42 +256,22 @@ const StreamerMestre = () => {
     const side = sidebarRef.current;
     if (!el || !side) return;
 
-    const mq = window.matchMedia('(max-width: 1024px)');
-
+    let destroyed = false;
     const update = () => {
-      if (!sidebarRef.current) return;
-      const s = sidebarRef.current;
-      if (mq.matches) {
-        s.style.removeProperty('--sidebar-height');
-        s.style.height = 'auto';
-        s.style.marginTop = '0px';
-        return;
-      }
-      const iframe = el.querySelector('iframe');
-      const rect = (iframe || el).getBoundingClientRect();
-      const content = el.closest('.video-content') as HTMLElement | null;
-      const contentRect = content ? content.getBoundingClientRect() : { top: rect.top } as any;
-      const h = Math.max(320, Math.round(rect.height));
-      s.style.setProperty('--sidebar-height', `${h}px`);
-      s.style.height = `${h}px`;
-      // Alinha exatamente ao topo do vídeo
-      const rawOffset = Math.round(rect.top - contentRect.top);
-      const offset = Math.max(0, rawOffset);
-      s.style.marginTop = `${offset}px`;
+      if (destroyed) return;
+      alignSidebar();
     };
 
     const observers: ResizeObserver[] = [];
     const cleanups: Array<() => void> = [];
 
-    // Observa tamanho/posição do container do vídeo
-    const ro = new ResizeObserver(() => update());
+    const ro = new ResizeObserver(update);
     ro.observe(el);
     observers.push(ro);
 
     const iframe = el.querySelector('iframe');
     if (iframe) {
-      // Observa mudanças no tamanho do iframe (ex.: player ajustando altura)
-      const roIframe = new ResizeObserver(() => update());
+      const roIframe = new ResizeObserver(update);
       roIframe.observe(iframe);
       observers.push(roIframe);
       iframe.addEventListener('load', update, { once: true });
@@ -253,7 +279,7 @@ const StreamerMestre = () => {
 
     const content = el.closest('.video-content') as HTMLElement | null;
     if (content) {
-      const roContent = new ResizeObserver(() => update());
+      const roContent = new ResizeObserver(update);
       roContent.observe(content);
       observers.push(roContent);
 
@@ -267,19 +293,21 @@ const StreamerMestre = () => {
     }
 
     window.addEventListener('resize', update);
-    // chama múltiplas vezes no primeiro segundo para garantir o acerto após layout
+
     update();
-    const t1 = setTimeout(update, 50);
-    const t2 = setTimeout(update, 250);
-    const t3 = setTimeout(update, 600);
+    const t1 = setTimeout(update, 60);
+    const t2 = setTimeout(update, 220);
+    const t3 = setTimeout(update, 640);
 
     return () => {
+      destroyed = true;
       observers.forEach((observer) => observer.disconnect());
       cleanups.forEach((fn) => fn());
+      if (iframe) iframe.removeEventListener('load', update);
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, [currentIndex]);
+  }, [currentVideo?.videoId, alignSidebar]);
 
   useEffect(() => {
     const lesson = videoList[currentIndex];
@@ -326,6 +354,8 @@ const StreamerMestre = () => {
         playerInstanceRef.current?.destroy().catch(() => {});
         const player = new Player(iframe);
         playerInstanceRef.current = player;
+        alignSidebar();
+        setTimeout(() => alignSidebar(), 120);
 
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
@@ -350,10 +380,13 @@ const StreamerMestre = () => {
           if (duration > 0) {
             persistProgress(stored?.watchedSeconds || 0, duration);
           }
+          alignSidebar();
+          setTimeout(() => alignSidebar(), 100);
         });
 
         player.on('durationchange', (data: any) => {
           tryResume(Number(data?.duration)).catch(() => {});
+          alignSidebar();
         });
 
         player.on('timeupdate', (data: any) => {
@@ -362,6 +395,7 @@ const StreamerMestre = () => {
           if (now - lastProgressFlushRef.current >= 5000) {
             lastProgressFlushRef.current = now;
             persistProgress(Number(data?.seconds || 0), duration);
+            alignSidebar();
           }
         });
 
@@ -369,6 +403,7 @@ const StreamerMestre = () => {
           lastProgressFlushRef.current = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           persistProgress(Number(data?.seconds || 0), duration);
+          alignSidebar();
         });
 
         player.on('ended', async () => {
@@ -378,6 +413,7 @@ const StreamerMestre = () => {
             duration = await player.getDuration();
           } catch {}
           persistProgress(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
+          alignSidebar();
         });
       } catch (error) {
         console.warn('Falha ao inicializar player Vimeo', error);
@@ -393,49 +429,82 @@ const StreamerMestre = () => {
     };
   }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress]);
 
-  const handleMarkAsCompleted = () => {
+  const handleMarkAsCompleted = async () => {
     const lesson = videoList[currentIndex];
-    if (!lesson) return;
-    if (!completedIds.has(lesson.videoId)) {
-      const next = new Set(completedIds); next.add(lesson.videoId); setCompletedIds(next);
-    }
-    if (lesson.sourceType === 'VIMEO' && playerInstanceRef.current) {
-      playerInstanceRef.current.getDuration().then((duration) => {
-        const total = Number(duration) || getStoredProgress(lesson)?.durationSeconds || 0;
-        if (total > 0) {
-          persistProgress(total, total);
-        }
-      }).catch(() => {
-        const stored = getStoredProgress(lesson);
-        if (stored?.durationSeconds) {
-          persistProgress(stored.durationSeconds, stored.durationSeconds);
-        }
-      });
-    } else {
+    if (!lesson || !lesson.videoId) return;
+    const lessonId = lesson.videoId;
+    const uid = getCurrentUserId();
+
+    if (completedIds.has(lessonId)) {
+      const confirmRevert = window.confirm('Deseja marcar esta aula como não concluída? Ela voltará para "Continuar assistindo".');
+      if (!confirmRevert) return;
+
+      const next = new Set(completedIds);
+      next.delete(lessonId);
+      setCompletedIds(next);
+
+      const { removed } = removeLessonCompleted(lessonId);
       const stored = getStoredProgress(lesson);
-      if (stored?.durationSeconds) {
-        persistProgress(stored.durationSeconds, stored.durationSeconds);
+      const previousWatched = removed?.previousWatched ?? stored?.watchedSeconds ?? 0;
+      const previousDuration = removed?.previousDuration ?? stored?.durationSeconds ?? null;
+      if (previousWatched > 0 || (previousDuration && previousDuration > 0)) {
+        persistProgress(Math.max(0, previousWatched), previousDuration ?? undefined);
       }
+
+      if (uid) {
+        import('../../services/completions')
+          .then((m) => m.deleteCompletion(uid, lessonId))
+          .catch(() => {});
+      }
+      return;
+    }
+
+    const storedProgress = getStoredProgress(lesson);
+    let duration = storedProgress?.durationSeconds ?? null;
+    if ((!duration || duration <= 0) && lesson.sourceType === 'VIMEO' && playerInstanceRef.current) {
+      try {
+        const fetched = await playerInstanceRef.current.getDuration();
+        if (typeof fetched === 'number' && fetched > 0) duration = fetched;
+      } catch {}
+    }
+    if ((!duration || duration <= 0) && typeof lesson.durationMinutes === 'number') {
+      duration = lesson.durationMinutes * 60;
+    }
+
+    const watchedBefore = storedProgress?.watchedSeconds ?? null;
+    const total = duration && duration > 0 ? duration : watchedBefore ?? 0;
+
+    const next = new Set(completedIds);
+    next.add(lessonId);
+    setCompletedIds(next);
+    setLessonCompleted(lessonId, {
+      previousWatched: watchedBefore,
+      previousDuration: storedProgress?.durationSeconds ?? duration ?? null,
+    });
+
+    if (total > 0) {
+      persistProgress(total, duration ?? undefined);
+    }
+
+    if (uid) {
+      import('../../services/completions')
+        .then((m) => m.upsertCompletion(uid, lessonId))
+        .catch(() => {});
     }
   };
-  useEffect(()=>{
-    const uid = getCurrentUserId();
-    if (!uid) return;
-    const lesson = videoList[currentIndex];
-    if (!lesson) return;
-    const id = lesson.videoId;
-    if (completedIds.has(id)){
-      import('../../services/completions').then(m=> m.upsertCompletion(uid, id)).catch(()=>{});
-    }
-  }, [completedIds, currentIndex, videoList]);
-
   // Load completions for user once
-  useEffect(()=>{
+  useEffect(() => {
     const uid = getCurrentUserId();
     if (!uid) return;
-    import('../../services/completions').then(async (m)=>{
-      try { const list = await m.fetchCompletionsForUser(uid); setCompletedIds(new Set(list)); } catch {}
-    });
+    import('../../services/completions')
+      .then(async (m) => {
+        try {
+          const list = await m.fetchCompletionsForUser(uid);
+          const merged = mergeCompletedLessons(list);
+          setCompletedIds(new Set(merged.keys()));
+        } catch {}
+      })
+      .catch(() => {});
   }, []);
   const navigate = useNavigate();
   // Filtro por matéria na sidebar
@@ -536,11 +605,13 @@ const StreamerMestre = () => {
                     )}
                   </div>
                   <div className="action-right">
-                    {!completedIds.has(videoList[currentIndex].videoId) ? (
-                      <button className="action-btn complete" onClick={handleMarkAsCompleted}>Concluir</button>
-                    ) : (
-                      <div className="completed-indicator">Concluída</div>
-                    )}
+                    <button
+                      className={`action-btn complete ${completedIds.has(videoList[currentIndex].videoId) ? 'is-done' : ''}`}
+                      onClick={handleMarkAsCompleted}
+                      type="button"
+                    >
+                      {completedIds.has(videoList[currentIndex].videoId) ? 'Concluída' : 'Concluir'}
+                    </button>
                   </div>
                 </div>
 
