@@ -336,14 +336,20 @@
 
 .manifesto {
   display: grid;
-  gap: 48px;
+  gap: 36px;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  align-items: start;
+  align-items: stretch;
 }
 
 .manifesto-text {
   display: grid;
   gap: 22px;
+  padding: 40px;
+  border-radius: var(--casas-radius);
+  border: 1px solid rgba(94, 200, 255, 0.16);
+  background: radial-gradient(circle at top, rgba(94, 200, 255, 0.1), transparent 75%), rgba(7, 20, 44, 0.8);
+  box-shadow: var(--casas-shadow);
+  backdrop-filter: blur(18px);
 }
 
 .manifesto-text h2 {
@@ -356,86 +362,154 @@
   line-height: 1.7;
 }
 
-.manifesto-text blockquote {
-  margin: 0;
+.manifesto-text__callout {
+  border: 1px solid rgba(35, 211, 185, 0.35);
+  background: rgba(35, 211, 185, 0.08);
+  border-radius: 18px;
   padding: 20px 24px;
-  border-left: 4px solid var(--casas-highlight);
-  background: rgba(6, 21, 44, 0.55);
-  border-radius: 12px;
-  color: #d0e8ff;
-  line-height: 1.6;
-  font-style: italic;
+  display: grid;
+  gap: 6px;
+  color: var(--casas-text);
 }
 
-.manifesto-text blockquote strong {
-  display: block;
-  margin-top: 8px;
-  font-style: normal;
+.manifesto-text__callout span {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
   color: var(--casas-highlight);
+  font-weight: 600;
+}
+
+.manifesto-text__callout p {
+  margin: 0;
+  color: var(--casas-text);
+  line-height: 1.6;
 }
 
 .pilares-grid {
   display: grid;
   gap: 24px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 
 .pilar-card {
-  background: radial-gradient(circle at top, rgba(94, 200, 255, 0.12), transparent 65%), var(--casas-surface);
-  border: 1px solid var(--casas-border);
+  background:
+    radial-gradient(circle at top, rgba(35, 211, 185, 0.18), transparent 70%),
+    rgba(6, 20, 44, 0.92);
+  border: 1px solid rgba(94, 200, 255, 0.18);
   border-radius: var(--casas-radius);
-  padding: 30px;
+  padding: 32px;
   box-shadow: var(--casas-shadow);
   display: grid;
-  gap: 16px;
+  gap: 20px;
+  backdrop-filter: blur(18px);
 }
 
 .pilar-card header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: grid;
+  gap: 6px;
+  justify-items: start;
 }
 
 .pilar-card header span {
-  font-size: 0.75rem;
-  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--casas-muted);
+  color: rgba(144, 190, 255, 0.75);
+  font-weight: 600;
 }
 
 .pilar-card header h3 {
   margin: 0;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
-.pilar-card p {
-  color: var(--casas-muted);
-  line-height: 1.6;
-}
-
-.pilar-card ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+.pilar-card__body {
   display: grid;
-  gap: 8px;
+  gap: 18px;
+  color: var(--casas-muted);
+  line-height: 1.7;
 }
 
-.pilar-card li {
+.pilar-card__body p {
+  margin: 0;
+}
+
+.pilar-card__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.pilar-card__list li {
   position: relative;
-  padding-left: 18px;
-  color: #dce9ff;
+  padding-left: 26px;
 }
 
-.pilar-card li::before {
+.pilar-card__list li::before {
   content: '';
   position: absolute;
   left: 0;
-  top: 8px;
-  width: 6px;
-  height: 6px;
+  top: 10px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--casas-highlight);
+  box-shadow: 0 0 10px rgba(94, 200, 255, 0.6);
+}
+
+.manifesto-text__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 12px;
+  color: var(--casas-muted);
+}
+
+.manifesto-text__list li {
+  position: relative;
+  padding-left: 26px;
+  line-height: 1.7;
+}
+
+.manifesto-text__list li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 11px;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(94, 200, 255, 0.8);
+  box-shadow: 0 0 12px rgba(94, 200, 255, 0.6);
+}
+
+.pilar-card__quote {
+  border-left: 3px solid rgba(94, 200, 255, 0.65);
+  background: rgba(4, 18, 36, 0.7);
+  border-radius: 12px;
+  padding: 16px 22px;
+  color: var(--casas-text);
+  display: grid;
+  gap: 10px;
+}
+
+.pilar-card__quote p {
+  margin: 0;
+  font-style: italic;
+  line-height: 1.5;
+}
+
+.pilar-card__quote span {
+  font-size: 0.85rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--casas-muted);
 }
 
 .confissao {
@@ -975,6 +1049,14 @@
   .casas-article__body {
     padding: 32px;
   }
+
+  .manifesto-text {
+    padding: 32px;
+  }
+
+  .pilar-card {
+    padding: 28px;
+  }
 }
 
 @media (max-width: 760px) {
@@ -1032,6 +1114,14 @@
   }
 
   .casas-article__body {
+    padding: 24px;
+  }
+
+  .manifesto-text {
+    padding: 26px;
+  }
+
+  .pilar-card {
     padding: 24px;
   }
 }

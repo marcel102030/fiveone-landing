@@ -80,27 +80,53 @@ const destaqueCards = [
   },
 ];
 
-const pilares = [
+const manifestoCards = [
   {
     tag: 'Visão',
-    titulo: 'Visão',
-    descricao:
-      'Casas que revelam Cristo por meio da comunhão, do ensino apostólico e da partilha de vida diária.',
-    itens: ['Cristo no centro', 'Mesa como altar', 'Famílias espirituais que multiplicam discípulos'],
+    titulo: 'O que acreditamos',
+    resumo: 'Cremos que a igreja é gente reunida pelo Espírito para viver e manifestar o Reino no dia a dia.',
+    detalhes: [
+      'Somos um corpo vivo de discípulos que compartilham comunhão, discipulado e missão em lares abertos.',
+    ],
+    itens: [
+      'Cristo como o cabeça da Igreja (Colossenses 1:18)',
+      'O sacerdócio de todos os santos (1 Pedro 2:9)',
+      'Casas como lugares de comunhão, ensino e missão (Romanos 16:3-5)',
+    ],
+    quote: {
+      text: '“O novo movimento de igrejas precisa de menos púlpitos e mais mesas, menos plateias e mais comunidades.”',
+      author: 'Wolfgang Simson',
+    },
   },
   {
     tag: 'Missão',
-    titulo: 'Missão',
-    descricao:
-      'Multiplicar comunidades simples e cheias do Espírito em cada bairro, servindo a cidade com amor prático.',
-    itens: ['Discipulado relacional', 'Compromisso com o território', 'Ação social e evangelismo'],
+    titulo: 'Onde estamos hoje',
+    resumo: 'Começamos em uma casa, cultivando fé, comunhão, discipulado e missão com simplicidade intencional.',
+    detalhes: [
+      'Cada encontro abre espaço para partilha, intercessão e envio — Cristo no centro e todos participando.',
+    ],
+    itens: [
+      'Comunhão ao redor da mesa',
+      'Discipulado orgânico que acompanha histórias reais',
+      'Missão encarnada no cotidiano',
+    ],
   },
   {
     tag: 'Propósito',
-    titulo: 'Propósito',
-    descricao:
-      'Ativar os cinco dons ministeriais para edificar o Corpo, equipar líderes e enviar novos plantadores.',
-    itens: ['Apostólico', 'Profético', 'Evangelístico', 'Pastoral', 'Mestre'],
+    titulo: 'Para onde estamos indo',
+    resumo: 'Multiplicar comunidades simples, cheias do Espírito, que florescem em casas e abençoam bairros inteiros.',
+    detalhes: [
+      'Cada casa é uma mesa de comunhão; cada discípulo, um sacerdote em movimento.',
+    ],
+    itens: [
+      'Discípulos que fazem discípulos (2 Timóteo 2:2)',
+      'Casas como centros de glória e serviço',
+      'Cada cristão vivendo seu dom com ousadia (Efésios 4:7-16)',
+    ],
+    quote: {
+      text: '“A igreja não está morrendo. Ela está se movendo. De volta às casas.”',
+      author: 'Alan Hirsch',
+    },
   },
 ];
 
@@ -308,34 +334,69 @@ const IgrejaNasCasas: React.FC = () => {
         <div className="manifesto-text">
           <h2>Quem somos</h2>
           <p>
-            Somos uma rede apostólica que nasce ao redor da mesa. Acreditamos que cada casa pode se tornar um ponto de
-            luz, onde Cristo é anunciado, a Palavra é praticada e a missão floresce. Cultivamos relacionamentos
-            intencionais, simplicidade cheia de poder e uma vida de oração que transforma territórios.
+            Somos uma rede de discípulos que coloca a mesa no centro. Abrimos nossos lares para viver o Evangelho com
+            simplicidade, participação e presença do Espírito Santo em cada encontro.
           </p>
           <p>
-            A inspiração bíblica nos leva a formar comunidades que se multiplicam organicamente, cuidam das pessoas e
-            ativam dons espirituais. A mesa é o nosso altar, a cidade é o nosso campo e o Espírito Santo é quem governa
-            cada passo.
+            Vemos a cidade como campo missionário e as casas como altares onde Cristo é anunciado, dons são ativados e
+            famílias espirituais florescem. Caminhamos próximos uns dos outros, cultivando discipulado que alcança a vida
+            real.
           </p>
-          <blockquote>
-            “Nos reunimos nas casas para que cada discípulo viva, sirva e compartilhe Cristo no ritmo do cotidiano.”
-            <strong>Rede de Igrejas nas Casas Five One</strong>
-          </blockquote>
+          <p>
+            Somos várias igrejas conectadas por uma mesma visão bíblica: uma comunidade simples, perseverante e fiel, capaz
+            de florescer em qualquer cultura até a volta de Cristo. Cada lar abriga uma expressão única dessa família que
+            vive, serve e cresce em unidade.
+          </p>
+          <ul className="manifesto-text__list">
+            <li>
+              Presbitério e liderança distribuída: cada casa conta com presbíteros próximos e os cinco ministérios em
+              movimento, edificando o Corpo em unidade.
+            </li>
+            <li>
+              Descentralização do “lugar santo”: não dependemos de prédios nem de uma casta sacerdotal. Em Cristo, todos os
+              santos participam da comunhão, do ensino, da oração e da missão.
+            </li>
+            <li>
+              Comunidades diversas e locais: caminhamos como família espiritual em meio à diversidade de idades, histórias e
+              culturas, aprendendo a amar para além das afinidades.
+            </li>
+          </ul>
+          <p>
+            A presença de Deus se manifesta onde Cristo é proclamado, a Palavra é honrada e o Espírito Santo conduz. É assim
+            que permanecemos fiéis ao Evangelho, multiplicando vida em cada bairro.
+          </p>
+          <div className="manifesto-text__callout">
+            <span>Rede Five One</span>
+            <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
+          </div>
         </div>
         <div className="pilares-grid">
-          {pilares.map((pilar) => (
-            <div key={pilar.titulo} className="pilar-card">
+          {manifestoCards.map((card) => (
+            <article key={card.titulo} className="pilar-card">
               <header>
-                <span>{pilar.tag}</span>
-                <h3>{pilar.titulo}</h3>
+                <span>{card.tag}</span>
+                <h3>{card.titulo}</h3>
               </header>
-              <p>{pilar.descricao}</p>
-              <ul>
-                {pilar.itens.map((item) => (
-                  <li key={item}>{item}</li>
+              <div className="pilar-card__body">
+                <p>{card.resumo}</p>
+                {card.detalhes?.map((texto) => (
+                  <p key={texto}>{texto}</p>
                 ))}
-              </ul>
-            </div>
+                {card.itens && (
+                  <ul className="pilar-card__list">
+                    {card.itens.map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                {card.quote && (
+                  <div className="pilar-card__quote">
+                    <p>{card.quote.text}</p>
+                    <span>{card.quote.author}</span>
+                  </div>
+                )}
+              </div>
+            </article>
           ))}
         </div>
       </section>
