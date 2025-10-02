@@ -263,11 +263,9 @@ const IgrejaNasCasas: React.FC = () => {
         <div className="hero-stage">
           <div key={heroIndex} className="hero-grid" aria-hidden>
             {displayedGallery.map((foto, index) => (
-              <div
-                key={foto}
-                className={`hero-grid__item ${index === 0 ? 'active' : ''}`}
-                style={{ backgroundImage: `url(${foto})` }}
-              />
+              <div key={`${foto}-${index}`} className={`hero-grid__item ${index === 0 ? 'active' : ''}`}>
+                <img src={foto} alt={`Rede Five One encontro ${index + 1}`} loading="eager" decoding="async" />
+              </div>
             ))}
           </div>
           <div className="hero-stage__overlay" />
