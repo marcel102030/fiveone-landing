@@ -147,24 +147,6 @@ const programacao = [
   },
 ];
 
-const recursos = [
-  {
-    titulo: 'Rede Five One Hub',
-    descricao: 'Conteúdos, mensagens e guias de discipulado para fortalecer cada casa.',
-    linkLabel: 'Acessar o hub',
-  },
-  {
-    titulo: 'Mentoria Apostólica',
-    descricao: 'Acompanhamento pastoral personalizado para líderes e anfitriões das casas.',
-    linkLabel: 'Solicitar mentoria',
-  },
-  {
-    titulo: 'Treinamentos Five Gifts',
-    descricao: 'Workshops presenciais e online sobre os cinco dons ministeriais.',
-    linkLabel: 'Ver agenda',
-  },
-];
-
 const encontros = [
   { imagem: encontro1, titulo: 'Estudo Bíblico e Partilha' },
   { imagem: encontro2, titulo: 'Louvor e Comunhão' },
@@ -181,6 +163,7 @@ const whatsappHeroLink = `https://wa.me/5583987181731?text=${encodeURIComponent(
 
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
+  { id: 'confissao', label: 'Confissão de Fé' },
   { id: 'programacao', label: 'Programação' },
   { id: 'mapa', label: 'Mapa da Rede' },
   { id: 'contato', label: 'Contato' },
@@ -190,6 +173,7 @@ const IgrejaNasCasas: React.FC = () => {
   const [estadoSelecionado, setEstadoSelecionado] = useState('PB');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('Campina Grande');
   const [heroIndex, setHeroIndex] = useState(0);
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -401,7 +385,7 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
-      <section className="confissao">
+      <section className="confissao" id="confissao">
         <div className="confissao-copy">
           <h2>Confissão de Fé Five One</h2>
           <p>
@@ -439,24 +423,6 @@ const IgrejaNasCasas: React.FC = () => {
               <a className="btn outline" href={item.link} target="_blank" rel="noopener noreferrer">
                 {item.botao}
               </a>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      <section className="recursos" id="recursos">
-        <div className="section-head">
-          <h2>Estruturas que impulsionam</h2>
-          <p>Ferramentas, pessoas e processos que sustentam a multiplicação saudável das casas.</p>
-        </div>
-        <div className="recursos-grid">
-          {recursos.map((item) => (
-            <div key={item.titulo} className="recurso-card">
-              <h3>{item.titulo}</h3>
-              <p>{item.descricao}</p>
-              <button className="text-link" type="button">
-                {item.linkLabel}
-              </button>
             </div>
           ))}
         </div>
@@ -625,13 +591,7 @@ const IgrejaNasCasas: React.FC = () => {
               <span>Social</span>
               <div className="social-links">
                 <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-                  Instagram
-                </a>
-                <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
-                  YouTube
-                </a>
-                <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-                  Facebook
+                  @redeigrejasfiveone
                 </a>
               </div>
             </div>
@@ -640,16 +600,56 @@ const IgrejaNasCasas: React.FC = () => {
       </section>
       <FloatingContacts instagramUrl={instagramUrl} whatsappUrl={whatsappLink} />
 
-      <footer className="footer">
-        <div>
-          <strong>Rede Five One</strong>
-          <p>Vivemos a igreja nas casas para transformar a cidade. BEM-VINDO AO NOVO!</p>
+      <footer className="footer-modern">
+        <div className="footer-modern__grid">
+          <div className="footer-modern__brand">
+            <h3>Rede de Igrejas nas Casas Five One</h3>
+            <p>
+              Uma família apostólica que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor
+              de Cristo.
+            </p>
+          </div>
+          <div className="footer-modern__column">
+            <h4>Contato</h4>
+            <ul>
+              <li>
+                <span>WhatsApp</span>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  +55 (83) 98718-1731
+                </a>
+              </li>
+              <li>
+                <span>E-mail</span>
+                <a href="mailto:redeigrejasfiveone@gmail.com">redeigrejasfiveone@gmail.com</a>
+              </li>
+              <li>
+                <span>Endereço</span>
+                Catolé · Campina Grande — PB
+              </li>
+            </ul>
+          </div>
+          <div className="footer-modern__column">
+            <h4>Explore</h4>
+            <nav>
+              <a href="#manifesto">Quem somos</a>
+              <a href="#confissao">Confissão de Fé</a>
+              <a href="#programacao">Agenda</a>
+              <a href="#mapa">Mapa da Rede</a>
+              <a href="#contato">Contato</a>
+            </nav>
+          </div>
+          <div className="footer-modern__column">
+            <h4>Conecte-se</h4>
+            <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
+              Instagram · @redeigrejasfiveone
+            </a>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+              WhatsApp
+            </a>
+          </div>
         </div>
-        <div className="footer-links">
-          <a href="#manifesto">Quem somos</a>
-          <a href="#programacao">Programação</a>
-          <a href="#mapa">Mapa da Rede</a>
-          <a href="#contato">Contato</a>
+        <div className="footer-modern__bottom">
+          <span>© {currentYear} Rede Five One. Todos os direitos reservados.</span>
         </div>
       </footer>
     </div>

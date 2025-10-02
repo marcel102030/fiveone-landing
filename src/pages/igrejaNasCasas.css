@@ -14,9 +14,9 @@
 
 .casas-page {
   min-height: 100vh;
-  padding: 32px 28px 96px;
+  padding: 32px 28px 88px;
   display: grid;
-  gap: 40px;
+  gap: 28px;
   background:
     radial-gradient(circle at top, rgba(35, 211, 185, 0.18), transparent 45%),
     linear-gradient(180deg, #020915 0%, #020a19 60%, #010510 100%);
@@ -514,15 +514,15 @@
 
 .confissao {
   display: grid;
-  gap: 32px;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-  align-items: center;
-  background:
-    radial-gradient(circle at top right, rgba(35, 211, 185, 0.2), transparent 65%),
-    linear-gradient(135deg, rgba(7, 22, 46, 0.92), rgba(5, 18, 36, 0.92));
+  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  align-items: stretch;
+  padding: 36px;
   border-radius: var(--casas-radius);
-  padding: 48px;
-  border: 1px solid rgba(35, 211, 185, 0.28);
+  border: 1px solid rgba(35, 211, 185, 0.24);
+  background:
+    radial-gradient(circle at top, rgba(35, 211, 185, 0.18), transparent 60%),
+    rgba(5, 17, 34, 0.94);
   box-shadow: var(--casas-shadow);
 }
 
@@ -543,53 +543,56 @@
 }
 
 .confissao-card {
-  background: rgba(3, 12, 28, 0.75);
-  border-radius: calc(var(--casas-radius) - 6px);
-  border: 1px solid rgba(35, 211, 185, 0.4);
-  padding: 32px;
   display: grid;
-  gap: 16px;
-  text-align: left;
+  gap: 18px;
+  padding: 28px;
+  border-radius: 24px;
+  border: 1px solid rgba(94, 200, 255, 0.2);
+  background:
+    radial-gradient(circle at top right, rgba(94, 200, 255, 0.18), transparent 65%),
+    rgba(4, 16, 32, 0.92);
+  box-shadow: inset 0 0 0 1px rgba(35, 211, 185, 0.08);
 }
 
 .confissao-card h3 {
-  font-size: 1.5rem;
+  font-size: 1.4rem;
   font-weight: 600;
 }
 
 .confissao-card p {
+  margin: 0;
   color: var(--casas-muted);
   line-height: 1.6;
 }
 
 .confissao-card .btn {
   justify-self: start;
-  padding-inline: 32px;
+  padding-inline: 30px;
 }
 
 .confissao-badge {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 16px;
+  padding: 7px 16px;
   border-radius: 999px;
-  border: 1px solid rgba(35, 211, 185, 0.55);
-  background: rgba(35, 211, 185, 0.12);
-  color: var(--casas-highlight);
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+  border: 1px solid rgba(94, 200, 255, 0.4);
+  background: rgba(94, 200, 255, 0.15);
+  color: #8ffaff;
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
 }
 
 .section-head {
   display: grid;
   gap: 10px;
-  margin-bottom: 32px;
   text-align: center;
 }
 
 .section-head h2 {
-  font-size: 2.1rem;
+  margin: 0;
+  font-size: 2rem;
   font-weight: 700;
 }
 
@@ -600,28 +603,34 @@
 }
 
 .programacao {
-  background: linear-gradient(145deg, rgba(7, 20, 44, 0.85), rgba(6, 25, 56, 0.75));
-  border-radius: var(--casas-radius);
-  padding: 60px;
-  border: 1px solid var(--casas-border);
-  box-shadow: var(--casas-shadow);
   display: grid;
-  gap: 44px;
+  gap: 24px;
+  padding: 42px;
+  border-radius: var(--casas-radius);
+  background:
+    radial-gradient(circle at top left, rgba(94, 200, 255, 0.14), transparent 70%),
+    rgba(4, 15, 32, 0.9);
+  border: 1px solid rgba(94, 200, 255, 0.22);
+  box-shadow: var(--casas-shadow);
 }
 
 .programacao-grid {
   display: grid;
-  gap: 28px;
+  gap: 20px;
   grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
 }
 
 .programacao-card {
-  background: rgba(10, 28, 56, 0.9);
-  border: 1px solid rgba(112, 184, 255, 0.2);
-  border-radius: calc(var(--casas-radius) - 6px);
-  padding: 28px;
+  position: relative;
   display: grid;
   gap: 16px;
+  padding: 26px;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at top right, rgba(35, 211, 185, 0.18), transparent 70%),
+    rgba(3, 11, 24, 0.9);
+  border: 1px solid rgba(35, 211, 185, 0.22);
+  box-shadow: inset 0 0 0 1px rgba(94, 200, 255, 0.06);
 }
 
 .programacao-card .card-top {
@@ -630,57 +639,17 @@
 }
 
 .programacao-card .card-top span {
+  color: #8ffaff;
   font-weight: 600;
-  color: var(--casas-highlight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.8rem;
 }
 
 .programacao-card p {
-  color: var(--casas-muted);
-  line-height: 1.65;
-}
-
-.recursos {
-  display: grid;
-  gap: 32px;
-}
-
-.recursos-grid {
-  display: grid;
-  gap: 22px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-
-.recurso-card {
-  background: var(--casas-surface);
-  border-radius: var(--casas-radius);
-  padding: 28px;
-  border: 1px solid var(--casas-border);
-  display: grid;
-  gap: 12px;
-}
-
-.recurso-card h3 {
-  font-size: 1.2rem;
-  font-weight: 600;
-}
-
-.recurso-card p {
+  margin: 0;
   color: var(--casas-muted);
   line-height: 1.6;
-}
-
-.text-link {
-  background: transparent;
-  border: none;
-  padding: 0;
-  color: var(--casas-highlight);
-  font-weight: 600;
-  text-align: left;
-  cursor: pointer;
-}
-
-.text-link:hover {
-  text-decoration: underline;
 }
 
 .participe {
@@ -907,35 +876,96 @@
   flex-wrap: wrap;
 }
 
-.footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  padding-top: 32px;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-  justify-content: space-between;
-  align-items: flex-start;
+.footer-modern {
+  margin-top: -8px;
+  border-radius: calc(var(--casas-radius) + 12px);
+  padding: 52px 48px;
+  background:
+    radial-gradient(circle at top, rgba(35, 211, 185, 0.18), transparent 60%),
+    linear-gradient(135deg, rgba(7, 22, 46, 0.92), rgba(4, 12, 26, 0.92));
+  border: 1px solid rgba(35, 211, 185, 0.24);
+  box-shadow: var(--casas-shadow);
+  display: grid;
+  gap: 32px;
+}
+
+.footer-modern__grid {
+  display: grid;
+  gap: 28px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.footer-modern__brand h3 {
+  margin: 0 0 12px;
+  font-size: 1.45rem;
+  font-weight: 700;
+}
+
+.footer-modern__brand p {
+  margin: 0;
+  color: var(--casas-muted);
+  line-height: 1.7;
+  max-width: 360px;
+}
+
+.footer-modern__column h4 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(143, 234, 255, 0.82);
+}
+
+.footer-modern__column ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
   color: var(--casas-muted);
 }
 
-.footer strong {
-  color: var(--casas-text);
-  font-size: 1.1rem;
+.footer-modern__column li {
+  display: grid;
+  gap: 2px;
 }
 
-.footer-links {
-  display: flex;
-  gap: 18px;
-  flex-wrap: wrap;
+.footer-modern__column li span {
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(143, 234, 255, 0.7);
 }
 
-.footer-links a {
+.footer-modern__column nav {
+  display: grid;
+  gap: 8px;
+}
+
+.footer-modern__column nav a,
+.footer-modern__column a {
+  color: var(--casas-muted);
+  transition: color 0.2s ease;
   text-decoration: none;
-  color: var(--casas-muted);
 }
 
-.footer-links a:hover {
+.footer-modern__column a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-modern__column nav a:hover,
+.footer-modern__column a:hover {
   color: var(--casas-highlight);
+}
+
+.footer-modern__bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 16px;
+  font-size: 0.9rem;
+  color: rgba(187, 208, 238, 0.7);
+  text-align: center;
 }
 
 .casas-article {
@@ -1039,7 +1069,11 @@
   }
 
   .programacao {
-    padding: 48px 40px;
+    padding: 36px 32px;
+  }
+
+  .confissao {
+    padding: 32px;
   }
 
   .casas-article {
@@ -1062,7 +1096,7 @@
 @media (max-width: 760px) {
   .casas-page {
     padding: 56px 18px 72px;
-    gap: 56px;
+    gap: 32px;
   }
 
   .hero {
@@ -1088,7 +1122,11 @@
   }
 
   .programacao {
-    padding: 40px 26px;
+    padding: 32px 22px;
+  }
+
+  .confissao {
+    padding: 28px 22px;
   }
 
   .participe {
@@ -1123,6 +1161,10 @@
 
   .pilar-card {
     padding: 24px;
+  }
+
+  .footer-modern {
+    padding: 40px 24px;
   }
 }
 
