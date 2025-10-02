@@ -835,37 +835,91 @@
 
 .galeria-grid {
   display: grid;
-  gap: 24px;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 }
 
 .galeria-card {
   position: relative;
-  border-radius: var(--casas-radius);
-  min-height: 260px;
-  background-size: cover;
-  background-position: center;
+  border-radius: calc(var(--casas-radius) - 4px);
   overflow: hidden;
-  box-shadow: var(--casas-shadow);
-  transition: transform 0.2s ease;
+  background: rgba(5, 16, 32, 0.8);
+  display: grid;
+  padding: 0;
+  border: 1px solid rgba(94, 200, 255, 0.2);
+  font: inherit;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .galeria-card:hover {
-  transform: translateY(-6px);
+  transform: translateY(-4px);
+  box-shadow: 0 24px 50px rgba(4, 8, 22, 0.4);
 }
 
-.galeria-overlay {
+.galeria-card:focus-visible {
+  outline: 3px solid rgba(94, 200, 255, 0.6);
+  outline-offset: 4px;
+}
+
+.galeria-card__media {
+  position: relative;
+  aspect-ratio: 4 / 3;
+}
+
+.galeria-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.galeria-card__shade {
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(1, 7, 20, 0.1) 0%, rgba(1, 7, 20, 0.88) 90%);
-  display: flex;
-  align-items: flex-end;
-  padding: 24px;
+  background: linear-gradient(180deg, rgba(2, 10, 25, 0) 20%, rgba(2, 10, 25, 0.85) 100%);
 }
 
-.galeria-overlay h3 {
+.galeria-card__content {
+  position: absolute;
+  inset: auto 0 0 0;
+  padding: 20px;
+  display: grid;
+  gap: 10px;
+  z-index: 1;
+}
+
+.galeria-card__content h3 {
   margin: 0;
   font-size: 1.2rem;
+  font-weight: 700;
+  color: #f8fbff;
+}
+
+.galeria-card__content p {
+  margin: 0;
+  color: rgba(220, 236, 255, 0.8);
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.galeria-card__dots {
+  display: flex;
+  gap: 6px;
+}
+
+.galeria-card__dots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.3);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.galeria-card__dots span.active {
+  background: var(--casas-highlight);
+  transform: scale(1.3);
+  opacity: 1;
 }
 
 .contato {
@@ -1035,6 +1089,95 @@
   text-align: center;
 }
 
+.galeria-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(1, 6, 20, 0.92);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 32px;
+  gap: 20px;
+}
+
+.galeria-modal img {
+  max-width: min(920px, 90vw);
+  max-height: 80vh;
+  border-radius: 20px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.5);
+}
+
+.galeria-modal__close {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(2, 12, 26, 0.8);
+  color: #fff;
+  font-size: 1.6rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease;
+}
+
+.galeria-modal__close:hover {
+  background: rgba(2, 12, 26, 1);
+}
+
+.galeria-modal__nav {
+  border: none;
+  background: rgba(2, 12, 26, 0.7);
+  color: #fff;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.galeria-modal__nav:hover {
+  background: rgba(2, 12, 26, 0.95);
+  transform: translateY(-2px);
+}
+
+.galeria-modal__caption {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(2, 10, 25, 0.8);
+  border-radius: 999px;
+  padding: 10px 22px;
+  display: flex;
+  gap: 12px;
+  color: #e2f8ff;
+  font-size: 0.95rem;
+  align-items: center;
+}
+
+.galeria-modal__nav--prev {
+  order: 0;
+}
+
+.galeria-modal__nav--next {
+  order: 2;
+}
+
+.galeria-modal span {
+  pointer-events: none;
+}
+
 .casas-article {
   min-height: 100vh;
   padding: 72px 28px 96px;
@@ -1158,6 +1301,18 @@
   .pilar-card {
     padding: 28px;
   }
+
+  .galeria-grid {
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  }
+
+  .galeria-modal {
+    padding: 24px;
+  }
+
+  .galeria-modal img {
+    max-width: min(720px, 90vw);
+  }
 }
 
 @media (max-width: 760px) {
@@ -1267,6 +1422,37 @@
 
   .footer-modern {
     padding: 40px 24px;
+  }
+
+  .galeria-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .galeria-card__content {
+    padding: 18px;
+  }
+
+  .galeria-card__content p {
+    font-size: 0.9rem;
+  }
+
+  .galeria-modal {
+    padding: 20px 16px;
+  }
+
+  .galeria-modal__nav {
+    display: none;
+  }
+
+  .galeria-modal img {
+    max-width: 100%;
+    max-height: 70vh;
+  }
+
+  .galeria-modal__caption {
+    bottom: 16px;
+    padding: 8px 16px;
+    font-size: 0.85rem;
   }
 }
 

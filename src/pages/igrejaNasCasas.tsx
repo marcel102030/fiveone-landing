@@ -148,10 +148,30 @@ const programacao = [
 ];
 
 const encontros = [
-  { imagem: encontro1, titulo: 'Estudo Bíblico e Partilha' },
-  { imagem: encontro2, titulo: 'Louvor e Comunhão' },
-  { imagem: encontro3, titulo: 'Palavra e Testemunho' },
-  { imagem: encontro4, titulo: 'Discipulado em Família' },
+  {
+    id: 'estudo',
+    titulo: 'Estudo Bíblico e Partilha',
+    descricao: 'Mesa aberta para mergulhar na Palavra, ouvir testemunhos e orar uns pelos outros.',
+    imagens: [encontro1, principal1, principal2, principal3],
+  },
+  {
+    id: 'louvor',
+    titulo: 'Louvor e Comunhão',
+    descricao: 'Adoração simples, família reunida e dons em movimento em cada casa.',
+    imagens: [encontro2, principal4, principal5, principal6],
+  },
+  {
+    id: 'palavra',
+    titulo: 'Palavra e Testemunho',
+    descricao: 'Compartilhamos experiências reais, aplicamos o Evangelho e celebramos milagres.',
+    imagens: [encontro3, principal7, principal8, principal9],
+  },
+  {
+    id: 'familia',
+    titulo: 'Discipulado em Família',
+    descricao: 'Casas acolhedoras onde cada geração encontra lugar e propósito no Reino.',
+    imagens: [encontro4, principal2, principal5, principal8],
+  },
 ];
 
 const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
@@ -174,6 +194,10 @@ const IgrejaNasCasas: React.FC = () => {
   const [cidadeSelecionada, setCidadeSelecionada] = useState('Campina Grande');
   const [heroIndex, setHeroIndex] = useState(0);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [galeriaIndices, setGaleriaIndices] = useState<Record<string, number>>(
+    () => Object.fromEntries(encontros.map((item) => [item.id, 0])) as Record<string, number>,
+  );
+  const [galeriaModal, setGaleriaModal] = useState<{ id: string; index: number } | null>(null);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -228,6 +252,23 @@ const IgrejaNasCasas: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const interval = window.setInterval(() => {
+      setGaleriaIndices((prev) => {
+        const next = { ...prev };
+        encontros.forEach((item) => {
+          if (item.imagens.length > 0) {
+            const current = prev[item.id] ?? 0;
+            next[item.id] = (current + 1) % item.imagens.length;
+          }
+        });
+        return next;
+      });
+    }, 4500);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth > 760) {
         setIsNavOpen(false);
@@ -246,6 +287,47 @@ const IgrejaNasCasas: React.FC = () => {
     const offset = window.pageYOffset + rect.top - 80;
     window.scrollTo({ top: offset, behavior: 'smooth' });
   };
+
+  const openGaleriaModal = (itemId: string, startIndex = 0) => {
+    setGaleriaModal({ id: itemId, index: startIndex });
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  const closeGaleriaModal = () => {
+    setGaleriaModal(null);
+    if (typeof document !== 'undefined') {
+      document.body.style.overflow = '';
+    }
+  };
+
+  const navigateGaleriaModal = (direction: 1 | -1) => {
+    setGaleriaModal((prev) => {
+      if (!prev) return prev;
+      const item = encontros.find((enc) => enc.id === prev.id);
+      if (!item) return prev;
+      const total = item.imagens.length;
+      const nextIndex = (prev.index + direction + total) % total;
+      return { id: prev.id, index: nextIndex };
+    });
+  };
+
+  useEffect(() => {
+    const handleKey = (event: KeyboardEvent) => {
+      if (!galeriaModal) return;
+      if (event.key === 'Escape') {
+        closeGaleriaModal();
+      } else if (event.key === 'ArrowLeft') {
+        navigateGaleriaModal(-1);
+      } else if (event.key === 'ArrowRight') {
+        navigateGaleriaModal(1);
+      }
+    };
+
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [galeriaModal]);
 
   return (
     <div className="casas-page">
@@ -436,6 +518,41 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
+      <section className="galeria" id="galeria">
+        <div className="section-head">
+          <h2>Como são nossos encontros</h2>
+          <p>Momentos reais da Rede: mesa posta, louvor em família e histórias transformadas pelo Evangelho.</p>
+        </div>
+        <div className="galeria-grid">
+          {encontros.map((encontro) => {
+            const activeIndex = galeriaIndices[encontro.id] ?? 0;
+            const activeImage = encontro.imagens[activeIndex];
+            return (
+              <button
+                key={encontro.id}
+                type="button"
+                className="galeria-card"
+                onClick={() => openGaleriaModal(encontro.id, activeIndex)}
+              >
+                <div className="galeria-card__media">
+                  <img src={activeImage} alt={`${encontro.titulo} - encontro ${activeIndex + 1}`} decoding="async" />
+                  <div className="galeria-card__shade" />
+                </div>
+                <div className="galeria-card__content">
+                  <h3>{encontro.titulo}</h3>
+                  <p>{encontro.descricao}</p>
+                  <div className="galeria-card__dots" aria-hidden>
+                    {encontro.imagens.map((_, idx) => (
+                      <span key={idx} className={idx === activeIndex ? 'active' : ''} />
+                    ))}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="programacao" id="programacao">
         <div className="section-head">
           <h2>Agenda Five One</h2>
@@ -543,22 +660,6 @@ const IgrejaNasCasas: React.FC = () => {
             allowFullScreen
             loading="lazy"
           />
-        </div>
-      </section>
-
-      <section className="galeria" id="galeria">
-        <div className="section-head">
-          <h2>Como são nossos encontros</h2>
-          <p>Momentos reais de Igreja nas Casas: mesa posta, oração sincera e histórias de transformação.</p>
-        </div>
-        <div className="galeria-grid">
-          {encontros.map((encontro) => (
-            <article key={encontro.titulo} className="galeria-card" style={{ backgroundImage: `url(${encontro.imagem})` }}>
-              <div className="galeria-overlay">
-                <h3>{encontro.titulo}</h3>
-              </div>
-            </article>
-          ))}
         </div>
       </section>
 
@@ -681,6 +782,50 @@ const IgrejaNasCasas: React.FC = () => {
           <span>© {currentYear} Rede Five One. Todos os direitos reservados.</span>
         </div>
       </footer>
+
+      {galeriaModal && (() => {
+        const item = encontros.find((enc) => enc.id === galeriaModal.id);
+        if (!item) return null;
+        const activeImage = item.imagens[galeriaModal.index];
+        return (
+          <div
+            className="galeria-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Fotos de ${item.titulo}`}
+            onClick={(event) => {
+              if (event.target === event.currentTarget) closeGaleriaModal();
+            }}
+          >
+            <button type="button" className="galeria-modal__close" onClick={closeGaleriaModal} aria-label="Fechar galeria">
+              &times;
+            </button>
+            <button
+              type="button"
+              className="galeria-modal__nav galeria-modal__nav--prev"
+              onClick={() => navigateGaleriaModal(-1)}
+              aria-label="Foto anterior"
+            >
+              <span>&lsaquo;</span>
+            </button>
+            <img src={activeImage} alt={`${item.titulo} — foto ${galeriaModal.index + 1}`} />
+            <button
+              type="button"
+              className="galeria-modal__nav galeria-modal__nav--next"
+              onClick={() => navigateGaleriaModal(1)}
+              aria-label="Próxima foto"
+            >
+              <span>&rsaquo;</span>
+            </button>
+            <div className="galeria-modal__caption">
+              <strong>{item.titulo}</strong>
+              <span>
+                {galeriaModal.index + 1} / {item.imagens.length}
+              </span>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 };
