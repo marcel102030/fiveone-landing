@@ -17,6 +17,9 @@ import Services from "./pages/Services";
 import BlogPostPage from "./pages/BlogPostPage";
 import Ministerio from "./pages/Ministerio";
 import IgrejaNasCasas from "./pages/igrejaNasCasas";
+import ComoFuncionaCasas from "./pages/redeIgrejas/ComoFunciona";
+import RedeFiveOne from "./pages/redeIgrejas/RedeFiveOne";
+import OQueEFiveOne from "./pages/redeIgrejas/OQueEFiveOne";
 import Plataforma from "./pages/plataforma/plataforma";
 import LoginAluno from "./pages/plataforma/loginAluno";
 import StreamerApostolo from "./pages/plataforma/streamerApostolo";
@@ -55,7 +58,8 @@ function AppContent() {
 
   const isIgrejasStandalone =
     location.pathname === "/igrejas" ||
-    location.pathname === "/rede-igrejas";
+    location.pathname === "/rede-igrejas" ||
+    location.pathname.startsWith("/rede-igrejas/");
 
   const hideLayout =
     location.pathname === "/plataforma" ||
@@ -142,6 +146,9 @@ function AppContent() {
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
             <Route path="/rede-igrejas" element={<IgrejaNasCasas />} />
+            <Route path="/rede-igrejas/como-funciona" element={<ComoFuncionaCasas />} />
+            <Route path="/rede-igrejas/rede-five-one" element={<RedeFiveOne />} />
+            <Route path="/rede-igrejas/o-que-e-five-one" element={<OQueEFiveOne />} />
             <Route path="/igrejas" element={<Navigate to="/rede-igrejas" replace />} />
             <Route path="/plataforma" element={<Plataforma />} />
             <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
