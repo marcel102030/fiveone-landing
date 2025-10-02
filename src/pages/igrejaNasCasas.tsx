@@ -173,6 +173,7 @@ const IgrejaNasCasas: React.FC = () => {
   const [estadoSelecionado, setEstadoSelecionado] = useState('PB');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('Campina Grande');
   const [heroIndex, setHeroIndex] = useState(0);
+  const [isNavOpen, setIsNavOpen] = useState(false);
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -226,6 +227,17 @@ const IgrejaNasCasas: React.FC = () => {
     return () => window.clearInterval(id);
   }, []);
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth > 760) {
+        setIsNavOpen(false);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
     if (typeof document === 'undefined') return;
     const el = document.getElementById(sectionId);
@@ -242,9 +254,28 @@ const IgrejaNasCasas: React.FC = () => {
           <span>Rede Five One</span>
           <strong>Rede de Igrejas nas Casas</strong>
         </div>
-        <nav className="page-strip__nav">
+        <button
+          type="button"
+          className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
+          onClick={() => setIsNavOpen((prev) => !prev)}
+          aria-expanded={isNavOpen}
+          aria-controls="page-strip-nav"
+        >
+          <span className="page-strip__toggle-line" />
+          <span className="page-strip__toggle-line" />
+          <span className="page-strip__toggle-line" />
+          <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
+        </button>
+        <nav id="page-strip-nav" className={`page-strip__nav ${isNavOpen ? 'is-open' : ''}`}>
           {pageLinks.map((item) => (
-            <button key={item.id} type="button" onClick={() => scrollToSection(item.id)}>
+            <button
+              key={item.id}
+              type="button"
+              onClick={() => {
+                scrollToSection(item.id);
+                setIsNavOpen(false);
+              }}
+            >
               {item.label}
             </button>
           ))}
@@ -657,19 +688,27 @@ const IgrejaNasCasas: React.FC = () => {
 export default IgrejaNasCasas;
 
 function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string; whatsappUrl: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
   return (
     <div className="floating-contacts" aria-live="polite">
-      <div className="floating-contacts__card">
+      <div className={`floating-contacts__card ${isOpen ? 'is-open' : ''}`} aria-hidden={!isOpen}>
         <strong>WhatsApp</strong>
         <p>Olá 👋 Bem-vindo à Rede Five One. Podemos ajudar?</p>
-        <a className="btn primary" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+        <a className="btn primary" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
           Abrir bate-papo
         </a>
       </div>
       <div className="floating-contacts__fab-group">
-        <a className="floating-contacts__fab floating-contacts__fab--whatsapp" href={whatsappUrl} target="_blank" rel="noopener noreferrer" aria-label="Conversar no WhatsApp">
+        <button
+          type="button"
+          className={`floating-contacts__fab floating-contacts__fab--whatsapp ${isOpen ? 'is-active' : ''}`}
+          onClick={() => setIsOpen((prev) => !prev)}
+          aria-label={isOpen ? 'Fechar card do WhatsApp' : 'Conversar no WhatsApp'}
+          aria-expanded={isOpen}
+        >
           <WhatsappIcon />
-        </a>
+        </button>
         <a className="floating-contacts__fab floating-contacts__fab--instagram" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Visitar Instagram">
           <InstagramIcon />
         </a>
