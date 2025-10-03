@@ -64,7 +64,7 @@ const destaqueCards = [
   },
   {
     id: 'rede-five-one',
-    titulo: 'Rede de Igrejas Five One',
+    titulo: 'Rede de Igrejas nas Casas - Five One',
     descricao: 'Conexão entre as igrejas nas casas, com acompanhamento dos 5 Ministérios e mentoria para fortalecer cada comunidade local.',
     acao: 'Saiba Mais',
     path: '/rede-igrejas/rede-five-one',
@@ -433,7 +433,7 @@ const IgrejaNasCasas: React.FC = () => {
             simplicidade, participação e presença do Espírito Santo em cada encontro.
           </p>
           <p>
-            Vemos a cidade como campo missionário e as casas como altares onde Cristo é anunciado, dons são ativados e
+            Vemos a cidade como campo missionário e as casas como lugares onde Cristo é anunciado, dons são ativados e
             famílias espirituais florescem. Caminhamos próximos uns dos outros, cultivando discipulado que alcança a vida
             real.
           </p>
@@ -461,7 +461,7 @@ const IgrejaNasCasas: React.FC = () => {
             que permanecemos fiéis ao Evangelho, multiplicando vida em cada bairro.
           </p>
           <div className="manifesto-text__callout">
-            <span>Rede Five One</span>
+            <span>Rede de Igrejas nas Casas - Five One</span>
             <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
           </div>
         </div>
@@ -700,7 +700,7 @@ const IgrejaNasCasas: React.FC = () => {
           </form>
           <div className="contato-info">
             <div className="info-card">
-              <h3>Conexões Rede Five One</h3>
+              <h3>Conexões Rede de Igreja nas Casas</h3>
               <p>
                 Catolé · Campina Grande — PB
                 <br />
