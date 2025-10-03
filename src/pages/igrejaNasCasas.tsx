@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import encontro1 from '../assets/images/encontro1.jpg';
 import encontro2 from '../assets/images/encontro2.png';
@@ -14,6 +14,7 @@ import principal7 from './image/principal/img_0469.jpg';
 import principal8 from './image/principal/img_9291.jpg';
 import principal9 from './image/principal/img_9375.jpg';
 import './igrejaNasCasas.css';
+import { destaqueCards as destaqueCardsData } from '../data/igrejaNasCasasHighlights';
 
 type IgrejaInfo = {
   cidade: string;
@@ -47,38 +48,38 @@ const heroGallery = [
   principal9,
 ];
 
+const heroImageAlts: Record<string, string> = {
+  [principal1]: 'Rede Five One — estudo bíblico em Campina Grande',
+  [principal2]: 'Rede Five One — encontro com oração nas casas',
+  [principal3]: 'Rede Five One — discipulado ao redor da mesa',
+  [principal4]: 'Rede Five One — louvor e comunhão em família',
+  [principal5]: 'Rede Five One — celebração missionária nas casas',
+  [principal6]: 'Rede Five One — momento de intercessão e envio',
+  [principal7]: 'Rede Five One — liderança reunida na casa',
+  [principal8]: 'Rede Five One — comunhão intergeracional nas casas',
+  [principal9]: 'Rede Five One — discipulado e alegria na rede',
+};
+
+const estatisticasRede = (() => {
+  const casasAtivas = igrejas.length;
+  const bairros = new Set(
+    igrejas.map((igreja) => igreja.endereco.split(',')[0]?.trim() || igreja.endereco),
+  ).size;
+  const cidades = new Set(igrejas.map((igreja) => igreja.cidade)).size;
+  return {
+    casasAtivas,
+    bairros,
+    cidades,
+  };
+})();
+
 const heroHighlights = [
-  { label: 'Casas ativas', value: '1' },
-  { label: 'Bairros', value: '1' },
-  { label: 'Cidades', value: '1' },
+  { label: 'Casas ativas', value: estatisticasRede.casasAtivas.toString() },
+  { label: 'Bairros', value: estatisticasRede.bairros.toString() },
+  { label: 'Cidades', value: estatisticasRede.cidades.toString() },
 ];
 
-const destaqueCards = [
-  {
-    id: 'como-funciona',
-    titulo: 'Como funcionam as Igrejas nas Casas?',
-    descricao: 'Reuniões simples nos lares, com comunhão à mesa, oração, ensino bíblico e discipulado para todas as idades.',
-    acao: 'Saiba Mais',
-    path: '/rede-igrejas/como-funciona',
-    imagem: encontro1,
-  },
-  {
-    id: 'rede-five-one',
-    titulo: 'Rede de Igrejas nas Casas - Five One',
-    descricao: 'Conexão entre as igrejas nas casas, com acompanhamento dos 5 Ministérios e mentoria para fortalecer cada comunidade local.',
-    acao: 'Saiba Mais',
-    path: '/rede-igrejas/rede-five-one',
-    imagem: encontro2,
-  },
-  {
-    id: 'o-que-e-five-one',
-    titulo: 'O que é o Five One',
-    descricao: 'Um movimento que ajuda a Igreja a compreender melhor a Bíblia e a viver sua fé de forma prática, tendo como base os cinco ministérios de Efésios 4.',
-    acao: 'Saiba Mais',
-    path: '/rede-igrejas/o-que-e-five-one',
-    imagem: encontro4,
-  },
-];
+const destaqueCards = destaqueCardsData;
 
 const manifestoCards = [
   {
@@ -178,7 +179,7 @@ const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
 const instagramUrl = 'https://www.instagram.com/redeigrejasfiveone';
 const whatsappLink = 'https://wa.me/5583987181731?text=Olá%2C%20vim%20do%20site%20da%20Rede%20de%20Igrejas%20nas%20Casas%20Five%20One';
 const whatsappHeroLink = `https://wa.me/5583987181731?text=${encodeURIComponent(
-  'Olá! Quero fazer parte da Rede de Igrejas nas Casas Five One. Pode me contar mais sobre como funciona e os próximos passos?',
+  'Olá! Quero visitar uma casa da Rede de Igrejas nas Casas Five One. Pode me orientar com os próximos passos?',
 )}`;
 
 const pageLinks = [
@@ -198,6 +199,8 @@ const IgrejaNasCasas: React.FC = () => {
     () => Object.fromEntries(encontros.map((item) => [item.id, 0])) as Record<string, number>,
   );
   const [galeriaModal, setGaleriaModal] = useState<{ id: string; index: number } | null>(null);
+  const heroGridRef = useRef<HTMLDivElement | null>(null);
+  const [heroImagesActive, setHeroImagesActive] = useState<boolean>(typeof window === 'undefined');
   const currentYear = new Date().getFullYear();
 
   useEffect(() => {
@@ -252,6 +255,30 @@ const IgrejaNasCasas: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const element = heroGridRef.current;
+    if (!element) {
+      setHeroImagesActive(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (entry?.isIntersecting) {
+          setHeroImagesActive(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '0px 0px -20% 0px' },
+    );
+
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (galeriaModal) return;
     const interval = window.setInterval(() => {
       setGaleriaIndices((prev) => {
         const next = { ...prev };
@@ -266,7 +293,7 @@ const IgrejaNasCasas: React.FC = () => {
     }, 4500);
 
     return () => window.clearInterval(interval);
-  }, []);
+  }, [galeriaModal]);
 
   useEffect(() => {
     const handleResize = () => {
@@ -278,6 +305,18 @@ const IgrejaNasCasas: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    if (galeriaModal) return;
+    if (typeof document === 'undefined') return;
+    const shouldLock = isNavOpen && window.innerWidth <= 760;
+    document.body.style.overflow = shouldLock ? 'hidden' : '';
+    return () => {
+      if (!galeriaModal) {
+        document.body.style.overflow = '';
+      }
+    };
+  }, [isNavOpen, galeriaModal]);
 
   const scrollToSection = (sectionId: string) => {
     if (typeof document === 'undefined') return;
@@ -330,7 +369,7 @@ const IgrejaNasCasas: React.FC = () => {
   }, [galeriaModal]);
 
   return (
-    <div className="casas-page">
+    <div className="casas-page" id="top">
       <div className="page-strip">
         <div className="page-strip__brand">
           <span>Rede Five One</span>
@@ -362,6 +401,10 @@ const IgrejaNasCasas: React.FC = () => {
             </button>
           ))}
         </nav>
+        <div
+          className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
+          onClick={() => setIsNavOpen(false)}
+        />
         <div className="page-strip__actions">
           <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
             Instagram
@@ -373,13 +416,20 @@ const IgrejaNasCasas: React.FC = () => {
       </div>
 
       <section className="hero">
-        <div className="hero-stage">
+        <div className="hero-stage" ref={heroGridRef}>
           <div key={heroIndex} className="hero-grid" aria-hidden>
-            {displayedGallery.map((foto, index) => (
-              <div key={`${foto}-${index}`} className={`hero-grid__item ${index === 0 ? 'active' : ''}`}>
-                <img src={foto} alt={`Rede Five One encontro ${index + 1}`} loading="eager" decoding="async" />
-              </div>
-            ))}
+            {heroImagesActive &&
+              displayedGallery.map((foto, index) => (
+                <div key={`${foto}-${index}`} className={`hero-grid__item ${index === 0 ? 'active' : ''}`}>
+                  <img
+                    src={foto}
+                    alt={heroImageAlts[foto] || 'Encontro da Rede Five One nas casas'}
+                    loading={index === 0 ? 'eager' : 'lazy'}
+                    decoding="async"
+                    sizes="(max-width: 760px) 70vw, 320px"
+                  />
+                </div>
+              ))}
           </div>
           <div className="hero-stage__overlay" />
         </div>
@@ -389,8 +439,8 @@ const IgrejaNasCasas: React.FC = () => {
             Rede de <span>Igrejas nas Casas</span>
           </h1>
           <p>
-            Um movimento missionário que transforma lares em centros de comunhão, discipulado e envio. buscamos viver a igreja
-            de do novo testamento, uma igreja para a cidade, ativando dons e construindo famílias espirituais que alcançam cada bairro.
+            Um movimento missionário que transforma lares em centros de comunhão, discipulado e envio. Buscamos viver a igreja
+            do novo testamento, uma igreja para a cidade, ativando dons e construindo famílias espirituais que alcançam cada bairro.
           </p>
           <div className="hero-actions">
             <a className="btn primary" href={whatsappHeroLink} target="_blank" rel="noopener noreferrer">
@@ -535,7 +585,13 @@ const IgrejaNasCasas: React.FC = () => {
                 onClick={() => openGaleriaModal(encontro.id, activeIndex)}
               >
                 <div className="galeria-card__media">
-                  <img src={activeImage} alt={`${encontro.titulo} - encontro ${activeIndex + 1}`} decoding="async" />
+                  <img
+                    src={activeImage}
+                    alt={`${encontro.titulo} - encontro ${activeIndex + 1}`}
+                    loading="lazy"
+                    decoding="async"
+                    sizes="(max-width: 760px) 90vw, 300px"
+                  />
                   <div className="galeria-card__shade" />
                 </div>
                 <div className="galeria-card__content">
@@ -780,6 +836,9 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
         <div className="footer-modern__bottom">
           <span>© {currentYear} Rede Five One. Todos os direitos reservados.</span>
+          <a href="#top" className="footer-modern__backtop">
+            Voltar ao topo ↑
+          </a>
         </div>
       </footer>
 
@@ -808,7 +867,14 @@ const IgrejaNasCasas: React.FC = () => {
             >
               <span>&lsaquo;</span>
             </button>
-            <img src={activeImage} alt={`${item.titulo} — foto ${galeriaModal.index + 1}`} />
+            <img
+              src={activeImage}
+              alt={`${item.titulo} — foto ${galeriaModal.index + 1}`}
+              className="galeria-modal__image"
+              loading="eager"
+              decoding="async"
+              sizes="(max-width: 760px) 90vw, 70vw"
+            />
             <button
               type="button"
               className="galeria-modal__nav galeria-modal__nav--next"
@@ -818,10 +884,28 @@ const IgrejaNasCasas: React.FC = () => {
               <span>&rsaquo;</span>
             </button>
             <div className="galeria-modal__caption">
-              <strong>{item.titulo}</strong>
+              <div className="galeria-modal__caption-text">
+                <strong>{item.titulo}</strong>
+                <p>{item.descricao}</p>
+              </div>
               <span>
                 {galeriaModal.index + 1} / {item.imagens.length}
               </span>
+            </div>
+            <div className="galeria-modal__thumbs" role="tablist" aria-label={`Outras fotos de ${item.titulo}`}>
+              {item.imagens.map((thumb, idx) => (
+                <button
+                  key={`${item.id}-${idx}-${thumb}`}
+                  type="button"
+                  className={`galeria-modal__thumb ${idx === galeriaModal.index ? 'is-active' : ''}`}
+                  onClick={() => setGaleriaModal({ id: item.id, index: idx })}
+                  aria-label={`${item.titulo} foto ${idx + 1}`}
+                  aria-selected={idx === galeriaModal.index}
+                  role="tab"
+                >
+                  <img src={thumb} alt="" loading="lazy" />
+                </button>
+              ))}
             </div>
           </div>
         );

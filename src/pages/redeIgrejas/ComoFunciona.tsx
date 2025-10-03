@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import '../igrejaNasCasas.css';
 
 const ComoFunciona: React.FC = () => {
   const navigate = useNavigate();
+  const sectionIds = ['oque-sao', 'como-sao', 'o-que-fazem', 'lideranca'];
+  const [isArticleMobile, setIsArticleMobile] = useState<boolean>(
+    typeof window !== 'undefined' ? window.innerWidth <= 760 : false,
+  );
+  const [openSections, setOpenSections] = useState<string[]>(
+    typeof window !== 'undefined' && window.innerWidth <= 760 ? ['oque-sao'] : sectionIds,
+  );
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -13,6 +20,28 @@ const ComoFunciona: React.FC = () => {
     }
 
     navigate('/rede-igrejas');
+  };
+
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 760;
+      setIsArticleMobile(mobile);
+      setOpenSections(mobile ? ['oque-sao'] : sectionIds);
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  const handleSectionToggle = (id: string, open: boolean) => {
+    if (!isArticleMobile) return;
+    setOpenSections((prev) => {
+      if (open) {
+        return Array.from(new Set([...prev, id]));
+      }
+      return prev.filter((section) => section !== id);
+    });
   };
 
   return (
@@ -30,88 +59,137 @@ const ComoFunciona: React.FC = () => {
           </p>
         </header>
         <article className="casas-article__body">
-          <section className="casas-article__section">
-            <h2>O que são</h2>
-            <p>
-              Igreja no lar é vida comunitária de cristãos conduzida por força sobrenatural em casas bem normais. É o estilo
-              de vida redimido, vivido na situação concreta. É o caminho orgânico pelo qual os cristãos seguem a Jesus
-              conjuntamente no cotidiano.
-            </p>
-            <p>
-              Pelo fato de não mais pertencerem a si próprios, os redimidos adotam consistentemente um estilo de vida
-              comunitário. Já não vivem num mundo particular e individualista. Igrejas nos lares nascem quando os cristãos
-              entendem que não podem mais conduzir sua própria vida, mas, juntos com outros, começam a colocar em prática os
-              valores do Reino de Deus, compartilhando a vida com cristãos e pessoas ainda não cristãs em seu redor.
-            </p>
-            <p>
-              Trata-se de uma concretização consequente de reconhecimento de que não existem caminhos para experimentar Jesus
-              Cristo e seu Espírito apenas em recintos sagrados, mas, sim, no meio da vida. Nesse sentido, o local é
-              indiferente, salvo o leito de morte do egoísmo – e, por consequência, o local de nascimento da comunidade
-              eclesial.
-            </p>
-            <div className="casas-article__callout">
-              A verdadeira comunhão começa onde termina o individualismo. Como diz Arthur Katz: “Quando estamos reunidos é que
-              estamos em casa!”.
+          <details
+            className="casas-article__section"
+            id="oque-sao"
+            open={!isArticleMobile || openSections.includes('oque-sao')}
+            onToggle={(event) => handleSectionToggle('oque-sao', event.currentTarget.open)}
+          >
+            <summary>
+              <h2>O que são</h2>
+              <span className="casas-article__section-icon" aria-hidden>
+                ⌄
+              </span>
+            </summary>
+            <div className="casas-article__section-body">
+              <p>
+                Igreja no lar é vida comunitária de cristãos conduzida por força sobrenatural em casas bem normais. É o
+                estilo de vida redimido, vivido na situação concreta. É o caminho orgânico pelo qual os cristãos seguem a
+                Jesus conjuntamente no cotidiano.
+              </p>
+              <p>
+                Pelo fato de não mais pertencerem a si próprios, os redimidos adotam consistentemente um estilo de vida
+                comunitário. Já não vivem num mundo particular e individualista. Igrejas nos lares nascem quando os cristãos
+                entendem que não podem mais conduzir sua própria vida, mas, juntos com outros, começam a colocar em prática
+                os valores do Reino de Deus, compartilhando a vida com cristãos e pessoas ainda não cristãs em seu redor.
+              </p>
+              <p>
+                Trata-se de uma concretização consequente de reconhecimento de que não existem caminhos para experimentar
+                Jesus Cristo e seu Espírito apenas em recintos sagrados, mas, sim, no meio da vida. Nesse sentido, o local é
+                indiferente, salvo o leito de morte do egoísmo – e, por consequência, o local de nascimento da comunidade
+                eclesial.
+              </p>
+              <div className="casas-article__callout">
+                A verdadeira comunhão começa onde termina o individualismo. Como diz Arthur Katz: “Quando estamos reunidos é
+                que estamos em casa!”.
+              </div>
+              <p>
+                Em muitos sentidos, uma igreja no lar constitui uma família extensa espiritual, na qual se partilha a vida de
+                modo espontâneo e orgânico. A vida cotidiana dessas igrejas não requer mais organização, burocracia e
+                cerimônias do que as famílias extensas comuns.
+              </p>
+              <p>
+                Igrejas nos lares são uma criação de Deus, um caminho de vida sobrenatural para realizar coisas que uma
+                família normal não seria capaz de fazer. Um dos mistérios extraordinários está na estrutura multiplicativa
+                inerente, com o ministério quíntuplo como sistema circulatório, estimulando o corpo todo a crescer e a
+                multiplicar-se.
+              </p>
             </div>
-            <p>
-              Em muitos sentidos, uma igreja no lar constitui uma família extensa espiritual, na qual se partilha a vida de
-              modo espontâneo e orgânico. A vida cotidiana dessas igrejas não requer mais organização, burocracia e cerimônias
-              do que as famílias extensas comuns.
-            </p>
-            <p>
-              Igrejas nos lares são uma criação de Deus, um caminho de vida sobrenatural para realizar coisas que uma família
-              normal não seria capaz de fazer. Um dos mistérios extraordinários está na estrutura multiplicativa inerente, com
-              o ministério quíntuplo como sistema circulatório, estimulando o corpo todo a crescer e a multiplicar-se.
-            </p>
-          </section>
+          </details>
 
-          <section className="casas-article__section">
-            <h2>Como são</h2>
-            <p>
-              Igrejas nos lares espelham as qualidades e o caráter de Deus. O estilo de vida comunitário é marcado por amor,
-              verdade, perdão, fé e graça; um caminho ideal para demonstrações de cuidado mútuo, encorajamento e serviço.
-            </p>
-            <p>
-              É um espaço em que todas as máscaras podem ser removidas, em que as pessoas são francas umas com as outras e,
-              apesar disso, continuam se amando. É onde experimentam e praticam pessoalmente a verdade e o perdão de Deus no
-              dia a dia.
-            </p>
-          </section>
+          <details
+            className="casas-article__section"
+            id="como-sao"
+            open={!isArticleMobile || openSections.includes('como-sao')}
+            onToggle={(event) => handleSectionToggle('como-sao', event.currentTarget.open)}
+          >
+            <summary>
+              <h2>Como são</h2>
+              <span className="casas-article__section-icon" aria-hidden>
+                ⌄
+              </span>
+            </summary>
+            <div className="casas-article__section-body">
+              <p>
+                Igrejas nos lares espelham as qualidades e o caráter de Deus. O estilo de vida comunitário é marcado por amor,
+                verdade, perdão, fé e graça; um caminho ideal para demonstrações de cuidado mútuo, encorajamento e serviço.
+              </p>
+              <p>
+                É um espaço em que todas as máscaras podem ser removidas, em que as pessoas são francas umas com as outras e,
+                apesar disso, continuam se amando. É onde experimentam e praticam pessoalmente a verdade e o perdão de Deus no
+                dia a dia.
+              </p>
+            </div>
+          </details>
 
-          <section className="casas-article__section">
-            <h2>O que fazem</h2>
-            <p>
-              Em um mundo que busca modelos prontos, preferimos discernir com o Espírito como viver a igreja no lar em nosso
-              contexto. Transferir fórmulas prontas produz estruturas vazias; por isso, revisitamos os princípios fundamentais
-              dados por Deus para encarná-los novamente em nossa cultura.
-            </p>
-            <p>
-              Dons apostólicos e proféticos têm papel crucial nesse processo, ajudando a desbravar caminhos saudáveis de
-              igreja em cada realidade. Ao longo da história e hoje, vemos quatro elementos básicos sustentando essa jornada,
-              formando o arcabouço das igrejas nos lares em todos os tempos.
-            </p>
-          </section>
+          <details
+            className="casas-article__section"
+            id="o-que-fazem"
+            open={!isArticleMobile || openSections.includes('o-que-fazem')}
+            onToggle={(event) => handleSectionToggle('o-que-fazem', event.currentTarget.open)}
+          >
+            <summary>
+              <h2>O que fazem</h2>
+              <span className="casas-article__section-icon" aria-hidden>
+                ⌄
+              </span>
+            </summary>
+            <div className="casas-article__section-body">
+              <p>
+                Em um mundo que busca modelos prontos, preferimos discernir com o Espírito como viver a igreja no lar em nosso
+                contexto. Transferir fórmulas prontas produz estruturas vazias; por isso, revisitamos os princípios
+                fundamentais dados por Deus para encarná-los novamente em nossa cultura.
+              </p>
+              <p>
+                Dons apostólicos e proféticos têm papel crucial nesse processo, ajudando a desbravar caminhos saudáveis de
+                igreja em cada realidade. Ao longo da história e hoje, vemos quatro elementos básicos sustentando essa
+                jornada, formando o arcabouço das igrejas nos lares em todos os tempos.
+              </p>
+            </div>
+          </details>
 
-          <section className="casas-article__section">
-            <h2>Como funciona a liderança</h2>
-            <p>
-              ① <strong>Presbíteros.</strong> Igrejas nos lares estão sob a responsabilidade de presbíteros que exercem papel
-              paternal e maternal sobre a comunidade. A maturidade comprovada por Deus e a sabedoria vivida fazem deles
-              referências claras do estilo de vida do Reino. Cuidam do rebanho como uma família, assegurando autenticidade,
-              seriedade e exemplo prático para cada discípulo.
-            </p>
-            <p>
-              ② <strong>O ministério quíntuplo.</strong> Esses presbíteros são formados e treinados por pessoas vocacionadas a um
-              dos cinco ministérios – apóstolos, profetas, evangelistas, pastores e mestres. Eles percorrem casa em casa,
-              funcionando como um sistema circulatório espiritual que abastece a rede com os nutrientes necessários para se
-              manter saudável e se multiplicar. Fortalecem a coesão do corpo, como tendões que mantêm um organismo unido.
-            </p>
-            <p>
-              Por meio desses ministérios, as igrejas nos lares operam de forma orgânica, servindo todo o corpo de Cristo em uma
-              região e conectando-se a outras cidades e nações. São recursos contínuos de formação que mantêm a igreja viva,
-              em expansão e alinhada à voz de Deus.
-            </p>
-          </section>
+          <details
+            className="casas-article__section"
+            id="lideranca"
+            open={!isArticleMobile || openSections.includes('lideranca')}
+            onToggle={(event) => handleSectionToggle('lideranca', event.currentTarget.open)}
+          >
+            <summary>
+              <h2>Como funciona a liderança</h2>
+              <span className="casas-article__section-icon" aria-hidden>
+                ⌄
+              </span>
+            </summary>
+            <div className="casas-article__section-body">
+              <p>
+                ① <strong>Presbíteros.</strong> Igrejas nos lares estão sob a responsabilidade de presbíteros que exercem papel
+                paternal e maternal sobre a comunidade. A maturidade comprovada por Deus e a sabedoria vivida fazem deles
+                referências claras do estilo de vida do Reino. Cuidam do rebanho como uma família, assegurando autenticidade,
+                seriedade e exemplo prático para cada discípulo.
+              </p>
+              <p>
+                ② <strong>O ministério quíntuplo.</strong> Esses presbíteros são formados e treinados por pessoas vocacionadas a
+                um dos cinco ministérios – apóstolos, profetas, evangelistas, pastores e mestres. Eles percorrem casa em casa,
+                funcionando como um sistema circulatório espiritual que abastece a rede com os nutrientes necessários para se
+                manter saudável e se multiplicar. Fortalecem a coesão do corpo, como tendões que mantêm um organismo unido.
+              </p>
+              <p>
+                Por meio desses ministérios, as igrejas nos lares operam de forma orgânica, servindo todo o corpo de Cristo em
+                uma região e conectando-se a outras cidades e nações. São recursos contínuos de formação que mantêm a igreja
+                viva, em expansão e alinhada à voz de Deus.
+              </p>
+            </div>
+          </details>
         </article>
 
         <section className="casas-cta">
