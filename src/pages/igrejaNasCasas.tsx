@@ -15,6 +15,7 @@ import principal8 from './image/principal/img_9291.jpg';
 import principal9 from './image/principal/img_9375.jpg';
 import './igrejaNasCasas.css';
 import { destaqueCards as destaqueCardsData } from '../data/igrejaNasCasasHighlights';
+import redeLogo from './image/logoRedeIgrejas/Post para Instagram Parabéns Aniversário Azul e Branco Divertido Moderno.png?url';
 
 type IgrejaInfo = {
   cidade: string;
@@ -23,6 +24,9 @@ type IgrejaInfo = {
   endereco: string;
   linkMaps: string;
   linkMapsEmbed: string;
+  bairro: string;
+  lider: string;
+  telefone: string;
 };
 
 const igrejas: IgrejaInfo[] = [
@@ -33,6 +37,9 @@ const igrejas: IgrejaInfo[] = [
     endereco: 'Catolé, Campina Grande - PB',
     linkMaps: 'https://www.google.com/maps/place/Igreja+Casas+Catolé/@-7.2371273,-35.9068963,17z',
     linkMapsEmbed: 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4',
+    bairro: 'Catolé',
+    lider: 'Marcelo Junior',
+    telefone: '+55 (83) 98718-1731',
   },
 ];
 
@@ -181,6 +188,7 @@ const whatsappLink = 'https://wa.me/5583987181731?text=Olá%2C%20vim%20do%20site
 const whatsappHeroLink = `https://wa.me/5583987181731?text=${encodeURIComponent(
   'Olá! Quero visitar uma casa da Rede de Igrejas nas Casas Five One. Pode me orientar com os próximos passos?',
 )}`;
+const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4';
 
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
@@ -191,8 +199,8 @@ const pageLinks = [
 ];
 
 const IgrejaNasCasas: React.FC = () => {
-  const [estadoSelecionado, setEstadoSelecionado] = useState('PB');
-  const [cidadeSelecionada, setCidadeSelecionada] = useState('Campina Grande');
+  const [estadoSelecionado, setEstadoSelecionado] = useState('');
+  const [cidadeSelecionada, setCidadeSelecionada] = useState('');
   const [heroIndex, setHeroIndex] = useState(0);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [galeriaIndices, setGaleriaIndices] = useState<Record<string, number>>(
@@ -211,6 +219,13 @@ const IgrejaNasCasas: React.FC = () => {
     }
   }, []);
 
+  const igrejasFiltradas = useMemo(() => {
+    if (!estadoSelecionado || !cidadeSelecionada) return [] as IgrejaInfo[];
+    return igrejas.filter(
+      (igreja) => igreja.estado === estadoSelecionado && igreja.cidade === cidadeSelecionada,
+    );
+  }, [estadoSelecionado, cidadeSelecionada]);
+
   const cidadesDisponiveis = useMemo(
     () =>
       [...new Set(
@@ -221,17 +236,9 @@ const IgrejaNasCasas: React.FC = () => {
     [estadoSelecionado],
   );
 
-  const igrejaSelecionada = useMemo(
-    () =>
-      igrejas.find(
-        (igreja) =>
-          (!estadoSelecionado || igreja.estado === estadoSelecionado) &&
-          (!cidadeSelecionada || igreja.cidade === cidadeSelecionada),
-      ),
-    [estadoSelecionado, cidadeSelecionada],
-  );
+  const igrejaSelecionada = igrejasFiltradas[0];
 
-  const mapaLink = igrejaSelecionada?.linkMapsEmbed || 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4';
+  const mapaLink = igrejaSelecionada?.linkMapsEmbed || mapaDefaultEmbed;
   const displayedGallery = useMemo(() => {
     if (heroGallery.length === 0) return [] as string[];
     const rotation = heroIndex % heroGallery.length;
@@ -372,8 +379,7 @@ const IgrejaNasCasas: React.FC = () => {
     <div className="casas-page" id="top">
       <div className="page-strip">
         <div className="page-strip__brand">
-          <span>Rede Five One</span>
-          <strong>Rede de Igrejas nas Casas</strong>
+          <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
         </div>
         <button
           type="button"
@@ -405,14 +411,6 @@ const IgrejaNasCasas: React.FC = () => {
           className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
           onClick={() => setIsNavOpen(false)}
         />
-        <div className="page-strip__actions">
-          <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-            Instagram
-          </a>
-          <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-            WhatsApp
-          </a>
-        </div>
       </div>
 
       <section className="hero">
@@ -696,13 +694,42 @@ const IgrejaNasCasas: React.FC = () => {
               ))}
             </select>
           </label>
-          {igrejaSelecionada && (
+          {estadoSelecionado && cidadeSelecionada && igrejasFiltradas.length > 0 ? (
             <div className="mapa-info">
-              <h3>{igrejaSelecionada.nome}</h3>
-              <p>{igrejaSelecionada.endereco}</p>
-              <a href={igrejaSelecionada.linkMaps} target="_blank" rel="noopener noreferrer">
-                Ver rota no Google Maps
-              </a>
+              <h3>Essas são as casas nesta cidade</h3>
+              <ul className="mapa-info__list">
+                {igrejasFiltradas.map((igreja) => {
+                  const telefoneLimpo = igreja.telefone.replace(/[^+\d]/g, '');
+                  return (
+                    <li key={igreja.nome} className="mapa-info__item">
+                      <div className="mapa-info__item-head">
+                        <strong>{igreja.nome}</strong>
+                        <span>
+                          {igreja.bairro} · {igreja.cidade} — {igreja.estado}
+                        </span>
+                      </div>
+                      <div className="mapa-info__item-body">
+                        <span>Presbítero: {igreja.lider}</span>
+                        <a href={`tel:${telefoneLimpo}`}>
+                          {igreja.telefone}
+                        </a>
+                        <a href={igreja.linkMaps} target="_blank" rel="noopener noreferrer">
+                          Ver rota no Google Maps
+                        </a>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ) : estadoSelecionado && cidadeSelecionada ? (
+            <div className="mapa-info mapa-info--empty">
+              <p>Selecione um estado e uma cidade para ver as casas disponíveis na rede.</p>
+            </div>
+          ) : (
+            <div className="mapa-info mapa-info--placeholder">
+              <h3>Filtre para encontrar uma casa</h3>
+              <p>Escolha um estado e depois uma cidade para listar as casas e entrar em contato com os presbíteros locais.</p>
             </div>
           )}
         </div>
@@ -777,7 +804,7 @@ const IgrejaNasCasas: React.FC = () => {
               <span>Social</span>
               <div className="social-links">
                 <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-                  @redeigrejasfiveone
+                  Instagram · @redeigrejasfiveone
                 </a>
               </div>
             </div>
@@ -814,16 +841,21 @@ const IgrejaNasCasas: React.FC = () => {
               </li>
             </ul>
           </div>
-          <div className="footer-modern__column">
-            <h4>Explore</h4>
-            <nav>
-              <a href="#manifesto">Quem somos</a>
-              <a href="#confissao">Confissão de Fé</a>
-              <a href="#programacao">Agenda</a>
-              <a href="#mapa">Mapa da Rede</a>
-              <a href="#contato">Contato</a>
-            </nav>
-          </div>
+        <div className="footer-modern__column">
+          <h4>Explore</h4>
+          <nav>
+            {pageLinks.map((link) => (
+              <button
+                key={`footer-${link.id}`}
+                type="button"
+                className="footer-modern__nav-button"
+                onClick={() => scrollToSection(link.id)}
+              >
+                {link.label}
+              </button>
+            ))}
+          </nav>
+        </div>
           <div className="footer-modern__column">
             <h4>Conecte-se</h4>
             <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
@@ -836,9 +868,6 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
         <div className="footer-modern__bottom">
           <span>© {currentYear} Rede Five One. Todos os direitos reservados.</span>
-          <a href="#top" className="footer-modern__backtop">
-            Voltar ao topo ↑
-          </a>
         </div>
       </footer>
 
