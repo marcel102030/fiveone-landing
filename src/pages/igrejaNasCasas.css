@@ -1817,6 +1817,7 @@
   .hero {
     margin-top: -4px;
     min-height: 556px;
+    border-radius: 28px;
   }
 
   .hero-collage {
@@ -1824,11 +1825,47 @@
   }
 
   .hero-content {
-    padding: 64px 22px 62px;
+    padding: 54px 24px 56px;
+    text-align: left;
+    align-items: flex-start;
+    gap: 24px;
+    background: linear-gradient(170deg, rgba(3, 22, 42, 0.88), rgba(1, 12, 26, 0.76));
+    border-radius: 26px;
+    border: 1px solid rgba(104, 238, 255, 0.18);
+    backdrop-filter: blur(18px);
+  }
+
+  .hero-badge {
+    margin: 0;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 9vw, 3rem);
+    line-height: 1.08;
+  }
+
+  .hero p {
+    font-size: 1.02rem;
+    line-height: 1.7;
+    color: rgba(228, 241, 255, 0.92);
+    text-align: left;
+  }
+
+  .hero-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .hero-actions .btn {
+    width: 100%;
+    justify-content: center;
   }
 
   .hero-stats {
-    gap: 22px;
+    gap: 18px;
+    justify-content: center;
   }
 
   .page-strip {
@@ -1882,6 +1919,13 @@
     display: inline-flex;
     align-self: flex-end;
     margin-left: 0;
+    border: 1px solid rgba(210, 250, 255, 0.35);
+    background: rgba(0, 42, 54, 0.25);
+    box-shadow: 0 10px 24px rgba(0, 26, 42, 0.32);
+  }
+
+  .page-strip__toggle-line {
+    background: rgba(240, 252, 255, 0.92);
   }
 
   .page-strip__nav {
@@ -1892,10 +1936,13 @@
     max-height: 0;
     overflow: hidden;
     transition: max-height 0.25s ease;
-    background: rgba(1, 35, 42, 0.92);
+    background: linear-gradient(165deg, rgba(2, 62, 82, 0.95), rgba(0, 32, 44, 0.96));
     padding: 0 clamp(12px, 4vw, 20px);
     border-radius: 16px;
-    box-shadow: 0 18px 34px rgba(1, 15, 28, 0.35);
+    box-shadow: 0 20px 40px rgba(0, 20, 34, 0.45);
+    border: 1px solid rgba(104, 238, 255, 0.22);
+    backdrop-filter: blur(18px);
+    color: rgba(236, 252, 255, 0.94);
   }
 
   .page-strip__nav.is-open {
@@ -1908,8 +1955,29 @@
     text-align: left;
     padding: 12px 16px;
     border-radius: 12px;
-    background: rgba(1, 35, 42, 0.12);
-    border: 1px solid rgba(1, 36, 44, 0.2);
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(128, 244, 255, 0.28);
+    color: inherit;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 12px 22px rgba(0, 20, 30, 0.28);
+  }
+
+  .page-strip__nav button:hover,
+  .page-strip__nav button:focus-visible {
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(156, 250, 255, 0.45);
+    color: rgba(255, 255, 255, 0.98);
+  }
+
+  .page-strip__link::after {
+    background: rgba(111, 247, 255, 0.9);
+    box-shadow: 0 0 10px rgba(111, 247, 255, 0.6);
+  }
+
+  .page-strip__link--active {
+    color: rgba(255, 255, 255, 0.98);
   }
 
   .page-strip__overlay {
