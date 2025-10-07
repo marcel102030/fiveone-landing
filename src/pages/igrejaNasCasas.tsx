@@ -193,8 +193,8 @@ const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIk
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
   { id: 'confissao', label: 'Confissão de Fé' },
-  { id: 'programacao', label: 'Programação' },
   { id: 'mapa', label: 'Mapa da Rede' },
+  { id: 'programacao', label: 'Programação' },
   { id: 'contato', label: 'Contato' },
 ];
 
@@ -203,6 +203,7 @@ const IgrejaNasCasas: React.FC = () => {
   const [cidadeSelecionada, setCidadeSelecionada] = useState('');
   const [heroIndex, setHeroIndex] = useState(0);
   const [isNavOpen, setIsNavOpen] = useState(false);
+  const [activeSection, setActiveSection] = useState<string>(pageLinks[0]?.id ?? 'manifesto');
   const [galeriaIndices, setGaleriaIndices] = useState<Record<string, number>>(
     () => Object.fromEntries(encontros.map((item) => [item.id, 0])) as Record<string, number>,
   );
@@ -325,6 +326,37 @@ const IgrejaNasCasas: React.FC = () => {
     };
   }, [isNavOpen, galeriaModal]);
 
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
+    const sectionIds = pageLinks.map((item) => item.id);
+    let ticking = false;
+
+    const updateActiveSection = () => {
+      ticking = false;
+      const scrollPosition = window.scrollY + 140;
+      let currentId = sectionIds[0];
+      sectionIds.forEach((id) => {
+        const section = document.getElementById(id);
+        if (!section) return;
+        if (scrollPosition >= section.offsetTop) {
+          currentId = id;
+        }
+      });
+      setActiveSection((prev) => (prev === currentId ? prev : currentId));
+    };
+
+    const handleScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        window.requestAnimationFrame(updateActiveSection);
+      }
+    };
+
+    updateActiveSection();
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
   const scrollToSection = (sectionId: string) => {
     if (typeof document === 'undefined') return;
     const el = document.getElementById(sectionId);
@@ -332,6 +364,7 @@ const IgrejaNasCasas: React.FC = () => {
     const rect = el.getBoundingClientRect();
     const offset = window.pageYOffset + rect.top - 80;
     window.scrollTo({ top: offset, behavior: 'smooth' });
+    setActiveSection(sectionId);
   };
 
   const openGaleriaModal = (itemId: string, startIndex = 0) => {
@@ -381,23 +414,13 @@ const IgrejaNasCasas: React.FC = () => {
         <div className="page-strip__brand">
           <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
         </div>
-        <button
-          type="button"
-          className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
-          onClick={() => setIsNavOpen((prev) => !prev)}
-          aria-expanded={isNavOpen}
-          aria-controls="page-strip-nav"
-        >
-          <span className="page-strip__toggle-line" />
-          <span className="page-strip__toggle-line" />
-          <span className="page-strip__toggle-line" />
-          <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
-        </button>
         <nav id="page-strip-nav" className={`page-strip__nav ${isNavOpen ? 'is-open' : ''}`}>
           {pageLinks.map((item) => (
             <button
               key={item.id}
               type="button"
+              className={`page-strip__link ${activeSection === item.id ? 'page-strip__link--active' : ''}`}
+              aria-current={activeSection === item.id ? 'page' : undefined}
               onClick={() => {
                 scrollToSection(item.id);
                 setIsNavOpen(false);
@@ -407,6 +430,28 @@ const IgrejaNasCasas: React.FC = () => {
             </button>
           ))}
         </nav>
+        <div className="page-strip__actions">
+          <a
+            href={whatsappLink}
+            className="page-strip__cta"
+            target="_blank"
+            rel="noreferrer"
+          >
+            FAÇA PARTE DA REDE
+          </a>
+          <button
+            type="button"
+            className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
+            onClick={() => setIsNavOpen((prev) => !prev)}
+            aria-expanded={isNavOpen}
+            aria-controls="page-strip-nav"
+          >
+            <span className="page-strip__toggle-line" />
+            <span className="page-strip__toggle-line" />
+            <span className="page-strip__toggle-line" />
+            <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
+          </button>
+        </div>
         <div
           className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
           onClick={() => setIsNavOpen(false)}
