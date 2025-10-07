@@ -13,9 +13,11 @@
 }
 
 .casas-page {
-  --page-padding-x: clamp(22px, 4vw, 40px);
+  --header-height: clamp(58px, 3.8vw, 74px);
+  --header-padding-y: clamp(6px, 0.32vw + 6px, 12px);
+  --page-padding-x: 0px;
   min-height: 100vh;
-  padding: clamp(14px, 2.2vw, 26px) var(--page-padding-x) 84px;
+  padding: calc(var(--header-height) + (var(--header-padding-y) * 2) + 16px) var(--page-padding-x) 84px;
   display: grid;
   gap: clamp(6px, 0.9vw, 14px);
   background:
@@ -25,14 +27,26 @@
   font-family: 'Inter', 'Helvetica Neue', sans-serif;
 }
 
+.page-strip-wrapper {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 140;
+  padding: 0;
+  display: flex;
+  justify-content: center;
+  pointer-events: none;
+  background: linear-gradient(180deg, rgba(2, 9, 21, 0.9), transparent 80%);
+}
+
 .page-strip {
-  width: calc(100% + (var(--page-padding-x) * 2));
-  margin: calc(-1 * clamp(14px, 2.2vw, 26px)) calc(-1 * var(--page-padding-x)) calc(-1 * clamp(4px, 0.8vw, 10px));
+  width: 100%;
   background: linear-gradient(94deg, rgba(72, 245, 222, 0.92) 0%, rgba(52, 196, 255, 0.9) 100%);
   color: #01232b;
-  border-radius: 18px;
-  padding: clamp(6px, 0.32vw + 6px, 12px) clamp(18px, 2vw, 28px);
-  min-height: clamp(58px, 3.8vw, 74px);
+  border-radius: 0;
+  padding: var(--header-padding-y) clamp(18px, 2vw, 28px);
+  min-height: var(--header-height);
   display: flex;
   align-items: center;
   gap: clamp(14px, 1.8vw, 24px);
@@ -40,13 +54,14 @@
   position: relative;
   z-index: 60;
   isolation: isolate;
+  pointer-events: auto;
 }
 
 .page-strip::after {
   content: '';
   position: absolute;
-  inset: 4px;
-  border-radius: 14px;
+  inset: 0;
+  border-radius: 0;
   border: 1px solid rgba(255, 255, 255, 0.28);
   pointer-events: none;
 }
@@ -56,6 +71,18 @@
   align-items: center;
   justify-content: flex-start;
   padding: clamp(0px, 0.3vw, 4px) 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  appearance: none;
+  margin: 0;
+  color: inherit;
+}
+
+.page-strip__brand:focus-visible {
+  outline: 2px solid rgba(94, 200, 255, 0.55);
+  outline-offset: 6px;
+  border-radius: 16px;
 }
 
 .page-strip__logo {
@@ -1431,8 +1458,8 @@
 
 @media (max-width: 1366px) {
   .casas-page {
-    --page-padding-x: 24px;
-    padding: 28px var(--page-padding-x) 80px;
+    --page-padding-x: 0px;
+    padding: calc(var(--header-height) + (var(--header-padding-y) * 2) + 24px) var(--page-padding-x) 80px;
     gap: 24px;
   }
 
@@ -1809,9 +1836,17 @@
 
 @media (max-width: 760px) {
   .casas-page {
-    --page-padding-x: clamp(18px, 6vw, 26px);
-    padding: clamp(18px, 6.5vw, 34px) var(--page-padding-x) 70px;
+    --header-height: clamp(58px, 24vw, 98px);
+    --header-padding-y: clamp(9px, 3vw, 14px);
+    --page-padding-x: 0px;
+    padding: calc(var(--header-height) + (var(--header-padding-y) * 2) + 22px) var(--page-padding-x) 70px;
     gap: clamp(16px, 5vw, 24px);
+  }
+
+  .page-strip-wrapper {
+    padding: 0;
+    justify-content: center;
+    background: linear-gradient(180deg, rgba(2, 12, 26, 0.92), transparent 82%);
   }
 
   .hero {
@@ -1869,13 +1904,12 @@
   }
 
   .page-strip {
-    width: calc(100% + (var(--page-padding-x) * 2));
     display: flex;
     flex-direction: column;
     align-items: stretch;
     gap: clamp(8px, 3.2vw, 16px);
     padding: clamp(18px, 6vw, 26px) clamp(16px, 4.4vw, 22px) clamp(20px, 6vw, 28px);
-    margin: calc(-1 * clamp(16px, 6vw, 30px)) calc(-1 * var(--page-padding-x)) 10px;
+    margin: 0;
   }
 
   .page-strip::after {

@@ -333,7 +333,9 @@ const IgrejaNasCasas: React.FC = () => {
 
     const updateActiveSection = () => {
       ticking = false;
-      const scrollPosition = window.scrollY + 140;
+      const header = document.querySelector<HTMLElement>('.page-strip-wrapper');
+      const headerOffset = header?.getBoundingClientRect().height ?? 0;
+      const scrollPosition = window.scrollY + headerOffset + 40;
       let currentId = sectionIds[0];
       sectionIds.forEach((id) => {
         const section = document.getElementById(id);
@@ -359,11 +361,20 @@ const IgrejaNasCasas: React.FC = () => {
 
   const scrollToSection = (sectionId: string) => {
     if (typeof document === 'undefined') return;
+    const header = document.querySelector<HTMLElement>('.page-strip-wrapper');
+    const headerOffset = header?.getBoundingClientRect().height ?? 0;
+    if (sectionId === 'top') {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (pageLinks[0]?.id) {
+        setActiveSection(pageLinks[0].id);
+      }
+      return;
+    }
     const el = document.getElementById(sectionId);
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const offset = window.pageYOffset + rect.top - 80;
-    window.scrollTo({ top: offset, behavior: 'smooth' });
+    const offset = window.pageYOffset + rect.top - headerOffset - 12;
+    window.scrollTo({ top: Math.max(offset, 0), behavior: 'smooth' });
     setActiveSection(sectionId);
   };
 
@@ -410,52 +421,62 @@ const IgrejaNasCasas: React.FC = () => {
 
   return (
     <div className="casas-page" id="top">
-      <div className="page-strip">
-        <div className="page-strip__brand">
-          <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
-        </div>
-        <nav id="page-strip-nav" className={`page-strip__nav ${isNavOpen ? 'is-open' : ''}`}>
-          {pageLinks.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`page-strip__link ${activeSection === item.id ? 'page-strip__link--active' : ''}`}
-              aria-current={activeSection === item.id ? 'page' : undefined}
-              onClick={() => {
-                scrollToSection(item.id);
-                setIsNavOpen(false);
-              }}
-            >
-              {item.label}
-            </button>
-          ))}
-        </nav>
-        <div className="page-strip__actions">
-          <a
-            href={whatsappLink}
-            className="page-strip__cta"
-            target="_blank"
-            rel="noreferrer"
-          >
-            FAÇA PARTE DA REDE
-          </a>
+      <div className="page-strip-wrapper">
+        <div className="page-strip">
           <button
             type="button"
-            className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
-            onClick={() => setIsNavOpen((prev) => !prev)}
-            aria-expanded={isNavOpen}
-            aria-controls="page-strip-nav"
+            className="page-strip__brand"
+            onClick={() => {
+              scrollToSection('top');
+              setIsNavOpen(false);
+            }}
+            aria-label="Voltar ao início"
           >
-            <span className="page-strip__toggle-line" />
-            <span className="page-strip__toggle-line" />
-            <span className="page-strip__toggle-line" />
-            <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
+            <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
           </button>
+          <nav id="page-strip-nav" className={`page-strip__nav ${isNavOpen ? 'is-open' : ''}`}>
+            {pageLinks.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`page-strip__link ${activeSection === item.id ? 'page-strip__link--active' : ''}`}
+                aria-current={activeSection === item.id ? 'page' : undefined}
+                onClick={() => {
+                  scrollToSection(item.id);
+                  setIsNavOpen(false);
+                }}
+              >
+                {item.label}
+              </button>
+            ))}
+          </nav>
+          <div className="page-strip__actions">
+            <a
+              href={whatsappLink}
+              className="page-strip__cta"
+              target="_blank"
+              rel="noreferrer"
+            >
+              FAÇA PARTE DA REDE
+            </a>
+            <button
+              type="button"
+              className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
+              onClick={() => setIsNavOpen((prev) => !prev)}
+              aria-expanded={isNavOpen}
+              aria-controls="page-strip-nav"
+            >
+              <span className="page-strip__toggle-line" />
+              <span className="page-strip__toggle-line" />
+              <span className="page-strip__toggle-line" />
+              <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
+            </button>
+          </div>
+          <div
+            className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
+            onClick={() => setIsNavOpen(false)}
+          />
         </div>
-        <div
-          className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
-          onClick={() => setIsNavOpen(false)}
-        />
       </div>
 
       <section className="hero">
