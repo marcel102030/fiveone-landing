@@ -36,6 +36,20 @@ const lessonStatusLabel: Record<LessonStatus, string> = {
   scheduled: "Programado",
 };
 
+const teacherOptions = [
+  'Rodolfo Henner',
+  'Marcelo Junior da Silva',
+  'Suenia Karcia Freitas Paulino',
+  'Pedro Henrique',
+  'Luãn Marcos Costa Lã',
+  'Jessica Plaster',
+] as const;
+
+const categoryOptions = [
+  'Formação Teológica',
+  'Formação Ministerial',
+] as const;
+
 const sourceTypeOptions: { value: LessonSourceType; label: string; helper: string }[] = [
   { value: "YOUTUBE", label: "YouTube", helper: "Cole a URL do vídeo do YouTube." },
   { value: "VIMEO", label: "Vimeo", helper: "Cole o link público ou o código de incorporação do Vimeo." },
@@ -70,7 +84,7 @@ const defaultLessonForm = (): LessonFormState => ({
   subtitle: "",
   subjectId: "",
   subjectName: "",
-  subjectType: "Formação T",
+  subjectType: categoryOptions[0],
   instructor: "",
   description: "",
   contentType: "VIDEO",
@@ -623,6 +637,9 @@ export default function AdminConteudoPlataforma() {
                         />
                       </div>
                       <div className="module-actions">
+                        <button className="module-new-lesson" type="button" onClick={() => openLessonModal(module.id)}>
+                          Nova aula
+                        </button>
                         <span className={`status-pill ${module.status}`}>{moduleStatusLabel[module.status]}</span>
                         <button
                           className="adm5-pill"
@@ -634,9 +651,6 @@ export default function AdminConteudoPlataforma() {
                             : module.status === "published"
                             ? "Despublicar"
                             : "Publicar"}
-                        </button>
-                        <button className="adm5-pill" onClick={() => openLessonModal(module.id)}>
-                          Nova aula
                         </button>
                       </div>
                     </div>
@@ -888,21 +902,39 @@ export default function AdminConteudoPlataforma() {
               <div className="form-two-col">
                 <div className="lesson-field">
                   <label>Categoria</label>
-                  <input
-                    className="lesson-input"
+                  <select
+                    className="lesson-select"
                     value={lessonForm.subjectType}
                     onChange={(event) => handleLessonFormChange("subjectType", event.target.value)}
-                    placeholder="Formação T / Formação M"
-                  />
+                  >
+                    <option value="">Selecione</option>
+                    {categoryOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                    {lessonForm.subjectType && !categoryOptions.includes(lessonForm.subjectType as typeof categoryOptions[number]) && (
+                      <option value={lessonForm.subjectType}>{lessonForm.subjectType}</option>
+                    )}
+                  </select>
                 </div>
                 <div className="lesson-field">
                   <label>Professor(a)</label>
-                  <input
-                    className="lesson-input"
+                  <select
+                    className="lesson-select"
                     value={lessonForm.instructor}
                     onChange={(event) => handleLessonFormChange("instructor", event.target.value)}
-                    placeholder="Quem ministra esta aula?"
-                  />
+                  >
+                    <option value="">Selecione</option>
+                    {teacherOptions.map((option) => (
+                      <option key={option} value={option}>
+                        {option}
+                      </option>
+                    ))}
+                    {lessonForm.instructor && !teacherOptions.includes(lessonForm.instructor as typeof teacherOptions[number]) && (
+                      <option value={lessonForm.instructor}>{lessonForm.instructor}</option>
+                    )}
+                  </select>
                 </div>
               </div>
 

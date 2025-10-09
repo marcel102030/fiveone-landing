@@ -348,8 +348,41 @@
 
 .module-actions {
   display: inline-flex;
-  gap: 8px;
+  gap: 12px;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.module-new-lesson {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #38bdf8, #22d3ee);
+  color: #04121b;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  box-shadow: 0 12px 28px rgba(34, 211, 238, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+}
+
+.module-new-lesson:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 32px rgba(34, 211, 238, 0.32);
+  filter: brightness(1.05);
+}
+
+.module-new-lesson:disabled {
+  opacity: 0.6;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
 }
 
 .module-body {
