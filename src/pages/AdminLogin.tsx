@@ -40,7 +40,7 @@ export default function AdminLogin() {
       const USERS: Record<string, { password: string; display: string }>= {
         "marcelojunio75@hotmail.com": { password: "M@r102030", display: "Marcelo Silva" },
         "sueniakarcia@gmail.com": { password: "123456", display: "Suenia Karcia" },
-        "guhfariasd@gmail.com": { password: "123456", display: "Gustavo Freitas" },
+        "guhfarias@gmail.com": { password: "123456", display: "Gustavo Freitas" },
       };
       const key = email.trim().toLowerCase();
       if (USERS[key] && USERS[key].password === password) {
