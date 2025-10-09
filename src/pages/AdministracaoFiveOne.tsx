@@ -4,6 +4,45 @@ import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
 import { useNavigate } from "react-router-dom";
 import "./AdministracaoFiveOne.css";
 
+const quickAccessLinks = [
+  {
+    label: "Acessar Site",
+    href: "https://fiveonemovement.com/",
+    variant: "default",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15 15 0 0 1 4 10 15 15 0 0 1-4 10 15 15 0 0 1-4-10A15 15 0 0 1 12 2Z" />
+      </svg>
+    ),
+  },
+  {
+    label: "Acessar Plataforma",
+    href: "https://fiveonemovement.com/#/login-aluno",
+    variant: "primary",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <rect x="2" y="3" width="20" height="14" rx="2" />
+        <line x1="8" y1="21" x2="16" y2="21" />
+        <line x1="12" y1="17" x2="12" y2="21" />
+      </svg>
+    ),
+  },
+  {
+    label: "Rede Igrejas nas Casas",
+    href: "https://redeigrejanascasas.com/",
+    variant: "highlight",
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="m3 11 9-8 9 8" />
+        <path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8" />
+        <path d="M9 21V9h6v12" />
+      </svg>
+    ),
+  },
+];
+
 export default function AdministracaoFiveOne() {
   document.title = "Administração | Five One";
   const navigate = useNavigate();
@@ -54,16 +93,28 @@ export default function AdministracaoFiveOne() {
   return (
     <div className="adm5-wrap">
       <div className="adm5-topbar">
-        <div>
+        <div className="adm5-topbar__intro">
           <h1 className="adm5-title">Olá, {name}!</h1>
           <p className="adm5-sub">Configure ou acesse os dados da sua plataforma por aqui.</p>
           <div className="adm5-quicklinks">
-            <a className="adm5-link" href="https://fiveonemovement.com/" target="_blank" rel="noopener noreferrer">
-              <span className="dot" /> Acessar Site
-            </a>
-            <a className="adm5-link primary" href="https://fiveonemovement.com/#/login-aluno" target="_blank" rel="noopener noreferrer">
-              <span className="dot" /> Acessar Plataforma
-            </a>
+            <div className="adm5-quicklinks__text">
+              <span>Acessos principais</span>
+              <p>Ferramentas do Five One.</p>
+            </div>
+            <div className="adm5-quicklinks__actions">
+              {quickAccessLinks.map((link) => (
+                <a
+                  key={link.href}
+                  className={`adm5-link adm5-link--${link.variant}`}
+                  href={link.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <span className="adm5-link__icon">{link.icon}</span>
+                  <span className="adm5-link__label">{link.label}</span>
+                </a>
+              ))}
+            </div>
           </div>
         </div>
         <div className="adm5-actions">
@@ -73,7 +124,7 @@ export default function AdministracaoFiveOne() {
       </div>
 
       <div className="adm5-hero">
-        <img className="adm5-hero-img" src="/assets/images/banner-login-fiveone.png" alt="Destaques Five One" />
+        <img className="adm5-hero-img" src="/assets/images/bannerAdmin.png" alt="Destaques Five One" />
       </div>
 
       <div className="adm5-grid">
