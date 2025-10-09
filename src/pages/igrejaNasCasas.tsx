@@ -360,9 +360,10 @@ const IgrejaNasCasas: React.FC = () => {
   }, []);
 
   const scrollToSection = (sectionId: string) => {
-    if (typeof document === 'undefined') return;
+    if (typeof window === 'undefined' || typeof document === 'undefined') return;
     const header = document.querySelector<HTMLElement>('.page-strip-wrapper');
-    const headerOffset = header?.getBoundingClientRect().height ?? 0;
+    const isMobile = window.matchMedia('(max-width: 760px)').matches;
+    const headerOffset = !isMobile ? header?.getBoundingClientRect().height ?? 0 : 0;
     if (sectionId === 'top') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
       if (pageLinks[0]?.id) {
@@ -373,9 +374,32 @@ const IgrejaNasCasas: React.FC = () => {
     const el = document.getElementById(sectionId);
     if (!el) return;
     const rect = el.getBoundingClientRect();
-    const offset = window.pageYOffset + rect.top - headerOffset - 12;
+    const offset = window.pageYOffset + rect.top - headerOffset - (isMobile ? 6 : 12);
     window.scrollTo({ top: Math.max(offset, 0), behavior: 'smooth' });
     setActiveSection(sectionId);
+  };
+
+  const handleNavigate = (sectionId: string) => {
+    if (isNavOpen) {
+      setIsNavOpen(false);
+      if (typeof document !== 'undefined') {
+        document.body.style.overflow = '';
+      }
+    }
+
+    if (typeof window === 'undefined') {
+      scrollToSection(sectionId);
+      return;
+    }
+
+    const isMobile = window.matchMedia('(max-width: 760px)').matches;
+    if (isMobile) {
+      window.setTimeout(() => {
+        scrollToSection(sectionId);
+      }, 220);
+    } else {
+      scrollToSection(sectionId);
+    }
   };
 
   const openGaleriaModal = (itemId: string, startIndex = 0) => {
@@ -426,10 +450,7 @@ const IgrejaNasCasas: React.FC = () => {
           <button
             type="button"
             className="page-strip__brand"
-            onClick={() => {
-              scrollToSection('top');
-              setIsNavOpen(false);
-            }}
+            onClick={() => handleNavigate('top')}
             aria-label="Voltar ao início"
           >
             <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
@@ -441,10 +462,7 @@ const IgrejaNasCasas: React.FC = () => {
                 type="button"
                 className={`page-strip__link ${activeSection === item.id ? 'page-strip__link--active' : ''}`}
                 aria-current={activeSection === item.id ? 'page' : undefined}
-                onClick={() => {
-                  scrollToSection(item.id);
-                  setIsNavOpen(false);
-                }}
+                onClick={() => handleNavigate(item.id)}
               >
                 {item.label}
               </button>
@@ -915,7 +933,7 @@ const IgrejaNasCasas: React.FC = () => {
                 key={`footer-${link.id}`}
                 type="button"
                 className="footer-modern__nav-button"
-                onClick={() => scrollToSection(link.id)}
+                onClick={() => handleNavigate(link.id)}
               >
                 {link.label}
               </button>
