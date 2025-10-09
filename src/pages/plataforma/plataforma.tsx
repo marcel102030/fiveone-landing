@@ -201,6 +201,15 @@ const PaginaInicial = () => {
     { title: 'Estude no seu ritmo', text: 'Aulas organizadas por módulos, com histórico e materiais.' },
     { title: 'Faça parte da comunidade', text: 'Conecte-se e cresça junto com outros alunos.' },
   ];
+
+  const bemVindosRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollBemVindos = (direction: 1 | -1) => {
+    const container = bemVindosRef.current;
+    if (!container) return;
+    const scrollAmount = container.clientWidth * 0.8;
+    container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
+  };
   const [hsIndex, setHsIndex] = useState(0);
   useEffect(() => {
     const id = setInterval(() => setHsIndex((i) => (i + 1) % heroSlides.length), 5000);
@@ -272,32 +281,40 @@ const PaginaInicial = () => {
         ) : null}
         <h2>Bem-Vindos</h2>
         <p>Sua Jornada Começa aqui</p>
-        <div className="bem-vindos-container">
-          <div
-            className="bem-vindos-item"
-            role="button"
-            style={{ backgroundImage: "url('/assets/images/BemVindo.png')" }}
-          />
-          <div
-            className="bem-vindos-item"
-            role="button"
-            style={{ backgroundImage: "url('/assets/images/OQueEFiveOne.png')" }}
-          />
-          <div
-            className="bem-vindos-item"
-            role="button"
-            style={{ backgroundImage: "url('/assets/images/SuaJornada.png')" }}
-          />
-          <div
-            className="bem-vindos-item"
-            role="button"
-            style={{ backgroundImage: "url('/assets/images/Conectese.png')" }}
-          />
-          <div
-            className="bem-vindos-item"
-            role="button"
-            style={{ backgroundImage: "url('/assets/images/Explore.png')" }}
-          />
+        <div className="bem-vindos-carousel" aria-label="Bem-vindos">
+          <button type="button" className="bw-arrow bw-arrow--prev" onClick={() => scrollBemVindos(-1)} aria-label="Cartões anteriores">
+            ‹
+          </button>
+          <div className="bem-vindos-container" ref={bemVindosRef}>
+            <div
+              className="bem-vindos-item"
+              role="button"
+              style={{ backgroundImage: "url('/assets/images/BemVindo.png')" }}
+            />
+            <div
+              className="bem-vindos-item"
+              role="button"
+              style={{ backgroundImage: "url('/assets/images/OQueEFiveOne.png')" }}
+            />
+            <div
+              className="bem-vindos-item"
+              role="button"
+              style={{ backgroundImage: "url('/assets/images/SuaJornada.png')" }}
+            />
+            <div
+              className="bem-vindos-item"
+              role="button"
+              style={{ backgroundImage: "url('/assets/images/Conectese.png')" }}
+            />
+            <div
+              className="bem-vindos-item"
+              role="button"
+              style={{ backgroundImage: "url('/assets/images/Explore.png')" }}
+            />
+          </div>
+          <button type="button" className="bw-arrow bw-arrow--next" onClick={() => scrollBemVindos(1)} aria-label="Próximos cartões">
+            ›
+          </button>
         </div>
         <div className="section-arrow-wrap">
           <button className="section-arrow" aria-label="Ir para Continuar Assistindo" onClick={() => scrollToId(visibleLastWatched.length ? 'sec-continuar' : 'sec-formacao')}>

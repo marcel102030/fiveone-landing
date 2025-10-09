@@ -318,7 +318,6 @@ html {
   .formacao-ministerial h2, .bem-vindos h2, .continuar-assistindo h2 { font-size: clamp(1.6rem, 3vw, 3rem); }
 }
 
-
 /* --- Bem-Vindos Section Styles --- */
 .bem-vindos {
   background-color: #0c1f33;
@@ -360,48 +359,133 @@ html {
 .continuar-banner .cb-pill { margin-top:4px; display:inline-block; background:#0f1d27; color:#bfe9ff; border:1px solid #274154; border-radius:999px; padding:4px 10px; font-size:.85rem; }
 
 .bem-vindos h2 {
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
-  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+  font-size: clamp(1.7rem, 3.6vw, 2.8rem);
+  margin-bottom: clamp(0.75rem, 1.8vw, 1.4rem);
   font-family: 'Inter', sans-serif;
 }
 
 .bem-vindos p {
-  font-size: 1.2rem;
+  font-size: clamp(1rem, 2vw, 1.4rem);
   color: #ccc;
-  margin-bottom: clamp(0.75rem, 2vw, 1.5rem);
+  margin-bottom: clamp(0.75rem, 1.6vw, 1.4rem);
   font-family: 'Inter', sans-serif;
 }
 
-.bem-vindos-container {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 20px);
-  padding: 0 1rem 0.5rem 1rem;
-  max-width: 1400px;
+.bem-vindos-carousel {
+  width: min(96vw, 1680px);
   margin: 0 auto;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: clamp(12px, 1.6vw, 24px);
+}
+
+.bw-arrow {
+  width: clamp(32px, 3vw, 48px);
+  height: clamp(32px, 3vw, 48px);
+  border-radius: 50%;
+  border: 1px solid rgba(0, 229, 255, 0.35);
+  background: rgba(5, 18, 32, 0.8);
+  color: #bfe9ff;
+  font-size: clamp(1.2rem, 2vw, 1.6rem);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bw-arrow:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(0, 229, 255, 0.2);
+}
+
+.bw-arrow:disabled {
+  opacity: 0.35;
+  cursor: default;
+  transform: none;
+  box-shadow: none;
+}
+
+.bem-vindos-container {
+  display: flex;
+  gap: clamp(16px, 2vw, 28px);
+  padding: 0 clamp(0.5rem, 2vw, 1.2rem);
+  margin: 0;
   align-items: stretch;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+}
+
+.bem-vindos-container::-webkit-scrollbar {
+  height: 8px;
+}
+
+.bem-vindos-container::-webkit-scrollbar-thumb {
+  background: rgba(95, 163, 216, 0.4);
+  border-radius: 999px;
 }
 
 .bem-vindos-item {
-  width: 100%;
-  aspect-ratio: 16 / 10;
+  width: clamp(220px, 18vw, 320px);
+  flex: 0 0 clamp(220px, 18vw, 320px);
+  aspect-ratio: 3 / 2;
   background-size: cover;
   background-position: center;
-  border-radius: 12px;
-  box-shadow: 0 4px 8px rgba(0,0,0,0.4);
+  border-radius: 14px;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
   cursor: pointer;
   transition: transform 0.3s ease, box-shadow 0.3s ease;
+  scroll-snap-align: start;
 }
 
 .bem-vindos-item:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 12px rgba(0,255,255,0.5);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 24px rgba(0,255,255,0.35);
 }
 
-@media screen and (max-width: 768px) {
+@media (min-width: 1600px) {
+  .bem-vindos {
+    padding-inline: clamp(2rem, 6vw, 8rem);
+  }
+
+  .bem-vindos-carousel {
+    width: min(92vw, 1800px);
+  }
+
+  .bem-vindos h2 {
+    font-size: clamp(2.2rem, 2.8vw, 3rem);
+  }
+
+  .bem-vindos p {
+    font-size: clamp(1.1rem, 1.8vw, 1.6rem);
+  }
+
   .bem-vindos-container {
-    flex-direction: column;
-    align-items: center;
+    gap: clamp(20px, 2.4vw, 36px);
+  }
+}
+
+@media screen and (max-width: 1024px) {
+  .bem-vindos-container {
+    overflow-x: auto;
+  }
+}
+
+@media screen and (max-width: 640px) {
+  .bem-vindos-carousel {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .bw-arrow {
+    align-self: center;
+    margin: 0 auto;
+  }
+
+  .bem-vindos-container {
+    flex-wrap: nowrap;
+    padding-inline: clamp(0.5rem, 4vw, 1rem);
   }
 }
 
@@ -456,12 +540,12 @@ html {
 
 .formacao-container {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: clamp(12px, 1.6vw, 20px);
-  padding: 0 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(clamp(160px, 16vw, 220px), 1fr));
+  gap: clamp(16px, 2.2vw, 32px);
+  padding: 0 clamp(1rem, 3vw, 2rem);
   padding-bottom: clamp(0.75rem, 2vw, 1.5rem);
-  margin-top: 3rem;
-  max-width: 1400px;
+  margin-top: clamp(2.5rem, 3vw, 4rem);
+  max-width: min(1600px, 94vw);
   margin-left: auto;
   margin-right: auto;
   align-items: stretch;
@@ -478,7 +562,7 @@ html {
 
 .formacao-item {
   width: 100%;
-  aspect-ratio: 125 / 242;
+  aspect-ratio: 125 / 210;
   position: relative;
   border-radius: 14px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
@@ -533,7 +617,6 @@ html {
   white-space: nowrap;
   border: 0;
 }
-
 
 /* --- Perfil Menu & Dropdown Styles --- */
 .perfil-menu {

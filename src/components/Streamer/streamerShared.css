@@ -15,12 +15,12 @@
 .comments-modern {
   background: #0d1621;
   border: 1px solid #1f3244;
-  border-radius: 14px;
-  padding: 16px;
+  border-radius: 18px;
+  padding: clamp(20px, 2.2vw, 32px);
   width: 100%;
   box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
 }
-.comments-header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 18px; }
+.comments-header { display:flex; justify-content: space-between; align-items:center; margin-bottom: 24px; flex-wrap: wrap; gap: 10px; }
 .comments-header h4 { margin:0; font-size: 1.1rem; color:#f1fbff; }
 .comments-counter { color:#9cb4c4; font-size:0.85rem; }
 
@@ -110,20 +110,21 @@
 .mention-info { display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem; }
 .mention-info small { color: #87a4b9; }
 
-.comments-list { list-style:none; padding:0; margin:0; display:grid; gap:12px; }
+.comments-list { list-style:none; padding:0; margin:0; display:grid; gap:0; }
 .comment-item {
-  background: #0f1a26;
-  border: 1px solid #1f3345;
-  border-radius: 14px;
-  padding: 14px 16px;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.22);
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+  padding: clamp(18px, 1.8vw, 26px) 0;
+  border-bottom: 1px solid rgba(40, 72, 106, 0.35);
 }
+.comment-item:first-of-type { padding-top: 0; }
+.comment-item:last-of-type { border-bottom: none; padding-bottom: 0; }
 .comment-item--reply {
-  background: #101d2b;
-  border-color: #22394f;
-  margin-left: 46px;
+  padding: clamp(16px, 1.6vw, 22px) 0;
+  border-bottom: none;
 }
-.comment-main { display:flex; gap:14px; }
+.comment-main { display:flex; gap:14px; align-items:flex-start; }
 .comment-avatar {
   width: 44px;
   height: 44px;
@@ -144,12 +145,18 @@
   object-fit: cover;
   display: block;
 }
-.comment-body { flex:1; display:flex; flex-direction:column; gap:10px; }
-.comment-meta { display:flex; flex-direction:column; gap:8px; }
+.comment-body { flex:1; display:flex; flex-direction:column; gap:12px; min-width:0; }
+.comment-meta {
+  display:flex;
+  justify-content: space-between;
+  align-items:flex-start;
+  gap:12px;
+  flex-wrap:wrap;
+}
 .comment-author-block { display:flex; gap:6px; align-items:center; color:#9cb4c4; font-size:0.85rem; }
 .comment-dot { color:#3e5569; }
 .comment-author { color:#f1fbff; font-weight:700; font-size:0.95rem; }
-.comment-actions { display:flex; gap:10px; }
+.comment-actions { display:flex; gap:10px; align-items:center; }
 .comment-action {
   display:inline-flex;
   gap:6px;
@@ -164,10 +171,23 @@
   transition: color 0.15s ease;
 }
 .comment-action:hover { color:#b1e5ff; }
-.comment-text { color:#dbe9f5; line-height:1.5; font-size:0.95rem; }
+.comment-text {
+  color:#dbe9f5;
+  line-height:1.55;
+  font-size:0.95rem;
+  word-break: break-word;
+  margin-top: 2px;
+}
 .comment-mention { color:#58e8ff; font-weight:600; }
-.comment-replies { list-style:none; margin:0; padding:0; display:grid; gap:12px; }
-.comment-reply { display:flex; flex-direction:column; gap:10px; padding-top:6px; }
+.comment-replies {
+  list-style:none;
+  margin:0;
+  padding: 10px 0 0 clamp(20px, 3vw, 40px);
+  display:grid;
+  gap:0;
+  border-left: 1px solid rgba(80, 145, 190, 0.34);
+}
+.comment-reply { display:flex; flex-direction:column; gap:10px; padding-top:8px; }
 .comment-reply-actions { display:flex; gap:10px; justify-content:flex-end; }
 .comment-cancel {
   background:none;
@@ -188,10 +208,28 @@
   font-weight:700;
   cursor:pointer;
 }
+.comment-toggle {
+  background: none;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0;
+  color: #58e8ff;
+  font-weight: 600;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+  align-self: flex-start;
+  margin-top: 4px;
+}
+.comment-toggle:hover { opacity: 0.85; transform: translateY(-1px); }
+.comment-toggle.is-collapsed { color: #8fceff; }
 .comment-empty { color:#8aa2b2; text-align:center; padding:18px; }
 
 @media (max-width: 640px) {
-  .comment-item--reply { margin-left: 20px; }
   .comment-actions { flex-wrap: wrap; gap: 6px; }
   .mention-suggestions { width: 100%; }
+  .comment-replies { padding-left: 16px; }
+  .comment-replies::before { left: 4px; }
 }

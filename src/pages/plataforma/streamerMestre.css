@@ -36,7 +36,6 @@
     box-sizing: border-box;
   }
   
-  
   .lesson-item {
     background-color: #292929;
     border-radius: 8px;
@@ -95,16 +94,18 @@
   }
 
 .video-content {
+    --content-max: clamp(1020px, 72vw, 1400px);
     display: flex;
     flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    flex: 1;
+    align-items: stretch;
+    justify-content: flex-start;
+    flex: 1 1 0;
+    min-width: 0;
   }
 
 .video-banner {
   width: 100%;
-  max-width: 980px;
+  max-width: var(--content-max);
   border-radius: 16px;
   overflow: hidden;
   margin: 12px auto 18px;
@@ -121,17 +122,17 @@
 
 .engagement-panel {
   width: 100%;
-  max-width: 980px;
-  background: rgba(10, 26, 38, 0.75);
+  max-width: var(--content-max);
+  background: rgba(8, 20, 34, 0.75);
   border: 1px solid #274154;
-  border-radius: 14px;
-  padding: 12px 14px 14px;
+  border-radius: 18px;
+  padding: clamp(16px, 1.8vw, 24px);
   margin-top: 14px;
   box-shadow: 0 12px 28px rgba(0,0,0,.25);
 }
 
 /* Nova barra de ações */
-.action-bar { width:100%; max-width:980px; margin:14px auto 0; display:flex; align-items:center; justify-content:space-between; gap:14px; background:rgba(10,26,38,0.8); border:1px solid #274154; border-radius:14px; padding:10px 14px; box-shadow:0 10px 24px rgba(0,0,0,.25); }
+.action-bar { width:100%; max-width:var(--content-max); margin:14px auto 0; display:flex; align-items:center; justify-content:space-between; gap:14px; background:rgba(10,26,38,0.8); border:1px solid #274154; border-radius:16px; padding:12px 18px; box-shadow:0 10px 24px rgba(0,0,0,.25); }
 .action-left { flex:1; }
 .action-center { flex:1; display:flex; justify-content:center; gap:10px; }
 .action-right { flex:1; display:flex; justify-content:flex-end; align-items:center; gap:10px; }
@@ -193,7 +194,6 @@
     font-size: 0.85rem;
   }
   
-  
   @media (max-width: 1280px) {
     .streamer-video-area {
       max-width: 100%;
@@ -203,7 +203,6 @@
       max-width: 90%;
     }
   }
-  
   
   @media (max-width: 1280px) {
     .streamer-container { flex-direction: row; justify-content: center; gap: 1rem; }
@@ -243,15 +242,14 @@
     .action-bar { padding: 8px 12px; }
     .material-card { padding: 8px 12px; }
   }
-  .streamer-main-wrapper {
+.streamer-main-wrapper {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    max-width: 1200px;
+    width: min(96vw, 1680px);
     margin: 0 auto;
-    padding: 1rem;
-    gap: 1rem;
-    width: 100%;
+    padding: clamp(20px, 3vw, 48px) clamp(24px, 4vw, 56px);
+    gap: clamp(24px, 3vw, 48px);
   }
   .aula-card {
     width: 21%;
@@ -307,13 +305,13 @@
   .streamer-wrapper {
     display: flex;
     justify-content: flex-start;
-    align-items: center;
+    align-items: stretch;
     flex-direction: column;
-    padding: 2rem 1rem;
-    max-width: 1200px;
-    margin-left: 2rem;
+    width: min(96vw, 1680px);
+    margin: 0 auto;
+    padding: clamp(24px, 3.2vw, 56px) clamp(20px, 3vw, 48px);
   }
-  
+ 
   .streamer-main {
     flex: 1;
     display: flex;
@@ -323,12 +321,13 @@
 .video-container {
   position: relative;
   width: 100%;
+  max-width: var(--content-max);
   display: flex;
   justify-content: center;
   align-items: stretch;
-  margin: 1rem 0;
+  margin: clamp(18px, 2vw, 28px) auto;
   background: #050b16;
-  border-radius: 12px;
+  border-radius: 18px;
   overflow: hidden;
 }
 
@@ -344,9 +343,9 @@
   background: #000;
 }
 
-/* Ensure a balanced layout similar to the reference UI */
+/* Ensure a balanced layout similar to o reference UI */
 .video-content { flex: 1 1 0; min-width: 0; }
-.video-sidebar { flex: 0 0 clamp(280px, 22vw, 360px); }
+.video-sidebar { flex: 0 0 clamp(320px, 26vw, 420px); }
   
   @media (max-width: 768px) {
     .video-container iframe {
@@ -440,7 +439,7 @@
   }
 .video-sidebar {
   --sidebar-height: 60vh; /* fallback seguro para o primeiro paint */
-  width: 340px;
+  width: clamp(320px, 26vw, 420px);
   background-color: #1e1e1e;
   border-radius: 12px;
   padding: 0 0 8px 0; /* header e CTA têm seus próprios paddings */
@@ -459,24 +458,23 @@
   flex-direction: row;
   justify-content: center;
   align-items: flex-start;
-  gap: clamp(12px, 1.5vw, 24px);
-  max-width: 1500px;
-  margin: 2rem auto 0 auto;
-  padding: 0 4vw;
-  width: 100%;
+  gap: clamp(20px, 3vw, 48px);
+  width: min(96vw, 1720px);
+  margin: clamp(24px, 3vw, 48px) auto 0;
+  padding: 0 clamp(28px, 4vw, 64px);
   flex-wrap: nowrap;
 }
 
 /* Garante side-by-side até 1366px sem quebrar */
 @media (max-width: 1366px) and (min-width: 1025px) {
-  .video-and-sidebar { padding: 0 2.5vw; gap: clamp(10px, 1.2vw, 16px); }
-  .video-sidebar { flex-basis: clamp(280px, 22vw, 300px); }
+  .video-and-sidebar { padding: 0 2.5vw; gap: clamp(14px, 2vw, 28px); }
+  .video-sidebar { flex-basis: clamp(300px, 26vw, 360px); }
 }
 
 /* Salvaguarda: 1025–1280px, mais compacto ainda */
 @media (max-width: 1280px) and (min-width: 1025px) {
   .video-and-sidebar { padding: 0 2vw; }
-  .video-sidebar { flex-basis: clamp(270px, 24vw, 300px); }
+  .video-sidebar { flex-basis: clamp(280px, 26vw, 320px); }
 }
 
 .sidebar-title {
@@ -522,7 +520,6 @@
   color: #000;
   font-weight: bold;
 }
-
 
 /* --- Custom sidebar video list item thumbnail & info layout --- */
 .sidebar-thumbnail {
@@ -578,7 +575,6 @@
 .sidebar-list::-webkit-scrollbar-thumb { background: #3b3b3b; border-radius: 10px; }
 .sidebar-list::-webkit-scrollbar-thumb:hover { background: #4b4b4b; }
 
-
 /* --- Estilo para o botão "Marcar como Concluído" --- */
   .complete-lesson-button {
     margin-left: auto;
@@ -599,7 +595,6 @@
   transform: translateY(-2px);
 }
 
-
 @media (min-width: 1600px) {
   .streamer-content {
     padding: 0 3rem;
@@ -609,7 +604,6 @@
     padding: 0 3rem;
   }
 }
-
 
 @media (max-width: 1024px) {
   .video-and-sidebar {
@@ -724,24 +718,24 @@
 
 .modulos-container {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
-  max-width: 1300px;
-  margin: 2rem auto;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(18px, 2vw, 32px);
+  max-width: min(1600px, 94vw);
+  margin: clamp(2rem, 3.5vw, 4rem) auto;
   align-items: flex-start;
   width: 100%;
-  padding-left: 5vw;
+  padding: 0 clamp(1.5rem, 4vw, 3rem);
 }
 
 .modulos-wrapper { width: 100%; display: flex; justify-content: center; }
 
 @media (max-width: 1024px) {
   .modulos-container {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
-@media (max-width: 600px) {
+@media (max-width: 640px) {
   .modulos-container {
     grid-template-columns: 1fr;
   }
@@ -964,7 +958,7 @@
     justify-content: center;
   }
 }
-.material-card { width:100%; max-width:980px; margin:12px auto 0; display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(10,26,38,0.8); border:1px solid #274154; border-radius:14px; padding:10px 14px; }
+.material-card { width:100%; max-width:var(--content-max); margin:12px auto 0; display:flex; align-items:center; justify-content:space-between; gap:12px; background:rgba(10,26,38,0.8); border:1px solid #274154; border-radius:18px; padding:clamp(12px, 1.6vw, 20px); }
 .material-info { display:flex; align-items:center; gap:12px; }
 .material-icon { width:26px; height:32px; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff5252'%3E%3Cpath d='M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm1 7V3.5L18.5 9H15z'/%3E%3C/svg%3E"); background-size:contain; background-repeat:no-repeat; }
 .material-title { color:#e7f2f9; font-weight:800; }
@@ -972,3 +966,10 @@
 .badge-pdf { background:#b71c1c; color:#fff; border-radius:6px; padding:2px 6px; margin-left:8px; font-size:.7rem; vertical-align: middle; }
 .material-btn { background: linear-gradient(135deg, #c62828, #8e0000); color:#fff; border:none; border-radius:10px; padding:10px 14px; font-weight:800; cursor:pointer; box-shadow:0 6px 14px rgba(244,67,54,.3); }
 .action-btn:focus-visible, .material-btn:focus-visible { outline: 2px solid #00e5ff; outline-offset: 2px; }
+
+@media (min-width: 1600px) {
+  .modulos-container {
+    gap: clamp(24px, 2.6vw, 40px);
+    padding-inline: clamp(2.5rem, 6vw, 5rem);
+  }
+}

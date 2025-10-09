@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { FiMessageCircle, FiSend, FiThumbsUp } from "react-icons/fi";
+import { FiChevronDown, FiChevronRight, FiMessageCircle, FiSend, FiThumbsUp } from "react-icons/fi";
 import { usePlatformUserProfile } from "../../hooks/usePlatformUserProfile";
 import { MentionProfile, searchMentionProfiles } from "../../services/userProfile";
 import { addComment, fetchComments, likeComment } from "../../services/comments";
@@ -45,10 +45,15 @@ function buildThreads(list: Comment[]): ThreadComment[] {
     }
   });
   const sortReplies = (nodes: ThreadComment[]) => {
-    nodes.sort((a, b) => a.ts - b.ts);
-    nodes.forEach((node) => sortReplies(node.replies));
+    nodes.forEach((node) => {
+      if (node.replies.length > 0) {
+        node.replies.sort((a, b) => a.ts - b.ts);
+        sortReplies(node.replies);
+      }
+    });
   };
   sortReplies(roots);
+  roots.sort((a, b) => b.ts - a.ts);
   return roots;
 }
 
@@ -74,7 +79,7 @@ function renderCommentText(text: string) {
     elements.push(
       <span key={`mention-${key++}`} className="comment-mention">
         {match}
-      </span>,
+      </span>
     );
     cursor = offset + match.length;
     return match;
@@ -225,6 +230,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   const [text, setText] = useState("");
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [activeReply, setActiveReply] = useState<string | null>(null);
+  const [collapsedThreads, setCollapsedThreads] = useState<Record<string, boolean>>({});
   const { profile } = usePlatformUserProfile();
 
   const currentAuthor: CommentAuthor | null = useMemo(() => {
@@ -299,6 +305,26 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     };
   }, [videoId]);
 
+  useEffect(() => {
+    setCollapsedThreads({});
+  }, [videoId]);
+
+  useEffect(() => {
+    setCollapsedThreads((prev) => {
+      const validIds = new Set(list.map((comment) => comment.id));
+      let changed = false;
+      const next: Record<string, boolean> = {};
+      Object.entries(prev).forEach(([id, value]) => {
+        if (validIds.has(id)) {
+          next[id] = value;
+        } else {
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [list]);
+
   const submitComment = (content: string, parentId: string | null, reset: () => void) => {
     const value = content.trim();
     if (!value) return;
@@ -364,66 +390,94 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   const threads = useMemo(() => buildThreads(list), [list]);
   const countLabel = useMemo(() => `${list.length} ${list.length === 1 ? "Comentário" : "Comentários"}`, [list.length]);
 
-  const renderThread = (comment: ThreadComment, depth = 0): JSX.Element => (
-    <li key={comment.id} className={`comment-item ${depth > 0 ? 'comment-item--reply' : ''}`}>
-      <div className="comment-main">
-        <div className={`comment-avatar ${comment.author.avatarUrl ? 'comment-avatar--image' : 'comment-avatar--initials'}`}>
-          {comment.author.avatarUrl ? (
-            <img src={comment.author.avatarUrl} alt={`Logo do aluno ${comment.author.name}`} />
-          ) : (
-            <span>{comment.author.initials}</span>
-          )}
-        </div>
-        <div className="comment-body">
-          <div className="comment-meta">
-            <div className="comment-author-block">
-              <span className="comment-author">{comment.author.name}</span>
-              <span className="comment-dot">•</span>
-              <span className="comment-time">{new Date(comment.ts).toLocaleString("pt-BR")}</span>
-            </div>
-            <div className="comment-actions">
-              <button type="button" className="comment-action" onClick={() => handleLike(comment.id)}>
-                <FiThumbsUp /> {comment.likes}
-              </button>
-              <button
-                type="button"
-                className="comment-action"
-                onClick={() => {
-                  setActiveReply((prev) => (prev === comment.id ? null : comment.id));
-                  setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
-                }}
-              >
-                <FiMessageCircle /> Responder
-              </button>
-            </div>
+  const toggleReplies = (commentId: string, force?: boolean) => {
+    setCollapsedThreads((prev) => {
+      const current = prev[commentId];
+      const nextState = typeof force === "boolean" ? force : !current;
+      return { ...prev, [commentId]: nextState };
+    });
+  };
+
+  const renderThread = (comment: ThreadComment, depth = 0): JSX.Element => {
+    const storedCollapsed = collapsedThreads[comment.id];
+    const defaultCollapsed = depth >= 1;
+    const isCollapsed = typeof storedCollapsed === "boolean" ? storedCollapsed : defaultCollapsed;
+
+    return (
+      <li key={comment.id} className={`comment-item ${depth > 0 ? 'comment-item--reply' : ''}`}>
+        <div className="comment-main">
+          <div className={`comment-avatar ${comment.author.avatarUrl ? 'comment-avatar--image' : 'comment-avatar--initials'}`}>
+            {comment.author.avatarUrl ? (
+              <img src={comment.author.avatarUrl} alt={`Logo do aluno ${comment.author.name}`} />
+            ) : (
+              <span>{comment.author.initials}</span>
+            )}
           </div>
-          <div className="comment-text">{renderCommentText(comment.text)}</div>
-          {activeReply === comment.id && (
-            <div className="comment-reply">
-              <MentionTextarea
-                value={replyDrafts[comment.id] || ''}
-                onChange={(value) => setReplyDrafts((prev) => ({ ...prev, [comment.id]: value }))}
-                placeholder="Responder ao comentário"
-                autoFocus
-                onSubmit={() => handleReplySubmit(comment.id)}
-              />
-              <div className="comment-reply-actions">
-                <button type="button" className="comment-cancel" onClick={() => setActiveReply(null)}>Cancelar</button>
-                <button type="button" className="comment-send" onClick={() => handleReplySubmit(comment.id)}>
-                  <FiSend /> Enviar
+          <div className="comment-body">
+            <div className="comment-meta">
+              <div className="comment-author-block">
+                <span className="comment-author">{comment.author.name}</span>
+                <span className="comment-dot">•</span>
+                <span className="comment-time">{new Date(comment.ts).toLocaleString("pt-BR")}</span>
+              </div>
+              <div className="comment-actions">
+                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)}>
+                  <FiThumbsUp /> {comment.likes}
+                </button>
+                <button
+                  type="button"
+                  className="comment-action"
+                  onClick={() => {
+                    setActiveReply((prev) => (prev === comment.id ? null : comment.id));
+                    setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
+                  }}
+                >
+                  <FiMessageCircle /> Responder
                 </button>
               </div>
             </div>
-          )}
-          {comment.replies.length > 0 && (
-            <ul className="comment-replies">
-              {comment.replies.map((reply) => renderThread(reply, depth + 1))}
-            </ul>
-          )}
+            <div className="comment-text">{renderCommentText(comment.text)}</div>
+            {comment.replies.length > 0 && (
+              <button
+                type="button"
+                className={`comment-toggle ${isCollapsed ? 'is-collapsed' : ''}`}
+                onClick={() => {
+                  toggleReplies(comment.id, !isCollapsed);
+                }}
+              >
+                {isCollapsed ? <FiChevronRight /> : <FiChevronDown />}
+                {isCollapsed
+                  ? `Mostrar ${comment.replies.length} ${comment.replies.length === 1 ? 'resposta' : 'respostas'}`
+                  : `Ocultar ${comment.replies.length} ${comment.replies.length === 1 ? 'resposta' : 'respostas'}`}
+              </button>
+            )}
+            {activeReply === comment.id && (
+              <div className="comment-reply">
+                <MentionTextarea
+                  value={replyDrafts[comment.id] || ''}
+                  onChange={(value) => setReplyDrafts((prev) => ({ ...prev, [comment.id]: value }))}
+                  placeholder="Responder ao comentário"
+                  autoFocus
+                  onSubmit={() => handleReplySubmit(comment.id)}
+                />
+                <div className="comment-reply-actions">
+                  <button type="button" className="comment-cancel" onClick={() => setActiveReply(null)}>Cancelar</button>
+                  <button type="button" className="comment-send" onClick={() => handleReplySubmit(comment.id)}>
+                    <FiSend /> Enviar
+                  </button>
+                </div>
+              </div>
+            )}
+            {comment.replies.length > 0 && !isCollapsed && (
+              <ul className="comment-replies">
+                {comment.replies.map((reply) => renderThread(reply, depth + 1))}
+              </ul>
+            )}
+          </div>
         </div>
-      </div>
-    </li>
-  );
+      </li>
+    );
+  };
 
   return (
     <div className="comments-wrap comments-modern">
