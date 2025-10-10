@@ -99,7 +99,10 @@ const ModulosMestre = () => {
     if (!ministry) return [];
     return ministry.modules.map((module) => {
       const publishedLessons = lessons.filter((lesson) => lesson.moduleId === module.id);
-      const topics = publishedLessons.slice(0, 4).map((lesson) => lesson.title);
+      const topics = publishedLessons
+        .map((lesson) => lesson.subjectName || lesson.title)
+        .filter((value, index, array) => !!value && array.indexOf(value) === index)
+        .slice(0, 4);
       const order = module.order + 1;
       const banner =
         publishedLessons.find((lesson) => lesson.bannerPlayer?.url || lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.url ||

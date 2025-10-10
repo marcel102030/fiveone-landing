@@ -50,6 +50,16 @@ const categoryOptions = [
   'Formação Ministerial',
 ] as const;
 
+const slugify = (value: string): string => {
+  return value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 const sourceTypeOptions: { value: LessonSourceType; label: string; helper: string }[] = [
   { value: "YOUTUBE", label: "YouTube", helper: "Cole a URL do vídeo do YouTube." },
   { value: "VIMEO", label: "Vimeo", helper: "Cole o link público ou o código de incorporação do Vimeo." },
@@ -184,7 +194,7 @@ export default function AdminConteudoPlataforma() {
         subtitle: lesson.subtitle || "",
         subjectId: lesson.subjectId || "",
         subjectName: lesson.subjectName || "",
-        subjectType: lesson.subjectType || "Formação T",
+        subjectType: lesson.subjectType || categoryOptions[0],
         instructor: lesson.instructor || "",
         description: lesson.description || "",
         contentType: lesson.contentType || "VIDEO",
@@ -213,7 +223,20 @@ export default function AdminConteudoPlataforma() {
   };
 
   const handleLessonFormChange = (field: keyof LessonFormState, value: string) => {
-    setLessonForm((prev) => ({ ...prev, [field]: value } as LessonFormState));
+    setLessonForm((prev) => {
+      const next: LessonFormState = { ...prev, [field]: value };
+      if (field === "subjectName") {
+        const newSlug = slugify(value);
+        const previousAutoSlug = slugify(prev.subjectName || "");
+        if (!prev.subjectId || prev.subjectId === previousAutoSlug) {
+          next.subjectId = newSlug;
+        }
+      }
+      if (field === "subjectType" && !value) {
+        next.subjectType = categoryOptions[0];
+      }
+      return next;
+    });
   };
 
   const extractVimeoEmbedSrc = (value: string): string | null => {
@@ -463,13 +486,17 @@ export default function AdminConteudoPlataforma() {
       return;
     }
 
+    const subjectName = lessonForm.subjectName.trim();
+    const subjectId = (lessonForm.subjectId || slugify(subjectName)).trim();
+    const subjectType = lessonForm.subjectType?.trim() || categoryOptions[0];
+    const instructor = lessonForm.instructor.trim();
     const basePayload: Partial<LessonInput> = {
       title: lessonForm.title,
       subtitle: lessonForm.subtitle,
-      subjectId: lessonForm.subjectId,
-      subjectName: lessonForm.subjectName,
-      subjectType: lessonForm.subjectType,
-      instructor: lessonForm.instructor,
+      subjectId,
+      subjectName,
+      subjectType,
+      instructor,
       description: lessonForm.description,
       contentType: lessonForm.contentType,
       sourceType: lessonForm.sourceType,

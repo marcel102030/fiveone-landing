@@ -18,6 +18,15 @@ import { LessonRef, listLessons, subscribePlatformContent } from '../../services
 import SubjectDropdown, { SubjectOption } from '../../components/SubjectDropdown/SubjectDropdown';
 import { openStoredFile } from '../../utils/storedFile';
 
+
+const slugify = (value: string): string =>
+  value
+    .trim()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 const extractEmbedSrc = (raw?: string | null): string | null => {
   if (!raw) return null;
   const trimmed = raw.trim();
@@ -508,18 +517,32 @@ const StreamerMestre = () => {
   }, []);
   const navigate = useNavigate();
   // Filtro por matéria na sidebar
-  const subjectOrder = ['biblia','fundamentos','ministerios','historia'];
   const subjects: SubjectOption[] = useMemo(() => {
-    const map = new Map<string, string>();
-    videoList.forEach(v => {
-      if (v.subjectId) map.set(v.subjectId, v.subjectName || v.subjectId);
+    const counts = new Map<string, { name: string; count: number }>();
+    videoList.forEach((v) => {
+      const id = (v.subjectId && v.subjectId.trim()) || slugify(v.subjectName || '');
+      if (!id) return;
+      const name = v.subjectName || v.subjectId || id;
+      const entry = counts.get(id);
+      if (entry) {
+        entry.count += 1;
+        if (name && entry.name !== name) entry.name = name;
+      } else {
+        counts.set(id, { name, count: 1 });
+      }
     });
-    const arr = Array.from(map.entries()).map(([id, name]) => ({ id, name, count: videoList.filter(v => v.subjectId === id).length }));
-    arr.sort((a,b)=> (subjectOrder.indexOf(a.id) === -1 ? 999 : subjectOrder.indexOf(a.id)) - (subjectOrder.indexOf(b.id) === -1 ? 999 : subjectOrder.indexOf(b.id)));
+    const arr = Array.from(counts.entries()).map(([id, info]) => ({ id, name: info.name, count: info.count }));
+    arr.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     return [{ id: 'all', name: 'Todas', count: videoList.length }, ...arr];
   }, [videoList]);
   const [filterSubject, setFilterSubject] = useState<string>('all');
-  const filteredList = useMemo(() => filterSubject === 'all' ? videoList : videoList.filter(v => v.subjectId === filterSubject), [videoList, filterSubject]);
+  const filteredList = useMemo(() => {
+    if (filterSubject === 'all') return videoList;
+    return videoList.filter((v) => {
+      const id = (v.subjectId && v.subjectId.trim()) || slugify(v.subjectName || '');
+      return id === filterSubject;
+    });
+  }, [videoList, filterSubject]);
   useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   const handleNext = () => {
     if (currentIndex < videoList.length - 1) {
