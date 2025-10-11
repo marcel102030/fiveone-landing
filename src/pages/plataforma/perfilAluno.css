@@ -433,3 +433,58 @@
     justify-content: center;
   }
 }
+
+@media (max-width: 640px) {
+  .profile-page {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 32px);
+  }
+
+  .profile-main {
+    padding:
+      calc(env(safe-area-inset-top) + clamp(52px, 16vw, 72px))
+      clamp(18px, 6vw, 26px)
+      clamp(72px, 18vw, 96px);
+    gap: clamp(18px, 6vw, 24px);
+  }
+
+  .profile-header h1 {
+    font-size: clamp(1.6rem, 5.6vw, 2rem);
+  }
+
+  .profile-top {
+    gap: clamp(14px, 5vw, 20px);
+  }
+
+  .profile-hero {
+    padding: clamp(18px, 6vw, 24px);
+    gap: clamp(12px, 5vw, 18px);
+  }
+
+  .profile-hero__meta {
+    gap: 8px;
+  }
+
+  .profile-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .profile-columns {
+    gap: clamp(18px, 6vw, 24px);
+  }
+
+  .profile-card {
+    padding: clamp(18px, 6vw, 26px);
+  }
+
+  .profile-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: clamp(12px, 4vw, 16px);
+  }
+}

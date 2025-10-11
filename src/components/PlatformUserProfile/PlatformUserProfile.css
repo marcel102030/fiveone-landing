@@ -102,8 +102,9 @@
 
 @media (max-width: 640px) {
   .platform-user-profile {
-    padding: 10px 14px;
-    gap: 10px;
+    padding: clamp(12px, 4vw, 16px);
+    gap: clamp(10px, 4vw, 14px);
+    width: 100%;
   }
 
   .platform-user-profile__avatar {
@@ -118,5 +119,9 @@
 
   .platform-user-profile__email {
     font-size: 0.8rem;
+  }
+
+  .platform-user-profile__details {
+    align-items: flex-start;
   }
 }

@@ -87,6 +87,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: clamp(18px, 2vw, 26px);
 }
 
 .streamer-titulo {
@@ -134,6 +135,53 @@
   }
 }
 
+@media (max-width: 640px) {
+  .streamer-container {
+    padding: clamp(18px, 6vw, 26px) clamp(16px, 6vw, 24px);
+  }
+
+  .streamer-content {
+    flex-direction: column;
+    gap: clamp(18px, 6vw, 28px);
+    align-items: stretch;
+  }
+
+  .streamer-video-area {
+    padding: 0;
+    max-width: 100%;
+  }
+
+  .video-wrapper {
+    width: 100%;
+  }
+
+  .video-container {
+    width: 100%;
+    border-radius: clamp(18px, 6vw, 24px);
+    overflow: hidden;
+    background: #050b16;
+  }
+
+  .video-container iframe {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    min-height: clamp(200px, 56vw, 240px);
+  }
+
+  .streamer-titulo {
+    font-size: clamp(1.45rem, 5.6vw, 1.75rem);
+    margin-top: clamp(18px, 6vw, 28px);
+    margin-bottom: clamp(12px, 4vw, 18px);
+  }
+
+  .streamer-main-wrapper,
+  .streamer-wrapper {
+    padding: clamp(20px, 6vw, 32px) clamp(18px, 6vw, 24px);
+    max-width: 100%;
+  }
+}
+
 @media (max-width: 1024px) {
   .streamer-layout {
     flex-direction: column;
@@ -155,6 +203,14 @@
   padding: 1rem;
   gap: 1rem;
   width: 100%;
+}
+
+@media (max-width: 640px) {
+  .streamer-main-wrapper {
+    max-width: 100%;
+    padding: clamp(20px, 6vw, 32px) clamp(18px, 6vw, 24px);
+    gap: clamp(18px, 6vw, 28px);
+  }
 }
 .aula-card {
   width: 100%;
