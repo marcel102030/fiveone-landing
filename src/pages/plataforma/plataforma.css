@@ -1034,6 +1034,16 @@ html {
   .custom-modal p {
     font-size: 0.9rem;
   }
+  .custom-modal-actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+  }
+  .custom-modal-actions.single {
+    flex-direction: column;
+  }
+  .custom-modal-button {
+    width: 100%;
+  }
   .inicio-container h1 {
     font-size: 1.8rem;
   }
@@ -1074,7 +1084,7 @@ html {
   width: 90%;
   max-height: 90vh;
   overflow: auto;
-  text-align: center;
+  text-align: left;
   color: white;
   font-family: 'Inter', sans-serif;
   border: 1px solid #00ffff;
@@ -1094,20 +1104,48 @@ html {
   color: #ddd;
 }
 
-.custom-modal button {
-  padding: 0.5rem 1rem;
-  background-color: #00ffff;
-  border: none;
-  border-radius: 6px;
-  font-weight: bold;
-  cursor: pointer;
-  font-size: 1rem;
-  color: #001a33;
-  transition: background-color 0.3s ease;
+.custom-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 18px;
 }
 
-.custom-modal button:hover {
-  background-color: #00cccc;
+.custom-modal-actions.single {
+  justify-content: center;
+}
+
+.custom-modal-button {
+  padding: 0.55rem 1.1rem;
+  border-radius: 8px;
+  font-weight: 700;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease, background-color 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+  border: none;
+}
+
+.custom-modal-button.primary {
+  background: linear-gradient(135deg, #00ffff, #00bcd4);
+  color: #001a33;
+  box-shadow: 0 12px 24px rgba(0, 255, 255, 0.25);
+}
+
+.custom-modal-button.primary:hover {
+  background: linear-gradient(135deg, #00d5d5, #00a5bf);
+  transform: translateY(-1px);
+}
+
+.custom-modal-button.secondary {
+  background: transparent;
+  border: 1px solid rgba(0, 229, 255, 0.45);
+  color: #bfe9ff;
+}
+
+.custom-modal-button.secondary:hover {
+  border-color: rgba(0, 229, 255, 0.65);
+  color: #ffffff;
+  transform: translateY(-1px);
 }
 
 @keyframes fadeInModal {

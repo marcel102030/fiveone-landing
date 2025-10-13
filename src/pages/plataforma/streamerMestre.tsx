@@ -6,7 +6,7 @@ import CommentSection from '../../components/Streamer/CommentSection';
 import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
-import { upsertProgress } from '../../services/progress';
+import { upsertProgress, deleteProgressForUserVideo } from '../../services/progress';
 import {
   COMPLETED_EVENT,
   listCompletedLessonIds,
@@ -39,12 +39,43 @@ const extractEmbedSrc = (raw?: string | null): string | null => {
   return null;
 };
 
+const normaliseVimeoUrl = (url: string): string => {
+  if (!url) return url;
+  if (/player\.vimeo\.com/.test(url)) return url;
+  const cleanUrl = url.trim();
+  const idMatch = cleanUrl.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+  if (!idMatch) return url;
+  const videoId = idMatch[1];
+  let hash = '';
+  const hashMatch = cleanUrl.match(/vimeo\.com\/\d+\/([0-9a-z]+)$/i);
+  if (hashMatch) hash = hashMatch[1];
+  const queryIndex = cleanUrl.indexOf('?');
+  let extra = queryIndex >= 0 ? cleanUrl.slice(queryIndex) : '';
+  if (!extra && hash) {
+    extra = `?h=${hash}`;
+  }
+  return `https://player.vimeo.com/video/${videoId}${extra}`;
+};
+
 type VimeoPlayer = import('@vimeo/player').default;
 
 type StoredProgress = {
   watchedSeconds: number;
   durationSeconds: number;
   lastAt: number;
+};
+
+type ConfirmState = {
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm: () => Promise<void> | void;
+};
+
+type ToastState = {
+  message: string;
+  tone?: 'success' | 'error' | 'info';
 };
 
 const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
@@ -120,6 +151,12 @@ const StreamerMestre = () => {
   const sidebarRef = useRef<HTMLDivElement>(null);
   // searchParams já usado acima
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
+  const [toastState, setToastState] = useState<ToastState | null>(null);
+
+  const syncCompletedIds = useCallback(() => {
+    setCompletedIds(new Set(listCompletedLessonIds()));
+  }, []);
 
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)');
@@ -130,27 +167,40 @@ const StreamerMestre = () => {
   }, []);
 
   useEffect(() => {
-    const sync = () => {
-      setCompletedIds(new Set(listCompletedLessonIds()));
-    };
-    sync();
-    const handler = () => sync();
+    if (!toastState) return;
+    const timer = window.setTimeout(() => setToastState(null), 3200);
+    return () => window.clearTimeout(timer);
+  }, [toastState]);
+
+  useEffect(() => {
+    const handler = () => syncCompletedIds();
+    syncCompletedIds();
     window.addEventListener(COMPLETED_EVENT, handler);
     const storageHandler = (event: StorageEvent) => {
-      if (event.key === 'fiveone_completed_lessons_v1') sync();
+      if (event.key === 'fiveone_completed_lessons_v1') syncCompletedIds();
     };
     window.addEventListener('storage', storageHandler);
     return () => {
       window.removeEventListener(COMPLETED_EVENT, handler);
       window.removeEventListener('storage', storageHandler);
     };
-  }, []);
+  }, [syncCompletedIds]);
 
   const currentVideo = videoList[currentIndex];
   const embedSrc = useMemo(() => {
     if (!currentVideo) return '';
-    return extractEmbedSrc(currentVideo.embedCode) || currentVideo.videoUrl || '';
-  }, [currentVideo?.embedCode, currentVideo?.videoUrl]);
+    const extracted = extractEmbedSrc(currentVideo.embedCode);
+    if (extracted) return normaliseVimeoUrl(extracted);
+    if (currentVideo.videoUrl) return normaliseVimeoUrl(currentVideo.videoUrl);
+    if (currentVideo.videoId && /^\d+$/.test(currentVideo.videoId)) {
+      return normaliseVimeoUrl(`https://player.vimeo.com/video/${currentVideo.videoId}`);
+    }
+    return '';
+  }, [currentVideo?.embedCode, currentVideo?.videoUrl, currentVideo?.videoId]);
+  const [playerNonce, setPlayerNonce] = useState(0);
+  useEffect(() => {
+    setPlayerNonce((nonce) => nonce + 1);
+  }, [embedSrc, currentVideo?.videoId]);
   const persistProgress = useCallback(
     (rawWatched: number, rawDuration?: number) => {
       const lesson = videoList[currentIndex];
@@ -205,14 +255,29 @@ const StreamerMestre = () => {
       };
 
       try {
-        const existingWatchedRaw = localStorage.getItem('videos_assistidos');
-        const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
-        const filteredWatched = Array.isArray(existingWatched)
-          ? existingWatched.filter((video: any) => video.url !== currentVideoData.url)
-          : [];
-        const updatedWatched = [currentVideoData, ...filteredWatched];
-        const limitedWatched = updatedWatched.slice(0, 12);
-        localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+        if (lesson.videoId && completedIds.has(lesson.videoId)) {
+          const existingRaw = localStorage.getItem('videos_assistidos');
+          if (existingRaw) {
+            const arr = JSON.parse(existingRaw);
+            if (Array.isArray(arr)) {
+              const filtered = arr.filter((video: any) => {
+                const key = video.id || video.videoId || video.url;
+                if (!key) return true;
+                return key !== lesson.videoId && key !== lesson.videoUrl;
+              });
+              localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
+            }
+          }
+        } else {
+          const existingWatchedRaw = localStorage.getItem('videos_assistidos');
+          const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
+          const filteredWatched = Array.isArray(existingWatched)
+            ? existingWatched.filter((video: any) => video.url !== currentVideoData.url)
+            : [];
+          const updatedWatched = [currentVideoData, ...filteredWatched];
+          const limitedWatched = updatedWatched.slice(0, 12);
+          localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+        }
       } catch {}
 
       const userId = getCurrentUserId();
@@ -232,8 +297,49 @@ const StreamerMestre = () => {
           }).catch(() => {});
         }
       }
+
+      const completionDuration = safeDurationSource > 0
+        ? safeDurationSource
+        : typeof lesson.durationMinutes === 'number' && lesson.durationMinutes > 0
+          ? lesson.durationMinutes * 60
+          : 0;
+
+      if (lesson.videoId && completionDuration > 0) {
+        const threshold = Math.max(completionDuration - 5, completionDuration * 0.97);
+        if (watchedSeconds >= threshold && !completedIds.has(lesson.videoId)) {
+          const next = new Set(completedIds);
+          next.add(lesson.videoId);
+          setCompletedIds(next);
+          setLessonCompleted(lesson.videoId, {
+            previousWatched: watchedSeconds,
+            previousDuration: completionDuration,
+          });
+          try {
+            const existingRaw = localStorage.getItem('videos_assistidos');
+            if (existingRaw) {
+              const arr = JSON.parse(existingRaw);
+              if (Array.isArray(arr)) {
+                const filtered = arr.filter((video: any) => {
+                  const key = video.id || video.videoId || video.url;
+                  if (!key) return true;
+                  return key !== lesson.videoId && key !== lesson.videoUrl;
+                });
+                localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
+              }
+            }
+          } catch {}
+          const uid = getCurrentUserId();
+          if (uid) {
+            import('../../services/completions')
+              .then((m) => m.upsertCompletion(uid, lesson.videoId))
+              .catch(() => {});
+          }
+
+          syncCompletedIds();
+        }
+      }
     },
-    [videoList, currentIndex, isMobile],
+    [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds],
   );
 
   const alignSidebar = useCallback(() => {
@@ -316,7 +422,7 @@ const StreamerMestre = () => {
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, [currentVideo?.videoId, alignSidebar]);
+  }, [currentVideo?.videoId, alignSidebar, playerNonce]);
 
   useEffect(() => {
     const lesson = videoList[currentIndex];
@@ -339,7 +445,7 @@ const StreamerMestre = () => {
       destroyed = true;
       window.clearInterval(interval);
     };
-  }, [videoList, currentIndex, persistProgress]);
+  }, [videoList, currentIndex, persistProgress, playerNonce]);
 
   useEffect(() => {
     const lesson = currentVideo;
@@ -358,10 +464,24 @@ const StreamerMestre = () => {
       try {
         const iframe = videoRef.current?.querySelector('iframe');
         if (!iframe) return;
+        const existingSrc = iframe.getAttribute('src');
+        if (existingSrc !== vimeoSrc) {
+          iframe.setAttribute('src', vimeoSrc);
+        }
         const { default: Player } = await import('@vimeo/player');
         if (cancelled) return;
         playerInstanceRef.current?.destroy().catch(() => {});
         const player = new Player(iframe);
+        try {
+          await player.loadVideo({ url: vimeoSrc });
+        } catch {
+          try {
+            await player.loadVideo(vimeoSrc);
+          } catch {
+            iframe.setAttribute('src', vimeoSrc);
+          }
+        }
+        await player.ready();
         playerInstanceRef.current = player;
         alignSidebar();
         setTimeout(() => alignSidebar(), 120);
@@ -436,38 +556,127 @@ const StreamerMestre = () => {
         playerInstanceRef.current = null;
       }
     };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress]);
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress, alignSidebar, playerNonce]);
+
+  const resolveLessonAssets = useCallback((lesson: LessonRef) => {
+    const bannerContinue = lesson.bannerContinue;
+    const bannerPlayer = lesson.bannerPlayer;
+    const bannerMobile = lesson.bannerMobile;
+    const resolvedBannerContinue = bannerContinue?.url || bannerContinue?.dataUrl || null;
+    const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
+    const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
+    const previewImage =
+      resolvedBannerContinue ||
+      resolvedBannerPlayer ||
+      resolvedBannerMobile ||
+      lesson.thumbnailUrl ||
+      '/assets/images/miniatura_fundamentos_mestre.png';
+    return { previewImage, resolvedBannerContinue, resolvedBannerMobile };
+  }, []);
+
+  const resetLessonProgress = useCallback((lesson: LessonRef, index: number, durationSeconds?: number) => {
+    const base = lesson.videoUrl || lesson.videoId;
+    if (!base) return;
+    const now = Date.now();
+    const duration = typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds : 0;
+    const payload: StoredProgress = {
+      watchedSeconds: 0,
+      durationSeconds: duration,
+      lastAt: now,
+    };
+    try {
+      localStorage.setItem(`fiveone_progress::${base}`, JSON.stringify(payload));
+    } catch {}
+
+    try {
+      const { previewImage, resolvedBannerContinue, resolvedBannerMobile } = resolveLessonAssets(lesson);
+      const entry = {
+        title: lesson.title,
+        thumbnail: previewImage,
+        url: base,
+        index,
+        id: lesson.videoId,
+        subjectName: lesson.subjectName,
+        subjectId: lesson.subjectId,
+        bannerContinue: resolvedBannerContinue,
+        bannerMobile: resolvedBannerMobile,
+        watchedSeconds: 0,
+        durationSeconds: duration,
+        lastAt: now,
+      };
+      const existingRaw = localStorage.getItem('videos_assistidos');
+      const existing = existingRaw ? JSON.parse(existingRaw) : [];
+      const filtered = Array.isArray(existing)
+        ? existing.filter((video: any) => {
+            const key = video.id || video.videoId || video.url;
+            if (!key) return true;
+            return key !== base;
+          })
+        : [];
+      filtered.unshift(entry);
+      localStorage.setItem('videos_assistidos', JSON.stringify(filtered.slice(0, 12)));
+    } catch {}
+  }, [resolveLessonAssets]);
+
+  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
+    setToastState({ message, tone });
+  }, []);
 
   const handleMarkAsCompleted = async () => {
     const lesson = videoList[currentIndex];
     if (!lesson || !lesson.videoId) return;
     const lessonId = lesson.videoId;
-    const uid = getCurrentUserId();
 
     if (completedIds.has(lessonId)) {
-      const confirmRevert = window.confirm('Deseja marcar esta aula como não concluída? Ela voltará para "Continuar assistindo".');
-      if (!confirmRevert) return;
+      const lessonSnapshot = lesson;
+      const indexSnapshot = currentIndex;
+      setConfirmState({
+        title: 'Marcar como não concluída',
+        message: 'Essa aula voltará para "Continuar assistindo" com o progresso zerado. Deseja confirmar?',
+        cancelLabel: 'Cancelar',
+        confirmLabel: 'Marcar como não concluída',
+        onConfirm: async () => {
+          setConfirmState(null);
+          const uid = getCurrentUserId();
+          setCompletedIds((prev) => {
+            const next = new Set(prev);
+            next.delete(lessonSnapshot.videoId);
+            return next;
+          });
+          const removal = removeLessonCompleted(lessonSnapshot.videoId);
+          const stored = getStoredProgress(lessonSnapshot);
+          const durationGuess = removal.removed?.previousDuration
+            ?? stored?.durationSeconds
+            ?? (typeof lessonSnapshot.durationMinutes === 'number' ? lessonSnapshot.durationMinutes * 60 : 0);
+          resetLessonProgress(lessonSnapshot, indexSnapshot, durationGuess);
 
-      const next = new Set(completedIds);
-      next.delete(lessonId);
-      setCompletedIds(next);
+          if (playerInstanceRef.current) {
+            try {
+              await playerInstanceRef.current.setCurrentTime(0);
+              await playerInstanceRef.current.pause();
+            } catch {}
+          } else if (embedSrc) {
+            const iframe = videoRef.current?.querySelector('iframe');
+            if (iframe) iframe.setAttribute('src', embedSrc);
+          }
 
-      const { removed } = removeLessonCompleted(lessonId);
-      const stored = getStoredProgress(lesson);
-      const previousWatched = removed?.previousWatched ?? stored?.watchedSeconds ?? 0;
-      const previousDuration = removed?.previousDuration ?? stored?.durationSeconds ?? null;
-      if (previousWatched > 0 || (previousDuration && previousDuration > 0)) {
-        persistProgress(Math.max(0, previousWatched), previousDuration ?? undefined);
-      }
+          setPlayerNonce((nonce) => nonce + 1);
 
-      if (uid) {
-        import('../../services/completions')
-          .then((m) => m.deleteCompletion(uid, lessonId))
-          .catch(() => {});
-      }
+          if (uid) {
+            import('../../services/completions')
+              .then((m) => m.deleteCompletion(uid, lessonSnapshot.videoId))
+              .catch(() => {});
+            deleteProgressForUserVideo(uid, lessonSnapshot.videoId).catch(() => {});
+          }
+
+          syncCompletedIds();
+          showToast('Aula marcada como não concluída.', 'info');
+        },
+      });
       return;
     }
 
+    const uid = getCurrentUserId();
     const storedProgress = getStoredProgress(lesson);
     let duration = storedProgress?.durationSeconds ?? null;
     if ((!duration || duration <= 0) && lesson.sourceType === 'VIMEO' && playerInstanceRef.current) {
@@ -483,9 +692,11 @@ const StreamerMestre = () => {
     const watchedBefore = storedProgress?.watchedSeconds ?? null;
     const total = duration && duration > 0 ? duration : watchedBefore ?? 0;
 
-    const next = new Set(completedIds);
-    next.add(lessonId);
-    setCompletedIds(next);
+    setCompletedIds((prev) => {
+      const next = new Set(prev);
+      next.add(lessonId);
+      return next;
+    });
     setLessonCompleted(lessonId, {
       previousWatched: watchedBefore,
       previousDuration: storedProgress?.durationSeconds ?? duration ?? null,
@@ -500,6 +711,9 @@ const StreamerMestre = () => {
         .then((m) => m.upsertCompletion(uid, lessonId))
         .catch(() => {});
     }
+
+    syncCompletedIds();
+    showToast('Aula marcada como concluída.', 'success');
   };
   // Load completions for user once
   useEffect(() => {
@@ -544,6 +758,10 @@ const StreamerMestre = () => {
     });
   }, [videoList, filterSubject]);
   useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
+  const currentLessonKey = useMemo(() => {
+    if (!currentVideo) return '';
+    return currentVideo.videoId || currentVideo.videoUrl || currentVideo.id || '';
+  }, [currentVideo]);
   const handleNext = () => {
     if (currentIndex < videoList.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -606,7 +824,7 @@ const StreamerMestre = () => {
                 </div>
                 <div className="video-container" ref={videoRef}>
                   <iframe
-                    key={currentVideo.videoId || embedSrc || currentVideo.videoUrl || currentVideo.id}
+                    key={`${currentVideo.videoId || currentVideo.videoUrl || currentVideo.id || 'player'}-${playerNonce}`}
                     src={embedSrc || 'about:blank'}
                     title={currentVideo.title}
                     frameBorder="0"
@@ -629,11 +847,11 @@ const StreamerMestre = () => {
                   </div>
                   <div className="action-right">
                     <button
-                      className={`action-btn complete ${completedIds.has(videoList[currentIndex].videoId) ? 'is-done' : ''}`}
+                      className={`action-btn complete ${currentLessonKey && completedIds.has(currentLessonKey) ? 'is-done' : ''}`}
                       onClick={handleMarkAsCompleted}
                       type="button"
                     >
-                      {completedIds.has(videoList[currentIndex].videoId) ? 'Concluída' : 'Concluir'}
+                      {currentLessonKey && completedIds.has(currentLessonKey) ? 'Concluída' : 'Concluir'}
                     </button>
                   </div>
                 </div>
@@ -666,12 +884,20 @@ const StreamerMestre = () => {
                   {(() => {
                     const items: JSX.Element[] = [];
                     filteredList.forEach((video, index) => {
-                      const globalIndex = videoList.findIndex(v => v.videoId === video.videoId);
+                      let globalIndex = videoList.findIndex(v => v.videoId === video.videoId);
+                      if (globalIndex === -1) {
+                        const fallbackKey = video.videoUrl || video.id || null;
+                        if (fallbackKey) {
+                          globalIndex = videoList.findIndex((v) => v.videoUrl === fallbackKey || v.id === fallbackKey);
+                        }
+                      }
                       if (globalIndex === -1) return;
+                      const itemKey = video.videoId || video.videoUrl || video.id || '';
+                      const isCompleted = itemKey ? completedIds.has(itemKey) : false;
                       items.push(
                         <li
-                          key={`${video.videoId}-${index}`}
-                          className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''}`}
+                          key={`${itemKey || `video-${index}`}-${index}`}
+                          className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''} ${isCompleted ? 'is-complete' : ''}`}
                           title={video.title}
                           onClick={() => setCurrentIndex(globalIndex)}
                         >
@@ -688,7 +914,7 @@ const StreamerMestre = () => {
                             <div className="sidebar-video-title">{video.title}</div>
                             <div className="sidebar-video-subject">{video.subjectName}</div>
                             <div className="status-indicator">
-                              {completedIds.has(video.videoId) && (
+                              {isCompleted && (
                                 <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
                               )}
                             </div>
@@ -705,6 +931,44 @@ const StreamerMestre = () => {
           )}
         </main>
       </div>
+      {confirmState && (
+        <div className="custom-modal-overlay" role="dialog" aria-modal="true" onClick={() => setConfirmState(null)}>
+          <div className="custom-modal" onClick={(event) => event.stopPropagation()}>
+            {confirmState.title && <h3>{confirmState.title}</h3>}
+            <p>{confirmState.message}</p>
+            <div className="custom-modal-actions">
+              <button type="button" className="custom-modal-button secondary" onClick={() => setConfirmState(null)}>
+                {confirmState.cancelLabel || 'Cancelar'}
+              </button>
+              <button
+                type="button"
+                className="custom-modal-button primary"
+                onClick={() => {
+                  try {
+                    const outcome = confirmState.onConfirm();
+                    if (outcome instanceof Promise) {
+                      outcome.catch((error) => {
+                        console.error(error);
+                        showToast('Não foi possível atualizar o status da aula.', 'error');
+                      });
+                    }
+                  } catch (error) {
+                    console.error(error);
+                    showToast('Não foi possível atualizar o status da aula.', 'error');
+                  }
+                }}
+              >
+                {confirmState.confirmLabel || 'Confirmar'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {toastState && (
+        <div className={`streamer-toast ${toastState.tone || 'info'}`} role="status" aria-live="polite">
+          {toastState.message}
+        </div>
+      )}
     </>
   );
 };

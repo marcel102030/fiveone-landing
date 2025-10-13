@@ -3,20 +3,25 @@ import "./plataforma.css";
 import { Link, useNavigate } from "react-router-dom";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { getCurrentUserId } from "../../utils/user";
-import { fetchUserProgress, deleteAllProgressForUser } from "../../services/progress";
+import { fetchUserProgress, deleteProgressExceptForUser } from "../../services/progress";
 import { listLessons, LessonRef, subscribePlatformContent } from "../../services/platformContent";
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
   mergeCompletedLessons,
   readCompletedLessons,
-  clearCompletedLessons,
 } from "../../utils/completedLessons";
-import { deleteAllCompletionsForUser } from "../../services/completions";
+
+type ModalState = {
+  title?: string;
+  message: string;
+  confirmLabel?: string;
+  cancelLabel?: string;
+  onConfirm?: () => Promise<void> | void;
+};
 
 const PaginaInicial = () => {
-  const [modalContent, setModalContent] = useState("");
-  const [showModal, setShowModal] = useState(false);
+  const [modalState, setModalState] = useState<ModalState | null>(null);
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
@@ -153,24 +158,90 @@ const PaginaInicial = () => {
     });
   }, [lastWatchedArray, completedIds, getVideoKey]);
 
-  const handleClearContinue = async () => {
+  const performClearHistory = useCallback(async () => {
+    const completedIdList = Array.from(completedIds.values()).filter((id): id is string => typeof id === 'string' && id.length > 0);
+    const keepBases = new Set<string>();
+    let storedWatched: Array<{ id?: string; videoId?: string; url?: string }> = [];
+
+    try {
+      const watchedRaw = localStorage.getItem('videos_assistidos');
+      if (watchedRaw) {
+        const parsed = JSON.parse(watchedRaw);
+        if (Array.isArray(parsed)) storedWatched = parsed as Array<{ id?: string; videoId?: string; url?: string }>;
+      }
+    } catch {}
+
+    if (completedIdList.length) {
+      mestreLessons.forEach((lesson) => {
+        if (!lesson.videoId) return;
+        if (!completedIds.has(lesson.videoId)) return;
+        const base = lesson.videoUrl || lesson.videoId;
+        if (base) keepBases.add(base);
+      });
+      storedWatched.forEach((item) => {
+        const candidateId = item?.id || item?.videoId;
+        if (candidateId && completedIds.has(candidateId)) {
+          const base = (typeof item?.url === 'string' && item.url) || candidateId;
+          if (base) keepBases.add(base);
+        }
+      });
+    }
+
     try {
       localStorage.removeItem('videos_assistidos');
+      const progressPrefix = 'fiveone_progress::';
+      const progressKeys: string[] = [];
+      for (let i = 0; i < localStorage.length; i += 1) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(progressPrefix)) {
+          const base = key.slice(progressPrefix.length);
+          if (!keepBases.has(base)) {
+            progressKeys.push(key);
+          }
+        }
+      }
+      progressKeys.forEach((key) => {
+        try { localStorage.removeItem(key); } catch {}
+      });
+
+      try {
+        const syncPrefix = 'fiveone_progress_sync_';
+        const syncKeys: string[] = [];
+        for (let i = 0; i < sessionStorage.length; i += 1) {
+          const key = sessionStorage.key(i);
+          if (key && key.startsWith(syncPrefix)) {
+            syncKeys.push(key);
+          }
+        }
+        syncKeys.forEach((key) => {
+          try { sessionStorage.removeItem(key); } catch {}
+        });
+      } catch {}
+
       const uid = getCurrentUserId();
       if (uid) {
-        try {
-          await deleteAllProgressForUser(uid);
-        } catch {}
-        try {
-          await deleteAllCompletionsForUser(uid);
-        } catch {}
+        await deleteProgressExceptForUser(uid, completedIdList);
       }
-    } finally {
+
       setLastWatchedArray([]);
-      clearCompletedLessons();
-      setCompletedMap(new Map());
+    } catch (error) {
+      console.error('Falha ao limpar histórico', error);
+      throw error;
     }
-  };
+  }, [completedIds, mestreLessons]);
+
+  const handleClearContinue = useCallback(() => {
+    setModalState({
+      title: 'Limpar histórico',
+      message:
+        'Ao limpar o histórico, todas as aulas que não foram concluídas terão o progresso reiniciado. As aulas já concluídas continuarão marcadas como concluídas. Deseja continuar?',
+      cancelLabel: 'Cancelar',
+      confirmLabel: 'Limpar histórico',
+      onConfirm: async () => {
+        await performClearHistory();
+      },
+    });
+  }, [performClearHistory]);
 
   const scrollCarousel = (direction: number) => {
     if (carouselRef.current) {
@@ -181,15 +252,25 @@ const PaginaInicial = () => {
     }
   };
 
-  const handleShowModal = (message: string) => {
-    setModalContent(message);
-    setShowModal(true);
+  const handleShowModal = (message: string, title?: string) => {
+    setModalState({ message, title });
   };
 
   const handleCloseModal = () => {
-    setShowModal(false);
-    setModalContent("");
+    setModalState(null);
   };
+
+  const handleModalConfirm = useCallback(async () => {
+    const action = modalState?.onConfirm;
+    setModalState(null);
+    if (!action) return;
+    try {
+      await action();
+    } catch (error) {
+      console.error('Ação do modal falhou', error);
+      setModalState({ title: 'Ops!', message: 'Não foi possível concluir a ação. Tente novamente em instantes.' });
+    }
+  }, [modalState]);
 
   const scrollToId = (id: string) => {
     const el = document.getElementById(id);
@@ -447,11 +528,27 @@ const PaginaInicial = () => {
             <img src="/assets/images/mestre.png" alt="Formação Mestre" loading="lazy" />
           </Link>
         </div>
-        {showModal && (
-          <div className="modal-overlay" onClick={handleCloseModal}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-              <p>{modalContent}</p>
-              <button onClick={handleCloseModal} className="modal-close-button">Fechar</button>
+        {modalState && (
+          <div className="custom-modal-overlay" role="dialog" aria-modal="true" onClick={handleCloseModal}>
+            <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
+              {modalState.title && <h3>{modalState.title}</h3>}
+              <p>{modalState.message}</p>
+              {modalState.onConfirm ? (
+                <div className="custom-modal-actions">
+                  <button type="button" className="custom-modal-button secondary" onClick={handleCloseModal}>
+                    {modalState.cancelLabel || 'Cancelar'}
+                  </button>
+                  <button type="button" className="custom-modal-button primary" onClick={handleModalConfirm}>
+                    {modalState.confirmLabel || 'Confirmar'}
+                  </button>
+                </div>
+              ) : (
+                <div className="custom-modal-actions single">
+                  <button type="button" className="custom-modal-button primary" onClick={handleCloseModal}>
+                    Fechar
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}

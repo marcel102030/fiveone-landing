@@ -36,6 +36,30 @@ export async function deleteAllProgressForUser(userId: string): Promise<void> {
   if (error) throw error;
 }
 
+export async function deleteProgressExceptForUser(userId: string, keepVideoIds: string[]): Promise<void> {
+  let query = supabase
+    .from('user_progress')
+    .delete()
+    .eq('user_id', userId);
+
+  if (keepVideoIds.length) {
+    const formatted = `(${keepVideoIds.map((id) => `"${id.replace(/"/g, '\\"')}"`).join(',')})`;
+    query = query.not('video_id', 'in', formatted);
+  }
+
+  const { error } = await query;
+  if (error) throw error;
+}
+
+export async function deleteProgressForUserVideo(userId: string, videoId: string): Promise<void> {
+  const { error } = await supabase
+    .from('user_progress')
+    .delete()
+    .eq('user_id', userId)
+    .eq('video_id', videoId);
+  if (error) throw error;
+}
+
 export function toLocalRow(row: any): ProgressRow {
   return {
     user_id: row.user_id,
