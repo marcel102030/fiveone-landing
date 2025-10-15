@@ -7,6 +7,7 @@ import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
 import { upsertProgress, deleteProgressForUserVideo } from '../../services/progress';
+import { upsertCompletion, deleteCompletion, fetchCompletionsForUser } from '../../services/completions';
 import {
   COMPLETED_EVENT,
   listCompletedLessonIds,
@@ -197,10 +198,6 @@ const StreamerMestre = () => {
     }
     return '';
   }, [currentVideo?.embedCode, currentVideo?.videoUrl, currentVideo?.videoId]);
-  const [playerNonce, setPlayerNonce] = useState(0);
-  useEffect(() => {
-    setPlayerNonce((nonce) => nonce + 1);
-  }, [embedSrc, currentVideo?.videoId]);
   const persistProgress = useCallback(
     (rawWatched: number, rawDuration?: number) => {
       const lesson = videoList[currentIndex];
@@ -330,9 +327,7 @@ const StreamerMestre = () => {
           } catch {}
           const uid = getCurrentUserId();
           if (uid) {
-            import('../../services/completions')
-              .then((m) => m.upsertCompletion(uid, lesson.videoId))
-              .catch(() => {});
+            upsertCompletion(uid, lesson.videoId).catch(() => {});
           }
 
           syncCompletedIds();
@@ -422,7 +417,7 @@ const StreamerMestre = () => {
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, [currentVideo?.videoId, alignSidebar, playerNonce]);
+  }, [currentVideo?.videoId, alignSidebar]);
 
   useEffect(() => {
     const lesson = videoList[currentIndex];
@@ -445,7 +440,7 @@ const StreamerMestre = () => {
       destroyed = true;
       window.clearInterval(interval);
     };
-  }, [videoList, currentIndex, persistProgress, playerNonce]);
+  }, [videoList, currentIndex, persistProgress]);
 
   useEffect(() => {
     const lesson = currentVideo;
@@ -472,16 +467,7 @@ const StreamerMestre = () => {
         if (cancelled) return;
         playerInstanceRef.current?.destroy().catch(() => {});
         const player = new Player(iframe);
-        try {
-          await player.loadVideo({ url: vimeoSrc });
-        } catch {
-          try {
-            await player.loadVideo(vimeoSrc);
-          } catch {
-            iframe.setAttribute('src', vimeoSrc);
-          }
-        }
-        await player.ready();
+        iframe.setAttribute('src', vimeoSrc);
         playerInstanceRef.current = player;
         alignSidebar();
         setTimeout(() => alignSidebar(), 120);
@@ -556,7 +542,7 @@ const StreamerMestre = () => {
         playerInstanceRef.current = null;
       }
     };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress, alignSidebar, playerNonce]);
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress, alignSidebar]);
 
   const resolveLessonAssets = useCallback((lesson: LessonRef) => {
     const bannerContinue = lesson.bannerContinue;
@@ -659,13 +645,10 @@ const StreamerMestre = () => {
             const iframe = videoRef.current?.querySelector('iframe');
             if (iframe) iframe.setAttribute('src', embedSrc);
           }
-
-          setPlayerNonce((nonce) => nonce + 1);
-
           if (uid) {
-            import('../../services/completions')
-              .then((m) => m.deleteCompletion(uid, lessonSnapshot.videoId))
-              .catch(() => {});
+            try {
+              await deleteCompletion(uid, lessonSnapshot.videoId);
+            } catch {}
             deleteProgressForUserVideo(uid, lessonSnapshot.videoId).catch(() => {});
           }
 
@@ -707,9 +690,9 @@ const StreamerMestre = () => {
     }
 
     if (uid) {
-      import('../../services/completions')
-        .then((m) => m.upsertCompletion(uid, lessonId))
-        .catch(() => {});
+      try {
+        await upsertCompletion(uid, lessonId);
+      } catch {}
     }
 
     syncCompletedIds();
@@ -719,15 +702,13 @@ const StreamerMestre = () => {
   useEffect(() => {
     const uid = getCurrentUserId();
     if (!uid) return;
-    import('../../services/completions')
-      .then(async (m) => {
-        try {
-          const list = await m.fetchCompletionsForUser(uid);
-          const merged = mergeCompletedLessons(list);
-          setCompletedIds(new Set(merged.keys()));
-        } catch {}
-      })
-      .catch(() => {});
+    (async () => {
+      try {
+        const list = await fetchCompletionsForUser(uid);
+        const merged = mergeCompletedLessons(list);
+        setCompletedIds(new Set(merged.keys()));
+      } catch {}
+    })();
   }, []);
   const navigate = useNavigate();
   // Filtro por matéria na sidebar
@@ -824,7 +805,7 @@ const StreamerMestre = () => {
                 </div>
                 <div className="video-container" ref={videoRef}>
                   <iframe
-                    key={`${currentVideo.videoId || currentVideo.videoUrl || currentVideo.id || 'player'}-${playerNonce}`}
+                    key={currentVideo.videoId || embedSrc || currentVideo.videoUrl || currentVideo.id}
                     src={embedSrc || 'about:blank'}
                     title={currentVideo.title}
                     frameBorder="0"

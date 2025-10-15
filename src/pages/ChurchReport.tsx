@@ -57,7 +57,7 @@ function ChurchReportInner() {
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const distRef = useRef<HTMLDivElement>(null);
-  const isPublic = useLocation().pathname.startsWith('/r');
+  const isPublic = useLocation().pathname.startsWith('/r/');
   const [metricMode, setMetricMode] = useState<'pct' | 'count'>('pct');
   const [visibleDoms, setVisibleDoms] = useState<Record<string, boolean>>({ Apostólico: true, Profeta: true, Evangelista: true, Pastor: true, Mestre: true });
   const toast = useAdminToast();
@@ -214,17 +214,94 @@ function ChurchReportInner() {
     return arr;
   }, [list, search, sortKey, sortDir]);
 
+  const totalParticipation = typeof data?.participation?.overallPct === 'number'
+    ? Math.round(data.participation.overallPct)
+    : null;
+  const totalResponses = typeof data?.participation?.overallTotal === 'number'
+    ? data.participation.overallTotal
+    : summary?.total ?? null;
+  const expectedMembers = typeof data?.expected_members === 'number'
+    ? data.expected_members
+    : null;
+
+  function formatDateLabel(value: string | null | undefined) {
+    if (!value) return null;
+    const parts = value.split("-");
+    if (parts.length !== 3) return null;
+    const [y, m, d] = parts;
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+
+  const periodLabel = (() => {
+    const fromLabel = formatDateLabel(from);
+    const toLabel = formatDateLabel(to);
+    if (fromLabel && toLabel) return `${fromLabel} — ${toLabel}`;
+    if (fromLabel) return `Desde ${fromLabel}`;
+    if (toLabel) return `Até ${toLabel}`;
+    return "Período completo";
+  })();
+
   return (
     <div className="report-wrap">
-      <h1 className="report-title">Relatório por Igreja</h1>
-      <p className="report-sub">
-        Igreja: <strong>{data?.churchName || "(não informado)"}</strong>
-        {" "}• Slug: <strong>{data?.slug || slug || "(n/d)"}</strong>
-      </p>
+      <header className="report-hero">
+        <div className="report-hero-main">
+          <div className="report-hero-top">
+            {!isPublic && (
+              <Link className="report-hero-back" to="/admin/igrejas">← Voltar</Link>
+            )}
+            <span className="report-pill">Relatórios</span>
+          </div>
+          <h1 className="report-title">Relatório por Igreja</h1>
+          <p className="report-sub">
+            Acompanhe respostas, distribuição de dons e engajamento durante o período selecionado.
+          </p>
+          <div className="report-meta">
+            <div className="report-meta-item">
+              <span className="report-meta-label">Igreja</span>
+              <span className="report-meta-value">{data?.churchName || "(não informado)"}</span>
+            </div>
+            <div className="report-meta-item">
+              <span className="report-meta-label">Slug</span>
+              <span className="report-meta-value">{data?.slug || slug || "(n/d)"}</span>
+            </div>
+            <div className="report-meta-item">
+              <span className="report-meta-label">Membros previstos</span>
+              <span className="report-meta-value">{expectedMembers !== null ? expectedMembers.toLocaleString("pt-BR") : "—"}</span>
+            </div>
+            <div className="report-meta-item">
+              <span className="report-meta-label">Respostas totais</span>
+              <span className="report-meta-value">{typeof totalResponses === "number" ? totalResponses.toLocaleString("pt-BR") : "—"}</span>
+            </div>
+            <div className="report-meta-item">
+              <span className="report-meta-label">Participação</span>
+              <span className="report-meta-value">{totalParticipation !== null ? `${totalParticipation}%` : "—"}</span>
+            </div>
+            <div className="report-meta-item">
+              <span className="report-meta-label">Período</span>
+              <span className="report-meta-value">{periodLabel}</span>
+            </div>
+          </div>
+        </div>
+        <div className="report-hero-actions">
+          <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to, toast)}>
+            Compartilhar relatório
+          </button>
+          {!isPublic && (() => {
+            const s = data?.slug || slug;
+            const origin = typeof window !== 'undefined' ? window.location.origin : '';
+            const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
+            return (
+              <a className="btn ghost" href={href} target="_blank" rel="noopener noreferrer">
+                Abrir teste
+              </a>
+            );
+          })()}
+        </div>
+      </header>
 
       {/* Filtros de período */}
-      <div className="toolbar">
-        <div className="toolbar-left">
+      <section className="report-toolbar">
+        <div className="report-toolbar-left">
           <label className="field">
             <span>De</span>
             <input className="input-date" type="date" value={from} onChange={(e) => setFrom(e.target.value)} />
@@ -233,32 +310,12 @@ function ChurchReportInner() {
             <span>Até</span>
             <input className="input-date" type="date" value={to} onChange={(e) => setTo(e.target.value)} />
           </label>
+        </div>
+        <div className="report-toolbar-right">
           <button className="btn pill" onClick={() => { setFrom(thirtyDaysAgoIso); setTo(todayIso); }}>Últimos 30 dias</button>
           <button className="btn pill ghost" onClick={() => { setFrom("" as any); setTo("" as any); }}>Tudo</button>
         </div>
-        <div className="toolbar-right" style={{ display: 'flex', gap: 8 }}>
-          <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to, toast)}>
-            Compartilhar Relatório
-          </button>
-          {!isPublic && (
-            <>
-              <Link to="/admin/igrejas">
-                <button className="btn ghost">Voltar</button>
-              </Link>
-              {(() => {
-                const s = data?.slug || slug;
-                const origin = typeof window !== 'undefined' ? window.location.origin : '';
-                const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
-                return (
-                  <a href={href} target="_blank" rel="noopener noreferrer">
-                    <button className="btn">Abrir teste</button>
-                  </a>
-                );
-              })()}
-            </>
-          )}
-        </div>
-      </div>
+      </section>
 
       {loading && <p>Carregando dados…</p>}
       {error && <p style={{ color: "#ef4444" }}>Erro: {error}</p>}

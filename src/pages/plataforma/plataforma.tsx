@@ -10,7 +10,9 @@ import {
   CompletedLessonInfo,
   mergeCompletedLessons,
   readCompletedLessons,
+  clearCompletedLessons,
 } from "../../utils/completedLessons";
+import { fetchCompletionsForUser } from "../../services/completions";
 
 type ModalState = {
   title?: string;
@@ -109,8 +111,6 @@ const PaginaInicial = () => {
         const rows = await fetchUserProgress(uid, 24);
         if (!active) return;
         if (rows && rows.length) {
-          const merged = mergeCompletedLessons(rows.map((r) => r.video_id));
-          setCompletedMap(merged);
           const remote = rows.map(r => ({
             id: r.video_id,
             url: '',
@@ -131,6 +131,18 @@ const PaginaInicial = () => {
               null,
           }));
           setLastWatchedArray(remote);
+        } else {
+          setLastWatchedArray([]);
+        }
+
+        const completions = await fetchCompletionsForUser(uid);
+        if (!active) return;
+        clearCompletedLessons();
+        if (completions && completions.length) {
+          const merged = mergeCompletedLessons(completions);
+          setCompletedMap(merged);
+        } else {
+          setCompletedMap(new Map<string, CompletedLessonInfo>());
         }
       } catch {}
     })();

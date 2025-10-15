@@ -56,6 +56,7 @@ export default function AdminChurches() {
   });
   const toast = useAdminToast();
   const [copiedRowSlug, setCopiedRowSlug] = useState<string | null>(null);
+  const [shareLoadingSlug, setShareLoadingSlug] = useState<string | null>(null);
   function makeUrlsFromSlug(slug: string) {
     return {
       invite_url: `${PROD_ORIGIN}/c/${slug}`,
@@ -294,22 +295,36 @@ export default function AdminChurches() {
   }
 
   async function onSharePublicReport(slug: string) {
+    setShareLoadingSlug(slug);
     try {
       const res = await fetch('/api/report-share', { method: 'POST', headers: { 'content-type':'application/json' }, body: JSON.stringify({ slug, from, to }) });
       const j = await res.json();
-      if (!res.ok || !j?.ok) throw new Error(j?.error || `Erro ${res.status}`);
+      if (!res.ok || !j?.ok) {
+        const errMsg = j?.error || `Erro ${res.status}`;
+        if ((errMsg || '').includes('REPORT_SHARE_SECRET')) {
+          toast.error('Configure o link público', 'Defina REPORT_SHARE_SECRET nas variáveis do projeto.');
+        } else {
+          toast.error('Não foi possível gerar o link público', errMsg);
+        }
+        return;
+      }
       const url = j.url as string;
-      if ((navigator as any).share) (navigator as any).share({ title:`Relatório — ${slug}`, url }).catch(()=>copy(url));
-      else copy(url);
+      if ((navigator as any).share) {
+        (navigator as any).share({ title:`Relatório — ${slug}`, url }).catch(()=>copy(url));
+      } else {
+        copy(url);
+      }
     } catch(e:any){
       toast.error('Não foi possível gerar o link público', e?.message || String(e));
+    } finally {
+      setShareLoadingSlug(prev => (prev === slug ? null : prev));
     }
     function copy(t:string){
       if (navigator.clipboard && window.isSecureContext) {
-        navigator.clipboard.writeText(t).then(()=> toast.success('Link público copiado', 'Compartilhe com a igreja.'));
+        navigator.clipboard.writeText(t).then(()=> toast.success('Link público pronto', 'Copiamos o link para a área de transferência.'));
       } else {
         const ta = document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.opacity='0'; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
-        toast.success('Link público copiado', 'Compartilhe com a igreja.');
+        toast.success('Link público pronto', 'Copiamos o link para a área de transferência.');
       }
     }
   }
@@ -352,231 +367,288 @@ export default function AdminChurches() {
 
   return (
     <div className="admin-wrap">
-      <div style={{display:'flex', alignItems:'center', justifyContent:'space-between', gap:12}}>
-        <h1 className="admin-title">Painel de Igrejas - Quiz</h1>
-        <div style={{display:'flex', alignItems:'center', gap:8}}>
-          <button className="admin-btn" onClick={()=> navigate('/admin/administracao')}>← Voltar ao hub</button>
+      <header className="admin-header">
+        <div className="admin-header-text">
+          <span className="admin-pill">Dashboard Quiz</span>
+          <h1 className="admin-title">Painel de Igrejas</h1>
+          <p className="admin-subtitle">
+            Visualize todas as igrejas cadastradas, acompanhe métricas-chave e acesse seus relatórios.
+          </p>
         </div>
-      </div>
-      <p className="admin-subtitle">
-        Visualize todas as igrejas cadastradas e acesse seus relatórios.
-      </p>
+        <div className="admin-header-actions">
+          <button className="admin-btn admin-btn--ghost" onClick={()=> navigate('/admin/administracao')}>← Voltar ao hub</button>
+        </div>
+      </header>
 
       {/* Indicadores agregados */}
-      <div className="admin-stats">
-        <div className="stat-card">
-          <div className="stat-title">Igrejas</div>
-          <div className="stat-number">{totalIgrejas}</div>
+      <section className="admin-section admin-section--kpis">
+        <div className="admin-stats">
+          <div className="stat-card">
+            <span className="stat-icon stat-icon--church" aria-hidden="true" />
+            <div className="stat-content">
+              <div className="stat-title">Igrejas</div>
+              <div className="stat-number">{totalIgrejas}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon stat-icon--members" aria-hidden="true" />
+            <div className="stat-content">
+              <div className="stat-title">Membros previstos</div>
+              <div className="stat-number">{totalMembrosPrev.toLocaleString("pt-BR")}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon stat-icon--responses" aria-hidden="true" />
+            <div className="stat-content">
+              <div className="stat-title">Respostas</div>
+              <div className="stat-number">{totalRespostas.toLocaleString("pt-BR")}</div>
+            </div>
+          </div>
+          <div className="stat-card">
+            <span className="stat-icon stat-icon--engagement" aria-hidden="true" />
+            <div className="stat-content">
+              <div className="stat-title">Participação</div>
+              <div className="stat-number">{taxaParticipacao}%</div>
+              <div className="stat-muted">{totalRespostas}/{totalMembrosPrev || 0}</div>
+            </div>
+          </div>
         </div>
-        <div className="stat-card">
-          <div className="stat-title">Membros previstos</div>
-          <div className="stat-number">{totalMembrosPrev.toLocaleString("pt-BR")}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-title">Respostas</div>
-          <div className="stat-number">{totalRespostas.toLocaleString("pt-BR")}</div>
-        </div>
-        <div className="stat-card">
-          <div className="stat-title">Participação</div>
-          <div className="stat-number">{taxaParticipacao}%</div>
-          <div className="stat-muted">{totalRespostas}/{totalMembrosPrev || 0}</div>
-        </div>
-      </div>
+      </section>
 
-      {/* Toolbar */}
-      <div className="admin-toolbar">
-        <div className="admin-toolbar-left">
-          <label className="admin-field">De
-            <input className="admin-input" type="date" value={from} onChange={e=>{setFrom(e.target.value); setPage(0);}} />
-          </label>
-          <label className="admin-field">Até
-            <input className="admin-input" type="date" value={to} onChange={e=>{setTo(e.target.value); setPage(0);}} />
-          </label>
+      {/* Filtros */}
+      <section className="admin-section admin-section--filters">
+        <div className="admin-toolbar">
+          <div className="admin-toolbar-left">
+            <label className="admin-field">De
+              <input className="admin-input" type="date" value={from} onChange={e=>{setFrom(e.target.value); setPage(0);}} />
+            </label>
+            <label className="admin-field">Até
+              <input className="admin-input" type="date" value={to} onChange={e=>{setTo(e.target.value); setPage(0);}} />
+            </label>
+          </div>
+          <div className="admin-toolbar-right">
+            <input type="file" accept=".csv" id="importCsv" style={{ display:'none' }} onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onImportCSV(f); }} />
+            <button className="admin-btn admin-btn--outline" onClick={()=>document.getElementById('importCsv')?.click()}>Importar CSV</button>
+            <button className="admin-btn admin-btn--outline" onClick={()=>exportCSV(rowsSorted)}>Exportar CSV</button>
+            <button className="admin-btn admin-btn--primary" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
+          </div>
         </div>
-        <div className="admin-toolbar-right">
-          <input type="file" accept=".csv" id="importCsv" style={{ display:'none' }} onChange={(e)=>{ const f=e.target.files?.[0]; if (f) onImportCSV(f); }} />
-          <button className="admin-btn" onClick={()=>document.getElementById('importCsv')?.click()}>Importar CSV</button>
-          <button className="admin-btn" onClick={()=>exportCSV(rowsSorted)}>Exportar CSV</button>
-          <button className="admin-btn" onClick={() => setShowCreate(true)}>+ Criar igreja</button>
-        </div>
-      </div>
 
-      <div className="admin-search">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Buscar por nome, slug, cidade ou líder…"
-          className="admin-search-input"
-        />
-        {/* Filtro Cidade */}
-        <select
-          value={filterCity}
-          onChange={(e) => setFilterCity(e.target.value)}
-          className="admin-filter-select admin-filter-city"
-        >
-          <option value="__ALL__">Todas as cidades</option>
-          {cityOptions.map(c => (
-            <option key={c} value={c}>{c}</option>
-          ))}
-        </select>
-        {/* Filtro Participação */}
-        <select
-          value={filterPart}
-          onChange={(e) => setFilterPart(e.target.value as any)}
-          className="admin-filter-select admin-filter-part"
-        >
-          <option value="ALL">Participação: todas</option>
-          <option value="LOW">Baixa (&lt; 30%)</option>
-          <option value="MED">Média (30–69%)</option>
-          <option value="HIGH">Alta (≥ 70%)</option>
-        </select>
-      </div>
+        <div className="admin-search">
+          <div className="admin-search-field">
+            <label className="admin-field-label" htmlFor="adminChurchSearch">Buscar</label>
+            <input
+              id="adminChurchSearch"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="Buscar por nome, slug, cidade ou líder…"
+              className="admin-search-input"
+            />
+          </div>
+          {/* Filtro Cidade */}
+          <div className="admin-filter-field">
+            <label className="admin-field-label" htmlFor="adminChurchCity">Cidade</label>
+            <select
+              id="adminChurchCity"
+              value={filterCity}
+              onChange={(e) => setFilterCity(e.target.value)}
+              className="admin-filter-select admin-filter-city"
+            >
+              <option value="__ALL__">Todas as cidades</option>
+              {cityOptions.map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          {/* Filtro Participação */}
+          <div className="admin-filter-field">
+            <label className="admin-field-label" htmlFor="adminChurchParticipation">Participação</label>
+            <select
+              id="adminChurchParticipation"
+              value={filterPart}
+              onChange={(e) => setFilterPart(e.target.value as any)}
+              className="admin-filter-select admin-filter-part"
+            >
+              <option value="ALL">Participação: todas</option>
+              <option value="LOW">Baixa (&lt; 30%)</option>
+              <option value="MED">Média (30–69%)</option>
+              <option value="HIGH">Alta (≥ 70%)</option>
+            </select>
+          </div>
+        </div>
+      </section>
 
       {loading && <p className="admin-msg">Carregando…</p>}
       {error && <p className="admin-msg admin-msg--error">Erro: {error}</p>}
 
       {!loading && !error && (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr className="admin-thead-row">
-                <th
-                  className="admin-th admin-th--sortable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSort("name")}
-                  onKeyDown={(e) => e.key === "Enter" && handleSort("name")}
-                >
-                  Nome {sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
-                <th className="admin-th">Slug</th>
-                <th
-                  className="admin-th admin-th--sortable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSort("city")}
-                  onKeyDown={(e) => e.key === "Enter" && handleSort("city")}
-                >
-                  Cidade {sortKey === "city" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
-                <th className="admin-th">Líder</th>
-                <th
-                  className="admin-th admin-th--sortable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSort("expected_members")}
-                  onKeyDown={(e) => e.key === "Enter" && handleSort("expected_members")}
-                >
-                  Membros (prev.) {sortKey === "expected_members" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
-                <th
-                  className="admin-th admin-th--sortable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSort("total_responses")}
-                  onKeyDown={(e) => e.key === "Enter" && handleSort("total_responses")}
-                >
-                  Respostas {sortKey === "total_responses" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
-                <th
-                  className="admin-th admin-th--sortable"
-                  role="button"
-                  tabIndex={0}
-                  onClick={() => handleSort("participacao")}
-                  onKeyDown={(e) => e.key === "Enter" && handleSort("participacao")}
-                >
-                  Participação {sortKey === "participacao" ? (sortDir === "asc" ? "▲" : "▼") : ""}
-                </th>
-                <th className="admin-th">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {pageRows.map((r) => {
-                const part = getParticipacao(r);
-                let badgeClass = "badge-participacao badge-low";
-                if (part >= 70) badgeClass = "badge-participacao badge-high";
-                else if (part >= 30) badgeClass = "badge-participacao badge-med";
-                return (
-                  <tr key={r.id} className="admin-row">
-                    <td className="admin-td admin-name-cell">
-                      <button className="linklike" onClick={()=> setOpenSlug(r.slug)} title="Ver detalhes">
-                        {r.name}
-                      </button>
-                    </td>
-                    <td className="admin-td"><code>{r.slug}</code></td>
-                    <td className="admin-td">{r.city || "—"}</td>
-                    <td className="admin-td">{r.leader_name || "—"}</td>
-                    <td className="admin-td">{r.expected_members ?? "—"}</td>
-                    <td className="admin-td">{r.total_responses}</td>
-                    <td className="admin-td">
-                      <span className={badgeClass}>{part}%</span>
-                    </td>
-                    <td className="admin-td">
-                      <div className="admin-actions">
-                        <Link to={`/relatorio/${r.slug}`}>
-                          <button className="admin-btn">Relatório</button>
-                        </Link>
-                        <button className="admin-btn" onClick={()=> onShareWhatsApp(r.slug, r.name)}>WhatsApp</button>
-                        <button className="admin-btn" onClick={()=> onSharePublicReport(r.slug)}>Link público</button>
-                        <div className="copy-wrap">
-                          <button
-                            className="admin-btn"
-                            onClick={() => {
-                              copyToClipboard(`${PROD_ORIGIN}/c/${r.slug}`);
-                              setCopiedRowSlug(r.slug);
-                              setTimeout(() => setCopiedRowSlug(null), 1500);
-                            }}
-                            title="Copiar link do teste (5 Ministérios)"
-                          >
-                            Link convite
-                          </button>
-                          {copiedRowSlug === r.slug && (
-                            <span className="copied-tip" role="status" aria-live="polite">✅ copiado</span>
-                          )}
-                        </div>
+        <section className="admin-section admin-section--table">
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
+                <tr className="admin-thead-row">
+                  <th
+                    className="admin-th admin-th--sortable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSort("name")}
+                    onKeyDown={(e) => e.key === "Enter" && handleSort("name")}
+                  >
+                    Nome {sortKey === "name" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="admin-th">Slug</th>
+                  <th
+                    className="admin-th admin-th--sortable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSort("city")}
+                    onKeyDown={(e) => e.key === "Enter" && handleSort("city")}
+                  >
+                    Cidade {sortKey === "city" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="admin-th">Líder</th>
+                  <th
+                    className="admin-th admin-th--sortable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSort("expected_members")}
+                    onKeyDown={(e) => e.key === "Enter" && handleSort("expected_members")}
+                  >
+                    Membros (prev.) {sortKey === "expected_members" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th
+                    className="admin-th admin-th--sortable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSort("total_responses")}
+                    onKeyDown={(e) => e.key === "Enter" && handleSort("total_responses")}
+                  >
+                    Respostas {sortKey === "total_responses" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th
+                    className="admin-th admin-th--sortable"
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => handleSort("participacao")}
+                    onKeyDown={(e) => e.key === "Enter" && handleSort("participacao")}
+                  >
+                    Participação {sortKey === "participacao" ? (sortDir === "asc" ? "▲" : "▼") : ""}
+                  </th>
+                  <th className="admin-th">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pageRows.map((r) => {
+                  const part = getParticipacao(r);
+                  let badgeClass = "badge-participacao badge-low";
+                  if (part >= 70) badgeClass = "badge-participacao badge-high";
+                  else if (part >= 30) badgeClass = "badge-participacao badge-med";
+                  return (
+                    <tr key={r.id} className="admin-row">
+                      <td className="admin-td admin-name-cell">
+                        <button className="linklike" onClick={()=> setOpenSlug(r.slug)} title="Ver detalhes">
+                          {r.name}
+                        </button>
+                      </td>
+                      <td className="admin-td"><code>{r.slug}</code></td>
+                      <td className="admin-td">{r.city || "—"}</td>
+                      <td className="admin-td">{r.leader_name || "—"}</td>
+                      <td className="admin-td">{r.expected_members ?? "—"}</td>
+                      <td className="admin-td">{r.total_responses}</td>
+                      <td className="admin-td">
+                        <span className={badgeClass}>{part}%</span>
+                      </td>
+                  <td className="admin-td">
+                    <div className="admin-actions">
+                      {(() => {
+                        const params = new URLSearchParams();
+                        if (from) params.set('from', from);
+                        if (to) params.set('to', to);
+                        const query = params.toString();
+                        const reportHref = `/relatorio/${r.slug}${query ? `?${query}` : ''}`;
+                        const sharing = shareLoadingSlug === r.slug;
+                        const copied = copiedRowSlug === r.slug;
+                        return (
+                          <>
+                            <Link className="admin-chip admin-chip--primary" to={reportHref}>Relatório</Link>
+                            <button className="admin-chip admin-chip--accent" onClick={()=> onShareWhatsApp(r.slug, r.name)}>WhatsApp</button>
+                            <button
+                              className="admin-chip admin-chip--ghost"
+                              onClick={()=> onSharePublicReport(r.slug)}
+                              disabled={sharing}
+                            >
+                              {sharing ? 'Gerando…' : 'Link público'}
+                            </button>
+                            <button
+                              className="admin-chip admin-chip--ghost"
+                              onClick={() => {
+                                copyToClipboard(`${PROD_ORIGIN}/c/${r.slug}`);
+                                setCopiedRowSlug(r.slug);
+                                setTimeout(() => setCopiedRowSlug(null), 1500);
+                              }}
+                              title="Copiar link do teste (5 Ministérios)"
+                            >
+                              Link convite
+                            </button>
+                            {copied && (
+                              <span className="admin-chip-note" role="status" aria-live="polite">Link copiado</span>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </td>
+                    </tr>
+                  );
+                })}
+                {!pageRows.length && (
+                  <tr className="admin-row admin-row-empty">
+                    <td className="admin-td admin-empty" colSpan={8}>
+                      <div className="admin-empty-state">
+                        <span className="admin-empty-title">Nenhuma igreja encontrada</span>
+                        <span className="admin-empty-sub">Ajuste os filtros ou cadastre uma nova igreja.</span>
                       </div>
                     </td>
                   </tr>
-                );
-              })}
-              {rowsSorted.length === 0 && (
-                <tr>
-                  <td className="admin-td" colSpan={8}>Nenhuma igreja encontrada.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </section>
       )}
       {!loading && !error && rowsSorted.length > 0 && (
-        <div className="admin-city-summary">
-          <h2 className="admin-h2">Resumo por cidade</h2>
-          <ul className="city-list">
-            {Object.entries(
-              rowsSorted.reduce<Record<string, { churches: number; responses: number }>>((acc, r) => {
-                const city = (r.city || "Não informado").trim();
-                if (!acc[city]) acc[city] = { churches: 0, responses: 0 };
-                acc[city].churches += 1;
-                acc[city].responses += (r.total_responses || 0);
-                return acc;
-              }, {})
-            ).map(([city, agg]) => (
-              <li key={city} className="city-item">
-                <span className="city-name">{city}</span>
-                <span className="city-metrics">{agg.churches} igrejas • {agg.responses} respostas</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        <section className="admin-section admin-section--summary">
+          <div className="admin-city-summary">
+            <h2 className="admin-h2">Resumo por cidade</h2>
+            <ul className="city-list">
+              {Object.entries(
+                rowsSorted.reduce<Record<string, { churches: number; responses: number }>>((acc, r) => {
+                  const city = (r.city || "Não informado").trim();
+                  if (!acc[city]) acc[city] = { churches: 0, responses: 0 };
+                  acc[city].churches += 1;
+                  acc[city].responses += (r.total_responses || 0);
+                  return acc;
+                }, {})
+              ).map(([city, agg]) => (
+                <li key={city} className="city-item">
+                  <span className="city-name">{city}</span>
+                  <span className="city-metrics">{agg.churches} igrejas • {agg.responses} respostas</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </section>
       )}
 
       {/* Paginação */}
       {!loading && !error && totalPages > 1 && (
-        <div className="admin-pagination">
-          <button className="admin-btn" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>Anterior</button>
-          <span>Página {page+1} de {totalPages}</span>
-          <button className="admin-btn" disabled={page>=totalPages-1} onClick={()=>setPage(p=>Math.min(totalPages-1,p+1))}>Próxima</button>
-        </div>
+        <section className="admin-section admin-section--pagination">
+          <div className="admin-pagination">
+            <button className="admin-btn admin-btn--outline" disabled={page===0} onClick={()=>setPage(p=>Math.max(0,p-1))}>Anterior</button>
+            <span className="admin-pagination-info">Página {page+1} de {totalPages}</span>
+            <button className="admin-btn admin-btn--outline" disabled={page>=totalPages-1} onClick={()=>setPage(p=>Math.min(totalPages-1,p+1))}>Próxima</button>
+          </div>
+        </section>
       )}
 
       {/* Drawer de detalhes */}

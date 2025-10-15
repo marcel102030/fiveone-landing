@@ -13,11 +13,24 @@ export const onRequestPost = async (ctx: any) => {
     const exp = Math.floor(Date.now() / 1000) + ttlDays * 24 * 3600;
     const payload = { slug, exp } as const;
 
-    const secret = env.REPORT_SHARE_SECRET as string | undefined;
+    let site = (env.SITE_URL as string) || new URL(request.url).origin;
+    try {
+      const parsed = new URL(site);
+      site = `${parsed.origin}`;
+    } catch {
+      site = new URL(request.url).origin;
+    }
+    let hostname = '';
+    try {
+      hostname = new URL(site).hostname;
+    } catch {
+      hostname = new URL(request.url).hostname;
+    }
+    const isLocal = ['localhost', '127.0.0.1', '0.0.0.0'].includes(hostname) || hostname.endsWith('.local');
+    const secret = (env.REPORT_SHARE_SECRET as string | undefined) || (isLocal ? 'DEV_REPORT_SHARE_SECRET' : undefined);
     if (!secret) return json({ error: 'REPORT_SHARE_SECRET não configurado' }, 500);
 
     const token = await sign(payload, secret);
-    const site = (env.SITE_URL as string) || new URL(request.url).origin;
     const url = `${site}/#/r/${encodeURIComponent(slug)}${from||to ? `?${buildQuery({ from, to, token })}` : `?${buildQuery({ token })}`}`;
     return json({ ok: true, token, url });
   } catch (e) {
@@ -50,4 +63,3 @@ function b64url(data: ArrayBuffer | Uint8Array) {
   for (let i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
   return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
 }
-
