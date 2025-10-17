@@ -34,6 +34,41 @@ type ApiResponse = {
 
 type AdminToastApi = ReturnType<typeof useAdminToast>;
 
+type ParticipantListItem = {
+  id?: string;
+  name: string;
+  date: string;
+  email?: string;
+  phone?: string;
+};
+
+type ParticipantDetail = {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  topDom: string | null;
+  ties: string[];
+  date: string | null;
+  scores: Record<string, number>;
+};
+
+const DOM_COLORS: Record<string, string> = {
+  Apostólico: "#22c55e",
+  Profeta: "#f472b6",
+  Evangelista: "#06b6d4",
+  Pastor: "#f59e0b",
+  Mestre: "#60a5fa",
+};
+
+const SCORE_LABELS: Record<string, string> = {
+  apostolo: 'Apostólico',
+  profeta: 'Profeta',
+  evangelista: 'Evangelista',
+  pastor: 'Pastor',
+  mestre: 'Mestre',
+};
+
 // Lê querystring do hash (HashRouter)
 function useHashQuery() {
   const { hash } = useLocation();
@@ -109,20 +144,13 @@ function ChurchReportInner() {
       .sort((a, b) => b.pct - a.pct); // ordenar do maior para o menor para leitura rápida
   }, [summary]);
 
-  // Paleta de cores por dom
-  const domColors: Record<string, string> = {
-    "Apostólico": "#22c55e",   // verde
-    "Profeta": "#f472b6",      // rosa
-    "Evangelista": "#06b6d4",  // ciano
-    "Pastor": "#f59e0b",       // âmbar
-    "Mestre": "#60a5fa",       // azul
-  };
+  const domColors = DOM_COLORS;
 
   // Modal de participantes
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDom, setModalDom] = useState<"Apostólico" | "Profeta" | "Evangelista" | "Pastor" | "Mestre" | null>(null);
-  const participants = useMemo((): { name: string; date: string }[] => {
-    if (!data?.peopleByDom || !modalDom) return [] as { name: string; date: string }[];
+  const participants = useMemo((): ParticipantListItem[] => {
+    if (!data?.peopleByDom || !modalDom) return [];
     const mapKeys: Record<'Apostólico' | 'Profeta' | 'Evangelista' | 'Pastor' | 'Mestre', 'apostolo' | 'profeta' | 'evangelista' | 'pastor' | 'mestre'> = {
       Apostólico: 'apostolo',
       Profeta: 'profeta',
@@ -141,9 +169,13 @@ function ChurchReportInner() {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<'name'|'date'>('name');
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('asc');
-  const [list, setList] = useState<{ id?: string; name: string; date: string; email?: string; phone?: string }[]>([]);
+  const [list, setList] = useState<ParticipantListItem[]>([]);
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(false);
+  const [selectedParticipantId, setSelectedParticipantId] = useState<string | null>(null);
+  const [participantDetail, setParticipantDetail] = useState<ParticipantDetail | null>(null);
+  const [participantDetailError, setParticipantDetailError] = useState<string | null>(null);
+  const [participantDetailLoading, setParticipantDetailLoading] = useState(false);
 
   useEffect(() => {
     if (modalOpen) {
@@ -151,6 +183,15 @@ function ChurchReportInner() {
       setList(participants as any);
       setPage(0);
       setHasMore((participants?.length || 0) >= 200);
+      setSelectedParticipantId(null);
+      setParticipantDetail(null);
+      setParticipantDetailError(null);
+      setParticipantDetailLoading(false);
+    } else {
+      setSelectedParticipantId(null);
+      setParticipantDetail(null);
+      setParticipantDetailError(null);
+      setParticipantDetailLoading(false);
     }
   }, [modalOpen, participants]);
 
@@ -200,6 +241,37 @@ function ChurchReportInner() {
     setHasMore(j.hasMore);
   }
 
+  async function handleSelectParticipant(item: ParticipantListItem) {
+    if (!item.id) {
+      setSelectedParticipantId(null);
+      setParticipantDetail(null);
+      setParticipantDetailError('Resposta sem identificador.');
+      return;
+    }
+    if (selectedParticipantId === item.id && participantDetail && !participantDetailLoading) {
+      return; // já carregado
+    }
+    setSelectedParticipantId(item.id);
+    setParticipantDetail(null);
+    setParticipantDetailError(null);
+    setParticipantDetailLoading(true);
+    try {
+      const qs = new URLSearchParams({ id: item.id, churchSlug: slug });
+      if (tokenParam) qs.set('token', tokenParam);
+      const res = await fetch(`/api/quiz-result?${qs.toString()}`);
+      const json = await res.json();
+      if (!res.ok || !json?.ok) {
+        throw new Error(json?.error || `Erro ${res.status}`);
+      }
+      const participant = json.participant as ParticipantDetail;
+      setParticipantDetail(participant);
+    } catch (err: any) {
+      setParticipantDetailError(String(err?.message || err || 'Erro ao carregar participante.'));
+    } finally {
+      setParticipantDetailLoading(false);
+    }
+  }
+
   const filteredSorted = useMemo(() => {
     let arr = list;
     if (search.trim()) {
@@ -213,6 +285,30 @@ function ChurchReportInner() {
     });
     return arr;
   }, [list, search, sortKey, sortDir]);
+
+  useEffect(() => {
+    if (selectedParticipantId) {
+      const exists = filteredSorted.some((p) => p.id === selectedParticipantId);
+      if (!exists) {
+        setSelectedParticipantId(null);
+        setParticipantDetail(null);
+        setParticipantDetailError(null);
+        setParticipantDetailLoading(false);
+      }
+    }
+  }, [filteredSorted, selectedParticipantId]);
+
+  const participantScores = useMemo(() => {
+    if (!participantDetail || !participantDetail.scores) return [] as { key: string; label: string; value: number; color: string }[];
+    return Object.entries(participantDetail.scores)
+      .map(([key, value]) => {
+        const label = SCORE_LABELS[key as keyof typeof SCORE_LABELS] ?? key;
+        const color = DOM_COLORS[label] ?? '#60a5fa';
+        return { key, label, value: Number(value) || 0, color };
+      })
+      .filter((item) => !Number.isNaN(item.value))
+      .sort((a, b) => b.value - a.value);
+  }, [participantDetail]);
 
   const totalParticipation = typeof data?.participation?.overallPct === 'number'
     ? Math.round(data.participation.overallPct)
@@ -450,25 +546,102 @@ function ChurchReportInner() {
                   {filteredSorted.length === 0 ? (
                     <p className="muted">Nenhum participante neste período.</p>
                   ) : (
-                    <ul className="people-list">
-                      {filteredSorted.map((p, i) => (
-                        <li key={`${p.name}-${p.date}-${i}`}>
-                          <div>
-                            <span className="person-name">{p.name}</span>
-                            {showContacts && (
-                              <div className="muted" style={{ fontSize:12 }}>
-                                {p.email || '—'} • {p.phone || '—'}
-                              </div>
-                            )}
+                    <div className="people-layout">
+                      <div className="people-list-wrapper">
+                        <ul className="people-list">
+                          {filteredSorted.map((p, i) => {
+                            const isSelected = Boolean(p.id && p.id === selectedParticipantId);
+                            return (
+                              <li key={`${p.id || p.name}-${p.date}-${i}`}>
+                                <button
+                                  type="button"
+                                  className={`people-row ${isSelected ? 'selected' : ''}`}
+                                  onClick={() => handleSelectParticipant(p)}
+                                >
+                                  <div>
+                                    <span className="person-name">{p.name}</span>
+                                    {showContacts && (
+                                      <div className="muted" style={{ fontSize:12 }}>
+                                        {(p.email && p.email !== 'null') ? p.email : '—'} • {(p.phone && p.phone !== 'null') ? p.phone : '—'}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <span className="person-date">{p.date ? formatPtDate(p.date) : '—'}</span>
+                                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                        {hasMore && (
+                          <div style={{ display:'flex', justifyContent:'center', marginTop:10 }}>
+                            <button className="btn" onClick={loadMorePeople}>Carregar mais</button>
                           </div>
-                          <span className="person-date">{formatPtDate(p.date)}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {hasMore && (
-                    <div style={{ display:'flex', justifyContent:'center', marginTop:10 }}>
-                      <button className="btn" onClick={loadMorePeople}>Carregar mais</button>
+                        )}
+                      </div>
+                      <div className="people-detail-wrapper">
+                        <div className="person-detail-card">
+                          {selectedParticipantId === null ? (
+                            <p className="muted">Selecione um participante para visualizar os percentuais.</p>
+                          ) : participantDetailLoading ? (
+                            <p className="muted">Carregando resultados…</p>
+                          ) : participantDetailError ? (
+                            <p className="error-text">{participantDetailError}</p>
+                          ) : participantDetail ? (
+                            <>
+                              <div className="person-detail-header">
+                                <h4>{participantDetail.name}</h4>
+                                <span className="person-detail-meta">
+                                  {participantDetail.date ? new Date(participantDetail.date).toLocaleDateString('pt-BR') : '—'}
+                                </span>
+                              </div>
+                              <div className="detail-tags">
+                                {participantDetail.topDom && (
+                                  <span className="person-detail-topdom">
+                                    Dom principal: {SCORE_LABELS[participantDetail.topDom as keyof typeof SCORE_LABELS] ?? participantDetail.topDom}
+                                  </span>
+                                )}
+                                {participantDetail.ties && participantDetail.ties.length > 0 && (
+                                  <span className="person-detail-topdom" style={{ background: 'rgba(34, 197, 94, 0.18)', color: '#bbf7d0' }}>
+                                    Empates: {participantDetail.ties.map((t: string) => SCORE_LABELS[t as keyof typeof SCORE_LABELS] ?? t).join(', ')}
+                                  </span>
+                                )}
+                              </div>
+                              {participantScores.length > 0 ? (
+                                <ul className="detail-scores">
+                                  {participantScores.map((score) => (
+                                    <li key={score.key} className="detail-score-item">
+                                      <div className="detail-score-header">
+                                        <span>{score.label}</span>
+                                        <strong>{score.value.toFixed(1)}%</strong>
+                                      </div>
+                                      <div className="score-bar-track">
+                                        <div
+                                          className="score-bar-fill"
+                                          style={{ width: `${Math.max(0, Math.min(100, score.value))}%`, background: score.color }}
+                                        />
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="muted">Nenhum percentual registrado para este participante.</p>
+                              )}
+                              {(participantDetail.email || participantDetail.phone) && (
+                                <div style={{ display: 'grid', gap: 4 }}>
+                                  {participantDetail.email && (
+                                    <div className="person-detail-meta">E-mail: {participantDetail.email}</div>
+                                  )}
+                                  {participantDetail.phone && (
+                                    <div className="person-detail-meta">Telefone: {participantDetail.phone}</div>
+                                  )}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <p className="muted">Selecione um participante para visualizar os percentuais.</p>
+                          )}
+                        </div>
+                      </div>
                     </div>
                   )}
                 </div>
