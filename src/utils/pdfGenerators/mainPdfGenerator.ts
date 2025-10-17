@@ -10,7 +10,6 @@ function arrayBufferToBase64(buffer: ArrayBuffer): string {
 import autoTable from 'jspdf-autotable';
 import jsPDF from 'jspdf';
 import type { jsPDF as jsPDFType } from 'jspdf';
-
 // Helper para carregar imagem e adicionar ao PDF
 export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG' | 'JPEG', x: number, y: number, w: number, h: number) {
   return new Promise<void>((resolve, reject) => {
@@ -27,44 +26,251 @@ export async function loadImageAndAdd(doc: jsPDFType, src: string, format: 'PNG'
 
 
 
-export async function renderHeader(doc: jsPDFType, name: string, date: string, domPrincipal: string) {
-  // Cabeçalho com fundo verde escuro ocupando os primeiros 50mm
-  doc.setFillColor(4, 91, 98); // Cor verde escuro
-  doc.rect(0, 0, 210, 50, 'F');
+const DOM_DISPLAY_LABELS: Record<string, string> = {
+  Apostólico: 'Apóstolo',
+  Profeta: 'Profeta',
+  Evangelístico: 'Evangelista',
+  Pastor: 'Pastor',
+  Mestre: 'Mestre',
+};
 
-  // Adicionar logo da Five One no canto esquerdo
-  await loadImageAndAdd(doc, '/assets/images/logo_maior.png', 'PNG', 10, 5, 40, 40);
+function toDisplayName(dom: string): string {
+  return DOM_DISPLAY_LABELS[dom] ?? dom;
+}
 
-  // Ajustar posições para evitar sobreposição
-  const leftX = 70;
-  // const rightX = 130;
-  const valueX = leftX + 45; // Aproxima os valores dos rótulos
-  let linhaY = 18;
+function formatDomList(doms: string[]): string {
+  const displayNames = doms.map(toDisplayName);
+  if (!displayNames.length) return '—';
+  if (displayNames.length === 1) return displayNames[0];
+  if (displayNames.length === 2) return `${displayNames[0]} e ${displayNames[1]}`;
+  return `${displayNames.slice(0, -1).join(', ')} e ${displayNames.slice(-1)}`;
+}
 
-  // Título
+type CoverParams = {
+  name: string;
+  date: string;
+  percentuais: { dom: string; valor: number }[];
+  domsPrincipais: string[];
+};
+
+async function renderCoverPage(doc: jsPDFType, params: CoverParams) {
+  const { name, date, percentuais, domsPrincipais } = params;
+  const sortedPercentuais = [...percentuais].sort((a, b) => b.valor - a.valor);
+  const displayDomList = formatDomList(domsPrincipais);
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const pageHeight = doc.internal.pageSize.getHeight();
+
+  const principaisCount = domsPrincipais.length;
+  const heroHeight = principaisCount > 2 ? 128 : principaisCount === 2 ? 120 : 112;
+  doc.setFillColor(4, 91, 98);
+  doc.rect(0, 0, pageWidth, heroHeight, 'F');
+  doc.setFillColor(236, 246, 252);
+  doc.rect(0, heroHeight, pageWidth, pageHeight - heroHeight, 'F');
+
+  const logoSize = 32;
+  const logoX = 28;
+  const logoY = 20;
+  await loadImageAndAdd(doc, '/assets/images/logo_maior.png', 'PNG', logoX, logoY, logoSize, logoSize);
+
   doc.setTextColor(255, 255, 255);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(18);
-  doc.text('FIVE ONE MOVEMENT', leftX, linhaY);
+  doc.setFontSize(24);
+  const titleY = logoY + logoSize / 2;
+  doc.text('MEU PERFIL MINISTERIAL', pageWidth / 2 + 10, titleY - 4, {
+    align: 'center',
+    baseline: 'middle',
+  });
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(11);
+  doc.text(
+    'Relatório de resultados Five One',
+    pageWidth / 2 + 10,
+    titleY + 12,
+    { align: 'center' }
+  );
 
-  linhaY += 8;
+  const cardX = 20;
+  const cardWidth = pageWidth - cardX * 2;
+  const cardPadding = 16;
+  const cardHeight =
+    principaisCount > 2 ? 124 : principaisCount === 2 ? 112 : 102;
+  const cardY = heroHeight - cardHeight / 2 + 10;
+  const innerWidth = cardWidth - cardPadding * 2;
+  const columnGap = 16;
+  const leftColumnWidth = innerWidth * 0.48;
+  const rightColumnWidth = innerWidth - leftColumnWidth - columnGap;
+  const leftColumnX = cardX + cardPadding;
+  const rightColumnX = leftColumnX + leftColumnWidth + columnGap;
+  const rightColumnCenter = rightColumnX + rightColumnWidth / 2;
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(210, 225, 232);
+  doc.setLineWidth(0.4);
+  doc.roundedRect(cardX, cardY, cardWidth, cardHeight, 7, 7, 'FD');
+
+  let infoY = cardY + cardPadding + 6;
+
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(49, 75, 86);
+  doc.text('Nome do participante', leftColumnX, infoY);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(34, 58, 70);
+  doc.text(name || '—', leftColumnX, infoY + 9, { maxWidth: leftColumnWidth });
+
+  infoY += 30;
+  doc.setFont('helvetica', 'bold');
+  doc.setTextColor(49, 75, 86);
+  doc.text('Data da avaliação', leftColumnX, infoY);
+  doc.setFont('helvetica', 'normal');
+  doc.setTextColor(34, 58, 70);
+  doc.text(date || '—', leftColumnX, infoY + 9);
+
+  const pillTextMaxWidth = Math.max(Math.min(rightColumnWidth - 16, 120), 48);
+  const pillTextLines = doc.splitTextToSize(displayDomList, pillTextMaxWidth);
+  const pillLineHeight = 6;
+  const pillHeight = pillTextLines.length * pillLineHeight + 12;
+  const pillLineWidths = pillTextLines.map((line: string) => doc.getTextWidth(line) + 20);
+  const pillWidth = Math.min(
+    rightColumnWidth,
+    Math.max(68, ...pillLineWidths)
+  );
+  const pillX = rightColumnX + (rightColumnWidth - pillWidth) / 2;
+  const domLabel =
+    domsPrincipais.length > 1 ? 'Dons em destaque' : 'Dom em destaque';
+  const highlightAreaTop = cardY + cardPadding;
+  const highlightAreaHeight = cardHeight - cardPadding * 2;
+  const labelHeight = 6;
+  const highlightBlockHeight = labelHeight + 6 + pillHeight + 6;
+  const highlightOffset = Math.max((highlightAreaHeight - highlightBlockHeight) / 2, 0);
+  const highlightTop = highlightAreaTop + highlightOffset + labelHeight;
+  const pillY = highlightTop + 4;
+
+  doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
-  doc.setFont('helvetica', 'bold');
-  doc.text('Nome:', leftX, linhaY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${name}`, valueX, linhaY);
+  doc.setTextColor(49, 75, 86);
+  doc.text(domLabel, rightColumnCenter, highlightTop, { align: 'center' });
 
-  linhaY += 5;
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(4, 91, 98);
+  doc.setLineWidth(0.6);
+  doc.roundedRect(pillX, pillY, pillWidth, pillHeight, 9, 9, 'FD');
   doc.setFont('helvetica', 'bold');
-  doc.text('Data da Avaliação:', leftX, linhaY);
-  doc.setFont('helvetica', 'normal');
-  doc.text(`${date}`, valueX, linhaY);
+  doc.setFontSize(12);
+  doc.setTextColor(4, 91, 98);
+  pillTextLines.forEach((line: string, index: number) => {
+    const lineY = pillY + 8 + index * pillLineHeight;
+    doc.text(line, rightColumnCenter, lineY, { align: 'center' });
+  });
 
-  linhaY += 5;
+  const cardBottom = Math.max(infoY + 18, pillY + pillHeight + cardPadding);
+  const summaryBase = Math.max(cardY + cardHeight, cardBottom);
+
+  // Seção inferior – resumo
+  let summaryY = summaryBase + 16;
+  const summaryText = domsPrincipais.length > 1
+    ? `Identificamos um empate técnico entre ${displayDomList}. Use as próximas páginas para descobrir como ativar cada dom destacado.`
+    : `O dom ${displayDomList} se destacou nesta avaliação. Confira o ranking completo e veja os próximos passos para potencializar seu ministério.`;
+  const summaryFontSize = 10.5;
+  const lineHeight = 4.6;
+  const summaryLines = doc.splitTextToSize(summaryText, cardWidth - 12);
+  const summaryTextHeight = summaryLines.length * lineHeight;
+
+  const tableHeaderHeight = 8;
+  const tableRowHeight = 7;
+  const tableWidth = cardWidth - 16;
+  const tableX = cardX + 8;
+  const tableSecondColX = tableX + tableWidth - 6;
+  const tableHeight = tableHeaderHeight + sortedPercentuais.length * tableRowHeight;
+
+  let summaryCardTop = summaryY - 14;
+  const summaryCardHeight = summaryTextHeight + tableHeight + 42;
+  const summaryCardBottomLimit = pageHeight - 32;
+  const calculatedCardBottom = summaryCardTop + summaryCardHeight;
+  if (calculatedCardBottom > summaryCardBottomLimit) {
+    const shift = calculatedCardBottom - summaryCardBottomLimit;
+    summaryCardTop -= shift;
+    summaryY -= shift;
+  }
+
+  doc.setFillColor(255, 255, 255);
+  doc.setDrawColor(220, 232, 236);
+  doc.roundedRect(cardX - 2, summaryCardTop, cardWidth + 4, summaryCardHeight, 12, 12, 'FD');
+
+  doc.setTextColor(4, 91, 98);
   doc.setFont('helvetica', 'bold');
-  doc.text('Dom Ministerial:', leftX, linhaY);
+  doc.setFontSize(15);
+  doc.text('Resumo dos seus percentuais', cardX, summaryY);
+
   doc.setFont('helvetica', 'normal');
-  doc.text(`${domPrincipal}`, valueX, linhaY);
+  doc.setFontSize(summaryFontSize);
+  doc.setTextColor(28, 56, 68);
+  const summaryTextStartY = summaryY + 7;
+  summaryLines.forEach((line: string, idx: number) => {
+    doc.text(line, cardX + 4, summaryTextStartY + idx * lineHeight);
+  });
+
+  const tableStartY = summaryTextStartY + summaryTextHeight + 8;
+  const headerY = tableStartY;
+  doc.setFillColor(235, 247, 248);
+  doc.rect(tableX, headerY, tableWidth, tableHeaderHeight, 'F');
+  doc.setDrawColor(215, 226, 233);
+  doc.rect(tableX, headerY, tableWidth, tableHeaderHeight, 'S');
+
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(11);
+  doc.setTextColor(4, 91, 98);
+  const headerCenterY = headerY + tableHeaderHeight / 2 + 1;
+  doc.text('Dom', tableX + 6, headerCenterY, { baseline: 'middle' });
+  doc.text('Percentual', tableSecondColX, headerCenterY, { baseline: 'middle', align: 'right' });
+
+  let currentRowY = headerY + tableHeaderHeight;
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(principaisCount > 2 ? 10 : 10.5);
+  sortedPercentuais.forEach((item, index) => {
+    const fillColor = index % 2 === 0 ? [255, 255, 255] : [245, 252, 253];
+    doc.setFillColor(fillColor[0], fillColor[1], fillColor[2]);
+    doc.rect(tableX, currentRowY, tableWidth, tableRowHeight, 'F');
+    doc.setDrawColor(215, 226, 233);
+    doc.rect(tableX, currentRowY, tableWidth, tableRowHeight, 'S');
+
+    const rowCenterY = currentRowY + tableRowHeight / 2 + 1;
+    doc.setTextColor(28, 56, 68);
+    doc.text(toDisplayName(item.dom), tableX + 6, rowCenterY, { baseline: 'middle' });
+    doc.text(`${item.valor.toFixed(1)}%`, tableSecondColX, rowCenterY, {
+      baseline: 'middle',
+      align: 'right',
+    });
+
+    currentRowY += tableRowHeight;
+  });
+
+  const cardInteriorBottom = summaryCardTop + summaryCardHeight - 10;
+  const iconWidth = 96;
+  const iconHeight = 48;
+  const iconY = currentRowY + 6;
+  if (iconY + iconHeight < cardInteriorBottom) {
+    await loadImageAndAdd(
+      doc,
+      meuPerfilMinisterial,
+      'PNG',
+      (pageWidth - iconWidth) / 2,
+      iconY,
+      iconWidth,
+      iconHeight
+    );
+  }
+
+  const quoteY = Math.min(pageHeight - 22, cardInteriorBottom + 12);
+  doc.setTextColor(4, 91, 98);
+  doc.setFont('helvetica', 'italic');
+  doc.setFontSize(10.5);
+  doc.text(
+    '“Ativar o seu dom é ativar a missão do Corpo de Cristo.”',
+    pageWidth / 2,
+    quoteY,
+    { align: 'center' }
+  );
 }
 
 export function aplicarFundo(doc: jsPDFType) {
@@ -267,7 +473,7 @@ export async function renderResumoDosDons(doc: jsPDFType, percentuais: { dom: st
   }
 
   // Tabela de percentuais
-  const tableData = percentuais.map(p => [p.dom, `${p.valor.toFixed(1)}%`]);
+  const tableData = percentuais.map(p => [toDisplayName(p.dom), `${p.valor.toFixed(1)}%`]);
   autoTable(doc, {
     head: [['Dom', 'Percentual']],
     body: tableData,
@@ -305,6 +511,13 @@ import { renderProfeta } from './pdfGeneratorProfeta';
 import { renderEvangelistico } from './pdfGeneratorEvangelista';
 import { renderPastor } from './pdfGeneratorPastor';
 import { renderMestre } from './pdfGeneratorMestre';
+const DOM_RENDERERS: Record<string, (doc: jsPDFType) => Promise<void>> = {
+  Apostólico: renderApostolico,
+  Profeta: renderProfeta,
+  Evangelístico: renderEvangelistico,
+  Pastor: renderPastor,
+  Mestre: renderMestre,
+};
 
 export async function renderIntroducao(doc: jsPDFType): Promise<void> {
   aplicarFundo(doc);
@@ -356,60 +569,50 @@ export async function generatePDF(
   name: string,
   date: string,
   percentuais: { dom: string; valor: number }[],
-  domPrincipal: string,
+  domsPrincipais: string[],
   download: boolean = true
 ): Promise<GeneratePdfResult> {
   const doc = new jsPDF({ compress: true });
 
-  aplicarFundo(doc);
-  // const maiorPercentual = percentuais.reduce((prev, current) => (current.valor > prev.valor ? current : prev));
-  await renderHeader(doc, name, date, domPrincipal);
+  const sortedPercentuais = [...percentuais].sort((a, b) => b.valor - a.valor);
+  const principaisNormalizados = Array.from(
+    new Set(
+      (domsPrincipais.length
+        ? domsPrincipais
+        : [sortedPercentuais[0]?.dom].filter(Boolean)) as string[]
+    )
+  );
 
-  // Adicionar imagem 'meuPerfilMinisterial' na primeira página (ajuste de tamanho e posição como no PDF antigo)
-  await loadImageAndAdd(doc, meuPerfilMinisterial, 'PNG', 20, 70, 170, 210);
-
-  doc.setFontSize(26);
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 38, 50);
-  doc.text('Meu Perfil Ministerial', 105, 95, { align: 'center' }); // Y alterado de 85 para 95
-  // Linha horizontal abaixo do título "Meu Perfil Ministerial"
-  doc.setDrawColor(15, 38, 50); // Cor semelhante ao título
-  doc.setLineWidth(1.5);
-  doc.line(60, 100, 150, 100); // Y alterado de 90 para 100
+  await renderCoverPage(doc, {
+    name,
+    date,
+    percentuais: sortedPercentuais,
+    domsPrincipais: principaisNormalizados,
+  });
 
   doc.addPage();
   await renderIntroducao(doc);
 
-  doc.addPage();
-  switch (domPrincipal) {
-    case 'Apostólico':
-      await renderApostolico(doc);
-      break;
-    case 'Profeta':
-      await renderProfeta(doc);
-      break;
-    case 'Evangelístico':
-      await renderEvangelistico(doc);
-      break;
-    case 'Pastor':
-      await renderPastor(doc);
-      break;
-    case 'Mestre':
-      await renderMestre(doc);
-      break;
-    default:
-      console.error('Dom ministerial não reconhecido:', domPrincipal);
-      break;
+  for (const dom of principaisNormalizados) {
+    const renderer = DOM_RENDERERS[dom];
+    if (!renderer) continue;
+    doc.addPage();
+    await renderer(doc);
   }
 
+  // Página institucional
   await renderEscolaFiveOne(doc);
   doc.addPage();
-  await renderResumoDosDons(doc, percentuais);
+  await renderResumoDosDons(doc, sortedPercentuais);
   await renderRodape(doc);
 
-  const nomeArquivo = `Resultado_FiveOne_${domPrincipal}`
+  const nomeArquivoBase = (principaisNormalizados.length > 0
+    ? principaisNormalizados.map(toDisplayName).join('_')
+    : toDisplayName(sortedPercentuais[0]?.dom ?? 'Relatorio')
+  )
     .normalize('NFD')
-    .replace(/[\u0300-\u036f\s]/g, '');
+    .replace(/[\u0300-\u036f\s]/g, '') || 'Relatorio';
+  const nomeArquivo = `Resultado_FiveOne_${nomeArquivoBase}`;
   const filename = `${nomeArquivo}.pdf`;
 
   // Gera base64 a partir de ArrayBuffer (mais robusto)

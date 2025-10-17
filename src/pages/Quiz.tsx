@@ -439,23 +439,28 @@ const Quiz = () => {
       }
 
       const highestScore = sortedScores[0].score;
-      const tiedDoms = sortedScores.filter(s => s.score === highestScore);
+      const tiedDoms = sortedScores.filter(
+        (s) => Math.abs(s.score - highestScore) < 0.0001
+      );
 
-      for (const domResult of tiedDoms) {
-        const mainDom = domNameToKey[domResult.metadata.name];
+      const principais = tiedDoms
+        .map((domResult) => domNameToKey[domResult.metadata.name] ?? domResult.metadata.name)
+        .filter((value): value is string => Boolean(value));
+      const principaisNormalizados = Array.from(new Set(principais));
 
-        console.log('Gerando PDF para:', mainDom);
-
-        await generatePDF(
-          userInfo.name,
-          new Date().toLocaleDateString(),
-          sortedScores.map((s) => ({
-            dom: domNameToKey[s.metadata.name],
-            valor: s.score,
-          })),
-          mainDom // dom principal atual
-        );
+      if (principaisNormalizados.length === 0 && sortedScores[0]) {
+        principaisNormalizados.push(domNameToKey[sortedScores[0].metadata.name] ?? sortedScores[0].metadata.name);
       }
+
+      await generatePDF(
+        userInfo.name,
+        new Date().toLocaleDateString(),
+        sortedScores.map((s) => ({
+          dom: domNameToKey[s.metadata.name],
+          valor: s.score,
+        })),
+        principaisNormalizados
+      );
 
       setShowDownloadSuccess(true);
       setTimeout(() => setShowDownloadSuccess(false), 8000);
@@ -693,20 +698,22 @@ const Quiz = () => {
                       const highestScore = sortedScores[0].score;
                       const tiedDoms = sortedScores.filter((s) => Math.abs(s.score - highestScore) < 0.0001);
 
-                      const hoje = new Date().toLocaleDateString("pt-BR");
-                      const pdfsToSend: Array<{ filename: string; base64: string }> = [];
-
-                      for (const domResult of tiedDoms) {
-                        const mainDom = domNameToKey[domResult.metadata.name] ?? domResult.metadata.name;
-                        const { base64, filename } = await generatePDF(
-                          userInfo.name,
-                          hoje,
-                          percentuaisPdf,
-                          mainDom,
-                          false // não baixar aqui; apenas gerar base64 para envio por e-mail (mobile-safe)
-                        );
-                        pdfsToSend.push({ filename, base64 });
+                      const principais = tiedDoms
+                        .map((s) => domNameToKey[s.metadata.name] ?? s.metadata.name)
+                        .filter((value): value is string => Boolean(value));
+                      const principaisNormalizados = Array.from(new Set(principais));
+                      if (principaisNormalizados.length === 0 && percentuaisPdf[0]) {
+                        principaisNormalizados.push(percentuaisPdf[0].dom);
                       }
+
+                      const hoje = new Date().toLocaleDateString("pt-BR");
+                      const { base64, filename } = await generatePDF(
+                        userInfo.name,
+                        hoje,
+                        percentuaisPdf,
+                        principaisNormalizados,
+                        false // não baixar aqui; apenas gerar base64 para envio por e-mail (mobile-safe)
+                      );
 
                       const scoresForEmail = computeScoresForEmail(categoryScores);
                       void sendResultsEmail({
@@ -714,7 +721,7 @@ const Quiz = () => {
                         email: userInfo.email,
                         phone: userInfo.phone,
                         scores: scoresForEmail,
-                        pdfs: pdfsToSend,
+                        pdfs: [{ filename, base64 }],
                       });
                     } catch (err) {
                       console.error("Falha ao gerar/enviar PDF(s):", err);
