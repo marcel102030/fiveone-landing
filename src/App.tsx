@@ -41,6 +41,7 @@ import MentoriaForm from "./pages/forms/MentoriaForm";
 import PalestraForm from "./pages/forms/PalestraForm";
 import TreinamentoForm from "./pages/forms/TreinamentoForm";
 import ImersaoForm from "./pages/forms/ImersaoForm";
+import ChurchSolutions from "./pages/ChurchSolutions";
 
 import "./App.css";
 
@@ -158,6 +159,7 @@ function AppContent() {
             <Route path="/solucoes/palestra-introdutoria" element={<PalestraForm />} />
             <Route path="/solucoes/treinamento-lideranca" element={<TreinamentoForm />} />
             <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
+            <Route path="/solucoes" element={<ChurchSolutions />} />
             <Route path="/plataforma" element={<Plataforma />} />
             <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
             <Route path="/streamer-mestre" element={<StreamerMestre />} />

@@ -62,6 +62,51 @@ function formatRelTime(iso: string) {
   }
 }
 
+function formatDateTime(iso: string) {
+  try {
+    const dt = new Date(iso);
+    if (Number.isNaN(dt.getTime())) return "";
+    return dt.toLocaleString("pt-BR", { dateStyle: "short", timeStyle: "short" });
+  } catch {
+    return "";
+  }
+}
+
+const FORM_LABEL_MAP: Record<string, string> = {
+  participantName: "Nome do participante",
+  responsibleName: "Nome do responsável",
+  leaderName: "Nome do líder",
+  leader_name: "Nome do líder",
+  email: "E-mail",
+  phone: "Telefone",
+  phone_whatsapp: "Telefone",
+  church: "Igreja",
+  churchName: "Nome da igreja",
+  city: "Cidade / Estado",
+  currentStage: "Como serve hoje",
+  currentstage: "Como serve hoje",
+  preferredDate: "Data sugerida",
+  preferredMonth: "Mês sugerido",
+  goals: "Objetivos",
+  context: "Objetivo",
+  notes: "Observações",
+  ministryAreas: "Áreas a trabalhar",
+  ministryareas: "Áreas a trabalhar",
+  teamSize: "Equipe",
+  membersCount: "Membros",
+  desiredDuration: "Duração desejada",
+  desiredStart: "Data desejada",
+  initiatives: "Iniciativas atuais",
+  role: "Função",
+};
+
+function humanizeKey(key: string) {
+  if (FORM_LABEL_MAP[key]) return FORM_LABEL_MAP[key];
+  return key
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
 export default function AdminChurches() {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
@@ -98,6 +143,8 @@ export default function AdminChurches() {
   const [leadLoading, setLeadLoading] = useState(false);
   const [leadError, setLeadError] = useState<string | null>(null);
   const [leadsByType, setLeadsByType] = useState<Record<string, ServiceRequestRow[]>>({});
+  const [leadModalType, setLeadModalType] = useState<string | null>(null);
+  const [leadModalSelected, setLeadModalSelected] = useState<string | null>(null);
   function makeUrlsFromSlug(slug: string) {
     return {
       invite_url: `${PROD_ORIGIN}/c/${slug}`,
@@ -164,6 +211,18 @@ export default function AdminChurches() {
     }
   }
 
+  const openLeadModal = (type: string) => {
+    const list = leadsByType[type] || [];
+    if (!list.length) return;
+    setLeadModalType(type);
+    setLeadModalSelected(list[0].id);
+  };
+
+  const closeLeadModal = () => {
+    setLeadModalType(null);
+    setLeadModalSelected(null);
+  };
+
   // carregar/persistir preferências
   useEffect(() => {
     try {
@@ -184,6 +243,19 @@ export default function AdminChurches() {
     const p = { q, filterCity, filterPart, sortKey, sortDir, from, to };
     try { localStorage.setItem("adminChurchesPrefs", JSON.stringify(p)); } catch {}
   }, [q, filterCity, filterPart, sortKey, sortDir, from, to]);
+
+  useEffect(() => {
+    if (!leadModalType) return;
+    const list = leadsByType[leadModalType] || [];
+    if (!list.length) {
+      setLeadModalType(null);
+      setLeadModalSelected(null);
+      return;
+    }
+    if (!leadModalSelected || !list.some((item) => item.id === leadModalSelected)) {
+      setLeadModalSelected(list[0].id);
+    }
+  }, [leadModalType, leadModalSelected, leadsByType]);
 
   async function submitCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -424,6 +496,13 @@ export default function AdminChurches() {
     }
   };
 
+  const leadModalList = leadModalType ? leadsByType[leadModalType] || [] : [];
+  const leadMeta = leadModalType ? SERVICE_LEAD_META[leadModalType] : null;
+  const activeLead = leadModalType
+    ? leadModalList.find((item) => item.id === leadModalSelected) || leadModalList[0] || null
+    : null;
+  const activeLeadUrls = activeLead?.church?.slug ? makeUrlsFromSlug(activeLead.church.slug) : null;
+
   return (
     <div className="admin-wrap">
       <header className="admin-header">
@@ -455,8 +534,27 @@ export default function AdminChurches() {
         <div className="leads-grid">
           {Object.entries(SERVICE_LEAD_META).map(([key, meta]) => {
             const list = leadsByType[key] || [];
+            const lastCreated = list[0]?.created_at;
+            const hasItems = list.length > 0;
+            const handleClick = () => {
+              if (!hasItems || leadLoading) return;
+              openLeadModal(key);
+            };
             return (
-              <article key={key} className="lead-card">
+              <article
+                key={key}
+                className={`lead-card${hasItems ? " lead-card--clickable" : ""}`}
+                onClick={handleClick}
+                role={hasItems ? "button" : undefined}
+                tabIndex={hasItems ? 0 : -1}
+                onKeyDown={(event) => {
+                  if (!hasItems) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    openLeadModal(key);
+                  }
+                }}
+              >
                 <header className="lead-card-head" style={{ borderColor: `${meta.color}33` }}>
                   <div>
                     <span className="lead-badge" style={{ background: `${meta.color}22`, color: meta.color }}>
@@ -469,37 +567,15 @@ export default function AdminChurches() {
                 <div className="lead-card-body">
                   {leadLoading && list.length === 0 ? (
                     <p className="lead-muted">Carregando solicitações...</p>
-                  ) : list.length === 0 ? (
+                  ) : !hasItems ? (
                     <p className="lead-muted">Nenhuma solicitação registrada.</p>
                   ) : (
-                    <ul className="lead-list">
-                      {list.slice(0, 5).map((item) => (
-                        <li key={item.id} className="lead-item">
-                          <div className="lead-item-main">
-                            <strong>{item.contact_name || "(Sem nome)"}</strong>
-                            <span className="lead-meta">
-                              {item.church?.name || "Igreja não informada"}
-                              {item.city ? ` • ${item.city}` : item.church?.city ? ` • ${item.church.city}` : ""}
-                            </span>
-                          </div>
-                          <div className="lead-item-side">
-                            <span className="lead-time">{formatRelTime(item.created_at)}</span>
-                            <div className="lead-actions">
-                              {item.contact_email && (
-                                <a className="lead-link" href={`mailto:${item.contact_email}`}>
-                                  E-mail
-                                </a>
-                              )}
-                              {item.church?.slug && (
-                                <Link className="lead-link" to={`/relatorio/${item.church.slug}`}>
-                                  Relatório
-                                </Link>
-                              )}
-                            </div>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="lead-summary">
+                      <p>
+                        Última solicitação {lastCreated ? formatRelTime(lastCreated) : "recente"}.<br />
+                        Clique para visualizar {list.length === 1 ? "a solicitação" : `${list.length} solicitações`}.
+                      </p>
+                    </div>
                   )}
                 </div>
               </article>
@@ -776,7 +852,105 @@ export default function AdminChurches() {
             <span className="admin-pagination-info">Página {page+1} de {totalPages}</span>
             <button className="admin-btn admin-btn--outline" disabled={page>=totalPages-1} onClick={()=>setPage(p=>Math.min(totalPages-1,p+1))}>Próxima</button>
           </div>
-        </section>
+      </section>
+    )}
+
+      {leadModalType && leadMeta && (
+        <div className="lead-modal-backdrop" role="dialog" aria-modal="true" onClick={closeLeadModal}>
+          <div className="lead-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="lead-modal-head">
+              <div>
+                <span className="lead-badge" style={{ background: `${leadMeta.color}22`, color: leadMeta.color }}>
+                  {leadMeta.badge}
+                </span>
+                <h3>Solicitações — {leadMeta.label}</h3>
+              </div>
+              <button className="lead-modal-close" onClick={closeLeadModal} aria-label="Fechar">×</button>
+            </div>
+            <div className="lead-modal-body">
+              <aside className="lead-modal-list">
+                {leadModalList.length === 0 ? (
+                  <p className="lead-muted">Nenhuma solicitação registrada.</p>
+                ) : (
+                  <ul className="lead-list">
+                    {leadModalList.map((item) => {
+                      const active = activeLead?.id === item.id;
+                      return (
+                        <li key={item.id}>
+                          <button
+                            className={`lead-item-button${active ? " lead-item-button--active" : ""}`}
+                            onClick={() => setLeadModalSelected(item.id)}
+                          >
+                            <div className="lead-item-main">
+                              <strong>{item.contact_name || "(Sem nome)"}</strong>
+                              <span className="lead-meta">
+                                {item.church?.name || "Igreja não informada"}
+                                {item.city ? ` • ${item.city}` : item.church?.city ? ` • ${item.church.city}` : ""}
+                              </span>
+                            </div>
+                            <span className="lead-time">{formatRelTime(item.created_at)}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </aside>
+              <div className="lead-modal-details">
+                {activeLead ? (
+                  <>
+                    <div className="lead-detail-block">
+                      <h4>Responsável</h4>
+                      <p><strong>{activeLead.contact_name || "(Sem nome)"}</strong></p>
+                      {activeLead.contact_email && (
+                        <p><a className="lead-link" href={`mailto:${activeLead.contact_email}`}>Enviar e-mail</a></p>
+                      )}
+                      {activeLead.contact_phone && (
+                        <p><a className="lead-link" href={`https://wa.me/${activeLead.contact_phone.replace(/\D/g, "")}`} target="_blank" rel="noreferrer">WhatsApp</a></p>
+                      )}
+                      <p className="lead-meta">Recebido em {formatDateTime(activeLead.created_at)}</p>
+                    </div>
+
+                    <div className="lead-detail-block">
+                      <h4>Igreja</h4>
+                      <p><strong>{activeLead.church?.name || "Não informado"}</strong></p>
+                      <p className="lead-meta">
+                        {activeLead.church?.city || activeLead.city || "Cidade não informada"}
+                        {activeLead.church?.leader_name ? ` • Líder: ${activeLead.church.leader_name}` : ""}
+                      </p>
+                      <div className="lead-detail-actions">
+                        {activeLeadUrls?.quiz_url && (
+                          <a className="btn primary" href={activeLeadUrls.quiz_url} target="_blank" rel="noreferrer">Abrir teste</a>
+                        )}
+                        {activeLead.church?.slug && (
+                          <Link className="btn ghost" to={`/relatorio/${activeLead.church.slug}`} onClick={closeLeadModal}>Abrir relatório</Link>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="lead-detail-block">
+                      <h4>Informações do formulário</h4>
+                      <div className="lead-detail-list">
+                        {Object.entries(activeLead.payload?.form || {}).length === 0 ? (
+                          <p className="lead-muted">Nenhuma resposta adicional registrada.</p>
+                        ) : (
+                          Object.entries(activeLead.payload?.form || {}).map(([key, value]) => (
+                            <div key={key} className="lead-detail-row">
+                              <span className="lead-detail-label">{humanizeKey(key)}</span>
+                              <span className="lead-detail-value">{String(value ?? "")}</span>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="lead-muted">Nenhuma solicitação selecionada.</p>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Drawer de detalhes */}

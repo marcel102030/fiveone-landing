@@ -240,12 +240,14 @@ const ServiceFormPage: React.FC<ServiceFormPageProps> = ({
   return (
     <section className="service-form-page">
       <div className="service-form-container">
-        <header className="service-form-header">
-          <span className="service-form-badge">{badge}</span>
-          <h1>{title}</h1>
-          {subtitle && <p className="service-form-subtitle">{subtitle}</p>}
-          <p className="service-form-description">{description}</p>
-        </header>
+        {!successData && (
+          <header className="service-form-header">
+            <span className="service-form-badge">{badge}</span>
+            <h1>{title}</h1>
+            {subtitle && <p className="service-form-subtitle">{subtitle}</p>}
+            <p className="service-form-description">{description}</p>
+          </header>
+        )}
 
         {errorMessage && (
           <div className="service-form-error-banner" role="alert">
@@ -259,8 +261,7 @@ const ServiceFormPage: React.FC<ServiceFormPageProps> = ({
               <strong>Solicitação recebida!</strong>
               <p>{successMessage}</p>
               <p>
-                Enviamos os próximos passos para <strong>{successData.contactEmail}</strong> e para{" "}
-                <strong>escolafiveone@gmail.com</strong>.
+                Enviamos os próximos passos para <strong>{successData.contactEmail}</strong>.
               </p>
             </div>
 

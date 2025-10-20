@@ -897,6 +897,7 @@ const Quiz = () => {
           </div>
           <div className="down-arrow"></div>
         </div>
+        <TrainingFormats />
         {/* Fecha content-container antes de adicionar a nova section */}
         <div className="don-profile-wrapper">
           <h2

@@ -46,6 +46,34 @@ const CORS_HEADERS = {
   'Access-Control-Allow-Headers': 'Content-Type',
 };
 
+const FORM_LABEL_MAP: Record<string, string> = {
+  participantName: 'Nome do participante',
+  responsibleName: 'Nome do responsável',
+  leaderName: 'Nome do líder',
+  leader_name: 'Nome do líder',
+  email: 'E-mail',
+  phone: 'Telefone',
+  phone_whatsapp: 'Telefone',
+  church: 'Igreja',
+  churchName: 'Nome da igreja',
+  city: 'Cidade / Estado',
+  currentStage: 'Como serve hoje',
+  currentstage: 'Como serve hoje',
+  preferredDate: 'Data sugerida',
+  preferredMonth: 'Mês sugerido',
+  goals: 'Objetivos',
+  context: 'Objetivo',
+  notes: 'Observações',
+  ministryAreas: 'Áreas a trabalhar',
+  ministryareas: 'Áreas a trabalhar',
+  teamSize: 'Equipe',
+  membersCount: 'Membros',
+  desiredDuration: 'Duração desejada',
+  desiredStart: 'Data desejada',
+  initiatives: 'Iniciativas atuais',
+  role: 'Função',
+};
+
 export const onRequest = async ({ request, env }: { request: Request; env: Env }) => {
   const method = request.method.toUpperCase();
 
@@ -109,11 +137,13 @@ export const onRequest = async ({ request, env }: { request: Request; env: Env }
       church?.notes?.trim() ? `Observação: ${church?.notes.trim()}` : null,
     ].filter(Boolean);
 
+    const expectedMembersFinal = serviceType === 'mentoria' ? 1 : expectedMembers;
+
     const insertPayload = {
       name: churchName,
       leader_name: church?.leaderName?.trim() || trimmedContact.name,
       city: church?.city?.trim() || null,
-      expected_members: expectedMembers,
+      expected_members: expectedMembersFinal,
       notes: noteParts.join(' | ') || null,
       slug,
     };
@@ -313,7 +343,8 @@ function renderInternalText({
   const answers = payload?.form || {};
   Object.entries(answers).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') return;
-    lines.push(`- ${key}: ${String(value)}`);
+    const label = FORM_LABEL_MAP[key] || key.replace(/_/g, ' ');
+    lines.push(`- ${label}: ${String(value)}`);
   });
 
   return lines.join('\n');
@@ -337,15 +368,14 @@ function renderInternalHtml({
   const answers = payload?.form || {};
   const rows = Object.entries(answers)
     .filter(([, value]) => value !== undefined && value !== null && value !== '')
-    .map(
-      ([key, value]) => `
+    .map(([key, value]) => {
+      const label = FORM_LABEL_MAP[key] || key.replace(/_/g, ' ');
+      return `
         <tr>
-          <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-transform:capitalize;color:#1e293b;">${escapeHtml(
-            key.replace(/_/g, ' ')
-          )}</td>
+          <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;text-transform:capitalize;color:#1e293b;">${escapeHtml(label)}</td>
           <td style="padding:6px 10px;border-bottom:1px solid #e2e8f0;color:#0f172a;">${escapeHtml(String(value))}</td>
-        </tr>`
-    )
+        </tr>`;
+    })
     .join('');
 
   return `
@@ -382,4 +412,3 @@ function json(body: unknown, status = 200) {
     headers: { 'content-type': 'application/json', ...CORS_HEADERS },
   });
 }
-

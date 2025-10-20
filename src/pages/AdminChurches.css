@@ -296,32 +296,10 @@
   font-size: 13px;
 }
 
-.leads-grid .lead-list {
-  list-style: none;
+.lead-summary p {
   margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 12px;
-}
-
-.lead-item {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  border-radius: 14px;
-  padding: 12px 14px;
-  background: rgba(10, 20, 41, 0.82);
-}
-
-.lead-item-main {
-  display: grid;
-  gap: 6px;
-}
-
-.lead-item-main strong {
-  color: #f8fafc;
-  font-size: 14px;
+  font-size: 13px;
+  color: var(--admin-muted);
 }
 
 .lead-meta {
@@ -329,21 +307,25 @@
   font-size: 12px;
 }
 
-.lead-item-side {
-  display: grid;
-  justify-items: end;
-  gap: 8px;
-  min-width: 120px;
-}
-
 .lead-time {
   font-size: 12px;
   color: rgba(148, 163, 184, 0.7);
 }
 
-.lead-actions {
-  display: inline-flex;
-  gap: 8px;
+.lead-card--clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.lead-card--clickable:hover {
+  transform: translateY(-2px);
+  border-color: rgba(148, 163, 184, 0.35);
+  box-shadow: 0 16px 34px rgba(8, 17, 35, 0.45);
+}
+
+.lead-card--clickable:focus-visible {
+  outline: 2px solid rgba(96, 165, 250, 0.65);
+  outline-offset: 4px;
 }
 
 .lead-link {
@@ -360,6 +342,159 @@
   border-color: rgba(148, 163, 184, 0.6);
   color: #f8fafc;
   background: rgba(148, 163, 184, 0.18);
+}
+
+.lead-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(2, 6, 23, 0.76);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 90;
+}
+
+.lead-modal-card {
+  width: min(1020px, 100%);
+  max-height: 90vh;
+  background: rgba(8, 15, 32, 0.95);
+  border-radius: 28px;
+  border: 1px solid rgba(96, 165, 250, 0.32);
+  box-shadow: 0 34px 80px rgba(2, 6, 23, 0.65);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.lead-modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 28px 18px;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.lead-modal-head h3 {
+  margin: 8px 0 0;
+  font-size: 20px;
+  color: #f8fafc;
+}
+
+.lead-modal-close {
+  background: none;
+  border: none;
+  color: #cbd5f5;
+  font-size: 26px;
+  cursor: pointer;
+}
+
+.lead-modal-body {
+  display: flex;
+  gap: 22px;
+  padding: 24px 28px;
+  overflow: hidden;
+}
+
+.lead-modal-list {
+  flex: 0 0 290px;
+  max-height: 60vh;
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+.lead-modal-list ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+
+.lead-item-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  background: rgba(10, 20, 41, 0.75);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 14px;
+  padding: 12px 14px;
+  text-align: left;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.lead-item-button:hover,
+.lead-item-button:focus-visible {
+  border-color: rgba(96, 165, 250, 0.45);
+}
+
+.lead-item-button--active {
+  border-color: rgba(96, 165, 250, 0.65);
+  background: rgba(15, 118, 110, 0.25);
+}
+
+.lead-item-button .lead-time {
+  font-size: 12px;
+  color: rgba(148, 163, 184, 0.7);
+  align-self: flex-start;
+}
+
+.lead-modal-details {
+  flex: 1;
+  max-height: 60vh;
+  overflow-y: auto;
+  display: grid;
+  gap: 18px;
+  padding-right: 6px;
+}
+
+.lead-detail-block {
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(12, 22, 44, 0.68);
+  display: grid;
+  gap: 10px;
+}
+
+.lead-detail-block h4 {
+  margin: 0;
+  font-size: 15px;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.lead-detail-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.lead-detail-list {
+  display: grid;
+  gap: 10px;
+}
+
+.lead-detail-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+}
+
+.lead-detail-label {
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.lead-detail-value {
+  color: #cbd5f5;
+  text-align: right;
 }
 
 .admin-section--kpis,
@@ -1212,13 +1347,13 @@
     grid-template-columns: 1fr;
   }
 
-  .lead-item {
+  .lead-modal-body {
     flex-direction: column;
-    align-items: flex-start;
   }
 
-  .lead-item-side {
-    justify-items: flex-start;
+  .lead-modal-list {
+    flex: none;
+    max-height: 220px;
   }
 
   .toast-body {
