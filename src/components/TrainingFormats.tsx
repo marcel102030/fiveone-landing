@@ -1,4 +1,5 @@
 import React from "react";
+import { Link } from "react-router-dom";
 
 // Componente de Cards de Formatos para a página do Teste/Quiz
 // Estilize via TrainingFormats.css (a ser criado separadamente)
@@ -10,7 +11,7 @@ type CardData = {
   desc: string;
   points: string[];
   ctaLabel: string;
-  ctaHref: string;
+  ctaTo: string;
   featured?: boolean;
 };
 
@@ -27,8 +28,7 @@ const cards: CardData[] = [
       "Plano prático de 30 dias",
     ],
     ctaLabel: "Agendar mentoria",
-    ctaHref:
-      "https://wa.me/5583987181731?text=Olá! Quero agendar Mentoria Individual sobre os 5 Ministérios.",
+    ctaTo: "/solucoes/mentoria-individual",
   },
   {
     badge: "Igreja toda",
@@ -42,8 +42,7 @@ const cards: CardData[] = [
       "Primeiros passos de aplicação",
     ],
     ctaLabel: "Levar para minha igreja",
-    ctaHref:
-      "https://wa.me/5583987181731?text=Olá! Quero levar a Palestra Introdutória dos 5 Ministérios para a igreja.",
+    ctaTo: "/solucoes/palestra-introdutoria",
   },
   {
     badge: "Presbíteros & líderes",
@@ -57,8 +56,7 @@ const cards: CardData[] = [
       "Mapa de funções e primeiros 90 dias",
     ],
     ctaLabel: "Agendar treinamento",
-    ctaHref:
-      "https://wa.me/5583987181731?text=Olá! Quero agendar o Treinamento para Liderança sobre os 5 Ministérios.",
+    ctaTo: "/solucoes/treinamento-lideranca",
   },
   {
     badge: "Acompanhamento",
@@ -72,8 +70,7 @@ const cards: CardData[] = [
       "Reuniões de alinhamento e metas mensais",
     ],
     ctaLabel: "Solicitar proposta",
-    ctaHref:
-      "https://wa.me/5583987181731?text=Olá! Quero solicitar proposta de Imersão Ministerial (1–12 semanas).",
+    ctaTo: "/solucoes/imersao-ministerial",
     featured: true,
   },
 ];
@@ -114,15 +111,13 @@ const TrainingFormats: React.FC = () => {
               )}
 
               <footer className="card-footer">
-                <a
+                <Link
                   className={`btn${card.featured ? " btn-outline" : ""}`}
-                  href={card.ctaHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
+                  to={card.ctaTo}
                   aria-label={`${card.ctaLabel} – ${card.title}`}
                 >
                   {card.ctaLabel}
-                </a>
+                </Link>
               </footer>
             </article>
           ))}

@@ -6,6 +6,13 @@ import { useAdminToast } from "../components/AdminToast";
 
 const PROD_ORIGIN = "https://fiveonemovement.com";
 
+const SERVICE_LEAD_META: Record<string, { label: string; badge: string; color: string }> = {
+  mentoria: { label: "Mentoria Individual", badge: "Individual", color: "#38bdf8" },
+  palestra: { label: "Palestra Introdutória", badge: "Igreja toda", color: "#f472b6" },
+  treinamento: { label: "Treinamento para Liderança", badge: "Liderança", color: "#f59e0b" },
+  imersao: { label: "Imersão Ministerial", badge: "Imersão", color: "#34d399" },
+};
+
 type Row = {
   id: string;
   slug: string;
@@ -23,6 +30,37 @@ type Row = {
 type ApiOut = { ok: boolean; churches: Row[]; error?: string };
 
 type Summary = { total: number; apostolo: number; profeta: number; evangelista: number; pastor: number; mestre: number };
+
+type ServiceRequestRow = {
+  id: string;
+  created_at: string;
+  service_type: string;
+  status: string;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  city?: string | null;
+  payload?: Record<string, any>;
+  church?: { id: string; name: string; slug: string; city?: string | null; leader_name?: string | null } | null;
+};
+
+function formatRelTime(iso: string) {
+  try {
+    const dt = new Date(iso);
+    if (Number.isNaN(dt.getTime())) return "";
+    const diffMs = Date.now() - dt.getTime();
+    const minutes = Math.round(diffMs / 60000);
+    if (Math.abs(minutes) < 1) return "agora";
+    const rtf = new Intl.RelativeTimeFormat("pt-BR", { numeric: "auto" });
+    if (Math.abs(minutes) < 60) return rtf.format(-minutes, "minute");
+    const hours = Math.round(minutes / 60);
+    if (Math.abs(hours) < 48) return rtf.format(-hours, "hour");
+    const days = Math.round(hours / 24);
+    return rtf.format(-days, "day");
+  } catch {
+    return "";
+  }
+}
 
 export default function AdminChurches() {
   const navigate = useNavigate();
@@ -57,6 +95,9 @@ export default function AdminChurches() {
   const toast = useAdminToast();
   const [copiedRowSlug, setCopiedRowSlug] = useState<string | null>(null);
   const [shareLoadingSlug, setShareLoadingSlug] = useState<string | null>(null);
+  const [leadLoading, setLeadLoading] = useState(false);
+  const [leadError, setLeadError] = useState<string | null>(null);
+  const [leadsByType, setLeadsByType] = useState<Record<string, ServiceRequestRow[]>>({});
   function makeUrlsFromSlug(slug: string) {
     return {
       invite_url: `${PROD_ORIGIN}/c/${slug}`,
@@ -106,6 +147,23 @@ export default function AdminChurches() {
     }
   }
 
+  async function loadServiceRequests() {
+    try {
+      setLeadLoading(true);
+      setLeadError(null);
+      const response = await fetch("/api/service-request-list");
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok || !data?.ok) {
+        throw new Error(data?.error || `Erro ${response.status}`);
+      }
+      setLeadsByType(data?.requestsByType || {});
+    } catch (err: any) {
+      setLeadError(String(err?.message || err));
+    } finally {
+      setLeadLoading(false);
+    }
+  }
+
   // carregar/persistir preferências
   useEffect(() => {
     try {
@@ -119,6 +177,7 @@ export default function AdminChurches() {
       if (p.to) setTo(p.to);
     } catch {}
     loadChurches();
+    loadServiceRequests();
   }, []);
 
   useEffect(() => {
@@ -379,6 +438,75 @@ export default function AdminChurches() {
           <button className="admin-btn admin-btn--ghost" onClick={()=> navigate('/admin/administracao')}>← Voltar ao hub</button>
         </div>
       </header>
+
+      <section className="admin-section admin-section--leads">
+        <div className="leads-header">
+          <div>
+            <h2>Solicitações recentes</h2>
+            <p>Acompanhe os pedidos enviados pelos formulários “Leve os 5 Ministérios para sua igreja”.</p>
+          </div>
+          <div className="leads-actions">
+            <button className="admin-btn" onClick={loadServiceRequests} disabled={leadLoading}>
+              {leadLoading ? "Atualizando..." : "Atualizar"}
+            </button>
+          </div>
+        </div>
+        {leadError && <div className="leads-error" role="alert">{leadError}</div>}
+        <div className="leads-grid">
+          {Object.entries(SERVICE_LEAD_META).map(([key, meta]) => {
+            const list = leadsByType[key] || [];
+            return (
+              <article key={key} className="lead-card">
+                <header className="lead-card-head" style={{ borderColor: `${meta.color}33` }}>
+                  <div>
+                    <span className="lead-badge" style={{ background: `${meta.color}22`, color: meta.color }}>
+                      {meta.badge}
+                    </span>
+                    <h3>{meta.label}</h3>
+                  </div>
+                  <div className="lead-count">{list.length}</div>
+                </header>
+                <div className="lead-card-body">
+                  {leadLoading && list.length === 0 ? (
+                    <p className="lead-muted">Carregando solicitações...</p>
+                  ) : list.length === 0 ? (
+                    <p className="lead-muted">Nenhuma solicitação registrada.</p>
+                  ) : (
+                    <ul className="lead-list">
+                      {list.slice(0, 5).map((item) => (
+                        <li key={item.id} className="lead-item">
+                          <div className="lead-item-main">
+                            <strong>{item.contact_name || "(Sem nome)"}</strong>
+                            <span className="lead-meta">
+                              {item.church?.name || "Igreja não informada"}
+                              {item.city ? ` • ${item.city}` : item.church?.city ? ` • ${item.church.city}` : ""}
+                            </span>
+                          </div>
+                          <div className="lead-item-side">
+                            <span className="lead-time">{formatRelTime(item.created_at)}</span>
+                            <div className="lead-actions">
+                              {item.contact_email && (
+                                <a className="lead-link" href={`mailto:${item.contact_email}`}>
+                                  E-mail
+                                </a>
+                              )}
+                              {item.church?.slug && (
+                                <Link className="lead-link" to={`/relatorio/${item.church.slug}`}>
+                                  Relatório
+                                </Link>
+                              )}
+                            </div>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Indicadores agregados */}
       <section className="admin-section admin-section--kpis">

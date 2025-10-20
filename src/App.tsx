@@ -37,6 +37,10 @@ import AdminBlogSite from "./pages/admin/BlogSite";
 import ChurchReport from "./pages/ChurchReport";
 import ChurchCreateInvite from "./pages/ChurchCreateInvite";
 import CopyLink from "./pages/CopyLink";
+import MentoriaForm from "./pages/forms/MentoriaForm";
+import PalestraForm from "./pages/forms/PalestraForm";
+import TreinamentoForm from "./pages/forms/TreinamentoForm";
+import ImersaoForm from "./pages/forms/ImersaoForm";
 
 import "./App.css";
 
@@ -150,6 +154,10 @@ function AppContent() {
             <Route path="/rede-igrejas/rede-five-one" element={<RedeFiveOne />} />
             <Route path="/rede-igrejas/o-que-e-five-one" element={<OQueEFiveOne />} />
             <Route path="/igrejas" element={<Navigate to="/rede-igrejas" replace />} />
+            <Route path="/solucoes/mentoria-individual" element={<MentoriaForm />} />
+            <Route path="/solucoes/palestra-introdutoria" element={<PalestraForm />} />
+            <Route path="/solucoes/treinamento-lideranca" element={<TreinamentoForm />} />
+            <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
             <Route path="/plataforma" element={<Plataforma />} />
             <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
             <Route path="/streamer-mestre" element={<StreamerMestre />} />
