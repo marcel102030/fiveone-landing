@@ -65,7 +65,7 @@ const Hero = ({ onScrollClick }: HeroProps) => {
           draggable="false"
         />
         <h1 className="hero-title">Bem-vindo ao Five One</h1>
-        <div className="hero-button-wrapper" style={{ marginTop: '-80px' }}>
+        <div className="hero-button-wrapper">
           <button className="hero-main-button" onClick={onScrollClick}>
             CLIQUE AQUI E CONHEÇA NOSSAS TRILHAS MINISTERIAIS
           </button>

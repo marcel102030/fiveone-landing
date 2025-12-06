@@ -13,6 +13,10 @@ export interface BlogPost {
   excerpt: string;
   imageUrl: string;
   date: string;
+  author?: string;
+  category?: string;
+  tags?: string[];
+  takeaways?: string[];
   content: string;
 }
 
@@ -23,9 +27,17 @@ export const blogPosts: BlogPost[] = [
     subtitle:
       "Como os arquétipos da jornada do herói se relacionam com os cinco ministérios de Cristo",
     excerpt:
-      "Tendo reconhecido a jornada do herói no envio, na descida e na ascensão de Jesus, estamos agora em uma posição melhor para entender exatamente como Jesus redefine os arquétipos e os apresenta à Igreja...",
+      "Jesus redefine o arquétipo do herói e entrega à Igreja um caminho de envio, provação e retorno. Descubra como os cinco ministérios aparecem na narrativa que pulsa em toda cultura humana.",
     imageUrl: heroiUrl,
     date: "2024-03-15",
+    author: "Equipe Five One (adaptação Alan Hirsch)",
+    category: "Formação ministerial",
+    tags: ["APEST", "discipulado", "narrativas bíblicas"],
+    takeaways: [
+      "O monomito — envio, provação e retorno — encontra seu cumprimento definitivo em Jesus.",
+      "Cristo redefine os arquétipos e entrega os cinco dons à Igreja como expressão de seu próprio ministério.",
+      "Seguir Jesus é assumir a jornada do herói que forma discípulos e comunidades enviadas.",
+    ],
     content: `
       Não é de surpreender que uma exploração de arquétipos na sociedade humana seja semelhante à ideia de que os mitos são fundamentais para a identidade pessoal e de grupo. Joseph Campbell declarou significativamente o poder contínuo dos mitos primários (definindo narrativas) ao longo da história humana.
 
@@ -60,9 +72,17 @@ export const blogPosts: BlogPost[] = [
     subtitle:
       "Uma analogia entre o jazz e o APEST para entender como os dons ministeriais funcionam na prática",
     excerpt:
-      "Ao longo dos meus trinta anos de ministério, a menção do APEST no livro de Efésios inspirou muitos pensamentos e ideias...",
+      "O APEST funciona como uma banda de jazz: há estrutura, improviso e espaço para cada voz. Veja como os cinco dons soam em harmonia quando lideram juntos.",
     imageUrl: jazzUrl,
     date: "2024-03-10",
+    author: "Equipe Five One (adaptação Alan Hirsch)",
+    category: "Formação ministerial",
+    tags: ["APEST", "liderança", "igreja saudável"],
+    takeaways: [
+      "O jazz ilustra a tensão saudável entre estrutura e improviso que o APEST traz para a igreja.",
+      "Cada dom se comporta como um instrumento específico, mas a beleza surge quando todos tocam em harmonia.",
+      "O objetivo não é regra rígida, mas maturidade colaborativa guiada pelo Espírito.",
+    ],
     content: `
       Ao longo dos meus trinta anos de ministério, a menção do APEST no livro de Efésios inspirou muitos pensamentos e ideias. Uma das analogias mais úteis que encontrei para entender como o APEST funciona na prática é compará-lo ao jazz.
 
@@ -93,9 +113,17 @@ export const blogPosts: BlogPost[] = [
     subtitle:
       "Uma reflexão sobre como o APEST se relaciona com nossa identidade em Cristo",
     excerpt:
-      "De muitas maneiras, esse aspecto vinculado à personalidade do APEST chega muito perto de ser uma questão de identidade...",
+      "Os dons revelam nossa inclinação, mas nossa identidade está enraizada em Cristo. Como usar o APEST como ferramenta de serviço, não como rótulo.",
     imageUrl: identidadeUrl,
     date: "2024-03-10",
+    author: "Equipe Five One (adaptação Alan Hirsch)",
+    category: "Formação ministerial",
+    tags: ["identidade", "APEST", "discipulado"],
+    takeaways: [
+      "A identidade primária do discípulo está em Cristo, não no dom predominante.",
+      "APEST serve como framework de desenvolvimento e serviço, não como prisão de rótulos.",
+      "Somos chamados a crescer em todos os dons, seguindo o modelo completo de Jesus.",
+    ],
     content: `
       De muitas maneiras, esse aspecto vinculado à personalidade do APEST chega muito perto de ser uma questão de identidade. Afinal, quando descobrimos nosso dom principal no APEST, muitas vezes sentimos que finalmente encontramos uma peça fundamental de quem somos.
 
@@ -131,9 +159,17 @@ export const blogPosts: BlogPost[] = [
     title: "Mulheres e os 5 Ministérios de Efésios 4",
     subtitle: "Uma leitura bíblica sobre a liderança feminina nos dons apostólicos, proféticos, evangelísticos, pastorais e de ensino",
     excerpt:
-      "Este artigo apresenta evidências bíblicas da atuação de mulheres como apóstolas, profetisas, evangelistas, pastoras e mestras. Um convite à restauração da liderança feminina no corpo de Cristo, à luz das Escrituras.",
+      "Evidências bíblicas mostram mulheres atuando como apóstolas, profetas, evangelistas, pastoras e mestras. Um convite para restaurar esse espaço no corpo de Cristo.",
     imageUrl: mulheres5MinisterioUrl,
     date: "2025-04-19",
+    author: "Marcelo Junior da Silva",
+    category: "Teologia bíblica",
+    tags: ["liderança", "mulheres", "Efésios 4"],
+    takeaways: [
+      "O Novo Testamento registra mulheres servindo em todos os dons de Efésios 4.",
+      "Júnia, Priscila, as filhas de Filipe e outras evidenciam liderança feminina ativa.",
+      "Honrar esses exemplos fortalece a missão e reflete o propósito original de Cristo.",
+    ],
     content: `
 ## O Chamado das Mulheres nos 5 Ministérios
 
@@ -220,9 +256,17 @@ Teólogo e pesquisador da liderança cristã e dos cinco ministérios de Efésio
     subtitle:
       "Por que a centralização no púlpito distorce a vida da igreja bíblica",
     excerpt:
-      "O Novo Testamento nos mostra uma igreja que vivia comunhão e discipulado mútuo — não um espetáculo dominical. É hora de redescobrirmos a beleza da mesa e da mutualidade.",
+      "A igreja do Novo Testamento florescia na mesa e nos lares, não em um palco. Como resgatar a mutualidade, o discipulado e a liderança plural que formam discípulos de verdade.",
     imageUrl: pulpitoUrl,
     date: "2025-06-11",
+    author: "Marcelo Junior da Silva",
+    category: "Vida comunitária",
+    tags: ["discipulado", "igreja simples", "liderança plural"],
+    takeaways: [
+      "A centralização no púlpito enfraquece a mutualidade e a vida de corpo.",
+      "O padrão bíblico privilegia mesa, discipulado cotidiano e liderança plural.",
+      "Reformar a prática é trocar consumo por comunhão e missão compartilhada.",
+    ],
     content: `
 ## O problema da supervalorização da Pregação em Púlpito
 
@@ -264,9 +308,17 @@ Teólogo e discipulador apaixonado pela Igreja Viva e pelos fundamentos apostól
     id: "Você_provavelmente_inferno",
     title: "Você provavelmente vai para o inferno",
     subtitle: "O perigo real de um evangelho sem arrependimento",
-    excerpt: "Jesus falou mais sobre o inferno do que qualquer outro. Este texto é um chamado urgente ao arrependimento verdadeiro e à fé que transforma.",
+    excerpt: "Jesus falou mais sobre o inferno do que qualquer outro. Um alerta contra a religiosidade sem conversão e um convite urgente ao arrependimento que transforma.",
     imageUrl: infernoUrl,
     date: "2025-06-11",
+    author: "Marcelo Junior da Silva",
+    category: "Evangelismo",
+    tags: ["arrependimento", "santidade", "evangelho"],
+    takeaways: [
+      "Religiosidade sem novo nascimento não salva; arrependimento é indispensável.",
+      "Jesus tratou o inferno como realidade e advertiu sobre falso sentimento de segurança.",
+      "Há esperança plena para quem se rende à graça e ao senhorio de Cristo.",
+    ],
     content: `
 ## Você provavelmente vai para o inferno
 
@@ -311,6 +363,14 @@ Teólogo, evangelista e defensor de um Evangelho fiel à Palavra de Deus.
     excerpt: "Em Mateus 6, Jesus confronta a cultura do medo e da autossuficiência, oferecendo a confiança em Deus como caminho para vencer a ansiedade. Descubra como a fé, a renovação da mente e a busca pelo Reino transformam nossa relação com o futuro.",
     imageUrl: ansiedadeUrl,
     date: "2025-06-11",
+    author: "Rodolfo Henner",
+    category: "Vida emocional",
+    tags: ["ansiedade", "discipulado", "confiança em Deus"],
+    takeaways: [
+      "A ansiedade nasce quando confiamos em nós mesmos e no ídolo do controle.",
+      "Jesus chama a buscar primeiro o Reino e descansar no cuidado do Pai.",
+      "Renovar a mente e treinar os pensamentos substitui o medo por descanso e fé.",
+    ],
     content: `
 ## Sem espaço para a ansiedade
 
