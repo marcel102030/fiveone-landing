@@ -52,7 +52,7 @@ const MINISTRY_OPTIONS = [
 const MEMBER_TYPE_OPTIONS = [
   { value: "membro", label: "Membro" },
   { value: "visitante", label: "Visitante" },
-  { value: "outro", label: "Outro" },
+  { value: "congregado", label: "Congregado" },
 ];
 
 type MemberQuestionnaireForm = Omit<RedeMemberQuestionnaire, "member_id" | "created_at" | "updated_at">;
@@ -259,6 +259,8 @@ export default function AdminRedeIgrejas() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
   const [inviteCreating, setInviteCreating] = useState(false);
+  const [inviteTypeModalOpen, setInviteTypeModalOpen] = useState(false);
+  const [inviteType, setInviteType] = useState<string>("membro");
 
   useEffect(() => {
     setMemberModalOpen(false);
@@ -266,6 +268,7 @@ export default function AdminRedeIgrejas() {
     setLeaderModalOpen(false);
     setHouseModalOpen(false);
     setInviteModalOpen(false);
+    setInviteTypeModalOpen(false);
   }, [activeTab]);
 
   const handleTestConnection = useCallback(async () => {
@@ -610,7 +613,7 @@ export default function AdminRedeIgrejas() {
     }
   };
 
-  const handleGenerateInvite = async () => {
+  const handleGenerateInvite = async (type: string) => {
     setInviteCreating(true);
     try {
       const token = typeof crypto !== "undefined" && "randomUUID" in crypto
@@ -621,6 +624,7 @@ export default function AdminRedeIgrejas() {
         status: "ativo",
         house_id: null,
         presbitero_id: null,
+        member_type: type,
         expires_at: null,
       });
       const link = `${window.location.origin}/#/rede/cadastro?token=${invite.token}`;
@@ -978,7 +982,14 @@ export default function AdminRedeIgrejas() {
             </div>
             <div className="rede-section-actions">
               <button className="admin-btn admin-btn--outline" onClick={loadAll}>Atualizar</button>
-              <button className="admin-btn admin-btn--outline" onClick={handleGenerateInvite} disabled={inviteCreating}>
+              <button
+                className="admin-btn admin-btn--outline"
+                onClick={() => {
+                  setInviteType("membro");
+                  setInviteTypeModalOpen(true);
+                }}
+                disabled={inviteCreating}
+              >
                 {inviteCreating ? "Gerando..." : "Gerar link de cadastro"}
               </button>
               <button className="admin-btn admin-btn--primary" onClick={openMemberModal}>+ Novo membro</button>
@@ -1365,6 +1376,51 @@ export default function AdminRedeIgrejas() {
                   disabled={!inviteLink}
                 >
                   Copiar link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {inviteTypeModalOpen && (
+        <div className="rede-modal-overlay" role="dialog" aria-modal="true" onClick={() => setInviteTypeModalOpen(false)}>
+          <div className="rede-modal rede-modal--compact" onClick={(event) => event.stopPropagation()}>
+            <div className="rede-modal-header">
+              <div>
+                <h3>Tipo do link de cadastro</h3>
+                <p className="rede-muted">Escolha o tipo para este link.</p>
+              </div>
+              <button className="rede-modal-close" type="button" onClick={() => setInviteTypeModalOpen(false)}>
+                Fechar
+              </button>
+            </div>
+            <div className="rede-modal-body">
+              <label className="admin-field">Tipo de cadastro
+                <select
+                  className="admin-input"
+                  value={inviteType}
+                  onChange={(event) => setInviteType(event.target.value)}
+                >
+                  {MEMBER_TYPE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </label>
+              <div className="rede-form-actions">
+                <button className="admin-btn admin-btn--outline" type="button" onClick={() => setInviteTypeModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button
+                  className="admin-btn admin-btn--primary"
+                  type="button"
+                  onClick={() => {
+                    setInviteTypeModalOpen(false);
+                    handleGenerateInvite(inviteType);
+                  }}
+                  disabled={inviteCreating}
+                >
+                  {inviteCreating ? "Gerando..." : "Gerar link"}
                 </button>
               </div>
             </div>

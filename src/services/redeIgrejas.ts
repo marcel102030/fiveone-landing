@@ -41,6 +41,7 @@ export type RedeMemberInvite = {
   id: string;
   token: string;
   status: string;
+  member_type: string | null;
   house_id: string | null;
   presbitero_id: string | null;
   expires_at: string | null;
@@ -357,7 +358,9 @@ export async function listRedeMemberInvites(): Promise<RedeMemberInvite[]> {
   return safeList<RedeMemberInvite>(data);
 }
 
-export async function createRedeMemberInvite(payload: Omit<RedeMemberInvite, "id" | "created_at" | "updated_at">): Promise<RedeMemberInvite> {
+export async function createRedeMemberInvite(
+  payload: Omit<RedeMemberInvite, "id" | "created_at" | "updated_at">
+): Promise<RedeMemberInvite> {
   const { data, error } = await supabase
     .from("rede_member_invite")
     .insert(payload)

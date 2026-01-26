@@ -70,6 +70,11 @@
   font-size: 14px;
 }
 
+.rede-signup-form input,
+.rede-signup-form select {
+  min-height: 44px;
+}
+
 .rede-signup-form input:disabled,
 .rede-signup-form select:disabled {
   opacity: 0.7;
@@ -145,7 +150,56 @@
 
 @media (max-width: 720px) {
   .rede-signup-wrap {
-    padding: 40px 16px;
+    padding: 32px 16px;
+  }
+
+  .rede-signup-card {
+    padding: 22px 20px;
+    border-radius: 22px;
+  }
+
+  .rede-signup-card header h1 {
+    font-size: 22px;
+  }
+
+  .rede-signup-form {
+    gap: 16px;
+  }
+
+  .rede-signup-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rede-signup-checks {
+    grid-template-columns: 1fr;
+  }
+
+  .rede-signup-actions {
+    justify-content: stretch;
+  }
+
+  .rede-signup-actions button {
+    width: 100%;
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+}
+
+@media (max-width: 480px) {
+  .rede-signup-wrap {
+    padding: 24px 14px;
+  }
+
+  .rede-signup-card {
+    padding: 18px 16px;
+  }
+
+  .rede-signup-card header p {
+    font-size: 13px;
+  }
+
+  .rede-signup-section {
+    padding: 14px;
   }
 
   .rede-signup-actions {

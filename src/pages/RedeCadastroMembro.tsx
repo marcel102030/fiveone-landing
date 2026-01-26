@@ -17,12 +17,6 @@ const MINISTRY_OPTIONS = [
   { value: "mestre", label: "Mestre" },
 ];
 
-const MEMBER_TYPE_OPTIONS = [
-  { value: "membro", label: "Membro" },
-  { value: "visitante", label: "Visitante" },
-  { value: "outro", label: "Outro" },
-];
-
 type QuestionnaireForm = {
   wants_preach_house: boolean;
   wants_preach_network: boolean;
@@ -91,7 +85,6 @@ export default function RedeCadastroMembro() {
     city: "",
     state: "",
     address: "",
-    member_type: "membro",
     house_id: "",
     notes: "",
   });
@@ -161,7 +154,7 @@ export default function RedeCadastroMembro() {
         city: form.city || null,
         state: form.state || null,
         address: form.address || null,
-        member_type: form.member_type || "membro",
+        member_type: invite?.member_type || "membro",
         house_id: form.house_id || invite?.house_id || null,
         gifts,
         wants_preach_house: questionnaire.wants_preach_house,
@@ -262,19 +255,6 @@ export default function RedeCadastroMembro() {
                   onChange={(event) => setForm((prev) => ({ ...prev, address: event.target.value }))}
                   placeholder="Rua, numero"
                 />
-              </label>
-              <label>
-                Tipo
-                <select
-                  value={form.member_type}
-                  onChange={(event) => setForm((prev) => ({ ...prev, member_type: event.target.value }))}
-                >
-                  {MEMBER_TYPE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
               </label>
               <label>
                 Igreja na casa
