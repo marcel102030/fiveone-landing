@@ -27,6 +27,8 @@ import StreamerMestre from "./pages/plataforma/streamerMestre";
 import ModulosMestre from "./pages/plataforma/modulosMestre";
 import PerfilAluno from "./pages/plataforma/PerfilAluno";
 import AdminChurches from "./pages/AdminChurches";
+import AdminRedeIgrejas from "./pages/AdminRedeIgrejas";
+import RedeCadastroMembro from "./pages/RedeCadastroMembro";
 import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
 import AdministracaoFiveOne from "./pages/AdministracaoFiveOne";
@@ -78,6 +80,7 @@ function AppContent() {
     location.pathname.startsWith("/r") ||
     location.pathname === "/cadastrar-igreja" ||
     location.pathname === "/copiar" ||
+    location.pathname.startsWith("/rede/cadastro") ||
     isInviteTest ||
     isIgrejasStandalone;
 
@@ -122,6 +125,15 @@ function AppContent() {
                 </AdminGuard>
               }
             />
+            <Route
+              path="/admin/rede-igrejas"
+              element={
+                <AdminGuard>
+                  <AdminRedeIgrejas />
+                </AdminGuard>
+              }
+            />
+            <Route path="/rede/cadastro" element={<RedeCadastroMembro />} />
             <Route
               path="/admin/relatorio-quiz"
               element={

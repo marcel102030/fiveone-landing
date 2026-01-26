@@ -508,9 +508,9 @@ export default function AdminChurches() {
       <header className="admin-header">
         <div className="admin-header-text">
           <span className="admin-pill">Dashboard Quiz</span>
-          <h1 className="admin-title">Painel de Igrejas</h1>
+          <h1 className="admin-title">Quiz de Igrejas</h1>
           <p className="admin-subtitle">
-            Visualize todas as igrejas cadastradas, acompanhe métricas-chave e acesse seus relatórios.
+            Visualize todas as igrejas cadastradas, acompanhe métricas-chave e acesse os relatórios do quiz.
           </p>
         </div>
         <div className="admin-header-actions">

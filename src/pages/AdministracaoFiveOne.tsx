@@ -85,7 +85,8 @@ export default function AdministracaoFiveOne() {
   const navCards = [
     { to: "/admin/alunos", title: "Alunos", desc: "Gerencie perfis e matrículas." },
     { to: "/admin/conteudo", title: "Conteúdo Plataforma", desc: "Formações, módulos e aulas." },
-    { to: "/admin/igrejas", title: "Painel de Igrejas — Quiz", desc: "Cadastro e relatórios." },
+    { to: "/admin/igrejas", title: "Quiz de Igrejas", desc: "Cadastro e relatórios do quiz." },
+    { to: "/admin/rede-igrejas", title: "Rede de Igrejas", desc: "Cadastros da rede nas casas." },
     { to: "/admin/relatorio-quiz", title: "Relatório Quiz", desc: "Consolidados e exportações." },
     { to: "/admin/blog", title: "Blog Site", desc: "Postagens e categorias." },
   ];
@@ -141,9 +142,12 @@ export default function AdministracaoFiveOne() {
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12h18"/><path d="M5 12a7 7 0 0 1 14 0"/><path d="M12 12v8"/><path d="M8 20h8"/></svg>
               )}
               {i === 3 && (
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 13h18v8H3z"/><path d="M7 13v8"/></svg>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m3 11 9-8 9 8"/><path d="M5 11v8a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-8"/><path d="M9 21V9h6v12"/></svg>
               )}
               {i === 4 && (
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 3h18v4H3z"/><path d="M3 13h18v8H3z"/><path d="M7 13v8"/></svg>
+              )}
+              {i === 5 && (
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5V6a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v13.5l-6.5-3.25L4 19.5z"/></svg>
               )}
             </div>
