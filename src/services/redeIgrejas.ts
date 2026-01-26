@@ -192,6 +192,22 @@ export type RedeMemberQuestionnaire = {
 
 const safeList = <T>(data: T[] | null) => (data || []) as T[];
 
+const normalizeMemberRef = (value: any): RedeMemberRef | null => {
+  if (!value) return null;
+  if (Array.isArray(value)) return (value[0] as RedeMemberRef) || null;
+  return value as RedeMemberRef;
+};
+
+const normalizePresbitero = (row: any): RedePresbitero => ({
+  ...(row || {}),
+  member: normalizeMemberRef(row?.member),
+});
+
+const normalizeLeader = (row: any): RedeMinistryLeader => ({
+  ...(row || {}),
+  member: normalizeMemberRef(row?.member),
+});
+
 export async function listRedeMembers(): Promise<RedeMember[]> {
   const { data, error } = await supabase
     .from("rede_member")
@@ -233,7 +249,7 @@ export async function listRedePresbiteros(): Promise<RedePresbitero[]> {
     .select("id, member_id, since_date, status, notes, created_at, updated_at, member:rede_member ( id, full_name, phone )")
     .order("since_date", { ascending: false });
   if (error) throw error;
-  return safeList<RedePresbitero>(data);
+  return safeList<any>(data).map(normalizePresbitero);
 }
 
 export async function createRedePresbitero(payload: RedePresbiteroInsert): Promise<RedePresbitero> {
@@ -243,7 +259,7 @@ export async function createRedePresbitero(payload: RedePresbiteroInsert): Promi
     .select("id, member_id, since_date, status, notes, created_at, updated_at, member:rede_member ( id, full_name, phone )")
     .single();
   if (error) throw error;
-  return data as RedePresbitero;
+  return normalizePresbitero(data as any);
 }
 
 export async function updateRedePresbitero(id: string, payload: Partial<RedePresbiteroInsert>): Promise<void> {
@@ -268,7 +284,7 @@ export async function listRedeMinistryLeaders(): Promise<RedeMinistryLeader[]> {
     .select("id, member_id, ministry, region, status, notes, created_at, updated_at, member:rede_member ( id, full_name, phone )")
     .order("created_at", { ascending: false });
   if (error) throw error;
-  return safeList<RedeMinistryLeader>(data);
+  return safeList<any>(data).map(normalizeLeader);
 }
 
 export async function createRedeMinistryLeader(payload: RedeMinistryLeaderInsert): Promise<RedeMinistryLeader> {
@@ -278,7 +294,7 @@ export async function createRedeMinistryLeader(payload: RedeMinistryLeaderInsert
     .select("id, member_id, ministry, region, status, notes, created_at, updated_at, member:rede_member ( id, full_name, phone )")
     .single();
   if (error) throw error;
-  return data as RedeMinistryLeader;
+  return normalizeLeader(data as any);
 }
 
 export async function updateRedeMinistryLeader(id: string, payload: Partial<RedeMinistryLeaderInsert>): Promise<void> {
