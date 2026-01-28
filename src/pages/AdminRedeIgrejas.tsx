@@ -42,11 +42,11 @@ import {
 } from "../services/redeIgrejas";
 
 const MINISTRY_OPTIONS = [
-  { value: "apostolo", label: "Apostolo" },
-  { value: "profeta", label: "Profeta" },
-  { value: "evangelista", label: "Evangelista" },
-  { value: "pastor", label: "Pastor" },
-  { value: "mestre", label: "Mestre" },
+  { value: "apostolo", label: "Tenho identificacao com o dom Apostolico" },
+  { value: "profeta", label: "Tenho identificacao com o dom Profetico" },
+  { value: "evangelista", label: "Tenho identificacao com o dom Evangelistico" },
+  { value: "pastor", label: "Tenho identificacao com o dom Pastoral" },
+  { value: "mestre", label: "Tenho identificacao com o dom de Mestre" },
 ];
 
 const MEMBER_TYPE_OPTIONS = [
@@ -112,21 +112,35 @@ type QuestionnaireBoolField =
   | "wants_serve_intercession"
   | "wants_serve_children"
   | "wants_serve_media"
+  | "wants_serve_hospitality"
+  | "wants_serve_teaching"
+  | "wants_serve_pastoral_care"
+  | "wants_serve_practical_support"
+  | "routine_bible_reading"
+  | "routine_prayer"
+  | "routine_fasting"
+  | "routine_in_development"
+  | "ministry_discernment"
+  | "discipleship_current"
+  | "discipleship_leads"
   | "available_for_training"
   | "available_for_missions";
 
 type RedeSectionKey = "members" | "presbiteros" | "leaders" | "houses";
 
-const MEMBER_QUESTIONS: { id: QuestionnaireBoolField; label: string }[] = [
-  { id: "wants_preach_house", label: "Deseja pregar em uma Igreja na Casa" },
-  { id: "wants_preach_network", label: "Deseja pregar para a rede" },
-  { id: "wants_bible_study", label: "Deseja dar estudo biblico em uma Igreja nas Casas" },
-  { id: "wants_open_house", label: "Deseja abrir sua casa para uma Igreja na Casa" },
-  { id: "wants_be_presbitero", label: "Deseja ser presbitero" },
-  { id: "wants_be_ministry_leader", label: "Deseja liderar um dos 5 ministerios" },
-  { id: "wants_discipleship", label: "Deseja liderar discipulado" },
-  { id: "available_for_training", label: "Disponivel para treinamento e capacitacao" },
-  { id: "available_for_missions", label: "Disponivel para missoes e viagens" },
+const LOCAL_CALLINGS: { id: QuestionnaireBoolField; label: string }[] = [
+  { id: "wants_preach_house", label: "Sente-se chamado a compartilhar a Palavra na Igreja na Casa" },
+  { id: "wants_bible_study", label: "Deseja conduzir estudo biblico nas casas" },
+  { id: "wants_open_house", label: "Tem desejo de abrir sua casa para uma Igreja na Casa" },
+  { id: "wants_be_presbitero", label: "Sente-se chamado a caminhar para o presbiterio" },
+  { id: "wants_discipleship", label: "Deseja caminhar e cuidar de pessoas no discipulado local" },
+];
+
+const NETWORK_CALLINGS: { id: QuestionnaireBoolField; label: string }[] = [
+  { id: "wants_preach_network", label: "Sente-se chamado a pregar para a rede" },
+  { id: "wants_be_ministry_leader", label: "Sente-se chamado a servir na lideranca dos 5 dons" },
+  { id: "available_for_training", label: "Disponivel para treinamento e capacitacao na rede" },
+  { id: "available_for_missions", label: "Disponivel para missoes e envios" },
 ];
 
 const SERVICE_AREAS: { id: QuestionnaireBoolField; label: string }[] = [
@@ -134,6 +148,23 @@ const SERVICE_AREAS: { id: QuestionnaireBoolField; label: string }[] = [
   { id: "wants_serve_intercession", label: "Intercessao" },
   { id: "wants_serve_children", label: "Ministerio com criancas" },
   { id: "wants_serve_media", label: "Midia e comunicacao" },
+  { id: "wants_serve_hospitality", label: "Hospitalidade e acolhimento" },
+  { id: "wants_serve_teaching", label: "Ensino" },
+  { id: "wants_serve_pastoral_care", label: "Cuidado pastoral" },
+  { id: "wants_serve_practical_support", label: "Apoio pratico" },
+];
+
+const SPIRITUAL_ROUTINE: { id: QuestionnaireBoolField; label: string }[] = [
+  { id: "routine_bible_reading", label: "Tenho rotina de leitura biblica" },
+  { id: "routine_prayer", label: "Tenho rotina de oracao" },
+  { id: "routine_fasting", label: "Pratico jejum regularmente" },
+  { id: "routine_in_development", label: "Minha rotina espiritual esta em desenvolvimento" },
+];
+
+const DISCIPLESHIP_STATUS: { id: QuestionnaireBoolField; label: string }[] = [
+  { id: "discipleship_current", label: "Ja caminho em discipulado" },
+  { id: "wants_discipleship", label: "Desejo caminhar em discipulado" },
+  { id: "discipleship_leads", label: "Acompanho ou discipulo outras pessoas" },
 ];
 
 const emptyQuestionnaire: MemberQuestionnaireForm = {
@@ -148,6 +179,17 @@ const emptyQuestionnaire: MemberQuestionnaireForm = {
   wants_serve_intercession: false,
   wants_serve_children: false,
   wants_serve_media: false,
+  wants_serve_hospitality: false,
+  wants_serve_teaching: false,
+  wants_serve_pastoral_care: false,
+  wants_serve_practical_support: false,
+  routine_bible_reading: false,
+  routine_prayer: false,
+  routine_fasting: false,
+  routine_in_development: false,
+  ministry_discernment: false,
+  discipleship_current: false,
+  discipleship_leads: false,
   available_for_training: false,
   available_for_missions: false,
   notes: "",
@@ -514,6 +556,17 @@ export default function AdminRedeIgrejas() {
       wants_serve_intercession: questionnaire?.wants_serve_intercession ?? false,
       wants_serve_children: questionnaire?.wants_serve_children ?? false,
       wants_serve_media: questionnaire?.wants_serve_media ?? false,
+      wants_serve_hospitality: questionnaire?.wants_serve_hospitality ?? false,
+      wants_serve_teaching: questionnaire?.wants_serve_teaching ?? false,
+      wants_serve_pastoral_care: questionnaire?.wants_serve_pastoral_care ?? false,
+      wants_serve_practical_support: questionnaire?.wants_serve_practical_support ?? false,
+      routine_bible_reading: questionnaire?.routine_bible_reading ?? false,
+      routine_prayer: questionnaire?.routine_prayer ?? false,
+      routine_fasting: questionnaire?.routine_fasting ?? false,
+      routine_in_development: questionnaire?.routine_in_development ?? false,
+      ministry_discernment: questionnaire?.ministry_discernment ?? false,
+      discipleship_current: questionnaire?.discipleship_current ?? false,
+      discipleship_leads: questionnaire?.discipleship_leads ?? false,
       available_for_training: questionnaire?.available_for_training ?? false,
       available_for_missions: questionnaire?.available_for_missions ?? false,
       notes: questionnaire?.notes || "",
@@ -667,6 +720,17 @@ export default function AdminRedeIgrejas() {
         wants_serve_intercession: application.wants_serve_intercession,
         wants_serve_children: application.wants_serve_children,
         wants_serve_media: application.wants_serve_media,
+        wants_serve_hospitality: application.wants_serve_hospitality,
+        wants_serve_teaching: application.wants_serve_teaching,
+        wants_serve_pastoral_care: application.wants_serve_pastoral_care,
+        wants_serve_practical_support: application.wants_serve_practical_support,
+        routine_bible_reading: application.routine_bible_reading,
+        routine_prayer: application.routine_prayer,
+        routine_fasting: application.routine_fasting,
+        routine_in_development: application.routine_in_development,
+        ministry_discernment: application.ministry_discernment,
+        discipleship_current: application.discipleship_current,
+        discipleship_leads: application.discipleship_leads,
         available_for_training: application.available_for_training,
         available_for_missions: application.available_for_missions,
         notes: application.notes,
@@ -1273,9 +1337,18 @@ export default function AdminRedeIgrejas() {
                 </div>
 
                 <details className="rede-accordion" open>
-                  <summary>Dom ministerial</summary>
+                  <summary>Chamado ministerial (em discernimento)</summary>
                   <div className="rede-accordion-body">
                     <div className="rede-checkbox-grid">
+                      <label className="rede-check">
+                        <input
+                          type="checkbox"
+                          name="ministry_discernment"
+                          checked={memberQuestionnaire.ministry_discernment}
+                          onChange={() => toggleQuestion("ministry_discernment")}
+                        />
+                        Ainda estou em processo de discernimento
+                      </label>
                       {MINISTRY_OPTIONS.map((option) => (
                         <label key={option.value} className="rede-check">
                           <input
@@ -1293,10 +1366,29 @@ export default function AdminRedeIgrejas() {
                 </details>
 
                 <details className="rede-accordion">
-                  <summary>Chamados e disponibilidade</summary>
+                  <summary>Servico e lideranca local na Igreja na Casa</summary>
                   <div className="rede-accordion-body">
                     <div className="rede-checkbox-grid">
-                      {MEMBER_QUESTIONS.map((question) => (
+                      {LOCAL_CALLINGS.map((question) => (
+                        <label key={question.id} className="rede-check">
+                          <input
+                            type="checkbox"
+                            name={question.id}
+                            checked={memberQuestionnaire[question.id]}
+                            onChange={() => toggleQuestion(question.id)}
+                          />
+                          {question.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+
+                <details className="rede-accordion">
+                  <summary>Servico e envio para a Rede</summary>
+                  <div className="rede-accordion-body">
+                    <div className="rede-checkbox-grid">
+                      {NETWORK_CALLINGS.map((question) => (
                         <label key={question.id} className="rede-check">
                           <input
                             type="checkbox"
@@ -1330,13 +1422,51 @@ export default function AdminRedeIgrejas() {
                   </div>
                 </details>
 
-                <label className="admin-field">Observacoes
+                <details className="rede-accordion">
+                  <summary>Rotina espiritual</summary>
+                  <div className="rede-accordion-body">
+                    <div className="rede-checkbox-grid">
+                      {SPIRITUAL_ROUTINE.map((item) => (
+                        <label key={item.id} className="rede-check">
+                          <input
+                            type="checkbox"
+                            name={item.id}
+                            checked={memberQuestionnaire[item.id]}
+                            onChange={() => toggleQuestion(item.id)}
+                          />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+
+                <details className="rede-accordion">
+                  <summary>Situacao de discipulado</summary>
+                  <div className="rede-accordion-body">
+                    <div className="rede-checkbox-grid">
+                      {DISCIPLESHIP_STATUS.map((item) => (
+                        <label key={item.id} className="rede-check">
+                          <input
+                            type="checkbox"
+                            name={item.id}
+                            checked={memberQuestionnaire[item.id]}
+                            onChange={() => toggleQuestion(item.id)}
+                          />
+                          {item.label}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </details>
+
+                <label className="admin-field">Partilha pastoral
                   <textarea
                     className="admin-input rede-textarea"
                     rows={3}
                     value={memberForm.notes}
                     onChange={(event) => setMemberForm((prev) => ({ ...prev, notes: event.target.value }))}
-                    placeholder="Informacoes adicionais"
+                    placeholder="Conte sobre sua caminhada, dons em discernimento ou necessidades"
                   />
                 </label>
 
