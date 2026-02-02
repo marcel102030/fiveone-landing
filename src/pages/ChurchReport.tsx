@@ -53,6 +53,30 @@ type ParticipantDetail = {
   scores: Record<string, number>;
 };
 
+type ProfileDomKey = "apostolo" | "profeta" | "evangelista" | "pastor" | "mestre";
+
+type ProfileItemBase = {
+  key: ProfileDomKey;
+  label: string;
+  lower: string;
+  emphasis: string;
+  practice: string;
+};
+
+type ProfileItem = ProfileItemBase & { value: number; pct: number };
+
+type RecommendationItem = {
+  key: ProfileDomKey;
+  label: string;
+  status: "ausente" | "com baixa expressão";
+  expressionTitle: string;
+  expressionShort: string;
+  expressionWhy: string;
+  suggestions: string[];
+  verse: string;
+  verseRef: string;
+};
+
 const DOM_COLORS: Record<string, string> = {
   Apostólico: "#22c55e",
   Profeta: "#f472b6",
@@ -67,6 +91,134 @@ const SCORE_LABELS: Record<string, string> = {
   evangelista: 'Evangelista',
   pastor: 'Pastor',
   mestre: 'Mestre',
+};
+
+const SECONDARY_PROXIMITY_PCT = 7;
+const LOW_PCT_THRESHOLD = 5;
+const BALANCE_DOMINANCE_PCT = 70;
+const BALANCE_EVEN_PCT = 45;
+const BALANCE_ABSENT_COUNT = 2;
+// Texto pastoral curto para orientar a leitura do relatório (diagnóstico inicial, não maturidade/ativação)
+const REPORT_WHAT_THIS_SHOWS_TEXT =
+  "Este relatório apresenta um retrato do período a partir das respostas ao teste dos 5 ministérios. Ele indica percepções e inclinações ministeriais entre os participantes e serve como um diagnóstico inicial para orientar cuidado, formação e cooperação no corpo — sem afirmar maturidade espiritual ou ativação prática dos dons. O crescimento acontece no processo, com discernimento, formação, prática comunitária e acompanhamento; a partir disso, o próximo bloco ajuda a reconhecer as ênfases percebidas da comunidade.";
+
+const PROFILE_DOMS: ProfileItemBase[] = [
+  {
+    key: "apostolo",
+    label: "Apóstolo",
+    lower: "apóstolo",
+    emphasis: "visão missionária e estabelecimento de fundamentos",
+    practice: "envio missionário e abertura de novas frentes",
+  },
+  {
+    key: "profeta",
+    label: "Profeta",
+    lower: "profeta",
+    emphasis: "discernimento espiritual e santidade",
+    practice: "oração, discernimento e santidade",
+  },
+  {
+    key: "evangelista",
+    label: "Evangelista",
+    lower: "evangelista",
+    emphasis: "alcance das boas-novas e mobilização",
+    practice: "acolhimento e anúncio das boas-novas",
+  },
+  {
+    key: "pastor",
+    label: "Pastor",
+    lower: "pastor",
+    emphasis: "cuidado, acompanhamento e unidade do rebanho",
+    practice: "cuidado mútuo e unidade do rebanho",
+  },
+  {
+    key: "mestre",
+    label: "Mestre",
+    lower: "mestre",
+    emphasis: "formação bíblica e maturidade no ensino",
+    practice: "ensino bíblico e formação da fé",
+  },
+];
+
+const RECOMMENDATION_MAP: Record<ProfileDomKey, { suggestions: string[]; verse: string; verseRef: string }> = {
+  apostolo: {
+    suggestions: [
+      "Crie um ambiente de envio e visão, com momentos de oração e discernimento para novas frentes.",
+      "Estabeleça mentoria para pessoas com inclinação missionária, acompanhando passos pequenos e consistentes.",
+      "Inicie uma ação mensurável de expansão local (um grupo novo ou uma visita missionária por mês).",
+    ],
+    verse: "Portanto, ide, fazei discípulos de todas as nações.",
+    verseRef: "Mateus 28:19",
+  },
+  profeta: {
+    suggestions: [
+      "Organize um ambiente regular de oração e escuta, cultivando discernimento com mansidão.",
+      "Treine e acompanhe pessoas com sensibilidade espiritual para servir com equilíbrio e graça.",
+      "Realize um encontro mensal de intercessão e consagração com foco na caminhada da comunidade.",
+    ],
+    verse: "Não apagueis o Espírito.",
+    verseRef: "1 Tessalonicenses 5:19",
+  },
+  evangelista: {
+    suggestions: [
+      "Crie um ambiente acolhedor para visitantes, com cultura de hospitalidade e escuta.",
+      "Treine e acompanhe pessoas para comunicar o evangelho de modo simples e fiel.",
+      "Inicie uma ação mensurável de proclamação (uma saída evangelística ou roda de testemunhos por mês).",
+    ],
+    verse: "Faze a obra de um evangelista.",
+    verseRef: "2 Timóteo 4:5",
+  },
+  pastor: {
+    suggestions: [
+      "Estabeleça um ambiente de cuidado mútuo, incentivando vínculos e reconciliação.",
+      "Forme e acompanhe líderes de cuidado para visitas, escuta e oração consistente.",
+      "Inicie uma prática mensurável de cuidado (um acompanhamento semanal por grupo ou setor).",
+    ],
+    verse: "Pastoreai o rebanho de Deus que há entre vós.",
+    verseRef: "1 Pedro 5:2",
+  },
+  mestre: {
+    suggestions: [
+      "Crie um ambiente de ensino bíblico contínuo, com encontros simples e regulares.",
+      "Forme e acompanhe pessoas com inclinação ao ensino, com mentoria e fidelidade às Escrituras.",
+      "Inicie uma prática mensurável de formação (uma classe de fundamentos ou leitura guiada semanal).",
+    ],
+    verse: "Habite, ricamente, em vós a palavra de Cristo.",
+    verseRef: "Colossenses 3:16",
+  },
+};
+
+const EXPRESSIONS_MAP: Record<ProfileDomKey, { expressionTitle: string; expressionShort: string; expressionRiskIfAbsent: string; expressionRiskIfDominant: string }> = {
+  apostolo: {
+    expressionTitle: "Impacto Missionário",
+    expressionShort: "envio e expansão do Reino",
+    expressionRiskIfAbsent: "pouco envio/expansão e pouca abertura de novas frentes",
+    expressionRiskIfDominant: "ativismo e expansão sem bases de cuidado/ensino e sem discernimento",
+  },
+  profeta: {
+    expressionTitle: "Fidelidade à Aliança",
+    expressionShort: "discernimento e santidade na caminhada",
+    expressionRiskIfAbsent: "pouco discernimento e enfraquecimento da santidade comunitária",
+    expressionRiskIfDominant: "rigidez e cobranças sem ternura pastoral e sem unidade",
+  },
+  evangelista: {
+    expressionTitle: "Proclamação do Evangelho",
+    expressionShort: "anúncio das boas-novas e acolhimento",
+    expressionRiskIfAbsent: "pouca proclamação e menor abertura aos novos",
+    expressionRiskIfDominant: "pressa em resultados sem cuidado, ensino e acompanhamento",
+  },
+  pastor: {
+    expressionTitle: "Comunidade Reconciliada",
+    expressionShort: "cuidado, unidade e reconciliação",
+    expressionRiskIfAbsent: "fragilidade no cuidado mútuo e na unidade do corpo",
+    expressionRiskIfDominant: "proteção excessiva que reduz envio, ensino e discernimento",
+  },
+  mestre: {
+    expressionTitle: "Sabedoria Profunda",
+    expressionShort: "ensino que forma e aprofunda a fé",
+    expressionRiskIfAbsent: "superficialidade bíblica e pouca formação",
+    expressionRiskIfDominant: "acúmulo de conteúdo sem prática, missão e cuidado",
+  },
 };
 
 // Lê querystring do hash (HashRouter)
@@ -337,6 +489,91 @@ function ChurchReportInner() {
     return "Período completo";
   })();
 
+  const profile = useMemo(() => {
+    if (!summary || summary.total <= 0) return null;
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return null;
+
+    const topValue = Math.max(...items.map((item) => item.value));
+    if (topValue <= 0) return null;
+    const primaryItems = items.filter((item) => item.value === topValue);
+    const primaryLabel = primaryItems.map((item) => `${item.label} (${formatPct(item.pct)})`).join(" • ");
+
+    const remaining = items.filter((item) => item.value < topValue);
+    const secondaryCandidate = remaining[0] ?? null;
+    const topPct = primaryItems[0]?.pct ?? 0;
+    const secondary = secondaryCandidate && secondaryCandidate.value > 0 && (topPct - secondaryCandidate.pct <= SECONDARY_PROXIMITY_PCT)
+      ? secondaryCandidate
+      : null;
+    const secondaryLabel = secondary
+      ? `${secondary.label} (${formatPct(secondary.pct)})`
+      : "Sem proximidade relevante neste período.";
+
+    const lowItems = items.filter((item) => item.value === 0 || item.pct <= LOW_PCT_THRESHOLD);
+    const lowLabel = lowItems.length > 0
+      ? lowItems.map((item) => `${item.label} (${formatPct(item.pct)})`).join(", ")
+      : "Nenhum neste período.";
+
+    const statusKey = computeStatusKey(items);
+    const insight = buildPastoralInsight(primaryItems, secondary, lowItems, statusKey);
+
+    return {
+      primaryLabel,
+      secondaryLabel,
+      lowLabel,
+      insight,
+    };
+  }, [summary]);
+
+  const balance = useMemo(() => {
+    if (!summary || summary.total <= 0) return null;
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return null;
+    return buildBalanceIndex(items);
+  }, [summary]);
+
+  const recommendations = useMemo(() => {
+    if (!summary || summary.total <= 0) return [] as RecommendationItem[];
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return [] as RecommendationItem[];
+    return buildRecommendations(items);
+  }, [summary]);
+
+  const recommendationsEmptyMessage = useMemo(() => {
+    if (!summary) return "Nenhuma orientação disponível para este período.";
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return "Nenhuma orientação disponível para este período.";
+    const statusKey = computeStatusKey(items);
+    const maxValue = Math.max(...items.map((item) => item.value));
+    const topItems = items.filter((item) => item.value === maxValue);
+    const absentItems = items.filter((item) => item.value === 0 || item.pct === 0);
+    const lowItems = items.filter((item) => item.pct > 0 && item.pct <= LOW_PCT_THRESHOLD);
+    const sortedDesc = [...items].sort((a, b) => b.pct - a.pct);
+    const secondItem = sortedDesc[1] ?? null;
+    const scenario = buildScenarioNarrative({
+      statusKey,
+      topItems,
+      absentItems,
+      lowItems,
+      secondItem,
+    });
+    return scenario.recommendationsEmptyText;
+  }, [summary]);
+
+  const nextStep = useMemo(() => {
+    if (!summary) return null;
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return null;
+    return buildNextStep(items, summary.total);
+  }, [summary]);
+
+  const executive = useMemo(() => {
+    if (!summary) return null;
+    const items = buildProfileItems(summary);
+    if (items.length === 0) return null;
+    return buildExecutiveSummary(items, summary.total);
+  }, [summary]);
+
   return (
     <div className="report-wrap">
       <header className="report-hero">
@@ -394,6 +631,45 @@ function ChurchReportInner() {
           })()}
         </div>
       </header>
+
+      {/* O que este relatório mostra */}
+      <section className="report-profile" aria-label="O que este relatório mostra">
+        <div className="report-profile-header">
+          <div>
+            <span className="report-kicker">Guia de leitura</span>
+            <h2 className="report-profile-title">O que este relatório mostra</h2>
+          </div>
+          <div className="report-profile-note">Diagnóstico inicial do período, baseado nas respostas do teste, que prepara a leitura das ênfases percebidas</div>
+        </div>
+        <div className="report-profile-grid">
+          <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
+            <span className="profile-insight-label">Orientação</span>
+            <p>{REPORT_WHAT_THIS_SHOWS_TEXT}</p>
+            <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.7.</span>
+          </div>
+        </div>
+      </section>
+
+      {executive && (
+        <section className="report-profile" aria-label="Resumo executivo">
+          <div className="report-profile-header">
+            <div>
+              <span className="report-kicker">Para líderes</span>
+              <h2 className="report-profile-title">{executive.title}</h2>
+            </div>
+            <div className="report-profile-note">Síntese pastoral do período para orientar decisões</div>
+          </div>
+          <div className="report-profile-grid">
+            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
+              <span className="profile-insight-label">Leitura em 6–8 linhas</span>
+              {executive.lines.map((line, index) => (
+                <p key={`exec-${index}`}>{line}</p>
+              ))}
+              <span className="profile-insight-base">{executive.base}</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Filtros de período */}
       <section className="report-toolbar">
@@ -463,6 +739,159 @@ function ChurchReportInner() {
               )}
             </div>
           </div>
+
+          <section className="report-profile">
+            <div className="report-profile-header">
+              <div>
+                <span className="report-kicker">Quem somos como comunidade?</span>
+                <h2 className="report-profile-title">Perfil Ministerial da Comunidade</h2>
+              </div>
+              <div className="report-profile-note">Leitura do período com base na distribuição percebida, preparando o índice de equilíbrio</div>
+            </div>
+            {profile ? (
+              <div className="report-profile-grid">
+                <div className="report-profile-list">
+                  <div className="profile-line">
+                    <span className="profile-label">Perfil predominante</span>
+                    <span className="profile-value">{profile.primaryLabel}</span>
+                  </div>
+                  <div className="profile-line">
+                    <span className="profile-label">Perfil secundário</span>
+                    <span className="profile-value">{profile.secondaryLabel}</span>
+                  </div>
+                  <div className="profile-line">
+                    <span className="profile-label">Dons ausentes ou sub-representados</span>
+                    <span className="profile-value">{profile.lowLabel}</span>
+                  </div>
+                </div>
+                <div className="report-profile-insight">
+                  <span className="profile-insight-label">Insight Ministerial</span>
+                  {profile.insight.map((line, index) => (
+                    <p key={`${line.slice(0, 16)}-${index}`}>{line}</p>
+                  ))}
+                  <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.14–26.</span>
+                </div>
+              </div>
+            ) : (
+              <div className="report-profile-empty">Dados insuficientes para compor o perfil ministerial deste período.</div>
+            )}
+          </section>
+
+          <section className="report-balance">
+            <div className="report-balance-header">
+              <div>
+                <span className="report-kicker">Índice de equilíbrio</span>
+                <h2 className="report-balance-title">Índice de Equilíbrio Ministerial</h2>
+                <p className="report-profile-note">Leitura do corpo como um todo no período, não da caminhada individual, preparando ações acompanhadas.</p>
+              </div>
+              {balance && (
+                <div className={`balance-pill ${balance.statusKey}`}>
+                  <span className="balance-indicator" aria-hidden="true">{balance.indicator}</span>
+                  <strong>{balance.label}</strong>
+                </div>
+              )}
+            </div>
+            {balance ? (
+              <div className="report-balance-grid">
+                <div className="balance-card">
+                  <span className="profile-label">Leitura pastoral do cenário</span>
+                  <p>{balance.reading}</p>
+                </div>
+                <div className="balance-card">
+                  <span className="profile-label">Onde há sinais percebidos?</span>
+                  <p>{balance.mature}</p>
+                </div>
+                <div className="balance-card">
+                  <span className="profile-label">Onde há riscos percebidos?</span>
+                  <p>{balance.imbalance}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="report-profile-empty">Dados insuficientes para compor o índice de equilíbrio ministerial deste período.</div>
+            )}
+          </section>
+
+          <section className="report-growth">
+            <div className="report-growth-header">
+              <div>
+                <span className="report-kicker">Como crescer juntos rumo à plenitude de Cristo?</span>
+                <h2 className="report-growth-title">Recomendações Práticas por Dom Ausente</h2>
+              </div>
+              <div className="report-profile-note">Sugestões pastorais para fortalecer expressões com baixa percepção e preparar o próximo passo.</div>
+            </div>
+            {recommendations.length > 0 ? (
+              <div className="report-growth-grid">
+                {recommendations.map((rec) => (
+                  <article key={rec.key} className="growth-card">
+                    <div className="growth-alert">⚠️ Oportunidade: Dom {rec.label} {rec.status} neste período</div>
+                    <div className="growth-expression">
+                      <span className="profile-label">Expressão a fortalecer</span>
+                      <p>{rec.expressionTitle} — {rec.expressionShort}</p>
+                      <p className="muted">{rec.expressionWhy}</p>
+                    </div>
+                    <div className="growth-suggestions">
+                      <span className="profile-label">Sugestões</span>
+                      <ul>
+                        {rec.suggestions.map((suggestion, index) => (
+                          <li key={`${rec.key}-${index}`}>{suggestion}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div className="growth-verse">
+                      <span className="profile-label">📖 Texto bíblico</span>
+                      <p>“{rec.verse}” <span className="growth-verse-ref">{rec.verseRef}</span></p>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="report-profile-empty">{recommendationsEmptyMessage}</div>
+            )}
+          </section>
+
+          <section className="report-next-step">
+            <div className="report-growth-header">
+              <div>
+                <span className="report-kicker">Próximo passo sugerido</span>
+                <h2 className="report-growth-title">Um caminho simples e pastoral para este período</h2>
+              </div>
+            </div>
+            {nextStep ? (
+              <div className="next-step-card">
+                <span className="profile-label">Próximo passo sugerido</span>
+                <strong>{nextStep.title}</strong>
+                <span className="muted">{nextStep.subtitle}</span>
+                <div>
+                  <span className="profile-label">30 dias</span>
+                  <ul>
+                    {nextStep.bullets30.map((item, index) => (
+                      <li key={`next30-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <span className="profile-label">60 dias</span>
+                  <ul>
+                    {nextStep.bullets60.map((item, index) => (
+                      <li key={`next60-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <span className="profile-label">90 dias</span>
+                  <ul>
+                    {nextStep.bullets90.map((item, index) => (
+                      <li key={`next90-${index}`}>{item}</li>
+                    ))}
+                  </ul>
+                </div>
+                <p>{nextStep.note}</p>
+                <p>{nextStep.optionalSupport}</p>
+              </div>
+            ) : (
+              <div className="report-profile-empty">Nenhum passo sugerido para este período.</div>
+            )}
+          </section>
 
           {/* Barras */}
           <h2 className="section-title">Distribuição por dom</h2>
@@ -1079,6 +1508,420 @@ function formatRelTime(iso: string) {
     const days = Math.round(hours / 24);
     return rtf.format(-days, 'day');
   } catch { return ''; }
+}
+
+function buildProfileItems(summary: Summary): ProfileItem[] {
+  const total = summary.total;
+  if (!total || total <= 0) return [];
+  return PROFILE_DOMS.map((dom) => {
+    const value = summary[dom.key];
+    const pct = total > 0 ? (value / total) * 100 : 0;
+    return { ...dom, value, pct };
+  }).sort((a, b) => (b.value - a.value) || (b.pct - a.pct));
+}
+
+function computeStatusKey(items: ProfileItem[]): "green" | "yellow" | "red" {
+  const maxPct = Math.max(...items.map((item) => item.pct));
+  const zeroItems = items.filter((item) => item.value === 0 || item.pct === 0);
+  if (maxPct >= BALANCE_DOMINANCE_PCT || zeroItems.length >= BALANCE_ABSENT_COUNT) return "red";
+  if (maxPct <= BALANCE_EVEN_PCT && zeroItems.length === 0) return "green";
+  return "yellow";
+}
+
+function buildScenarioNarrative(args: {
+  statusKey: "green" | "yellow" | "red";
+  topItems: ProfileItem[];
+  absentItems: ProfileItem[];
+  lowItems: ProfileItem[];
+  secondItem?: ProfileItem | null;
+}): {
+  balanceReadingAddon: string;
+  balanceRiskText: string;
+  profileInsightAddon: string;
+  recommendationsEmptyText: string;
+  nextStepSubtitleAddon: string;
+} {
+  const topExprs = joinList(args.topItems.map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+  const absentNames = joinList(args.absentItems.map((item) => item.lower));
+  const lowNames = joinList(args.lowItems.map((item) => item.lower));
+  const absentRisks = joinList(args.absentItems.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionRiskIfAbsent));
+  const lowRisks = joinList(args.lowItems.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionRiskIfAbsent));
+  const dominantRisk = args.topItems.length === 1
+    ? EXPRESSIONS_MAP[args.topItems[0].key].expressionRiskIfDominant
+    : "centralização gradual de uma expressão";
+
+  if (args.statusKey === "green") {
+    return {
+      balanceReadingAddon: "Mesmo em cenários cooperativos, o processo precisa de acompanhamento para evitar acomodação.",
+      balanceRiskText:
+        "Quando há cooperação, o risco é a acomodação que permite centralização gradual; o convite pastoral é sustentar práticas que mantenham o corpo em cooperação.",
+      profileInsightAddon:
+        "Esse retrato sugere cooperação percebida, mas lembra que a caminhada exige discernimento contínuo e acompanhamento pastoral.",
+      recommendationsEmptyText:
+        "Não há expressões ausentes neste período; o convite é sustentar práticas que preservem a cooperação do corpo.",
+      nextStepSubtitleAddon:
+        "Com acompanhamento, preservem a cooperação e evitem centralização gradual.",
+    };
+  }
+
+  if (args.statusKey === "yellow") {
+    const riskText = lowRisks || absentRisks
+      ? `Quando algumas expressões aparecem de forma discreta, pode haver ${lowRisks || absentRisks}; o convite é agir com intencionalidade pastoral.`
+      : "Há risco de desequilíbrio por falta de intencionalidade pastoral; o convite é ajustar com cuidado.";
+    return {
+      balanceReadingAddon: "Há cooperação percebida, mas algumas expressões precisam de atenção para não ficarem discretas.",
+      balanceRiskText: riskText,
+      profileInsightAddon:
+        "Esse retrato sugere cooperação real, mas pede intencionalidade para que nenhuma expressão fique à margem no processo.",
+      recommendationsEmptyText:
+        "Ainda que não haja ausências claras, vale observar expressões discretas e encorajar participação com acompanhamento.",
+      nextStepSubtitleAddon:
+        "Com intencionalidade pastoral, fortaleçam as expressões discretas.",
+    };
+  }
+
+  const redRiskParts: string[] = [];
+  if (args.absentItems.length > 0) {
+    redRiskParts.push(`Quando ${absentNames} não se expressam, a igreja tende a experimentar ${absentRisks}.`);
+  }
+  if (args.lowItems.length > 0) {
+    redRiskParts.push(`Quando ${lowNames} aparecem com menos força, pode haver ${lowRisks}.`);
+  }
+  if (args.topItems.length === 1) {
+    redRiskParts.push(`Quando ${topExprs} assume o centro sozinho, pode surgir ${dominantRisk}.`);
+  }
+  const redRiskText = redRiskParts.length > 0
+    ? `${redRiskParts.join(" ")} O convite é ajustar com passos pequenos e acompanhados.`
+    : "Há sinais de concentração funcional; o convite é ajustar com passos pequenos e acompanhados.";
+
+  return {
+    balanceReadingAddon: "Há lacunas ou concentração forte; a resposta pastoral é fortalecer cooperação com passos simples.",
+    balanceRiskText: redRiskText,
+    profileInsightAddon:
+      "Esse retrato aponta lacunas funcionais do corpo e chama para passos pequenos, com formação e acompanhamento pastoral.",
+    recommendationsEmptyText:
+      "Mesmo sem ausências claras, pode haver lacunas funcionais; vale revisar o período e manter o acompanhamento pastoral.",
+    nextStepSubtitleAddon:
+      "Com passos pequenos e acompanhados, busquem restaurar a cooperação do corpo.",
+  };
+}
+
+function formatPct(pct: number) {
+  if (!Number.isFinite(pct)) return "0%";
+  if (pct <= 0) return "0%";
+  if (pct < 10) return `${pct.toFixed(1).replace(".", ",")}%`;
+  return `${Math.round(pct)}%`;
+}
+
+function joinList(items: string[]) {
+  if (items.length <= 1) return items.join("");
+  if (items.length === 2) return `${items[0]} e ${items[1]}`;
+  return `${items.slice(0, -1).join(", ")} e ${items[items.length - 1]}`;
+}
+
+function buildBalanceIndex(items: ProfileItem[]) {
+  const statusKey = computeStatusKey(items);
+  const zeroItems = items.filter((item) => item.value === 0 || item.pct === 0);
+  const lowItems = items.filter((item) => item.pct > 0 && item.pct <= LOW_PCT_THRESHOLD);
+  const presentItems = items.filter((item) => item.value > 0);
+
+  const labels = {
+    green: { indicator: "🟢", label: "Equilibrada" },
+    yellow: { indicator: "🟡", label: "Parcialmente equilibrada" },
+    red: { indicator: "🔴", label: "Desequilíbrio ministerial" },
+  } as const;
+
+  const sortedPresent = [...presentItems].sort((a, b) => b.pct - a.pct);
+  const top = sortedPresent[0];
+  const second = sortedPresent[1];
+  const maxValue = presentItems.length > 0 ? Math.max(...presentItems.map((item) => item.value)) : 0;
+  const topItems = presentItems.filter((item) => item.value === maxValue);
+  const scenario = buildScenarioNarrative({
+    statusKey,
+    topItems,
+    absentItems: zeroItems,
+    lowItems,
+    secondItem: second ?? null,
+  });
+
+  let mature = "";
+  if (topItems.length === 1) {
+    const expr = EXPRESSIONS_MAP[topItems[0].key];
+    mature = `Há sinais de ênfase percebida em ${expr.expressionTitle}, o que tende a fortalecer ${expr.expressionShort} se for acompanhado com cuidado.`;
+  } else if (topItems.length === 2) {
+    const exprA = EXPRESSIONS_MAP[topItems[0].key];
+    const exprB = EXPRESSIONS_MAP[topItems[1].key];
+    mature = `Há sinais de ênfases percebidas em ${exprA.expressionTitle} e ${exprB.expressionTitle}, com potencial de cooperação entre ${exprA.expressionShort} e ${exprB.expressionShort}.`;
+  } else if (topItems.length > 2) {
+    const exprNames = joinList(topItems.map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+    mature = `Há sinais de diversidade funcional percebida entre ${exprNames}, indicando potencial para servir o corpo com maior unidade.`;
+  }
+
+  let imbalance = scenario.balanceRiskText;
+
+  let reading = "";
+  if (presentItems.length === 1 && top) {
+    const expr = EXPRESSIONS_MAP[top.key];
+    reading = `Este índice indica um retrato comunitário com concentração funcional em ${expr.expressionTitle}, o que sugere atenção pastoral para que a cooperação do corpo não se reduza a uma expressão. `;
+  } else if (presentItems.length > 1 && top) {
+    if (second && second.pct > LOW_PCT_THRESHOLD) {
+      const exprA = EXPRESSIONS_MAP[top.key];
+      const exprB = EXPRESSIONS_MAP[second.key];
+      reading = `Este índice indica um retrato comunitário com cooperação mais visível entre ${exprA.expressionTitle} e ${exprB.expressionTitle}, ainda que outras expressões possam precisar de espaço. `;
+    } else {
+      const expr = EXPRESSIONS_MAP[top.key];
+      reading = `Este índice indica um retrato comunitário com maior ênfase em ${expr.expressionTitle} e menor visibilidade de outras expressões. `;
+    }
+  }
+  reading += "A partir disso, as recomendações a seguir não buscam corrigir números, mas fortalecer a cooperação do corpo.";
+  reading = `${reading} ${scenario.balanceReadingAddon}`;
+
+  return {
+    statusKey,
+    indicator: labels[statusKey].indicator,
+    label: labels[statusKey].label,
+    reading,
+    mature,
+    imbalance,
+  };
+}
+
+function buildRecommendations(items: ProfileItem[]): RecommendationItem[] {
+  const lowItems = items.filter((item) => item.value === 0 || item.pct <= LOW_PCT_THRESHOLD);
+  if (lowItems.length === 0) return [];
+  const ordered = [...lowItems].sort((a, b) => {
+    if (a.value === 0 && b.value !== 0) return -1;
+    if (b.value === 0 && a.value !== 0) return 1;
+    return a.pct - b.pct;
+  });
+  return ordered
+    .map((item) => {
+      const data = RECOMMENDATION_MAP[item.key];
+      const expr = EXPRESSIONS_MAP[item.key];
+      if (!data) return null;
+      const status = item.value === 0 || item.pct === 0 ? "ausente" : "com baixa expressão";
+      const expressionWhy = `Quando esta expressão é fortalecida, a igreja tende a superar ${expr.expressionRiskIfAbsent}.`;
+      return {
+        key: item.key,
+        label: item.label,
+        status,
+        expressionTitle: expr.expressionTitle,
+        expressionShort: expr.expressionShort,
+        expressionWhy,
+        suggestions: data.suggestions.slice(0, 3),
+        verse: data.verse,
+        verseRef: data.verseRef,
+      } satisfies RecommendationItem;
+    })
+    .filter((item): item is RecommendationItem => Boolean(item));
+}
+
+function buildNextStep(items: ProfileItem[], total: number) {
+  const statusKey = computeStatusKey(items);
+  const zeroItems = items.filter((item) => item.value === 0 || item.pct === 0);
+  const sortedAsc = [...items].sort((a, b) => a.pct - b.pct);
+  const sortedDesc = [...items].sort((a, b) => b.pct - a.pct);
+  const lowestExprs = joinList(sortedAsc.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+  const dominant = sortedDesc[0];
+  const dominantExpr = dominant ? EXPRESSIONS_MAP[dominant.key].expressionTitle : "uma expressão";
+  const maxValue = sortedDesc.length > 0 ? sortedDesc[0].value : 0;
+  const topItems = sortedDesc.filter((item) => item.value === maxValue);
+  const lowItems = items.filter((item) => item.pct > 0 && item.pct <= LOW_PCT_THRESHOLD);
+  const scenario = buildScenarioNarrative({
+    statusKey,
+    topItems,
+    absentItems: zeroItems,
+    lowItems,
+    secondItem: sortedDesc[1] ?? null,
+  });
+
+  if (total < 10) {
+    return {
+      title: "Plano 30/60/90 dias",
+      subtitle: `Caminho pastoral para ampliar a participação com leveza. ${scenario.nextStepSubtitleAddon}`,
+      bullets30: [
+        "Reforcem o convite ao teste com uma palavra pastoral curta no culto e nos grupos.",
+        "Explique que o teste revela percepções e é um primeiro passo para cuidado do corpo.",
+        "Abram um período de escuta para acolher dúvidas e orações dos participantes.",
+      ],
+      bullets60: [
+        "Compartilhem um testemunho simples de quem participou e se sentiu edificado.",
+        "Reservem um momento nos encontros para esclarecer a finalidade do relatório.",
+        "Acompanhem quem iniciou o teste e ofereçam apoio para concluir.",
+      ],
+      bullets90: [
+        "Reúnam a liderança para ler os dados com calma e definir um foco pastoral inicial.",
+        "Iniciem uma prática comunitária leve que fortaleça o corpo como um todo.",
+        "Registrem aprendizados e preparem o próximo ciclo de participação.",
+      ],
+      note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
+      optionalSupport:
+        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
+    };
+  }
+
+  if (statusKey === "red") {
+    const practiceMap: Record<ProfileDomKey, string> = {
+      apostolo: "uma pequena ação de envio local e abertura de novas frentes",
+      profeta: "um encontro de oração e escuta para discernimento e santidade",
+      evangelista: "uma iniciativa de acolhimento e anúncio das boas-novas",
+      pastor: "uma rotina de cuidado mútuo em grupos e visitas",
+      mestre: "uma trilha curta de ensino bíblico básico",
+    };
+    const primaryLow = sortedAsc[0];
+    const practice = primaryLow ? practiceMap[primaryLow.key] : "uma prática simples ligada às expressões frágeis";
+    return {
+      title: "Plano 30/60/90 dias",
+      subtitle: `Caminho pastoral para restaurar a cooperação do corpo. ${scenario.nextStepSubtitleAddon}`,
+      bullets30: [
+        "Separem um tempo de oração e diagnóstico pastoral para compreender as lacunas do corpo.",
+        `Mapeiem quais expressões estão mais frágeis, especialmente ${lowestExprs}.`,
+        "Formem um pequeno time de acompanhamento para sustentar o processo com graça.",
+      ],
+      bullets60: [
+        `Iniciem mentoria e treino simples para os dons ligados a ${lowestExprs}.`,
+        "Criem rotinas leves de formação bíblica e prática supervisionada.",
+        "Acompanhem passos pequenos e constantes, sem pressão por resultados rápidos.",
+      ],
+      bullets90: [
+        `Realizem a primeira prática mensurável: ${practice}.`,
+        "Avaliem juntos o que gerou edificação e onde ajustar o caminho.",
+        `Reequilibrem o corpo, evitando centralizar tudo em ${dominantExpr}.`,
+      ],
+      note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
+      optionalSupport:
+        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
+    };
+  }
+
+  if (statusKey === "yellow") {
+    return {
+      title: "Plano 30/60/90 dias",
+      subtitle: `Caminho pastoral para fortalecer o que está discreto. ${scenario.nextStepSubtitleAddon}`,
+      bullets30: [
+        `Reconheçam a força atual de ${dominantExpr} sem deixar as demais expressões apagadas.`,
+        `Identifiquem pessoas com inclinação para ${lowestExprs} e ofereçam mentoria simples.`,
+        "Estabeleçam um ritmo semanal de oração e escuta para discernimento do corpo.",
+      ],
+      bullets60: [
+        "Rodem pequenos pilotos, um por expressão mais discreta, em grupos ou ministérios.",
+        "Acompanhem com líderes próximos, avaliando sinais de edificação.",
+        "Guardem o processo com formação bíblica e unidade pastoral.",
+      ],
+      bullets90: [
+        "Consolidem os pilotos que trouxeram fruto e descartem o que não serviu.",
+        "Escolham uma prioridade por trimestre para manter foco e continuidade.",
+        "Registrem aprendizados e planejem o próximo ciclo de cooperação.",
+      ],
+      note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
+      optionalSupport:
+        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
+    };
+  }
+
+  return {
+    title: "Plano 30/60/90 dias",
+    subtitle: `Caminho pastoral para preservar o equilíbrio e amadurecer o corpo. ${scenario.nextStepSubtitleAddon}`,
+    bullets30: [
+      "Preservem o equilíbrio, treinando líderes para reconhecer e encorajar cada expressão.",
+      "Orem juntos pedindo discernimento e humildade para cooperar.",
+      "Abram espaço para novos participantes praticarem dons de forma acompanhada.",
+    ],
+    bullets60: [
+      "Organizem prática supervisionada em pequenos grupos e ministérios.",
+      "Promovam mentoria curta para quem demonstra inclinação ministerial.",
+      "Acompanhem sinais de edificação e unidade nas equipes.",
+    ],
+    bullets90: [
+      "Criem uma rotina mensal de alinhamento entre expressões do corpo.",
+      "Escolham um foco comunitário que integre missão, cuidado e ensino.",
+      "Registrem avanços e ajustem o processo com simplicidade.",
+    ],
+    note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
+    optionalSupport:
+      "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
+  };
+}
+
+function buildExecutiveSummary(items: ProfileItem[], total: number) {
+  const sortedDesc = [...items].sort((a, b) => b.pct - a.pct);
+  const sortedAsc = [...items].sort((a, b) => a.pct - b.pct);
+  const maxValue = sortedDesc.length > 0 ? sortedDesc[0].value : 0;
+  const topItems = sortedDesc.filter((item) => item.value === maxValue);
+  const topExprs = joinList(topItems.map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+  const lowExprs = joinList(sortedAsc.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+
+  const zeroItems = items.filter((item) => item.value === 0 || item.pct === 0);
+  const maxPct = Math.max(...items.map((item) => item.pct));
+  const statusKey: "green" | "yellow" | "red" =
+    maxPct >= BALANCE_DOMINANCE_PCT || zeroItems.length >= BALANCE_ABSENT_COUNT
+      ? "red"
+      : maxPct <= BALANCE_EVEN_PCT && zeroItems.length === 0
+        ? "green"
+        : "yellow";
+  const statusLabel = statusKey === "green" ? "equilibrado" : statusKey === "yellow" ? "parcialmente equilibrado" : "concentrado";
+
+  if (total < 10) {
+    return {
+      title: "Resumo Executivo (para líderes)",
+      lines: [
+        "Há poucos dados neste período; o retrato ainda é inicial.",
+        "O teste ajuda a mapear percepções e inclinações ministeriais do corpo.",
+        "Prioridade pastoral: ampliar a participação com convites simples e cuidado.",
+        "Explique que o relatório orienta discernimento, não conclui maturidade.",
+        "Use este momento para formar líderes e preparar práticas acompanhadas.",
+        "Próximo passo (30 dias): mobilizar respostas e ouvir a comunidade.",
+      ],
+      base: "Ef 4.11–16; 1Co 12",
+    };
+  }
+
+  return {
+    title: "Resumo Executivo (para líderes)",
+    lines: [
+      `Ênfase percebida no período: ${topExprs}.`,
+      `Leitura do equilíbrio: cenário ${statusLabel}, com foco em cooperação.`,
+      `Expressões a fortalecer: ${lowExprs}.`,
+      "Este retrato é baseado em respostas e não confirma ativação ou maturidade.",
+      "Resultado equilibrado ou concentrado pede discernimento e acompanhamento pastoral.",
+      "Próximo passo (30 dias): escolher 1 expressão para fortalecer e iniciar uma prática simples acompanhada.",
+    ],
+    base: "Ef 4.11–16; 1Co 12",
+  };
+}
+
+function buildPastoralInsight(primary: ProfileItem[], secondary: ProfileItem | null, lowItems: ProfileItem[], statusKey?: "green" | "yellow" | "red") {
+  const sentences: string[] = [];
+  const exprNames = joinList(primary.map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+  const exprShorts = joinList(primary.map((item) => EXPRESSIONS_MAP[item.key].expressionShort));
+
+  sentences.push(`Com base nas respostas, percebe-se uma ênfase ministerial em ${exprNames}, sinalizando ${exprShorts} como tendência percebida.`);
+  sentences.push("Essa leitura não afirma que os dons estejam ativados ou maduros; a ativação acontece com prática, discipulado e organização comunitária.");
+  sentences.push("A plenitude de Cristo se expressa quando as funções cooperam e servem ao corpo em unidade, e este relatório aponta caminhos para esse processo.");
+
+  if (lowItems.length > 0) {
+    const weaker = joinList(lowItems.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
+    sentences.push(`Há oportunidade de criar espaço e fortalecer ${weaker}, para que essas expressões também sirvam ao corpo com liberdade.`);
+  } else {
+    sentences.push("Quando não há grandes ausências, o desafio é preservar o equilíbrio e evitar que uma única expressão se centralize.");
+  }
+
+  if (statusKey) {
+    const absentItems = lowItems.filter((item) => item.value === 0 || item.pct === 0);
+    const lowOnly = lowItems.filter((item) => item.pct > 0 && item.pct <= LOW_PCT_THRESHOLD);
+    const scenario = buildScenarioNarrative({
+      statusKey,
+      topItems: primary,
+      absentItems,
+      lowItems: lowOnly,
+      secondItem: secondary ?? null,
+    });
+    sentences.push(scenario.profileInsightAddon);
+  }
+
+  sentences.push("Esse entendimento prepara o caminho para ler o equilíbrio do corpo e seguir com passos acompanhados.");
+
+  return sentences;
 }
 
 // Card de destaque para o maior dom
