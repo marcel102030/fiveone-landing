@@ -1,0 +1,1 @@
+-- Deprecated: visitor applications now live in public.rede_member_application

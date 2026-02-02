@@ -10,6 +10,8 @@ import {
   deleteUser,
   setUserActive,
   updateUserFormation,
+  updateUserMemberLink,
+  updateUserRole,
   FormationKey,
   getUserComments,
   setUsersActive,
@@ -18,6 +20,7 @@ import {
   deleteUsers,
   createInvite,
 } from "../../services/userAccount";
+import { RedeMember, listRedeMembers } from "../../services/redeIgrejas";
 import "../AdministracaoFiveOne.css";
 import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
@@ -51,7 +54,19 @@ export default function AdminAlunos() {
   const [details, setDetails] = useState<null | { email: string; loading: boolean; data: UserProfileDetails | null }>(null);
   const [bulkPassword, setBulkPassword] = useState<null | { emails: string[] }>(null);
   const [bulkRemove, setBulkRemove] = useState<null | { emails: string[] }>(null);
+  const [members, setMembers] = useState<RedeMember[]>([]);
+  const [linking, setLinking] = useState<null | { email: string; memberId: string }>(null);
+  const [linkSaving, setLinkSaving] = useState(false);
   const toast = useAdminToast();
+
+  async function ensureMembersLoaded() {
+    if (members.length) return;
+    try {
+      setMembers(await listRedeMembers());
+    } catch {
+      setMembers([]);
+    }
+  }
 
   async function load() {
     setLoading(true);
@@ -279,6 +294,10 @@ export default function AdminAlunos() {
                         setDetails({ email: normalized, loading: false, data: null });
                       });
                     }}>Detalhes</button>
+                    <button className="admin-btn" onClick={async ()=> {
+                      await ensureMembersLoaded();
+                      setLinking({ email: u.email, memberId: (u as any).member_id || "" });
+                    }}>Vincular membro</button>
                     <button className="admin-btn" onClick={()=> setReset({ email: u.email })}>Redefinir senha</button>
                     <button className="admin-btn" onClick={()=> setConfirmDel({ email: u.email })}>Remover</button>
                   </td>
@@ -288,6 +307,7 @@ export default function AdminAlunos() {
                       <div>
                         <div style={{fontWeight:700}}>{u.name || u.email.split('@')[0]}</div>
                         <div style={{color:'#9fb2c5', fontSize:12}}>{u.email}</div>
+                        {(u as any).member_id && <div style={{color:'#38bdf8', fontSize:11}}>Membro vinculado</div>}
                       </div>
                     </div>
                   </td>
@@ -384,6 +404,68 @@ export default function AdminAlunos() {
             )}
             <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
               <button className="adm5-pill" onClick={()=> setDetails(null)}>Fechar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {linking && (
+        <div className="custom-modal-overlay" onClick={()=> setLinking(null)}>
+          <div className="custom-modal" style={{ maxWidth: 520, width: '100%' }} onClick={(e)=> e.stopPropagation()}>
+            <h3>Vincular membro</h3>
+            <p style={{ marginTop: -6, color: '#9fb2c5' }}>{linking.email}</p>
+            <label className="admin-field">Membro da rede
+              <select
+                className="admin-input"
+                value={linking.memberId}
+                onChange={(e)=> setLinking(prev => prev ? ({ ...prev, memberId: e.target.value }) : prev)}
+              >
+                <option value="">Selecione</option>
+                {members.map((m) => (
+                  <option key={m.id} value={m.id}>{m.full_name}</option>
+                ))}
+              </select>
+            </label>
+            <div style={{display:'flex', justifyContent:'space-between', gap:8, marginTop:12}}>
+              <button className="admin-btn" onClick={async ()=>{
+                setLinkSaving(true);
+                try {
+                  await updateUserMemberLink(linking.email, null);
+                  await updateUserRole(linking.email, "STUDENT");
+                  toast.success('Vinculo removido', 'O usuario foi desvinculado do membro.');
+                  setLinking(null);
+                  await load();
+                } catch {
+                  toast.error('Nao foi possivel remover', 'Tente novamente em instantes.');
+                } finally {
+                  setLinkSaving(false);
+                }
+              }} disabled={linkSaving}>
+                Desvincular
+              </button>
+              <div style={{display:'flex', gap:8}}>
+                <button className="admin-btn" onClick={()=> setLinking(null)} disabled={linkSaving}>Cancelar</button>
+                <button className="admin-btn primary" onClick={async ()=>{
+                  if (!linking.memberId) {
+                    toast.warning('Selecione um membro', 'Escolha o membro para vincular.');
+                    return;
+                  }
+                  setLinkSaving(true);
+                  try {
+                    await updateUserMemberLink(linking.email, linking.memberId);
+                    await updateUserRole(linking.email, "MEMBER");
+                    toast.success('Vinculo salvo', 'O usuario agora esta vinculado ao membro.');
+                    setLinking(null);
+                    await load();
+                  } catch {
+                    toast.error('Nao foi possivel salvar', 'Tente novamente em instantes.');
+                  } finally {
+                    setLinkSaving(false);
+                  }
+                }} disabled={linkSaving}>
+                  {linkSaving ? "Salvando..." : "Salvar"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

@@ -398,6 +398,13 @@
   flex: 1;
 }
 
+.rede-tab-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 .rede-form-grid {
   display: grid;
   gap: 16px;

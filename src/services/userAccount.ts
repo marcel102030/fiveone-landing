@@ -5,10 +5,13 @@ export type PlatformUser = {
   password: string; // plain for now; recommend Supabase Auth in production
   name?: string | null;
   formation?: FormationKey; // APOSTOLO | PROFETA | EVANGELISTA | PASTOR | MESTRE
+  role?: PlatformUserRole;
+  member_id?: string | null;
   created_at?: string;
 };
 
 export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
+export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
 
 export async function createUser(u: PlatformUser): Promise<void> {
   const { error } = await supabase.from('platform_user').insert({
@@ -16,6 +19,8 @@ export async function createUser(u: PlatformUser): Promise<void> {
     password: u.password,
     name: u.name || null,
     formation: u.formation || 'MESTRE',
+    role: u.role || 'STUDENT',
+    member_id: u.member_id || null,
   });
   if (error) throw error;
 }
@@ -36,12 +41,14 @@ export type PlatformUserListItem = {
   name: string | null;
   created_at: string | null;
   formation?: FormationKey;
+  role?: PlatformUserRole | null;
+  member_id?: string | null;
 };
 
 export async function listUsers(q?: string): Promise<PlatformUserListItem[]> {
   let query = supabase
     .from('platform_user')
-    .select('email,name,created_at,formation')
+    .select('email,name,created_at,formation,role,member_id')
     .order('created_at', { ascending: false });
   if (q && q.trim()) {
     query = query.ilike('email', `%${q.trim()}%`);
@@ -62,7 +69,7 @@ export async function listUsersPage(params: { q?: string; page: number; pageSize
   const to = from + pageSize - 1;
   let query = supabase
     .from('platform_user')
-    .select('email,name,created_at,formation', { count: 'exact' })
+    .select('email,name,created_at,formation,role,member_id', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
   if (q && q.trim()) query = query.ilike('email', `%${q.trim()}%`);
@@ -86,6 +93,22 @@ export async function updateUserEmail(oldEmail: string, newEmail: string): Promi
     .from('platform_user')
     .update({ email: newEmail.toLowerCase() })
     .eq('email', oldEmail.toLowerCase());
+  if (error) throw error;
+}
+
+export async function updateUserRole(email: string, role: PlatformUserRole): Promise<void> {
+  const { error } = await supabase
+    .from('platform_user')
+    .update({ role })
+    .eq('email', email.toLowerCase());
+  if (error) throw error;
+}
+
+export async function updateUserMemberLink(email: string, memberId: string | null): Promise<void> {
+  const { error } = await supabase
+    .from('platform_user')
+    .update({ member_id: memberId })
+    .eq('email', email.toLowerCase());
   if (error) throw error;
 }
 
@@ -177,7 +200,7 @@ export async function updateUserFormation(email: string, formation: FormationKey
 export async function getUserByEmail(email: string): Promise<PlatformUserListItem | null> {
   const { data, error } = await supabase
     .from('platform_user')
-    .select('email,name,created_at,formation')
+    .select('email,name,created_at,formation,role,member_id')
     .eq('email', email.toLowerCase())
     .maybeSingle();
   if (error) throw error;

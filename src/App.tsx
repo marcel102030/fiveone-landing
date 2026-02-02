@@ -31,6 +31,14 @@ import AdminRedeIgrejas from "./pages/AdminRedeIgrejas";
 import RedeCadastroMembro from "./pages/RedeCadastroMembro";
 import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
+import MemberGuard from "./components/auth/MemberGuard";
+import MemberLayout from "./pages/membro/MemberLayout";
+import MemberDashboard from "./pages/membro/MemberDashboard";
+import MemberPlaceholder from "./pages/membro/MemberPlaceholder";
+import MemberHouse from "./pages/membro/MemberHouse";
+import MemberDiscipulado from "./pages/membro/MemberDiscipulado";
+import MemberTracks from "./pages/membro/MemberTracks";
+import MemberNotices from "./pages/membro/MemberNotices";
 import AdministracaoFiveOne from "./pages/AdministracaoFiveOne";
 import AdminAlunos from "./pages/admin/Alunos";
 import AdminConteudoPlataforma from "./pages/admin/ConteudoPlataforma";
@@ -76,6 +84,7 @@ function AppContent() {
     location.pathname === "/modulos-mestre" ||
     location.pathname === "/perfil" ||
     location.pathname.startsWith("/admin") ||
+    location.pathname.startsWith("/membro") ||
     location.pathname.startsWith("/relatorio") ||
     location.pathname.startsWith("/r") ||
     location.pathname === "/cadastrar-igreja" ||
@@ -133,6 +142,22 @@ function AppContent() {
                 </AdminGuard>
               }
             />
+            <Route
+              path="/membro"
+              element={
+                <MemberGuard>
+                  <MemberLayout />
+                </MemberGuard>
+              }
+            >
+              <Route index element={<MemberDashboard />} />
+              <Route path="igreja" element={<MemberHouse />} />
+              <Route path="discipulado" element={<MemberDiscipulado />} />
+              <Route path="trilhas" element={<MemberTracks />} />
+              <Route path="avisos" element={<MemberNotices />} />
+              <Route path="oracao" element={<MemberPlaceholder title="Pedidos de oracao" />} />
+              <Route path="perfil-ministerial" element={<MemberPlaceholder title="Meu Perfil Ministerial" />} />
+            </Route>
             <Route path="/rede/cadastro" element={<RedeCadastroMembro />} />
             <Route
               path="/admin/relatorio-quiz"

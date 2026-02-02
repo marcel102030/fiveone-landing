@@ -5,6 +5,11 @@ import {
   isAdminAuthenticated,
   getAdminAuthData,
 } from "../utils/adminAuth";
+import { setCurrentUser } from "../utils/user";
+import { FormationKey, getUserByEmail, updateUserMemberLink, updateUserRole, verifyUser } from "../services/userAccount";
+import { getRedeMemberByEmail } from "../services/redeIgrejas";
+import { getUserProfileDetails } from "../services/userProfile";
+import { storePlatformProfile } from "../hooks/usePlatformUserProfile";
 import "./AdminLogin.css";
 
 export default function AdminLogin() {
@@ -64,9 +69,52 @@ export default function AdminLogin() {
         setAdminAuthenticated(email, rememberMe);
         const to = location?.state?.from?.pathname || "/admin/administracao";
         navigate(to, { replace: true });
-      } else {
-        setError("E-mail ou senha incorretos.");
+        return;
       }
+
+      const ok = await verifyUser(email, password);
+      if (!ok) {
+        setError("E-mail ou senha incorretos.");
+        return;
+      }
+      const normalizedEmail = email.trim().toLowerCase();
+      const [row, details] = await Promise.all([
+        getUserByEmail(normalizedEmail),
+        getUserProfileDetails(normalizedEmail).catch(() => null),
+      ]);
+      let memberId = (row as any)?.member_id || null;
+      let role = (row as any)?.role || null;
+      if (!memberId) {
+        const matchedMember = await getRedeMemberByEmail(normalizedEmail);
+        if (matchedMember?.id) {
+          try {
+            await updateUserMemberLink(normalizedEmail, matchedMember.id);
+            await updateUserRole(normalizedEmail, "MEMBER");
+            memberId = matchedMember.id;
+            role = "MEMBER";
+          } catch {
+            // ignore linking errors
+          }
+        }
+      }
+      if (role !== "MEMBER") {
+        setError("Este usuario nao possui perfil de membro.");
+        return;
+      }
+      const formation = (row?.formation as FormationKey | null) || null;
+      storePlatformProfile({
+        email: normalizedEmail,
+        name: (details?.display_name || [details?.first_name, details?.last_name].filter(Boolean).join(' ') || row?.name || null),
+        formation,
+        role,
+        memberId,
+        firstName: details?.first_name || null,
+        lastName: details?.last_name || null,
+        displayName: details?.display_name || null,
+        avatarUrl: details?.avatar_url || null,
+      });
+      setCurrentUser(normalizedEmail, rememberMe);
+      navigate("/membro", { replace: true });
     } finally {
       setSubmitting(false);
     }
@@ -84,9 +132,9 @@ export default function AdminLogin() {
         </aside>
         <div className="admin-login-card">
           <div className="admin-login-card-head">
-            <span className="admin-login-tag">Painel administrativo</span>
+            <span className="admin-login-tag">Painel administrativo e de membros</span>
             <h1 className="admin-login-title">Entrar</h1>
-            <p className="admin-login-sub">Acesse com as credenciais de gestor da plataforma.</p>
+            <p className="admin-login-sub">Acesse como admin ou membro usando seu e-mail e senha.</p>
           </div>
           {error && <div className="admin-login-error">{error}</div>}
           <form onSubmit={onSubmit} className="admin-login-form">

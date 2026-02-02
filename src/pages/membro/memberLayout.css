@@ -1,0 +1,77 @@
+.member-shell {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  min-height: 100vh;
+  background: #0b1224;
+  color: #e2e8f0;
+}
+
+.member-sidebar {
+  border-right: 1px solid rgba(148, 163, 184, 0.2);
+  background: rgba(8, 13, 28, 0.92);
+  padding: 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.member-brand h2 {
+  margin: 10px 0 0;
+  font-size: 18px;
+  color: #f8fafc;
+}
+
+.member-pill {
+  display: inline-flex;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  background: rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(59, 130, 246, 0.45);
+  color: #bfdbfe;
+}
+
+.member-nav {
+  display: grid;
+  gap: 8px;
+}
+
+.member-nav-link {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 12px;
+  color: rgba(226, 232, 240, 0.8);
+  text-decoration: none;
+  border: 1px solid transparent;
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.member-nav-link:hover {
+  border-color: rgba(148, 163, 184, 0.3);
+  color: #f8fafc;
+}
+
+.member-nav-link.is-active {
+  border-color: rgba(59, 130, 246, 0.6);
+  background: rgba(37, 99, 235, 0.2);
+  color: #f8fafc;
+}
+
+.member-main {
+  padding: 32px;
+}
+
+@media (max-width: 960px) {
+  .member-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .member-sidebar {
+    border-right: none;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  }
+
+  .member-main {
+    padding: 24px;
+  }
+}

@@ -40,6 +40,7 @@ import {
   updateRedePresbitero,
   upsertRedeMemberQuestionnaire,
 } from "../services/redeIgrejas";
+import { updateUserMemberLink, updateUserRole } from "../services/userAccount";
 
 const MINISTRY_OPTIONS = [
   { value: "apostolo", label: "Tenho identificacao com o dom Apostolico" },
@@ -429,10 +430,19 @@ export default function AdminRedeIgrejas() {
     return counts;
   }, [houseMembers]);
 
-  const pendingApplications = useMemo(
-    () => applications.filter((app) => app.status === "pendente"),
+  const followupPending = useMemo(
+    () => applications.filter((app) => (app.followup_status || "pendente") === "pendente"),
     [applications]
   );
+  const followupActive = useMemo(
+    () => applications.filter((app) => (app.followup_status || "pendente") === "em_acompanhamento"),
+    [applications]
+  );
+  const followupClosed = useMemo(
+    () => applications.filter((app) => (app.followup_status || "pendente") === "concluido"),
+    [applications]
+  );
+
 
   const questionnaireMap = useMemo(() => {
     const map = new Map<string, RedeMemberQuestionnaire>();
@@ -705,6 +715,15 @@ export default function AdminRedeIgrejas() {
         notes: application.notes,
       });
 
+      if (application.email) {
+        try {
+          await updateUserMemberLink(application.email, member.id);
+          await updateUserRole(application.email, "MEMBER");
+        } catch {
+          // ignore linkage failures
+        }
+      }
+
       await replaceRedeMemberGifts(member.id, application.gifts || []);
       await replaceRedeMemberHouse(member.id, application.house_id || null, null);
       await upsertRedeMemberQuestionnaire({
@@ -759,6 +778,75 @@ export default function AdminRedeIgrejas() {
       await loadAll();
     } catch (err: any) {
       toast.error("Nao foi possivel rejeitar", err?.message || String(err));
+    }
+  };
+
+  const [followupTab, setFollowupTab] = useState<"pendente" | "em_acompanhamento" | "concluido">("pendente");
+  const [followupModalOpen, setFollowupModalOpen] = useState(false);
+  const [followupCloseOpen, setFollowupCloseOpen] = useState(false);
+  const [followupSelected, setFollowupSelected] = useState<RedeMemberApplication | null>(null);
+  const [followupAssignedId, setFollowupAssignedId] = useState("");
+  const [followupNotes, setFollowupNotes] = useState("");
+  const [followupCloseReason, setFollowupCloseReason] = useState("");
+  const [followupSaving, setFollowupSaving] = useState(false);
+
+  const openFollowupAssign = (application: RedeMemberApplication) => {
+    setFollowupSelected(application);
+    setFollowupAssignedId(application.followup_assigned_member_id || "");
+    setFollowupNotes(application.followup_notes || "");
+    setFollowupModalOpen(true);
+  };
+
+  const openFollowupClose = (application: RedeMemberApplication) => {
+    setFollowupSelected(application);
+    setFollowupCloseReason(application.followup_closed_reason || "");
+    setFollowupNotes(application.followup_notes || "");
+    setFollowupCloseOpen(true);
+  };
+
+  const handleFollowupAssign = async () => {
+    if (!followupSelected) return;
+    if (!followupAssignedId) {
+      toast.warning("Informe o responsavel", "Selecione o membro que vai acompanhar.");
+      return;
+    }
+    setFollowupSaving(true);
+    try {
+      await updateRedeMemberApplication(followupSelected.id, {
+        followup_status: "em_acompanhamento",
+        followup_assigned_member_id: followupAssignedId,
+        followup_notes: followupNotes || null,
+      });
+      toast.success("Acompanhamento iniciado", "Responsavel definido.");
+      setFollowupModalOpen(false);
+      await loadAll();
+    } catch (err: any) {
+      toast.error("Nao foi possivel atualizar", err?.message || String(err));
+    } finally {
+      setFollowupSaving(false);
+    }
+  };
+
+  const handleFollowupClose = async () => {
+    if (!followupSelected) return;
+    if (!followupCloseReason) {
+      toast.warning("Informe o motivo", "Selecione um motivo de encerramento.");
+      return;
+    }
+    setFollowupSaving(true);
+    try {
+      await updateRedeMemberApplication(followupSelected.id, {
+        followup_status: "concluido",
+        followup_closed_reason: followupCloseReason,
+        followup_notes: followupNotes || null,
+      });
+      toast.success("Acompanhamento fechado", "O atendimento foi concluido.");
+      setFollowupCloseOpen(false);
+      await loadAll();
+    } catch (err: any) {
+      toast.error("Nao foi possivel atualizar", err?.message || String(err));
+    } finally {
+      setFollowupSaving(false);
     }
   };
 
@@ -1166,8 +1254,30 @@ export default function AdminRedeIgrejas() {
 
             <article className="rede-card rede-card--wide">
               <div className="rede-card-head">
-                <h3>Solicitacoes pendentes</h3>
-                <span className="rede-badge">{pendingApplications.length} aguardando</span>
+                <div className="rede-card-title">
+                  <h3>Solicitacoes</h3>
+                  <span className="rede-badge">{followupPending.length} pendentes</span>
+                </div>
+                <div className="rede-tab-inline">
+                  <button
+                    className={`admin-chip ${followupTab === "pendente" ? "admin-chip--active" : "admin-chip--ghost"}`}
+                    onClick={() => setFollowupTab("pendente")}
+                  >
+                    Pendentes
+                  </button>
+                  <button
+                    className={`admin-chip ${followupTab === "em_acompanhamento" ? "admin-chip--active" : "admin-chip--ghost"}`}
+                    onClick={() => setFollowupTab("em_acompanhamento")}
+                  >
+                    Em acompanhamento
+                  </button>
+                  <button
+                    className={`admin-chip ${followupTab === "concluido" ? "admin-chip--active" : "admin-chip--ghost"}`}
+                    onClick={() => setFollowupTab("concluido")}
+                  >
+                    Concluidos
+                  </button>
+                </div>
               </div>
               <div className="rede-table-wrap">
                 <table className="admin-table rede-table">
@@ -1175,39 +1285,65 @@ export default function AdminRedeIgrejas() {
                     <tr className="admin-thead-row">
                       <th className="admin-th">Nome</th>
                       <th className="admin-th">Tipo</th>
+                      <th className="admin-th">Contato</th>
                       <th className="admin-th">Casa</th>
+                      <th className="admin-th">Responsavel</th>
                       <th className="admin-th">Status</th>
                       <th className="admin-th">Acoes</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {pendingApplications.map((application) => {
+                    {(followupTab === "pendente" ? followupPending : followupTab === "em_acompanhamento" ? followupActive : followupClosed).map((application) => {
                       const house = application.house_id ? houseMap.get(application.house_id) : null;
                       const typeLabel = MEMBER_TYPE_OPTIONS.find((opt) => opt.value === application.member_type)?.label;
+                      const isVisitor = application.member_type === "visitante";
+                      const assignedName = application.followup_assigned_member_id
+                        ? members.find((m) => m.id === application.followup_assigned_member_id)?.full_name
+                        : "-";
                       return (
                         <tr key={application.id} className="admin-row">
                           <td className="admin-td">
                             <div className="rede-member-name">{application.full_name}</div>
-                            <span className="rede-muted">{application.email || application.phone || "-"}</span>
+                            <span className="rede-muted">{application.city || "-"}</span>
                           </td>
                           <td className="admin-td">{typeLabel || application.member_type || "-"}</td>
-                          <td className="admin-td">{house?.name || "-"}</td>
-                          <td className="admin-td">{application.status}</td>
+                          <td className="admin-td">{application.phone || application.email || "-"}</td>
+                          <td className="admin-td">{house?.name || (isVisitor ? "Ainda nao participou" : "-")}</td>
+                          <td className="admin-td">{assignedName}</td>
+                          <td className="admin-td">{application.followup_status || "pendente"}</td>
                           <td className="admin-td">
                             <div className="rede-actions">
-                              <button className="admin-chip admin-chip--ghost" onClick={() => handleApproveApplication(application)}>Aceitar</button>
-                              <button className="admin-chip rede-chip-danger" onClick={() => handleRejectApplication(application)}>Rejeitar</button>
+                              {followupTab === "pendente" ? (
+                                <>
+                                  {isVisitor ? (
+                                    <button className="admin-chip admin-chip--ghost" onClick={() => openFollowupAssign(application)}>
+                                      Acompanhar
+                                    </button>
+                                  ) : (
+                                    <>
+                                      <button className="admin-chip admin-chip--ghost" onClick={() => handleApproveApplication(application)}>Aceitar</button>
+                                      <button className="admin-chip rede-chip-danger" onClick={() => handleRejectApplication(application)}>Rejeitar</button>
+                                    </>
+                                  )}
+                                </>
+                              ) : followupTab === "em_acompanhamento" ? (
+                                <button className="admin-chip admin-chip--ghost" onClick={() => openFollowupClose(application)}>
+                                  Fechar
+                                </button>
+                              ) : (
+                                <span className="rede-muted">Concluido</span>
+                              )}
                             </div>
                           </td>
                         </tr>
                       );
                     })}
-                    {!pendingApplications.length && (
+                    {!(followupTab === "pendente" ? followupPending : followupTab === "em_acompanhamento" ? followupActive : followupClosed).length && (
                       <tr className="admin-row admin-row-empty">
-                        <td className="admin-td admin-empty" colSpan={5}>
+                        <td className="admin-td admin-empty" colSpan={7}>
                           <div className="admin-empty-state">
-                            <span className="admin-empty-title">Nenhuma solicitacao pendente</span>
-                            <span className="admin-empty-sub">Quando alguem enviar o cadastro, aparece aqui.</span>
+                            <span className="admin-empty-title">Nenhuma solicitacao encontrada</span>
+                            <span className="admin-empty-sub">Selecione outra aba para ver mais solicitacoes.</span>
                           </div>
                         </td>
                       </tr>
@@ -1506,6 +1642,103 @@ export default function AdminRedeIgrejas() {
                   disabled={!inviteLink}
                 >
                   Copiar link
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {followupModalOpen && (
+        <div className="rede-modal-overlay" role="dialog" aria-modal="true" onClick={() => setFollowupModalOpen(false)}>
+          <div className="rede-modal rede-modal--compact" onClick={(event) => event.stopPropagation()}>
+            <div className="rede-modal-header">
+              <div>
+                <h3>Definir responsavel</h3>
+                <p className="rede-muted">Escolha quem vai acompanhar este visitante.</p>
+              </div>
+              <button className="rede-modal-close" type="button" onClick={() => setFollowupModalOpen(false)}>
+                Fechar
+              </button>
+            </div>
+            <div className="rede-modal-body">
+              <label className="admin-field">Responsavel pelo acompanhamento
+                <select
+                  className="admin-input"
+                  value={followupAssignedId}
+                  onChange={(event) => setFollowupAssignedId(event.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  {members.map((member) => (
+                    <option key={member.id} value={member.id}>{member.full_name}</option>
+                  ))}
+                </select>
+              </label>
+              <label className="admin-field">Observacao pastoral
+                <textarea
+                  className="admin-input rede-textarea"
+                  rows={3}
+                  value={followupNotes}
+                  onChange={(event) => setFollowupNotes(event.target.value)}
+                  placeholder="Anote algo importante para o acompanhamento"
+                />
+              </label>
+              <div className="rede-form-actions">
+                <button className="admin-btn admin-btn--outline" type="button" onClick={() => setFollowupModalOpen(false)}>
+                  Cancelar
+                </button>
+                <button className="admin-btn admin-btn--primary" type="button" onClick={handleFollowupAssign} disabled={followupSaving}>
+                  {followupSaving ? "Salvando..." : "Iniciar acompanhamento"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {followupCloseOpen && (
+        <div className="rede-modal-overlay" role="dialog" aria-modal="true" onClick={() => setFollowupCloseOpen(false)}>
+          <div className="rede-modal rede-modal--compact" onClick={(event) => event.stopPropagation()}>
+            <div className="rede-modal-header">
+              <div>
+                <h3>Concluir acompanhamento</h3>
+                <p className="rede-muted">Informe o motivo do encerramento.</p>
+              </div>
+              <button className="rede-modal-close" type="button" onClick={() => setFollowupCloseOpen(false)}>
+                Fechar
+              </button>
+            </div>
+            <div className="rede-modal-body">
+              <label className="admin-field">Motivo de encerramento
+                <select
+                  className="admin-input"
+                  value={followupCloseReason}
+                  onChange={(event) => setFollowupCloseReason(event.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  <option value="virou_membro">Virou membro</option>
+                  <option value="outra_igreja">Caminhou para outra igreja</option>
+                  <option value="nao_cristao">Nao era cristao / nao quis continuar</option>
+                  <option value="apenas_visitou">Preferiu apenas visitar</option>
+                  <option value="sem_retorno">Sem retorno / desistiu</option>
+                  <option value="outro">Outro motivo</option>
+                </select>
+              </label>
+              <label className="admin-field">Observacao pastoral
+                <textarea
+                  className="admin-input rede-textarea"
+                  rows={3}
+                  value={followupNotes}
+                  onChange={(event) => setFollowupNotes(event.target.value)}
+                  placeholder="Se quiser, registre um detalhe final"
+                />
+              </label>
+              <div className="rede-form-actions">
+                <button className="admin-btn admin-btn--outline" type="button" onClick={() => setFollowupCloseOpen(false)}>
+                  Cancelar
+                </button>
+                <button className="admin-btn admin-btn--primary" type="button" onClick={handleFollowupClose} disabled={followupSaving}>
+                  {followupSaving ? "Salvando..." : "Concluir"}
                 </button>
               </div>
             </div>

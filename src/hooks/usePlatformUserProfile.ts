@@ -7,6 +7,8 @@ export type StoredPlatformUserProfile = {
   email: string;
   name: string | null;
   formation: FormationKey | null;
+  role?: string | null;
+  memberId?: string | null;
   firstName?: string | null;
   lastName?: string | null;
   displayName?: string | null;
@@ -26,6 +28,8 @@ export function readStoredPlatformProfile(): StoredPlatformUserProfile | null {
         email: parsed.email.toLowerCase(),
         name: parsed.name ?? null,
         formation: (parsed.formation ?? null) as FormationKey | null,
+        role: parsed.role ?? null,
+        memberId: parsed.memberId ?? null,
         firstName: parsed.firstName ?? null,
         lastName: parsed.lastName ?? null,
         displayName: parsed.displayName ?? null,
@@ -45,6 +49,8 @@ export function storePlatformProfile(profile: StoredPlatformUserProfile): void {
       email: profile.email.toLowerCase(),
       name: profile.name ?? null,
       formation: profile.formation ?? null,
+      role: profile.role ?? null,
+      memberId: profile.memberId ?? null,
       firstName: profile.firstName ?? null,
       lastName: profile.lastName ?? null,
       displayName: profile.displayName ?? profile.name ?? null,
@@ -120,6 +126,8 @@ export function usePlatformUserProfile() {
         ]);
         if (cancelled) return;
         const formation = (row?.formation as FormationKey | null) ?? fallbackFormation ?? null;
+        const role = (row as any)?.role ?? null;
+        const memberId = (row as any)?.member_id ?? null;
         const firstName = details?.first_name || null;
         const lastName = details?.last_name || null;
         const preferredDisplayName = details?.display_name || null;
@@ -128,6 +136,8 @@ export function usePlatformUserProfile() {
           email: normalizedEmail,
           name: composedName,
           formation,
+          role,
+          memberId,
           firstName,
           lastName,
           displayName: preferredDisplayName,

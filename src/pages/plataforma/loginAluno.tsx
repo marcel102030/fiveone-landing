@@ -3,7 +3,8 @@ import "./loginAluno.css";
 import logoSmall from "./assets/images/logo-fiveone-white-small.png";
 import heroBanner from "./assets/images/banner-login-fiveone.png";
 import { setCurrentUser, getStoredUser, StoredUserRecord } from "../../utils/user";
-import { FormationKey, getUserByEmail, verifyUser } from "../../services/userAccount";
+import { FormationKey, getUserByEmail, updateUserMemberLink, updateUserRole, verifyUser } from "../../services/userAccount";
+import { getRedeMemberByEmail } from "../../services/redeIgrejas";
 import { storePlatformProfile } from "../../hooks/usePlatformUserProfile";
 import { getUserProfileDetails } from "../../services/userProfile";
 
@@ -66,23 +67,42 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
           getUserByEmail(normalizedEmail),
           getUserProfileDetails(normalizedEmail).catch(() => null),
         ]);
+        let memberId = (row as any)?.member_id || null;
+        let role = (row as any)?.role || null;
+        if (!memberId) {
+          const matchedMember = await getRedeMemberByEmail(normalizedEmail);
+          if (matchedMember?.id) {
+            try {
+              await updateUserMemberLink(normalizedEmail, matchedMember.id);
+              await updateUserRole(normalizedEmail, "MEMBER");
+              memberId = matchedMember.id;
+              role = "MEMBER";
+            } catch {
+              // ignore linking errors
+            }
+          }
+        }
         const formation = (row?.formation as FormationKey | null) || 'MESTRE';
         localStorage.setItem('platform_user_formation', String(formation));
         storePlatformProfile({
           email: normalizedEmail,
           name: (details?.display_name || [details?.first_name, details?.last_name].filter(Boolean).join(' ') || row?.name || null),
           formation,
+          role,
+          memberId,
           firstName: details?.first_name || null,
           lastName: details?.last_name || null,
           displayName: details?.display_name || null,
           avatarUrl: details?.avatar_url || null,
         });
       } catch {
-        try {
+          try {
           storePlatformProfile({
             email: email.trim().toLowerCase(),
             name: null,
             formation: null,
+            role: null,
+            memberId: null,
             firstName: null,
             lastName: null,
             displayName: null,
