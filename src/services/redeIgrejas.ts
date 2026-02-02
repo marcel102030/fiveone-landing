@@ -103,10 +103,53 @@ export type RedeMemberApplication = {
   approved_member_id?: string | null;
 };
 
-export type RedeMemberApplicationInsert = Omit<
-  RedeMemberApplication,
-  "id" | "status" | "created_at" | "updated_at" | "reviewed_at" | "approved_member_id"
->;
+export type RedeMemberApplicationInsert = {
+  invite_token?: string | null;
+  full_name: string;
+  email?: string | null;
+  phone?: string | null;
+  city?: string | null;
+  state?: string | null;
+  address?: string | null;
+  member_type?: string | null;
+  house_id?: string | null;
+  gifts?: string[] | null;
+  visit_experience?: string[] | null;
+  invited_by?: string | null;
+  care_needs?: string[] | null;
+  faith_journey?: string[] | null;
+  doubts_interests?: string[] | null;
+  contact_preferences?: string[] | null;
+  wants_preach_house?: boolean;
+  wants_preach_network?: boolean;
+  wants_bible_study?: boolean;
+  wants_open_house?: boolean;
+  wants_be_presbitero?: boolean;
+  wants_be_ministry_leader?: boolean;
+  wants_discipleship?: boolean;
+  wants_serve_worship?: boolean;
+  wants_serve_intercession?: boolean;
+  wants_serve_children?: boolean;
+  wants_serve_media?: boolean;
+  wants_serve_hospitality?: boolean;
+  wants_serve_teaching?: boolean;
+  wants_serve_pastoral_care?: boolean;
+  wants_serve_practical_support?: boolean;
+  routine_bible_reading?: boolean;
+  routine_prayer?: boolean;
+  routine_fasting?: boolean;
+  routine_in_development?: boolean;
+  ministry_discernment?: boolean;
+  discipleship_current?: boolean;
+  discipleship_leads?: boolean;
+  available_for_training?: boolean;
+  available_for_missions?: boolean;
+  notes?: string | null;
+  followup_status?: string | null;
+  followup_assigned_member_id?: string | null;
+  followup_closed_reason?: string | null;
+  followup_notes?: string | null;
+};
 
 export type RedePresbitero = {
   id: string;
