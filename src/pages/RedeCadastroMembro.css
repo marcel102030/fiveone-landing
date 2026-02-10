@@ -46,6 +46,31 @@
   gap: 18px;
 }
 
+.rede-signup-stepper {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.rede-signup-step {
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: rgba(226, 232, 240, 0.7);
+}
+
+.rede-signup-step.is-active {
+  border-color: rgba(59, 130, 246, 0.6);
+  color: #e2e8f0;
+  background: rgba(59, 130, 246, 0.2);
+}
+
+.rede-signup-required {
+  color: #fca5a5;
+  margin-left: 4px;
+}
+
 .rede-signup-grid {
   display: grid;
   gap: 14px;
@@ -93,6 +118,34 @@
   color: #f8fafc;
 }
 
+.rede-signup-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.rede-signup-section .rede-signup-section-header h3 {
+  margin: 0;
+  font-size: 14px;
+  color: #f8fafc;
+}
+
+.rede-signup-required-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.45);
+  border-radius: 999px;
+  padding: 2px 10px;
+  background: rgba(248, 113, 113, 0.08);
+  white-space: nowrap;
+}
+
 .rede-signup-checks {
   display: grid;
   gap: 10px;
@@ -123,6 +176,12 @@
 .rede-signup-actions {
   display: flex;
   justify-content: flex-end;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.rede-signup-actions--split {
+  justify-content: space-between;
 }
 
 .rede-signup-actions button {
@@ -133,6 +192,12 @@
   color: #0b1224;
   font-weight: 600;
   cursor: pointer;
+}
+
+.rede-signup-actions button.rede-signup-btn--ghost {
+  background: transparent;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  color: #e2e8f0;
 }
 
 .rede-signup-msg,

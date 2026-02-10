@@ -1,4 +1,5 @@
 import { supabase } from "../lib/supabaseClient";
+import { normalizePhone } from "../utils/phone";
 
 export type RedeMember = {
   id: string;
@@ -13,6 +14,8 @@ export type RedeMember = {
   member_type: string | null;
   status: string | null;
   notes: string | null;
+  created_by_member_id?: string | null;
+  updated_by_member_id?: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -29,6 +32,8 @@ export type RedeMemberInsert = {
   member_type?: string | null;
   status?: string | null;
   notes?: string | null;
+  created_by_member_id?: string | null;
+  updated_by_member_id?: string | null;
 };
 
 export type RedeMemberRef = {
@@ -55,6 +60,8 @@ export type RedeMemberApplication = {
   full_name: string;
   email: string | null;
   phone: string | null;
+  birthdate: string | null;
+  gender: string | null;
   city: string | null;
   state: string | null;
   address: string | null;
@@ -63,10 +70,14 @@ export type RedeMemberApplication = {
   gifts: string[] | null;
   visit_experience: string[] | null;
   invited_by: string | null;
+  invited_by_member_id: string | null;
+  invited_by_name: string | null;
   care_needs: string[] | null;
   faith_journey: string[] | null;
   doubts_interests: string[] | null;
   contact_preferences: string[] | null;
+  allow_contact: boolean;
+  preferred_contact_channel: string | null;
   wants_preach_house: boolean;
   wants_preach_network: boolean;
   wants_bible_study: boolean;
@@ -94,6 +105,13 @@ export type RedeMemberApplication = {
   notes: string | null;
   status: string;
   followup_status: string | null;
+  created_by_member_id?: string | null;
+  updated_by_member_id?: string | null;
+  followup_started_at?: string | null;
+  followup_closed_at?: string | null;
+  last_contact_at?: string | null;
+  next_contact_at?: string | null;
+  contact_attempts?: number | null;
   followup_assigned_member_id: string | null;
   followup_closed_reason: string | null;
   followup_notes: string | null;
@@ -103,11 +121,33 @@ export type RedeMemberApplication = {
   approved_member_id?: string | null;
 };
 
+export type RedeMemberFollowupLog = {
+  id: string;
+  application_id: string;
+  contact_method: string | null;
+  contacted_at: string | null;
+  outcome: string | null;
+  notes: string | null;
+  created_by_member_id: string | null;
+  created_at?: string;
+};
+
+export type RedeMemberFollowupLogInsert = {
+  application_id: string;
+  contact_method?: string | null;
+  contacted_at?: string | null;
+  outcome?: string | null;
+  notes?: string | null;
+  created_by_member_id?: string | null;
+};
+
 export type RedeMemberApplicationInsert = {
   invite_token?: string | null;
   full_name: string;
   email?: string | null;
   phone?: string | null;
+  birthdate?: string | null;
+  gender?: string | null;
   city?: string | null;
   state?: string | null;
   address?: string | null;
@@ -116,10 +156,14 @@ export type RedeMemberApplicationInsert = {
   gifts?: string[] | null;
   visit_experience?: string[] | null;
   invited_by?: string | null;
+  invited_by_member_id?: string | null;
+  invited_by_name?: string | null;
   care_needs?: string[] | null;
   faith_journey?: string[] | null;
   doubts_interests?: string[] | null;
   contact_preferences?: string[] | null;
+  allow_contact?: boolean;
+  preferred_contact_channel?: string | null;
   wants_preach_house?: boolean;
   wants_preach_network?: boolean;
   wants_bible_study?: boolean;
@@ -146,6 +190,13 @@ export type RedeMemberApplicationInsert = {
   available_for_missions?: boolean;
   notes?: string | null;
   followup_status?: string | null;
+  created_by_member_id?: string | null;
+  updated_by_member_id?: string | null;
+  followup_started_at?: string | null;
+  followup_closed_at?: string | null;
+  last_contact_at?: string | null;
+  next_contact_at?: string | null;
+  contact_attempts?: number | null;
   followup_assigned_member_id?: string | null;
   followup_closed_reason?: string | null;
   followup_notes?: string | null;
@@ -488,6 +539,18 @@ export async function getRedeMemberByEmail(email: string): Promise<RedeMember | 
   return (data as RedeMember) || null;
 }
 
+export async function getRedeMemberByPhone(phone: string): Promise<RedeMember | null> {
+  const normalized = normalizePhone(phone);
+  if (!normalized) return null;
+  const { data, error } = await supabase
+    .from("rede_member")
+    .select("*")
+    .eq("phone", normalized)
+    .maybeSingle();
+  if (error) return null;
+  return (data as RedeMember) || null;
+}
+
 export async function getRedeMemberById(id: string): Promise<RedeMember | null> {
   if (!id) return null;
   const { data, error } = await supabase
@@ -497,6 +560,17 @@ export async function getRedeMemberById(id: string): Promise<RedeMember | null> 
     .maybeSingle();
   if (error) return null;
   return (data as RedeMember) || null;
+}
+
+export async function getRedePresbiteroById(id: string): Promise<RedePresbitero | null> {
+  if (!id) return null;
+  const { data, error } = await supabase
+    .from("rede_presbitero")
+    .select("id, member_id, since_date, status, notes, created_at, updated_at, member:rede_member ( id, full_name, phone )")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) return null;
+  return normalizePresbitero(data);
 }
 
 export async function getRedePrimaryHouseMember(memberId: string): Promise<RedeHouseMember | null> {
@@ -713,6 +787,38 @@ export async function updateRedeMemberApplication(
     .update(payload)
     .eq("id", id);
   if (error) throw error;
+}
+
+export async function listRedeMemberFollowupLogs(applicationId: string): Promise<RedeMemberFollowupLog[]> {
+  if (!applicationId) return [];
+  const { data, error } = await supabase
+    .from("rede_member_followup_log")
+    .select("*")
+    .eq("application_id", applicationId)
+    .order("contacted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return safeList<RedeMemberFollowupLog>(data);
+}
+
+export async function listRedeMemberFollowupLogsAll(): Promise<RedeMemberFollowupLog[]> {
+  const { data, error } = await supabase
+    .from("rede_member_followup_log")
+    .select("id, application_id, contact_method, contacted_at, outcome, notes, created_by_member_id, created_at")
+    .order("contacted_at", { ascending: false })
+    .order("created_at", { ascending: false });
+  if (error) throw error;
+  return safeList<RedeMemberFollowupLog>(data);
+}
+
+export async function createRedeMemberFollowupLog(payload: RedeMemberFollowupLogInsert): Promise<RedeMemberFollowupLog> {
+  const { data, error } = await supabase
+    .from("rede_member_followup_log")
+    .insert(payload)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as RedeMemberFollowupLog;
 }
 
 export async function listRedeHouseMembers(): Promise<RedeHouseMember[]> {
