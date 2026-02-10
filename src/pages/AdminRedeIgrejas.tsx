@@ -965,7 +965,7 @@ export default function AdminRedeIgrejas() {
         member_type: type,
         expires_at: null,
       });
-      const link = `${window.location.origin}/#/rede/cadastro?token=${invite.token}`;
+      const link = `${window.location.origin}/rede-cadastro?token=${invite.token}`;
       setInviteLink(link);
       setInviteModalOpen(true);
     } catch (err: any) {

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cadastro Rede de Igrejas nas Casas - Five One</title>
+
+    <meta property="og:title" content="Cadastro Rede de Igrejas nas Casas - Five One" />
+    <meta
+      property="og:description"
+      content="Envie seu cadastro como membro ou visitante para que possamos acolher você com cuidado."
+    />
+    <meta property="og:image" content="https://fiveonemovement.com/assets/og-image.jpg" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Five One" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Cadastro Rede de Igrejas nas Casas - Five One" />
+    <meta
+      name="twitter:description"
+      content="Envie seu cadastro como membro ou visitante para que possamos acolher você com cuidado."
+    />
+    <meta name="twitter:image" content="https://fiveonemovement.com/assets/og-image.jpg" />
+  </head>
+  <body>
+    <script>
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token");
+      const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : "";
+      const target = `${window.location.origin}/#/rede/cadastro${tokenQuery}`;
+      window.location.replace(target);
+    </script>
+    <noscript>
+      <p>Redirecionando para o cadastro...</p>
+      <a href="/#/rede/cadastro">Abrir cadastro</a>
+    </noscript>
+  </body>
+</html>
