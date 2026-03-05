@@ -451,6 +451,21 @@
   transition: opacity 160ms ease;
 }
 
+.video-progress-track {
+  height: 3px;
+  background: #1e293b;
+  border-radius: 0 0 4px 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.video-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #0ea5e9);
+  border-radius: 4px;
+  transition: width 1s linear;
+}
+
 /* Ensure a balanced layout similar to o reference UI */
 .video-content { flex: 1 1 0; min-width: 0; }
 .video-sidebar { flex: 0 0 clamp(320px, 26vw, 420px); }
@@ -605,9 +620,61 @@
   border-bottom: 1px solid #2a2a2a;
 }
 
+.sidebar-progress-summary {
+  padding: 10px 16px 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sidebar-progress-count {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.sidebar-progress-bar {
+  height: 4px;
+  background: #1e293b;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.sidebar-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #0369a1);
+  border-radius: 4px;
+  transition: width 0.4s ease;
+}
+
 .sidebar-list {
   list-style: none;
   padding: 10px 12px 70px; /* espaço para CTA sticky não cobrir últimos itens */
+  margin: 0;
+}
+
+.sidebar-group {
+  list-style: none;
+}
+
+.sidebar-module-header {
+  padding: 10px 16px 6px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+  border-bottom: 1px solid #1e293b;
+  margin-bottom: 2px;
+  position: sticky;
+  top: 0;
+  background: var(--sidebar-bg, #0f172a);
+  z-index: 1;
+}
+
+.sidebar-group-list {
+  list-style: none;
+  padding: 0;
   margin: 0;
 }
 

@@ -15,11 +15,11 @@ function userKeyFor(videoId: string) {
 export default function ReactionBar({ videoId }: { videoId: string }) {
   const [counts, setCounts] = useState<Counts>({ like: 0, dislike: 0 });
   const [selected, setSelected] = useState<keyof Counts | null>(null);
+  const uid = getCurrentUserId();
 
   useEffect(() => {
     (async () => {
       try {
-        const uid = getCurrentUserId();
         if (uid) {
           const s = await fetchReactionState(uid, videoId);
           setCounts(s.counts);
@@ -36,7 +36,7 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
         }
       } catch {}
     })();
-  }, [videoId]);
+  }, [videoId, uid]);
 
   function persist(nextCounts: Counts, nextSelected: keyof Counts | null) {
     try {
@@ -54,7 +54,6 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
       setSelected(null);
       setCounts(next);
       persist(next, null);
-      const uid = getCurrentUserId();
       if (uid) setReaction(uid, videoId, null).catch(()=>{});
       return;
     }
@@ -63,7 +62,6 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
     setSelected(type);
     setCounts(next);
     persist(next, type);
-    const uid = getCurrentUserId();
     if (uid) setReaction(uid, videoId, type as any).catch(()=>{});
   }
 

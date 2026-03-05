@@ -1306,6 +1306,82 @@ html {
 }
 .continuar-seta { display:none; }
 
+/* Estado vazio — Começar jornada */
+.comecar-jornada {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 48px 24px;
+}
+
+.comecar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  background: linear-gradient(135deg, #0f172a, #0c1a2e);
+  border: 1px solid #1e3a5f;
+  border-radius: 16px;
+  padding: 40px 32px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  box-shadow: 0 4px 32px rgba(56, 189, 248, 0.08);
+}
+
+.comecar-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #0369a1, #38bdf8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.comecar-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0;
+}
+
+.comecar-sub {
+  font-size: 0.9rem;
+  color: #94a3b8;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.comecar-btn {
+  background: linear-gradient(90deg, #0369a1, #38bdf8);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 28px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease, transform 0.15s ease;
+}
+
+.comecar-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 640px) {
+  .comecar-card {
+    padding: 28px 20px;
+  }
+  .comecar-title {
+    font-size: 1.05rem;
+  }
+}
+
 /* Acessibilidade e foco visível */
 .continuar-card:focus-visible,
 .header nav a:focus-visible,

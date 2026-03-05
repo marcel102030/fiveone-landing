@@ -1494,6 +1494,42 @@ const StreamerMestre = () => {
       return id === filterSubject;
     });
   }, [videoList, filterSubject]);
+  const groupedList = useMemo(() => {
+    type SidebarGroup = {
+      moduleTitle: string;
+      moduleOrder: number;
+      items: { video: LessonRef; globalIndex: number }[];
+    };
+
+    const groups: SidebarGroup[] = [];
+    const groupMap = new Map<string, SidebarGroup>();
+
+    filteredList.forEach((video) => {
+      let globalIndex = videoList.findIndex((v) => v.videoId === video.videoId);
+      if (globalIndex === -1) {
+        const fallbackKey = video.videoUrl || video.id || null;
+        if (fallbackKey) {
+          globalIndex = videoList.findIndex((v) => v.videoUrl === fallbackKey || v.id === fallbackKey);
+        }
+      }
+      if (globalIndex === -1) return;
+
+      const key = video.moduleId || video.moduleTitle || 'default';
+      if (!groupMap.has(key)) {
+        const group: SidebarGroup = {
+          moduleTitle: video.moduleTitle || 'Módulo',
+          moduleOrder: video.moduleOrder ?? 0,
+          items: [],
+        };
+        groupMap.set(key, group);
+        groups.push(group);
+      }
+      groupMap.get(key)!.items.push({ video, globalIndex });
+    });
+
+    groups.sort((a, b) => a.moduleOrder - b.moduleOrder);
+    return groups;
+  }, [filteredList, videoList]);
   useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   const currentLessonKey = useMemo(() => {
     if (!currentVideo) return '';
@@ -1613,6 +1649,16 @@ const StreamerMestre = () => {
                     </div>
                   )}
                 </div>
+                {uiProgress.durationSeconds > 0 && (
+                  <div className="video-progress-track" aria-hidden>
+                    <div
+                      className="video-progress-fill"
+                      style={{
+                        width: `${Math.min(100, Math.round((uiProgress.watchedSeconds / uiProgress.durationSeconds) * 100))}%`
+                      }}
+                    />
+                  </div>
+                )}
                 {showPlayerFallback && playerStatus === 'ready' && (
                   <div className="player-fallback-inline" role="note">
                     <span className="player-fallback-text">Problemas com o player?</span>
@@ -1688,6 +1734,19 @@ const StreamerMestre = () => {
                 </div>
               </div>
               <div className="video-sidebar" ref={sidebarRef} data-filtered={filterSubject !== 'all'}>
+                {videoList.length > 0 && (
+                  <div className="sidebar-progress-summary">
+                    <span className="sidebar-progress-count">
+                      {completedIds.size} de {videoList.length} aulas concluídas
+                    </span>
+                    <div className="sidebar-progress-bar">
+                      <div
+                        className="sidebar-progress-bar-fill"
+                        style={{ width: `${Math.round((completedIds.size / videoList.length) * 100)}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
                 <h3 className="sidebar-title">Próximas Aulas</h3>
                 <SubjectDropdown
                   label="Matéria"
@@ -1696,65 +1755,60 @@ const StreamerMestre = () => {
                   options={subjects}
                 />
                 <ul className="sidebar-list">
-                  {(() => {
-                    const items: JSX.Element[] = [];
-                    filteredList.forEach((video, _index) => {
-                      let globalIndex = videoList.findIndex(v => v.videoId === video.videoId);
-                      if (globalIndex === -1) {
-                        const fallbackKey = video.videoUrl || video.id || null;
-                        if (fallbackKey) {
-                          globalIndex = videoList.findIndex((v) => v.videoUrl === fallbackKey || v.id === fallbackKey);
-                        }
-                      }
-                      if (globalIndex === -1) return;
-                      const itemKey = video.videoId;
-                      if (!itemKey) return;
-                      const isCompleted = completedIds.has(itemKey);
-                      const stored = getStoredProgress(video);
-                      const durationSeconds =
-                        (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
-                        (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
-                      const watchedSeconds = stored?.watchedSeconds || 0;
-                      const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
-                      const progress = isCompleted ? 1 : rawProgress;
-                      items.push(
-                        <li
-                          key={itemKey}
-                          className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''} ${isCompleted ? 'is-complete' : ''}`}
-                          title={video.title}
-                          onClick={() => setCurrentIndex(globalIndex)}
-                        >
-                          <img
-                            src={
-                              isMobile
-                                ? video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
-                                : video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.bannerPlayer?.url || video.bannerPlayer?.dataUrl || video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
-                            }
-                            alt={`Miniatura ${video.title}`}
-                            className="sidebar-thumbnail"
-                          />
-                          <div className="sidebar-video-info">
-                            <div className="sidebar-video-title">{video.title}</div>
-                            <div className="sidebar-video-subject">{video.subjectName}</div>
-                            <div className="sidebar-video-meta">
-                              {durationSeconds > 0 && <span className="sidebar-duration">{formatClock(durationSeconds)}</span>}
-                              {durationSeconds > 0 && (
-                                <div className="sidebar-progress" aria-label={`Progresso ${Math.round(progress * 100)}%`}>
-                                  <div className="sidebar-progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+                  {groupedList.map((group) => (
+                    <li key={`${group.moduleOrder}-${group.moduleTitle}`} className="sidebar-group">
+                      <div className="sidebar-module-header">{group.moduleTitle}</div>
+                      <ul className="sidebar-group-list">
+                        {group.items.map(({ video, globalIndex }) => {
+                          const itemKey = video.videoId;
+                          if (!itemKey) return null;
+                          const isCompleted = completedIds.has(itemKey);
+                          const stored = getStoredProgress(video);
+                          const durationSeconds =
+                            (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
+                            (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
+                          const watchedSeconds = stored?.watchedSeconds || 0;
+                          const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
+                          const progress = isCompleted ? 1 : rawProgress;
+                          return (
+                            <li
+                              key={itemKey}
+                              className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''} ${isCompleted ? 'is-complete' : ''}`}
+                              title={video.title}
+                              onClick={() => setCurrentIndex(globalIndex)}
+                            >
+                              <img
+                                src={
+                                  isMobile
+                                    ? video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
+                                    : video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.bannerPlayer?.url || video.bannerPlayer?.dataUrl || video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
+                                }
+                                alt={`Miniatura ${video.title}`}
+                                className="sidebar-thumbnail"
+                              />
+                              <div className="sidebar-video-info">
+                                <div className="sidebar-video-title">{video.title}</div>
+                                <div className="sidebar-video-subject">{video.subjectName}</div>
+                                <div className="sidebar-video-meta">
+                                  {durationSeconds > 0 && <span className="sidebar-duration">{formatClock(durationSeconds)}</span>}
+                                  {durationSeconds > 0 && (
+                                    <div className="sidebar-progress" aria-label={`Progresso ${Math.round(progress * 100)}%`}>
+                                      <div className="sidebar-progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+                                    </div>
+                                  )}
                                 </div>
-                              )}
-                            </div>
-                            <div className="status-indicator">
-                              {isCompleted && (
-                                <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
-                              )}
-                            </div>
-                          </div>
-                        </li>
-                      );
-                    });
-                    return items;
-                  })()}
+                                <div className="status-indicator">
+                                  {isCompleted && (
+                                    <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
+                                  )}
+                                </div>
+                              </div>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </li>
+                  ))}
                 </ul>
                 <button className="sidebar-cta" onClick={handleNext} disabled={currentIndex >= videoList.length - 1}>
                   Próxima aula

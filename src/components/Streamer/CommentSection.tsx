@@ -231,6 +231,8 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   const [replyDrafts, setReplyDrafts] = useState<Record<string, string>>({});
   const [activeReply, setActiveReply] = useState<string | null>(null);
   const [collapsedThreads, setCollapsedThreads] = useState<Record<string, boolean>>({});
+  const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
+  const [isLoading, setIsLoading] = useState(true);
   const { profile } = usePlatformUserProfile();
   const userId = getCurrentUserId();
 
@@ -275,6 +277,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
 
   useEffect(() => {
     let cancelled = false;
+    setIsLoading(true);
 
     const loadFromStorage = () => {
       try {
@@ -293,12 +296,13 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     fetchComments(videoId)
       .then((rows) => {
         if (cancelled) return;
+        setIsLoading(false);
         const mapped = rows.map(mapComment);
         setList(mapped);
         persist(mapped);
       })
       .catch(() => {
-        /* fallback to storage already displayed */
+        if (!cancelled) setIsLoading(false);
       });
 
     return () => {
@@ -378,7 +382,8 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   };
 
   const handleLike = (id: string) => {
-    if (!userId) return;
+    if (!userId || likedIds.has(id)) return;
+    setLikedIds((prev) => new Set(prev).add(id));
     setList((prev) => {
       const next = prev.map((comment) => (comment.id === id ? { ...comment, likes: comment.likes + 1 } : comment));
       persist(next);
@@ -421,7 +426,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                 <span className="comment-time">{new Date(comment.ts).toLocaleString("pt-BR")}</span>
               </div>
               <div className="comment-actions">
-                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId}>
+                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId || likedIds.has(comment.id)}>
                   <FiThumbsUp /> {comment.likes}
                 </button>
                 <button
@@ -482,6 +487,21 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     );
   };
 
+  const renderSkeleton = () => (
+    <div className="comments-skeleton" aria-busy="true" aria-label="Carregando comentários">
+      {[1, 2, 3].map((i) => (
+        <div key={i} className="comment-skeleton-item">
+          <div className="skeleton-avatar" />
+          <div className="skeleton-body">
+            <div className="skeleton-line skeleton-line--name" />
+            <div className="skeleton-line skeleton-line--text" />
+            <div className="skeleton-line skeleton-line--text skeleton-line--short" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <div className="comments-wrap comments-modern">
       <div className="comments-header">
@@ -502,7 +522,9 @@ export default function CommentSection({ videoId }: { videoId: string }) {
         </button>
       </form>
 
-      {threads.length > 0 ? (
+      {isLoading ? (
+        renderSkeleton()
+      ) : threads.length > 0 ? (
         <ul className="comments-list">
           {threads.map((comment) => renderThread(comment))}
         </ul>
