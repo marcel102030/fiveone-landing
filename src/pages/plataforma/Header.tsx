@@ -6,6 +6,7 @@ import "./plataforma.css";
 import { useState, useEffect, useRef } from "react";
 import { usePlatformUserProfile } from "../../hooks/usePlatformUserProfile";
 import { clearCurrentUser } from "../../utils/user";
+import { signOut } from "../../services/userAccount";
 
 const Header = () => {
   const [isDropdownOpen, setDropdownOpen] = useState(false);
@@ -44,6 +45,18 @@ const Header = () => {
         if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 50);
     }
+  }
+
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch {
+      // noop: still clear frontend state
+    }
+    clearCurrentUser();
+    setDropdownOpen(false);
+    setMenuOpen(false);
+    navigate("/login-aluno", { replace: true });
   }
 
   return (
@@ -155,9 +168,9 @@ const Header = () => {
               <a
                 href="/#/login-aluno"
                 className="perfil-dropdown-item"
-                onClick={() => {
-                  clearCurrentUser();
-                  setDropdownOpen(false);
+                onClick={(event) => {
+                  event.preventDefault();
+                  void handleSignOut();
                 }}
               >
                 Sair

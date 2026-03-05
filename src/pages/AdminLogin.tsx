@@ -58,20 +58,6 @@ export default function AdminLogin() {
     }
     setSubmitting(true);
     try {
-      // Front-only auth (whitelist). Trocar por backend quando disponível.
-      const USERS: Record<string, { password: string; display: string }> = {
-        "marcelojunio75@hotmail.com": { password: "M@r102030", display: "Marcelo Silva" },
-        "sueniakarcia@gmail.com": { password: "123456", display: "Suenia Karcia" },
-        "guhfarias@gmail.com": { password: "123456", display: "Gustavo Freitas" },
-      };
-      const key = email.trim().toLowerCase();
-      if (USERS[key] && USERS[key].password === password) {
-        setAdminAuthenticated(email, rememberMe);
-        const to = location?.state?.from?.pathname || "/admin/administracao";
-        navigate(to, { replace: true });
-        return;
-      }
-
       const ok = await verifyUser(email, password);
       if (!ok) {
         setError("E-mail ou senha incorretos.");
@@ -92,13 +78,18 @@ export default function AdminLogin() {
             await updateUserRole(normalizedEmail, "MEMBER");
             memberId = matchedMember.id;
             role = "MEMBER";
-          } catch {
-            // ignore linking errors
-          }
+          } catch { }
         }
       }
+      // Admins (sem role MEMBER) vão para o painel admin
+      if (role === 'ADMIN' || !role) {
+        setAdminAuthenticated(email, rememberMe);
+        const to = location?.state?.from?.pathname || "/admin/administracao";
+        navigate(to, { replace: true });
+        return;
+      }
       if (role !== "MEMBER") {
-        setError("Este usuario nao possui perfil de membro.");
+        setError("Este usuário não possui perfil de membro.");
         return;
       }
       const formation = (row?.formation as FormationKey | null) || null;

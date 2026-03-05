@@ -2,7 +2,6 @@ import { supabase } from "../lib/supabaseClient";
 
 export type PlatformUser = {
   email: string;
-  password: string; // plain for now; recommend Supabase Auth in production
   name?: string | null;
   formation?: FormationKey; // APOSTOLO | PROFETA | EVANGELISTA | PASTOR | MESTRE
   role?: PlatformUserRole;
@@ -12,42 +11,32 @@ export type PlatformUser = {
 
 export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
 export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
+export type PlatformUserCreateInput = PlatformUser & { password: string };
 
-export async function createUser(u: PlatformUser): Promise<void> {
-  const { error } = await supabase.from('platform_user').insert({
+export async function createUser(u: PlatformUserCreateInput): Promise<void> {
+  const { error: authError } = await supabase.auth.signUp({
     email: u.email.toLowerCase(),
     password: u.password,
+  });
+  if (authError) throw authError;
+
+  const { error: dbError } = await supabase.from('platform_user').insert({
+    email: u.email.toLowerCase(),
     name: u.name || null,
     formation: u.formation || 'MESTRE',
     role: u.role || 'STUDENT',
     member_id: u.member_id || null,
   });
-  if (error) throw error;
+  if (dbError) throw dbError;
 }
 
 export async function verifyUser(email: string, password: string): Promise<boolean> {
-  const normalizedEmail = email.trim().toLowerCase();
-
-  const run = async (withActive: boolean) => {
-    let query = supabase
-      .from("platform_user")
-      .select("email")
-      .eq("email", normalizedEmail)
-      .eq("password", password);
-    if (withActive) query = query.eq("active", true);
-    return query.maybeSingle();
-  };
-
-  let { data, error } = await run(true);
-  // Compatibilidade com bancos antigos que ainda não possuem a coluna `active`.
-  if (error) {
-    const message = String((error as any)?.message || "");
-    if (/column/i.test(message) && /\bactive\b/i.test(message)) {
-      ({ data, error } = await run(false));
-    }
-  }
-  if (error) throw error;
-  return Boolean(data);
+  const { error } = await supabase.auth.signInWithPassword({
+    email: email.trim().toLowerCase(),
+    password,
+  });
+  if (error) return false;
+  return true;
 }
 
 export type PlatformUserListItem = {
@@ -134,12 +123,13 @@ export async function updateUserName(email: string, name: string | null): Promis
   if (error) throw error;
 }
 
-export async function resetUserPassword(email: string, newPassword: string): Promise<void> {
-  const { error } = await supabase
-    .from('platform_user')
-    .update({ password: newPassword })
-    .eq('email', email.toLowerCase());
+export async function resetUserPassword(_email: string, newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
+}
+
+export async function signOut(): Promise<void> {
+  await supabase.auth.signOut();
 }
 
 export async function deleteUser(email: string): Promise<void> {

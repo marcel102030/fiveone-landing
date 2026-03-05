@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { useMemo, useState } from "react";
 import { clearAdminAuthenticated, getAdminEmail } from "../utils/adminAuth";
 import { useNavigate } from "react-router-dom";
+import { signOut } from "../services/userAccount";
 import "./AdministracaoFiveOne.css";
 
 const quickAccessLinks = [
@@ -91,6 +92,16 @@ export default function AdministracaoFiveOne() {
     { to: "/admin/blog", title: "Blog Site", desc: "Postagens e categorias." },
   ];
 
+  async function handleSignOut() {
+    try {
+      await signOut();
+    } catch {
+      // noop: still clear local admin session
+    }
+    clearAdminAuthenticated();
+    navigate('/admin', { replace: true });
+  }
+
   return (
     <div className="adm5-wrap">
       <div className="adm5-topbar">
@@ -120,7 +131,7 @@ export default function AdministracaoFiveOne() {
         </div>
         <div className="adm5-actions">
           <button className="adm5-pill" onClick={()=> setShowProfiles(true)}>Perfil de Usuário</button>
-          <button className="adm5-pill" onClick={()=>{ clearAdminAuthenticated(); navigate('/admin', { replace:true }); }}>Sair</button>
+          <button className="adm5-pill" onClick={() => void handleSignOut()}>Sair</button>
         </div>
       </div>
 
