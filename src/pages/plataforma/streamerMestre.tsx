@@ -297,7 +297,9 @@ const normaliseYouTubeUrl = (url: string): string => {
   out.searchParams.set("playsinline", "1");
   out.searchParams.set("rel", "0");
   if (typeof window !== "undefined") {
-    out.searchParams.set("origin", window.location.origin);
+    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      out.searchParams.set("origin", window.location.origin);
+    }
   }
   if (typeof start === "number" && Number.isFinite(start) && start > 0) {
     out.searchParams.set("start", String(Math.floor(start)));
@@ -383,34 +385,20 @@ type DeferredIframeProps = {
 };
 
 const DeferredIframe = ({ src, title, allow, onReady, onError }: DeferredIframeProps) => {
-  const [frameSrc, setFrameSrc] = useState<string>('about:blank');
-
-  // Injeta o src real apenas após o mount (layout effect). Isso evita perder o evento `load`
-  // quando o navegador resolve do cache rápido demais.
-  useLayoutEffect(() => {
-    if (!src || src === 'about:blank') {
-      setFrameSrc('about:blank');
-      return;
-    }
-    setFrameSrc(src);
-  }, [src]);
+  if (!src || src === 'about:blank') return null;
 
   return (
     <iframe
       id="fiveone-streamer-player"
-      src={frameSrc}
+      src={src}
       title={title}
       frameBorder="0"
       allow={allow}
       onLoad={(event) => {
         if (!src || src === 'about:blank') return;
         try {
-          const expected = new URL(src);
-          const actual = new URL(event.currentTarget.src);
-          if (expected.origin !== actual.origin || expected.pathname !== actual.pathname) return;
-        } catch {
-          // Se a URL não for parseável, libera a UI mesmo assim.
-        }
+          if (new URL(event.currentTarget.src).href === 'about:blank') return;
+        } catch {}
         onReady();
       }}
       onError={() => {
@@ -549,6 +537,16 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
 };
 
 const StreamerMestre = () => {
+  useEffect(() => {
+    // Reload automático por URL: cada URL de aula recarrega uma vez.
+    // Resolve o problema de cache SPA onde o player não inicializa sem F5.
+    const key = 's_loaded::' + window.location.pathname + window.location.search;
+    if (!sessionStorage.getItem(key)) {
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+    }
+  }, []);
+
   const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
@@ -755,6 +753,11 @@ const StreamerMestre = () => {
     clearPlayerTimers();
     setPlayerMessage(null);
     setShowPlayerFallback(false);
+    cleanupVimeoPlayer();
+    try {
+      youtubePlayerRef.current?.destroy?.();
+    } catch {}
+    youtubePlayerRef.current = null;
 
     if (!currentVideo) return;
 
@@ -764,7 +767,7 @@ const StreamerMestre = () => {
     }
 
     setPlayerStatus('loading');
-  }, [currentVideo?.videoId, embedSrc, playerReloadKey, clearPlayerTimers, markPlayerError]);
+  }, [currentVideo?.videoId, embedSrc, clearPlayerTimers, markPlayerError, cleanupVimeoPlayer]);
 
   useEffect(() => {
     if (!currentVideo) return;
@@ -1037,12 +1040,16 @@ const StreamerMestre = () => {
     lastProgressFlushRef.current = 0;
     (async () => {
       try {
-        const iframe = videoRef.current?.querySelector('iframe');
-        if (!iframe) return;
-        const existingSrc = iframe.getAttribute('src');
-        if (existingSrc !== vimeoSrc) {
-          iframe.setAttribute('src', vimeoSrc);
+        // Aguarda o iframe estar no DOM antes de importar o SDK
+        let iframe: HTMLIFrameElement | null = null;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          iframe = document.getElementById('fiveone-streamer-player') as HTMLIFrameElement | null;
+          if (iframe) break;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+          if (cancelled) return;
         }
+        if (!iframe) return;
+
         const { default: Player } = await import('@vimeo/player');
         if (cancelled) return;
         cleanupVimeoPlayer();
@@ -1155,11 +1162,17 @@ const StreamerMestre = () => {
         await ensureYouTubeApi();
         if (cancelled) return;
 
-        const iframe = videoRef.current?.querySelector('iframe');
-        if (!iframe) return;
-        const existingSrc = iframe.getAttribute('src');
-        if (existingSrc !== youtubeSrc) {
-          iframe.setAttribute('src', youtubeSrc);
+        // Aguarda o iframe estar no DOM (o React pode ainda não ter pintado após o await assíncrono)
+        let iframe: HTMLIFrameElement | null = null;
+        for (let attempt = 0; attempt < 20; attempt++) {
+          iframe = document.getElementById('fiveone-streamer-player') as HTMLIFrameElement | null;
+          if (iframe) break;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+          if (cancelled) return;
+        }
+        if (!iframe) {
+          markPlayerError('Player não encontrado. Tente recarregar a página.');
+          return;
         }
 
         try {
@@ -1170,6 +1183,7 @@ const StreamerMestre = () => {
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
 
+        // Passa o elemento diretamente — forma oficial e robusta da YouTube IFrame API
         const player = new window.YT.Player(iframe, {
           events: {
             onReady: (event: any) => {
@@ -1600,7 +1614,7 @@ const StreamerMestre = () => {
                   ref={videoRef}
                 >
                   <DeferredIframe
-                    key={`${currentVideo.videoId || 'player'}-${playerReloadKey}`}
+                    key={currentVideo?.videoId ?? currentIndex}
                     src={embedSrc || 'about:blank'}
                     title={currentVideo.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
