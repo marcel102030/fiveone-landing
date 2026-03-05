@@ -216,13 +216,33 @@ const normaliseVimeoUrl = (url: string): string => {
   if (hParam) out.searchParams.set('h', hParam);
   out.searchParams.delete('background');
   if (out.searchParams.get('controls') === '0') out.searchParams.set('controls', '1');
-  // Autoplay sem muted costuma ser bloqueado e parece "tela preta" (principalmente em embeds sem controles).
-  if (out.searchParams.get('autoplay') === '1' && !out.searchParams.has('muted')) out.searchParams.set('muted', '1');
+  // Regra da plataforma: a aula deve abrir pausada para o aluno iniciar no play.
+  out.searchParams.set('autoplay', '0');
 
   return out.toString();
 };
 
 const isYouTubeUrl = (url: string): boolean => /(?:youtube\.com|youtu\.be)/i.test(url);
+
+const extractYouTubeVideoId = (url: string): string | null => {
+  try {
+    const parsed = new URL(url);
+    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
+    if (host === 'youtu.be') {
+      const id = parsed.pathname.replace(/^\//, '').split('/')[0];
+      return id || null;
+    }
+    const embed = parsed.pathname.match(/\/embed\/([^/?]+)/i);
+    if (embed?.[1]) return embed[1];
+    const watch = parsed.searchParams.get('v');
+    if (watch) return watch;
+    const shorts = parsed.pathname.match(/\/shorts\/([^/?]+)/i);
+    if (shorts?.[1]) return shorts[1];
+    return null;
+  } catch {
+    return null;
+  }
+};
 
 function parseYouTubeStart(raw: string | null): number | null {
   if (!raw) return null;
@@ -296,6 +316,8 @@ const normaliseYouTubeUrl = (url: string): string => {
   out.searchParams.set("enablejsapi", "1");
   out.searchParams.set("playsinline", "1");
   out.searchParams.set("rel", "0");
+  // Regra da plataforma: a aula deve abrir pausada para o aluno iniciar no play.
+  out.searchParams.set("autoplay", "0");
   if (typeof window !== "undefined") {
     if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
       out.searchParams.set("origin", window.location.origin);
@@ -546,9 +568,7 @@ const StreamerMestre = () => {
   const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
-  // Ref para persistProgress: permite usá-la nos effects do YouTube e Vimeo sem
-  // colocá-la nas deps — evita re-run do effect quando videoList muda de referência.
-  const persistProgressRef = useRef<((watched: number, duration?: number) => void) | null>(null);
+  const persistProgressRef = useRef<((rawWatched: number, rawDuration?: number) => void) | null>(null);
   const cleanupVimeoPlayer = useCallback(() => {
     const player = playerInstanceRef.current;
     if (!player) return;
@@ -570,6 +590,39 @@ const StreamerMestre = () => {
 
     playerInstanceRef.current = null;
   }, []);
+  const clearYouTubePoll = useCallback(() => {
+    try {
+      const id = (youtubePlayerRef.current as any)?.__fiveonePoll as number | undefined;
+      if (id) window.clearInterval(id);
+      if (youtubePlayerRef.current) {
+        delete (youtubePlayerRef.current as any).__fiveonePoll;
+      }
+    } catch {}
+  }, []);
+  const cleanupYouTubePlayer = useCallback((hardDestroy = false) => {
+    const player = youtubePlayerRef.current;
+    clearYouTubePoll();
+    if (!player) {
+      youtubePlayerRef.current = null;
+      return;
+    }
+
+    if (hardDestroy) {
+      try {
+        player.destroy?.();
+      } catch {}
+    } else {
+      // Evita `destroy()` em ciclos automáticos do React (StrictMode/SPA),
+      // pois o YouTube pode remover o iframe do DOM.
+      try {
+        player.pauseVideo?.();
+      } catch {}
+      try {
+        player.stopVideo?.();
+      } catch {}
+    }
+    youtubePlayerRef.current = null;
+  }, [clearYouTubePoll]);
 
   const [playerStatus, setPlayerStatus] = useState<'loading' | 'ready' | 'error'>('loading');
   const [playerMessage, setPlayerMessage] = useState<string | null>(null);
@@ -601,12 +654,9 @@ const StreamerMestre = () => {
     setShowPlayerFallback(false);
     lastProgressFlushRef.current = 0;
     cleanupVimeoPlayer();
-    try {
-      youtubePlayerRef.current?.destroy?.();
-    } catch {}
-    youtubePlayerRef.current = null;
+    cleanupYouTubePlayer(true);
     setPlayerReloadKey((prev) => prev + 1);
-  }, [clearPlayerTimers, cleanupVimeoPlayer]);
+  }, [clearPlayerTimers, cleanupVimeoPlayer, cleanupYouTubePlayer]);
 
   const [theaterMode, setTheaterMode] = useState(() => {
     if (typeof window === 'undefined') return false;
@@ -631,13 +681,18 @@ const StreamerMestre = () => {
   const [searchParams] = useSearchParams();
   const [currentIndex, setCurrentIndex] = useState(0);
   const searchKey = searchParams.toString();
+
+  // Monta uma vez: lê mod= do React Router (já correto na montagem SPA) e filtra
   useEffect(() => {
-    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+    const modId = new URLSearchParams(searchKey).get('mod') || undefined;
+    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
     const unsubscribe = subscribePlatformContent(() => {
-      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+      // Mantém o filtro de módulo ao receber atualizações do admin
+      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
     });
     return () => unsubscribe();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // [] intencional: searchKey via React Router já está correto na montagem
   useEffect(() => {
     if (!videoList.length) return;
     const params = new URLSearchParams(searchKey);
@@ -678,6 +733,17 @@ const StreamerMestre = () => {
   const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
+  const getPlayerIframe = useCallback((): HTMLIFrameElement | null => {
+    const container = videoRef.current;
+    if (container) {
+      const byId = container.querySelector('#fiveone-streamer-player');
+      if (byId instanceof HTMLIFrameElement) return byId;
+      const anyIframe = container.querySelector('iframe');
+      if (anyIframe instanceof HTMLIFrameElement) return anyIframe;
+    }
+    const globalById = document.getElementById('fiveone-streamer-player');
+    return globalById instanceof HTMLIFrameElement ? globalById : null;
+  }, []);
   // searchParams já usado acima
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
@@ -753,10 +819,7 @@ const StreamerMestre = () => {
     setPlayerMessage(null);
     setShowPlayerFallback(false);
     cleanupVimeoPlayer();
-    try {
-      youtubePlayerRef.current?.destroy?.();
-    } catch {}
-    youtubePlayerRef.current = null;
+    cleanupYouTubePlayer(false);
 
     if (!currentVideo) return;
     setPlayerStatus('loading');
@@ -952,7 +1015,6 @@ const StreamerMestre = () => {
     },
     [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds],
   );
-  // Mantém o ref sempre atualizado sem precisar colocar persistProgress nas deps dos effects.
   persistProgressRef.current = persistProgress;
 
   const alignSidebar = useCallback(() => {
@@ -1051,8 +1113,8 @@ const StreamerMestre = () => {
       try {
         // Aguarda o iframe estar no DOM antes de importar o SDK
         let iframe: HTMLIFrameElement | null = null;
-        for (let attempt = 0; attempt < 20; attempt++) {
-          iframe = document.getElementById('fiveone-streamer-player') as HTMLIFrameElement | null;
+        for (let attempt = 0; attempt < 60; attempt++) {
+          iframe = getPlayerIframe();
           if (iframe) break;
           await new Promise(resolve => window.setTimeout(resolve, 100));
           if (cancelled) return;
@@ -1071,9 +1133,12 @@ const StreamerMestre = () => {
         // `ready()` nos dá um sinal mais confiável para liberar o iframe na UI.
         player
           .ready()
-          .then(() => {
+          .then(async () => {
             if (cancelled) return;
             markPlayerReady();
+            try {
+              await player.pause();
+            } catch {}
           })
           .catch(() => {});
 
@@ -1099,15 +1164,7 @@ const StreamerMestre = () => {
           tryResume(Number(data?.duration)).catch(() => {});
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (duration > 0) {
-            const resumeAt = stored?.watchedSeconds || 0;
-            if (resumeAt > 5) {
-              // Só sincroniza com o banco se há progresso real — evita salvar 0
-              // e sobrescrever um progresso válido que estava no banco.
-              persistProgressRef.current?.(resumeAt, duration);
-            } else {
-              // Sem progresso local: atualiza só a UI com a duração real
-              setUiProgress(prev => ({ ...prev, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
-            }
+            persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
           }
           alignSidebar();
           setTimeout(() => alignSidebar(), 100);
@@ -1156,22 +1213,13 @@ const StreamerMestre = () => {
       cancelled = true;
       cleanupVimeoPlayer();
     };
-  // embedSrc é capturado como `vimeoSrc` no início do effect — não precisa estar nos deps.
-  // Tê-lo aqui causaria re-inicialização do player quando embedSrc recomputa (mesmo videoId),
-  // destruindo o iframe no meio do carregamento.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideo?.videoId, currentVideo?.sourceType, playerReloadKey, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer]);
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer, getPlayerIframe]);
 
   useEffect(() => {
     const lesson = currentVideo;
     const youtubeSrc = embedSrc;
     if (!lesson || lesson.sourceType !== 'YOUTUBE' || !youtubeSrc || !isYouTubeUrl(youtubeSrc)) {
-      if (youtubePlayerRef.current) {
-        try {
-          youtubePlayerRef.current.destroy?.();
-        } catch {}
-        youtubePlayerRef.current = null;
-      }
+      cleanupYouTubePlayer(false);
       return;
     }
 
@@ -1185,21 +1233,19 @@ const StreamerMestre = () => {
 
         // Aguarda o iframe estar no DOM (o React pode ainda não ter pintado após o await assíncrono)
         let iframe: HTMLIFrameElement | null = null;
-        for (let attempt = 0; attempt < 20; attempt++) {
-          iframe = document.getElementById('fiveone-streamer-player') as HTMLIFrameElement | null;
+        for (let attempt = 0; attempt < 60; attempt++) {
+          iframe = getPlayerIframe();
           if (iframe) break;
           await new Promise(resolve => window.setTimeout(resolve, 100));
           if (cancelled) return;
         }
         if (!iframe) {
-          markPlayerError('Player não encontrado. Tente recarregar a página.');
+          // Evita falso erro no primeiro carregamento via navegação SPA/StrictMode.
+          // O fallback de timeout global ainda cobre falhas reais de renderização.
           return;
         }
 
-        try {
-          youtubePlayerRef.current?.destroy?.();
-        } catch {}
-        youtubePlayerRef.current = null;
+        cleanupYouTubePlayer(false);
 
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
@@ -1213,15 +1259,7 @@ const StreamerMestre = () => {
               const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
 
               if (duration > 0) {
-                const resumeAt = stored?.watchedSeconds || 0;
-                if (resumeAt > 5) {
-                  // Só sincroniza com o banco se há progresso real — evita salvar 0
-                  // e sobrescrever um progresso válido que estava no banco.
-                  persistProgressRef.current?.(resumeAt, duration);
-                } else {
-                  // Sem progresso local: atualiza só a UI com a duração real
-                  setUiProgress(prev => ({ ...prev, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
-                }
+                persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
               } else if (stored) {
                 setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
               }
@@ -1231,10 +1269,22 @@ const StreamerMestre = () => {
                 const target = maxSeek !== null ? Math.min(pendingResume, maxSeek) : pendingResume;
                 if (target > 5) {
                   try {
-                    event.target.seekTo(target, true);
-                  } catch {}
+                    const resumeVideoId = extractYouTubeVideoId(youtubeSrc);
+                    if (resumeVideoId) {
+                      event.target.cueVideoById?.({ videoId: resumeVideoId, startSeconds: target });
+                    } else {
+                      event.target.seekTo?.(target, true);
+                    }
+                  } catch {
+                    try {
+                      event.target.seekTo?.(target, true);
+                    } catch {}
+                  }
                 }
               }
+              try {
+                event.target.pauseVideo?.();
+              } catch {}
               pendingResume = 0;
             },
             onStateChange: (event: any) => {
@@ -1314,19 +1364,9 @@ const StreamerMestre = () => {
 
     return () => {
       cancelled = true;
-      try {
-        const id = (youtubePlayerRef.current as any)?.__fiveonePoll as number | undefined;
-        if (id) window.clearInterval(id);
-      } catch {}
-      try {
-        youtubePlayerRef.current?.destroy?.();
-      } catch {}
-      youtubePlayerRef.current = null;
+      cleanupYouTubePlayer(false);
     };
-  // embedSrc é capturado como `youtubeSrc` no início do effect — não precisa estar nos deps.
-  // Tê-lo aqui causaria re-inicialização do player quando embedSrc recomputa (mesmo videoId).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentVideo?.videoId, currentVideo?.sourceType, playerReloadKey, markPlayerReady, markPlayerError]);
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, markPlayerReady, markPlayerError, getPlayerIframe, cleanupYouTubePlayer]);
 
   const resolveLessonAssets = useCallback((lesson: LessonRef) => {
     const bannerContinue = lesson.bannerContinue;

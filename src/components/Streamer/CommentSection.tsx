@@ -88,6 +88,16 @@ function renderCommentText(text: string) {
   return elements;
 }
 
+
+function relativeTime(ts: number): string {
+  const diff = Math.floor((Date.now() - ts) / 1000);
+  if (diff < 60) return 'agora mesmo';
+  if (diff < 3600) { const m = Math.floor(diff / 60); return `há ${m} ${m === 1 ? 'minuto' : 'minutos'}`; }
+  if (diff < 86400) { const h = Math.floor(diff / 3600); return `há ${h} ${h === 1 ? 'hora' : 'horas'}`; }
+  if (diff < 604800) { const d = Math.floor(diff / 86400); return `há ${d} ${d === 1 ? 'dia' : 'dias'}`; }
+  return new Date(ts).toLocaleDateString('pt-BR');
+}
+
 function detectMention(value: string, caret: number): MentionQuery {
   const slice = value.slice(0, caret);
   const at = slice.lastIndexOf("@");
@@ -116,6 +126,16 @@ function MentionTextarea({ value, onChange, placeholder, disabled, autoFocus, on
   const debounceRef = useRef<number>();
 
   useEffect(() => () => { if (debounceRef.current) window.clearTimeout(debounceRef.current); }, []);
+
+  // Cursor no fim do texto ao abrir com autoFocus (ex: "@Nome ")
+  useEffect(() => {
+    if (autoFocus && textareaRef.current) {
+      const end = textareaRef.current.value.length;
+      textareaRef.current.focus();
+      textareaRef.current.setSelectionRange(end, end);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!mentionState) {
@@ -254,7 +274,11 @@ export default function CommentSection({ videoId }: { videoId: string }) {
       avatar_url?: string | null;
     };
     const nameFromProfile = profileRow?.display_name || [profileRow?.first_name, profileRow?.last_name].filter(Boolean).join(' ');
-    const resolvedName = (nameFromProfile && nameFromProfile.trim()) || raw.user_id || 'Aluno';
+    const userIdRaw: string = raw.user_id || '';
+    const userIdFallback = userIdRaw.includes('@')
+      ? userIdRaw.split('@')[0].replace(/[._-]+/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase()).trim()
+      : userIdRaw;
+    const resolvedName = (nameFromProfile && nameFromProfile.trim()) || userIdFallback || 'Aluno';
     const avatarUrl = profileRow?.avatar_url || null;
     return {
       id: raw.id,
@@ -419,31 +443,29 @@ export default function CommentSection({ videoId }: { videoId: string }) {
             )}
           </div>
           <div className="comment-body">
-            <div className="comment-meta">
-              <div className="comment-author-block">
-                <span className="comment-author">{comment.author.name}</span>
-                <span className="comment-dot">•</span>
-                <span className="comment-time">{new Date(comment.ts).toLocaleString("pt-BR")}</span>
-              </div>
-              <div className="comment-actions">
-                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId || likedIds.has(comment.id)}>
-                  <FiThumbsUp /> {comment.likes}
-                </button>
-                <button
-                  type="button"
-                  className="comment-action"
-                  onClick={() => {
-                    if (!userId) return;
-                    setActiveReply((prev) => (prev === comment.id ? null : comment.id));
-                    setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
-                  }}
-                  disabled={!userId}
-                >
-                  <FiMessageCircle /> Responder
-                </button>
-              </div>
+            <div className="comment-author-block">
+              <span className="comment-author">{comment.author.name}</span>
+              <span className="comment-dot">—</span>
+              <span className="comment-time" title={new Date(comment.ts).toLocaleString("pt-BR")}>{relativeTime(comment.ts)}</span>
             </div>
             <div className="comment-text">{renderCommentText(comment.text)}</div>
+            <div className="comment-actions">
+              <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId || likedIds.has(comment.id)}>
+                <FiThumbsUp /> Gostei {comment.likes > 0 && <span className="comment-likes-count">{comment.likes}</span>}
+              </button>
+              <button
+                type="button"
+                className="comment-action"
+                onClick={() => {
+                  if (!userId) return;
+                  setActiveReply((prev) => (prev === comment.id ? null : comment.id));
+                  setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
+                }}
+                disabled={!userId}
+              >
+                <FiMessageCircle /> Responder
+              </button>
+            </div>
             {comment.replies.length > 0 && (
               <button
                 type="button"

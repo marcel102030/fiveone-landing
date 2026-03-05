@@ -51,8 +51,8 @@ const ModulosMestre = () => {
       });
     } catch {}
     if (localBest) {
-      if (idSet.has(localBest)) return navigate(`/streamer-mestre?vid=${encodeURIComponent(localBest)}`);
-      if (urlSet.has(localBest)) return navigate(`/streamer-mestre?v=${encodeURIComponent(localBest)}`);
+      if (idSet.has(localBest)) return navigate(`/streamer-mestre?vid=${encodeURIComponent(localBest)}&mod=${encodeURIComponent(module.moduleId)}`);
+      if (urlSet.has(localBest)) return navigate(`/streamer-mestre?v=${encodeURIComponent(localBest)}&mod=${encodeURIComponent(module.moduleId)}`);
     }
 
     // 2) background: tenta remoto com timeout curto; senão abre a primeira aula
@@ -60,7 +60,7 @@ const ModulosMestre = () => {
     const timer = setTimeout(() => {
       if (!navigated) {
         navigated = true;
-        navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}`);
+        navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}&mod=${encodeURIComponent(module.moduleId)}`);
       }
     }, 800);
 
@@ -79,17 +79,17 @@ const ModulosMestre = () => {
           clearTimeout(timer);
           navigated = true;
           if (best) {
-            if (idSet.has(best)) return navigate(`/streamer-mestre?vid=${encodeURIComponent(best)}`);
-            if (urlSet.has(best)) return navigate(`/streamer-mestre?v=${encodeURIComponent(best)}`);
+            if (idSet.has(best)) return navigate(`/streamer-mestre?vid=${encodeURIComponent(best)}&mod=${encodeURIComponent(module.moduleId)}`);
+            if (urlSet.has(best)) return navigate(`/streamer-mestre?v=${encodeURIComponent(best)}&mod=${encodeURIComponent(module.moduleId)}`);
           }
-          navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}`);
+          navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}&mod=${encodeURIComponent(module.moduleId)}`);
         }
       }
     } catch {
       if (!navigated) {
         clearTimeout(timer);
         navigated = true;
-        navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}`);
+        navigate(`/streamer-mestre?vid=${encodeURIComponent(firstLesson.videoId)}&mod=${encodeURIComponent(module.moduleId)}`);
       }
     }
   };
