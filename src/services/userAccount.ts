@@ -26,14 +26,28 @@ export async function createUser(u: PlatformUser): Promise<void> {
 }
 
 export async function verifyUser(email: string, password: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from('platform_user')
-    .select('email')
-    .eq('email', email.toLowerCase())
-    .eq('password', password)
-    .maybeSingle();
+  const normalizedEmail = email.trim().toLowerCase();
+
+  const run = async (withActive: boolean) => {
+    let query = supabase
+      .from("platform_user")
+      .select("email")
+      .eq("email", normalizedEmail)
+      .eq("password", password);
+    if (withActive) query = query.eq("active", true);
+    return query.maybeSingle();
+  };
+
+  let { data, error } = await run(true);
+  // Compatibilidade com bancos antigos que ainda não possuem a coluna `active`.
+  if (error) {
+    const message = String((error as any)?.message || "");
+    if (/column/i.test(message) && /\bactive\b/i.test(message)) {
+      ({ data, error } = await run(false));
+    }
+  }
   if (error) throw error;
-  return !!data;
+  return Boolean(data);
 }
 
 export type PlatformUserListItem = {

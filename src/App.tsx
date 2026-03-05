@@ -32,6 +32,7 @@ import RedeCadastroMembro from "./pages/RedeCadastroMembro";
 import AdminLogin from "./pages/AdminLogin";
 import AdminGuard from "./components/auth/AdminGuard";
 import MemberGuard from "./components/auth/MemberGuard";
+import StudentGuard from "./components/auth/StudentGuard";
 import MemberLayout from "./pages/membro/MemberLayout";
 import MemberDashboard from "./pages/membro/MemberDashboard";
 import MemberPlaceholder from "./pages/membro/MemberPlaceholder";
@@ -68,7 +69,17 @@ function AppContent() {
   const isInviteTest = location.pathname === "/teste-dons" && searchParams.has("churchSlug");
 
   const handleLogin = () => {
-    navigate("/plataforma");
+    const next = searchParams.get("next");
+    const safeNext =
+      typeof next === "string" &&
+      next.startsWith("/") &&
+      !next.startsWith("//") &&
+      !next.startsWith("/\\") &&
+      next !== "/login-aluno"
+        ? next
+        : null;
+
+    navigate(safeNext || "/plataforma", { replace: true });
   };
 
   const isIgrejasStandalone =
@@ -197,11 +208,46 @@ function AppContent() {
             <Route path="/solucoes/treinamento-lideranca" element={<TreinamentoForm />} />
             <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
             <Route path="/solucoes" element={<ChurchSolutions />} />
-            <Route path="/plataforma" element={<Plataforma />} />
-            <Route path="/streamer-apostolo" element={<StreamerApostolo />} />
-            <Route path="/streamer-mestre" element={<StreamerMestre />} />
-            <Route path="/modulos-mestre" element={<ModulosMestre />} />
-            <Route path="/perfil" element={<PerfilAluno />} />
+            <Route
+              path="/plataforma"
+              element={
+                <StudentGuard>
+                  <Plataforma />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/streamer-apostolo"
+              element={
+                <StudentGuard>
+                  <StreamerApostolo />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/streamer-mestre"
+              element={
+                <StudentGuard>
+                  <StreamerMestre />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/modulos-mestre"
+              element={
+                <StudentGuard>
+                  <ModulosMestre />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/perfil"
+              element={
+                <StudentGuard>
+                  <PerfilAluno />
+                </StudentGuard>
+              }
+            />
             <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
           </Routes>
         </main>

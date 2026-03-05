@@ -38,19 +38,6 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
     })();
   }, [videoId]);
 
-  // se antes salvamos por URL e agora usamos ID, tenta migrar uma vez
-  useEffect(()=>{
-    try {
-      if (/^mestre-/.test(videoId)) {
-        const legacy = localStorage.getItem(keyFor((videoId as any).url || ''));
-        if (legacy) {
-          localStorage.setItem(keyFor(videoId), legacy);
-          localStorage.removeItem(keyFor((videoId as any).url || ''));
-        }
-      }
-    } catch {}
-  }, [videoId]);
-
   function persist(nextCounts: Counts, nextSelected: keyof Counts | null) {
     try {
       localStorage.setItem(keyFor(videoId), JSON.stringify(nextCounts));

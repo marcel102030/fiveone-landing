@@ -239,14 +239,89 @@ export default function AdminConteudoPlataforma() {
     });
   };
 
+  const decodeHtmlEntities = (raw: string): string => {
+    let out = raw;
+    for (let i = 0; i < 4; i += 1) {
+      const prev = out;
+      out = prev
+        .replace(/&amp;/gi, '&')
+        .replace(/&#0*38;/gi, '&')
+        .replace(/&#x0*26;/gi, '&')
+        .replace(/&quot;/gi, '"')
+        .replace(/&#0*34;/gi, '"')
+        .replace(/&#x0*22;/gi, '"')
+        .replace(/&apos;/gi, "'")
+        .replace(/&#0*39;/gi, "'")
+        .replace(/&#x0*27;/gi, "'")
+        .replace(/&lt;/gi, '<')
+        .replace(/&#0*60;/gi, '<')
+        .replace(/&#x0*3c;/gi, '<')
+        .replace(/&gt;/gi, '>')
+        .replace(/&#0*62;/gi, '>')
+        .replace(/&#x0*3e;/gi, '>');
+      if (out === prev) break;
+    }
+    return out;
+  };
+
+  const stripSurroundingQuotes = (raw: string): string => {
+    let out = raw.trim();
+    if ((out.startsWith('"') && out.endsWith('"')) || (out.startsWith("'") && out.endsWith("'"))) {
+      out = out.slice(1, -1).trim();
+    }
+    return out;
+  };
+
+  const maybeDecodeURIComponentUrl = (raw: string): string => {
+    let out = raw;
+    for (let i = 0; i < 2; i += 1) {
+      const looksEncodedUrl =
+        /^[a-z][a-z0-9+.-]*%3a%2f%2f/i.test(out) ||
+        out.startsWith('%2F%2F') ||
+        out.startsWith('%2f%2f');
+      if (!looksEncodedUrl) break;
+      try {
+        out = decodeURIComponent(out);
+      } catch {
+        break;
+      }
+    }
+    return out;
+  };
+
+  const decodeHtmlUrl = (raw: string): string => {
+    let out = decodeHtmlEntities(raw);
+    out = stripSurroundingQuotes(out);
+    out = maybeDecodeURIComponentUrl(out);
+    out = decodeHtmlEntities(out);
+    out = stripSurroundingQuotes(out);
+    if (out.startsWith('//')) out = `https:${out}`;
+    return out;
+  };
+
   const extractVimeoEmbedSrc = (value: string): string | null => {
     const trimmed = value.trim();
     if (!trimmed) return null;
-    const doubleQuoteMatch = trimmed.match(/src\s*=\s*"([^"]+)"/i);
-    if (doubleQuoteMatch?.[1]) return doubleQuoteMatch[1];
-    const singleQuoteMatch = trimmed.match(/src\s*=\s*'([^']+)'/i);
-    if (singleQuoteMatch?.[1]) return singleQuoteMatch[1];
-    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+
+    const decoded = decodeHtmlEntities(trimmed);
+    const decodedMaybeUrl = decodeHtmlUrl(decoded);
+    if (/^https?:\/\//i.test(decodedMaybeUrl)) return decodedMaybeUrl;
+
+    const doubleQuoteMatch = decoded.match(/src\s*=\s*"([^"]+)"/i);
+    if (doubleQuoteMatch?.[1]) return decodeHtmlUrl(doubleQuoteMatch[1]);
+    const singleQuoteMatch = decoded.match(/src\s*=\s*'([^']+)'/i);
+    if (singleQuoteMatch?.[1]) return decodeHtmlUrl(singleQuoteMatch[1]);
+    const unquotedMatch = decoded.match(/src\s*=\s*([^\s>]+)/i);
+    if (unquotedMatch?.[1]) return decodeHtmlUrl(unquotedMatch[1]);
+
+    try {
+      if (typeof DOMParser !== 'undefined') {
+        const doc = new DOMParser().parseFromString(decoded, 'text/html');
+        const src = doc.querySelector('iframe')?.getAttribute('src');
+        if (src) return decodeHtmlUrl(src);
+      }
+    } catch {}
+
     return null;
   };
 

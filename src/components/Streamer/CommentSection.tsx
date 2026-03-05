@@ -232,6 +232,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   const [activeReply, setActiveReply] = useState<string | null>(null);
   const [collapsedThreads, setCollapsedThreads] = useState<Record<string, boolean>>({});
   const { profile } = usePlatformUserProfile();
+  const userId = getCurrentUserId();
 
   const currentAuthor: CommentAuthor | null = useMemo(() => {
     if (!profile) return null;
@@ -326,9 +327,9 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   }, [list]);
 
   const submitComment = (content: string, parentId: string | null, reset: () => void) => {
+    if (!userId) return;
     const value = content.trim();
     if (!value) return;
-    const userId = getCurrentUserId();
     const fallbackName = currentAuthor?.name || 'Aluno';
     const optimistic: Comment = {
       id: crypto.randomUUID(),
@@ -337,7 +338,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
       likes: 0,
       parentId,
       author: currentAuthor || {
-        id: userId || 'anon',
+        id: userId,
         name: fallbackName,
         avatarUrl: null,
         initials: fallbackName.replace(/@.*/, '').slice(0, 2).toUpperCase() || 'AL',
@@ -350,8 +351,6 @@ export default function CommentSection({ videoId }: { videoId: string }) {
       persist(next);
       return next;
     });
-
-    if (!userId) return;
 
     addComment(userId, videoId, value, parentId)
       .then(() => fetchComments(videoId))
@@ -379,6 +378,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   };
 
   const handleLike = (id: string) => {
+    if (!userId) return;
     setList((prev) => {
       const next = prev.map((comment) => (comment.id === id ? { ...comment, likes: comment.likes + 1 } : comment));
       persist(next);
@@ -421,16 +421,18 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                 <span className="comment-time">{new Date(comment.ts).toLocaleString("pt-BR")}</span>
               </div>
               <div className="comment-actions">
-                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)}>
+                <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId}>
                   <FiThumbsUp /> {comment.likes}
                 </button>
                 <button
                   type="button"
                   className="comment-action"
                   onClick={() => {
+                    if (!userId) return;
                     setActiveReply((prev) => (prev === comment.id ? null : comment.id));
                     setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
                   }}
+                  disabled={!userId}
                 >
                   <FiMessageCircle /> Responder
                 </button>
@@ -456,13 +458,14 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                 <MentionTextarea
                   value={replyDrafts[comment.id] || ''}
                   onChange={(value) => setReplyDrafts((prev) => ({ ...prev, [comment.id]: value }))}
-                  placeholder="Responder ao comentário"
+                  placeholder={userId ? "Responder ao comentário" : "Faça login para responder."}
+                  disabled={!userId}
                   autoFocus
                   onSubmit={() => handleReplySubmit(comment.id)}
                 />
                 <div className="comment-reply-actions">
                   <button type="button" className="comment-cancel" onClick={() => setActiveReply(null)}>Cancelar</button>
-                  <button type="button" className="comment-send" onClick={() => handleReplySubmit(comment.id)}>
+                  <button type="button" className="comment-send" onClick={() => handleReplySubmit(comment.id)} disabled={!userId}>
                     <FiSend /> Enviar
                   </button>
                 </div>
@@ -490,10 +493,11 @@ export default function CommentSection({ videoId }: { videoId: string }) {
         <MentionTextarea
           value={text}
           onChange={setText}
-          placeholder="Adicionar um comentário…"
+          placeholder={userId ? "Adicionar um comentário…" : "Faça login para comentar."}
+          disabled={!userId}
           onSubmit={() => submitComment(text, null, () => setText(""))}
         />
-        <button className="comments-send" type="submit">
+        <button className="comments-send" type="submit" disabled={!userId}>
           <FiSend /> Enviar
         </button>
       </form>

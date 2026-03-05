@@ -383,6 +383,7 @@ async function fetchContent(): Promise<void> {
           highlight,
           lessons:platform_lesson(
             id,
+            video_id,
             module_id,
             order_index,
             title,
@@ -413,6 +414,8 @@ async function fetchContent(): Promise<void> {
       `;
 
   const fallbackSelect = baseSelect.replace(",\n            banner_mobile", "");
+  const fallbackNoVideoIdSelect = baseSelect.replace(",\n            video_id", "");
+  const fallbackNoVideoIdNoMobileSelect = fallbackNoVideoIdSelect.replace(",\n            banner_mobile", "");
 
   const execSelect = async (fields: string) =>
     supabase
@@ -424,11 +427,25 @@ async function fetchContent(): Promise<void> {
 
   let { data, error } = await execSelect(baseSelect);
 
-  if (error && error.message?.includes("banner_mobile")) {
-    console.warn("Coluna banner_mobile ausente. Reexecutando consulta sem o campo (execute a migração).", error);
-    const fallback = await execSelect(fallbackSelect);
-    data = fallback.data;
-    error = fallback.error;
+  if (error) {
+    const missingMobile = error.message?.includes("banner_mobile");
+    const missingVideoId = error.message?.includes("video_id");
+    if (missingMobile || missingVideoId) {
+      if (missingMobile) {
+        console.warn("Coluna banner_mobile ausente. Reexecutando consulta sem o campo (execute a migração).", error);
+      }
+      if (missingVideoId) {
+        console.warn("Coluna video_id ausente. Reexecutando consulta sem o campo (execute a migração).", error);
+      }
+      const fields = missingMobile && missingVideoId
+        ? fallbackNoVideoIdNoMobileSelect
+        : missingMobile
+          ? fallbackSelect
+          : fallbackNoVideoIdSelect;
+      const fallback = await execSelect(fields);
+      data = fallback.data;
+      error = fallback.error;
+    }
   }
 
   if (error) {

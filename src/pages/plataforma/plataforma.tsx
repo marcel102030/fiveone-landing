@@ -187,14 +187,14 @@ const PaginaInicial = () => {
       mestreLessons.forEach((lesson) => {
         if (!lesson.videoId) return;
         if (!completedIds.has(lesson.videoId)) return;
-        const base = lesson.videoUrl || lesson.videoId;
-        if (base) keepBases.add(base);
+        keepBases.add(lesson.videoId);
+        if (lesson.videoUrl) keepBases.add(lesson.videoUrl);
       });
       storedWatched.forEach((item) => {
         const candidateId = item?.id || item?.videoId;
         if (candidateId && completedIds.has(candidateId)) {
-          const base = (typeof item?.url === 'string' && item.url) || candidateId;
-          if (base) keepBases.add(base);
+          keepBases.add(candidateId);
+          if (typeof item?.url === 'string' && item.url) keepBases.add(item.url);
         }
       });
     }
@@ -366,9 +366,9 @@ const PaginaInicial = () => {
             </div>
             <button className="cb-btn" onClick={() => {
               const v:any = visibleLastWatched[0];
-              if (v.id) window.location.hash = `#/streamer-mestre?vid=${encodeURIComponent(v.id)}`;
-              else if (typeof v.index === 'number') window.location.hash = `#/streamer-mestre?i=${v.index}`;
-              else window.location.hash = `#/streamer-mestre?v=${encodeURIComponent(v.url)}`;
+              if (v.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(v.id)}`);
+              else if (typeof v.index === 'number') navigate(`/streamer-mestre?i=${v.index}`);
+              else navigate(`/streamer-mestre?v=${encodeURIComponent(v.url)}`);
             }}>Retomar aula</button>
           </div>
         ) : null}

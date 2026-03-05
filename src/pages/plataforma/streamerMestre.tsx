@@ -28,35 +28,330 @@ const slugify = (value: string): string =>
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, '-')
     .replace(/^-+|-+$/g, '');
+
+const decodeHtmlEntities = (value: string): string => {
+  let out = value;
+  // Alguns conteúdos do banco podem vir com entidades duplicadas (ex: &amp;amp;).
+  for (let i = 0; i < 4; i += 1) {
+    const prev = out;
+    out = prev
+      // Ampersand
+      .replace(/&amp;/gi, '&')
+      .replace(/&#0*38;/gi, '&')
+      .replace(/&#x0*26;/gi, '&')
+      // Quotes
+      .replace(/&quot;/gi, '"')
+      .replace(/&#0*34;/gi, '"')
+      .replace(/&#x0*22;/gi, '"')
+      // Apostrophe
+      .replace(/&apos;/gi, "'")
+      .replace(/&#0*39;/gi, "'")
+      .replace(/&#x0*27;/gi, "'")
+      // Angle brackets (às vezes o iframe inteiro vem como &lt;iframe ...&gt;)
+      .replace(/&lt;/gi, '<')
+      .replace(/&#0*60;/gi, '<')
+      .replace(/&#x0*3c;/gi, '<')
+      .replace(/&gt;/gi, '>')
+      .replace(/&#0*62;/gi, '>')
+      .replace(/&#x0*3e;/gi, '>');
+    if (out === prev) break;
+  }
+  return out;
+};
+
+const maybeDecodeURIComponentUrl = (value: string): string => {
+  let out = value;
+  for (let i = 0; i < 2; i += 1) {
+    const looksEncodedUrl =
+      /^[a-z][a-z0-9+.-]*%3a%2f%2f/i.test(out) ||
+      out.startsWith('%2F%2F') ||
+      out.startsWith('%2f%2f');
+    if (!looksEncodedUrl) break;
+    try {
+      const decoded = decodeURIComponent(out);
+      out = decoded;
+    } catch {
+      break;
+    }
+  }
+  return out;
+};
+
+const stripSurroundingQuotes = (value: string): string => {
+  let out = value.trim();
+  if ((out.startsWith('"') && out.endsWith('"')) || (out.startsWith("'") && out.endsWith("'"))) {
+    out = out.slice(1, -1).trim();
+  }
+  return out;
+};
+
+const decodeHtmlUrl = (value: string): string => {
+  let out = decodeHtmlEntities(value);
+  out = stripSurroundingQuotes(out);
+  out = maybeDecodeURIComponentUrl(out);
+  out = decodeHtmlEntities(out);
+  out = stripSurroundingQuotes(out);
+  if (out.startsWith('//')) out = `https:${out}`;
+  return out;
+};
 const extractEmbedSrc = (raw?: string | null): string | null => {
   if (!raw) return null;
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  const doubleMatch = trimmed.match(/src\s*=\s*"([^"]+)"/i);
-  if (doubleMatch?.[1]) return doubleMatch[1];
-  const singleMatch = trimmed.match(/src\s*=\s*'([^']+)'/i);
-  if (singleMatch?.[1]) return singleMatch[1];
-  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  const decoded = decodeHtmlEntities(trimmed);
+  const decodedMaybeUrl = decodeHtmlUrl(decoded);
+  if (/^https?:\/\//i.test(decodedMaybeUrl)) return decodedMaybeUrl;
+  const doubleMatch = decoded.match(/src\s*=\s*"([^"]+)"/i);
+  if (doubleMatch?.[1]) return decodeHtmlUrl(doubleMatch[1]);
+  const singleMatch = decoded.match(/src\s*=\s*'([^']+)'/i);
+  if (singleMatch?.[1]) return decodeHtmlUrl(singleMatch[1]);
+  const unquotedMatch = decoded.match(/src\s*=\s*([^\s>]+)/i);
+  if (unquotedMatch?.[1]) return decodeHtmlUrl(unquotedMatch[1].replace(/^['"]|['"]$/g, ''));
+  try {
+    if (typeof DOMParser !== 'undefined') {
+      const doc = new DOMParser().parseFromString(decoded, 'text/html');
+      const src = doc.querySelector('iframe')?.getAttribute('src');
+      if (src) return decodeHtmlUrl(src);
+    }
+  } catch {}
   return null;
 };
 
 const normaliseVimeoUrl = (url: string): string => {
   if (!url) return url;
-  if (/player\.vimeo\.com/.test(url)) return url;
-  const cleanUrl = url.trim();
-  const idMatch = cleanUrl.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-  if (!idMatch) return url;
-  const videoId = idMatch[1];
-  let hash = '';
-  const hashMatch = cleanUrl.match(/vimeo\.com\/\d+\/([0-9a-z]+)$/i);
-  if (hashMatch) hash = hashMatch[1];
-  const queryIndex = cleanUrl.indexOf('?');
-  let extra = queryIndex >= 0 ? cleanUrl.slice(queryIndex) : '';
-  if (!extra && hash) {
-    extra = `?h=${hash}`;
+  const cleanUrl = decodeHtmlUrl(url).trim();
+  if (!cleanUrl) return url;
+  // Caso comum: salvar apenas o ID numérico do Vimeo.
+  if (/^\d+$/.test(cleanUrl)) {
+    return `https://player.vimeo.com/video/${cleanUrl}`;
   }
-  return `https://player.vimeo.com/video/${videoId}${extra}`;
+
+  const parsed = (() => {
+    try {
+      return new URL(cleanUrl);
+    } catch {
+      return null;
+    }
+  })();
+  if (!parsed) return url;
+
+  const normaliseParamKey = (key: string): string => {
+    let out = key.trim();
+    if (!out) return '';
+    // Corrige URLs vindas de HTML (ex: "...&amp;h=..." vira "amp;h" como chave).
+    for (let i = 0; i < 4; i += 1) {
+      const lower = out.toLowerCase();
+      if (lower.startsWith('amp;')) {
+        out = out.slice(4);
+        continue;
+      }
+      break;
+    }
+    out = out.trim();
+    // Se a chave contém '=' geralmente é sinal de query corrompida (ex: "amp;=auto").
+    if (!out || out.includes('=')) return '';
+    return out;
+  };
+
+  const findVideoId = (): string | null => {
+    // player.vimeo.com/video/<id>
+    const direct = parsed.pathname.match(/\/video\/(\d+)/i);
+    if (direct?.[1]) return direct[1];
+    // Links do Vimeo vêm em vários formatos (channels, groups, etc). Pega o último segmento numérico.
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    for (let i = segments.length - 1; i >= 0; i -= 1) {
+      if (/^\d+$/.test(segments[i])) return segments[i];
+    }
+    const clip = parsed.searchParams.get('clip_id');
+    if (clip && /^\d+$/.test(clip)) return clip;
+    return null;
+  };
+
+  const videoId = findVideoId();
+  if (!videoId) return url;
+
+  let hParam = parsed.searchParams.get('h');
+  if (!hParam) {
+    for (const [key, value] of parsed.searchParams.entries()) {
+      const normalized = normaliseParamKey(key);
+      if (normalized.toLowerCase() === 'h' && value) {
+        hParam = value;
+        break;
+      }
+    }
+  }
+  if (!hParam) {
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const idx = segments.lastIndexOf(videoId);
+    const maybeHash = idx >= 0 ? segments[idx + 1] : null;
+    if (maybeHash && /^[0-9a-z]+$/i.test(maybeHash)) hParam = maybeHash;
+  }
+
+  const out = new URL(`https://player.vimeo.com/video/${videoId}`);
+
+  // Mantém apenas parâmetros relevantes (evita query corrompida derrubar embeds, ex: perder o `h=`).
+  const allowed = new Set([
+    'h',
+    'app_id',
+    'autoplay',
+    'player_id',
+    'muted',
+    'loop',
+    'controls',
+    'title',
+    'byline',
+    'portrait',
+    'badge',
+    'autopause',
+    'dnt',
+    'pip',
+    'playsinline',
+  ]);
+  parsed.searchParams.forEach((value, key) => {
+    const normalizedKey = normaliseParamKey(key);
+    if (!normalizedKey) return;
+    if (!allowed.has(normalizedKey)) return;
+    out.searchParams.set(normalizedKey, value);
+  });
+  if (hParam) out.searchParams.set('h', hParam);
+  out.searchParams.delete('background');
+  if (out.searchParams.get('controls') === '0') out.searchParams.set('controls', '1');
+  // Autoplay sem muted costuma ser bloqueado e parece "tela preta" (principalmente em embeds sem controles).
+  if (out.searchParams.get('autoplay') === '1' && !out.searchParams.has('muted')) out.searchParams.set('muted', '1');
+
+  return out.toString();
 };
+
+const isYouTubeUrl = (url: string): boolean => /(?:youtube\.com|youtu\.be)/i.test(url);
+
+function parseYouTubeStart(raw: string | null): number | null {
+  if (!raw) return null;
+  const value = raw.trim();
+  if (!value) return null;
+  if (/^\d+$/.test(value)) return Number(value);
+  let seconds = 0;
+  const h = value.match(/(\d+)\s*h/i);
+  const m = value.match(/(\d+)\s*m/i);
+  const s = value.match(/(\d+)\s*s/i);
+  if (!h && !m && !s) return null;
+  if (h) seconds += Number(h[1]) * 3600;
+  if (m) seconds += Number(m[1]) * 60;
+  if (s) seconds += Number(s[1]);
+  return seconds > 0 ? seconds : null;
+}
+
+const normaliseYouTubeUrl = (url: string): string => {
+  if (!url) return url;
+  const cleanUrl = url.trim();
+  if (!cleanUrl) return url;
+
+  const asUrl = (() => {
+    try {
+      return new URL(cleanUrl);
+    } catch {
+      return null;
+    }
+  })();
+  if (!asUrl) return url;
+
+  const host = asUrl.hostname.replace(/^www\./, "").toLowerCase();
+  const isShort = host === "youtu.be";
+  const isYouTube = host.endsWith("youtube.com") || isShort;
+  if (!isYouTube) return url;
+
+  const start =
+    parseYouTubeStart(asUrl.searchParams.get("start")) ?? parseYouTubeStart(asUrl.searchParams.get("t"));
+
+  const embed = (() => {
+    // Se já for embed, mantém o path.
+    const embedMatch = asUrl.pathname.match(/\/embed\/([^/]+)/i);
+    if (embedMatch?.[1]) return `https://www.youtube.com/embed/${embedMatch[1]}`;
+
+    // youtu.be/<id>
+    if (isShort) {
+      const id = asUrl.pathname.replace(/^\//, "").split("/")[0];
+      if (id) return `https://www.youtube.com/embed/${id}`;
+    }
+
+    // /watch?v=<id>
+    const watchId = asUrl.searchParams.get("v");
+    if (watchId) return `https://www.youtube.com/embed/${watchId}`;
+
+    // /shorts/<id>
+    const shortsMatch = asUrl.pathname.match(/\/shorts\/([^/]+)/i);
+    if (shortsMatch?.[1]) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
+
+    return asUrl.toString();
+  })();
+
+  const out = (() => {
+    try {
+      return new URL(embed);
+    } catch {
+      return null;
+    }
+  })();
+  if (!out) return embed;
+
+  out.searchParams.set("enablejsapi", "1");
+  out.searchParams.set("playsinline", "1");
+  out.searchParams.set("rel", "0");
+  if (typeof window !== "undefined") {
+    out.searchParams.set("origin", window.location.origin);
+  }
+  if (typeof start === "number" && Number.isFinite(start) && start > 0) {
+    out.searchParams.set("start", String(Math.floor(start)));
+  }
+  return out.toString();
+};
+
+declare global {
+  interface Window {
+    YT?: any;
+    onYouTubeIframeAPIReady?: () => void;
+  }
+}
+
+let youtubeApiPromise: Promise<void> | null = null;
+
+function ensureYouTubeApi(): Promise<void> {
+  if (typeof window === "undefined") {
+    return Promise.reject(new Error("YouTube API requires window"));
+  }
+  if (window.YT?.Player) return Promise.resolve();
+  if (youtubeApiPromise) return youtubeApiPromise;
+
+  youtubeApiPromise = new Promise<void>((resolve, reject) => {
+    const timeout = window.setTimeout(() => {
+      youtubeApiPromise = null;
+      reject(new Error("Timeout ao carregar YouTube IFrame API"));
+    }, 15_000);
+
+    const prev = window.onYouTubeIframeAPIReady;
+    window.onYouTubeIframeAPIReady = () => {
+      try {
+        if (typeof prev === "function") prev();
+      } catch {}
+      window.clearTimeout(timeout);
+      resolve();
+    };
+
+    const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
+    if (existing) return;
+
+    const script = document.createElement("script");
+    script.src = "https://www.youtube.com/iframe_api";
+    script.async = true;
+    script.onerror = () => {
+      window.clearTimeout(timeout);
+      youtubeApiPromise = null;
+      reject(new Error("Falha ao carregar YouTube IFrame API"));
+    };
+    document.head.appendChild(script);
+  });
+
+  return youtubeApiPromise;
+}
 
 type VimeoPlayer = import('@vimeo/player').default;
 
@@ -79,23 +374,173 @@ type ToastState = {
   tone?: 'success' | 'error' | 'info';
 };
 
+type DeferredIframeProps = {
+  src: string;
+  title: string;
+  allow: string;
+  onReady: () => void;
+  onError: (message: string) => void;
+};
+
+const DeferredIframe = ({ src, title, allow, onReady, onError }: DeferredIframeProps) => {
+  const [frameSrc, setFrameSrc] = useState<string>('about:blank');
+
+  // Injeta o src real apenas após o mount (layout effect). Isso evita perder o evento `load`
+  // quando o navegador resolve do cache rápido demais.
+  useLayoutEffect(() => {
+    if (!src || src === 'about:blank') {
+      setFrameSrc('about:blank');
+      return;
+    }
+    setFrameSrc(src);
+  }, [src]);
+
+  return (
+    <iframe
+      id="fiveone-streamer-player"
+      src={frameSrc}
+      title={title}
+      frameBorder="0"
+      allow={allow}
+      onLoad={(event) => {
+        if (!src || src === 'about:blank') return;
+        try {
+          const expected = new URL(src);
+          const actual = new URL(event.currentTarget.src);
+          if (expected.origin !== actual.origin || expected.pathname !== actual.pathname) return;
+        } catch {
+          // Se a URL não for parseável, libera a UI mesmo assim.
+        }
+        onReady();
+      }}
+      onError={() => {
+        if (!src || src === 'about:blank') return;
+        onError('Não foi possível carregar este vídeo.');
+      }}
+      allowFullScreen
+    />
+  );
+};
+
+const formatClock = (rawSeconds: number): string => {
+  const seconds = Math.max(0, Math.floor(Number(rawSeconds) || 0));
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
+
+const resolveExternalVideoUrl = (lesson: LessonRef | null | undefined, embedSrc: string): string | null => {
+  const fallback = (lesson?.videoUrl && /^https?:\/\//i.test(lesson.videoUrl) ? lesson.videoUrl : null) || embedSrc;
+  if (!fallback) return null;
+  try {
+    const url = new URL(fallback);
+    const href = url.toString();
+    if (isYouTubeUrl(href)) {
+      const embedMatch = url.pathname.match(/\/embed\/([^/]+)/i);
+      const id = embedMatch?.[1];
+      if (id) {
+        const out = new URL('https://www.youtube.com/watch');
+        out.searchParams.set('v', id);
+        const start = url.searchParams.get('start');
+        if (start) out.searchParams.set('t', start);
+        return out.toString();
+      }
+      return href;
+    }
+    if (/player\.vimeo\.com/i.test(url.hostname)) {
+      const m = url.pathname.match(/\/video\/(\d+)/i);
+      if (m?.[1]) {
+        const out = new URL(`https://vimeo.com/${m[1]}`);
+        let h = url.searchParams.get('h');
+        if (!h) {
+          for (const [key, value] of url.searchParams.entries()) {
+            let normalized = key.trim();
+            for (let i = 0; i < 4; i += 1) {
+              if (normalized.toLowerCase().startsWith('amp;')) {
+                normalized = normalized.slice(4);
+                continue;
+              }
+              break;
+            }
+            if (normalized.toLowerCase() === 'h' && value) {
+              h = value;
+              break;
+            }
+          }
+        }
+        if (!h) {
+          const segments = url.pathname.split('/').filter(Boolean);
+          const idx = segments.lastIndexOf(m[1]);
+          const maybeHash = idx >= 0 ? segments[idx + 1] : null;
+          if (maybeHash && /^[0-9a-z]+$/i.test(maybeHash)) h = maybeHash;
+        }
+        if (h) out.searchParams.set('h', h);
+        return out.toString();
+      }
+      return href;
+    }
+    return href;
+  } catch {
+    return fallback;
+  }
+};
+
 const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
   if (!video) return null;
-  const base = video.videoUrl || video.videoId;
-  if (!base) return null;
-  const key = `fiveone_progress::${base}`;
+  const canonicalBase = video.videoId;
+  if (!canonicalBase) return null;
+
+  const bases: string[] = [
+    canonicalBase,
+    ...(video.id && video.id !== canonicalBase ? [video.id] : []),
+    ...(video.videoUrl ? [video.videoUrl] : []),
+    ...(extractEmbedSrc(video.embedCode) ? [extractEmbedSrc(video.embedCode)!] : []),
+  ];
+
+  const canonicalKey = `fiveone_progress::${canonicalBase}`;
+  let keyUsed = canonicalKey;
+
+  const raw = (() => {
+    try {
+      const direct = localStorage.getItem(canonicalKey);
+      if (direct) return direct;
+      for (const base of bases) {
+        if (!base || base === canonicalBase) continue;
+        const candidateKey = `fiveone_progress::${base}`;
+        const candidate = localStorage.getItem(candidateKey);
+        if (candidate) {
+          keyUsed = candidateKey;
+          return candidate;
+        }
+      }
+    } catch {}
+    return null;
+  })();
+
+  if (!raw) return null;
+
   try {
-    const parsed = JSON.parse(localStorage.getItem(key) || 'null');
+    const parsed = JSON.parse(raw || 'null');
     if (!parsed) return null;
     const watchedSeconds = Number(parsed.watchedSeconds || parsed.watched || 0);
     const durationSeconds = Number(parsed.durationSeconds || parsed.duration || 0);
     const lastAt = Number(parsed.lastAt || 0);
     if (Number.isFinite(watchedSeconds)) {
-      return {
+      const result = {
         watchedSeconds: Math.max(0, watchedSeconds),
         durationSeconds: Number.isFinite(durationSeconds) ? Math.max(0, durationSeconds) : 0,
         lastAt: Number.isFinite(lastAt) ? lastAt : 0,
       };
+      // Migra dados legados para a chave canônica (melhor esforço).
+      try {
+        if (keyUsed !== canonicalKey) {
+          localStorage.setItem(canonicalKey, raw);
+          localStorage.removeItem(keyUsed);
+        }
+      } catch {}
+      return result;
     }
     return null;
   } catch {
@@ -106,7 +551,87 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
 const StreamerMestre = () => {
   const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
+  const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
+  const [playerReloadKey, setPlayerReloadKey] = useState(0);
+  const cleanupVimeoPlayer = useCallback(() => {
+    const player = playerInstanceRef.current;
+    if (!player) return;
+
+    // IMPORTANTE: não use `destroy()` aqui.
+    // `player.destroy()` remove o iframe do DOM — e como este iframe é renderizado pelo React,
+    // isso pode causar "tela preta" em navegação SPA (o React não recria o elemento automaticamente).
+    try {
+      player.off('loaded');
+      player.off('durationchange');
+      player.off('timeupdate');
+      player.off('seeked');
+      player.off('ended');
+      player.off('error');
+    } catch {}
+    try {
+      player.unload().catch(() => {});
+    } catch {}
+
+    playerInstanceRef.current = null;
+  }, []);
+
+  const [playerStatus, setPlayerStatus] = useState<'loading' | 'ready' | 'error'>('loading');
+  const [playerMessage, setPlayerMessage] = useState<string | null>(null);
+  const [showPlayerFallback, setShowPlayerFallback] = useState(false);
+  const fallbackTimerRef = useRef<number | null>(null);
+  const errorTimerRef = useRef<number | null>(null);
+  const clearPlayerTimers = useCallback(() => {
+    if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
+    if (errorTimerRef.current) window.clearTimeout(errorTimerRef.current);
+    fallbackTimerRef.current = null;
+    errorTimerRef.current = null;
+  }, []);
+  const markPlayerReady = useCallback(() => {
+    clearPlayerTimers();
+    setPlayerStatus('ready');
+    setPlayerMessage(null);
+    setShowPlayerFallback(false);
+  }, [clearPlayerTimers]);
+  const markPlayerError = useCallback((message?: string) => {
+    clearPlayerTimers();
+    setPlayerStatus('error');
+    setPlayerMessage(message || 'Não foi possível carregar o vídeo agora.');
+    setShowPlayerFallback(true);
+  }, [clearPlayerTimers]);
+  const handleReloadPlayer = useCallback(() => {
+    clearPlayerTimers();
+    setPlayerStatus('loading');
+    setPlayerMessage(null);
+    setShowPlayerFallback(false);
+    lastProgressFlushRef.current = 0;
+    cleanupVimeoPlayer();
+    try {
+      youtubePlayerRef.current?.destroy?.();
+    } catch {}
+    youtubePlayerRef.current = null;
+    setPlayerReloadKey((prev) => prev + 1);
+  }, [clearPlayerTimers, cleanupVimeoPlayer]);
+
+  const [theaterMode, setTheaterMode] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      return localStorage.getItem('fiveone_theater_mode') === '1';
+    } catch {
+      return false;
+    }
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    try {
+      localStorage.setItem('fiveone_theater_mode', theaterMode ? '1' : '0');
+    } catch {}
+  }, [theaterMode]);
+
+  const [uiProgress, setUiProgress] = useState<{ watchedSeconds: number; durationSeconds: number }>({
+    watchedSeconds: 0,
+    durationSeconds: 0,
+  });
 
   const [searchParams] = useSearchParams();
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -126,7 +651,15 @@ const StreamerMestre = () => {
     const urlParam = params.get('v');
     let resolved = 0;
     if (vid) {
-      const idx = videoList.findIndex(item => item.videoId === vid);
+      let idx = videoList.findIndex(item => item.videoId === vid);
+      // compat: se alguém salvar/compartilhar um `vid` antigo (URL/embed), tenta resolver também
+      if (idx < 0) {
+        idx = videoList.findIndex((item) => {
+          const url = item.videoUrl || '';
+          const extracted = extractEmbedSrc(item.embedCode) || '';
+          return item.id === vid || vid === url || vid === extracted || (url && (vid.includes(url) || url.includes(vid)));
+        });
+      }
       if (idx >= 0) resolved = idx;
     } else if (idxParam) {
       const idx = Number(idxParam);
@@ -191,18 +724,83 @@ const StreamerMestre = () => {
   const embedSrc = useMemo(() => {
     if (!currentVideo) return '';
     const extracted = extractEmbedSrc(currentVideo.embedCode);
-    if (extracted) return normaliseVimeoUrl(extracted);
-    if (currentVideo.videoUrl) return normaliseVimeoUrl(currentVideo.videoUrl);
+    if (extracted) {
+      if (isYouTubeUrl(extracted)) return normaliseYouTubeUrl(extracted);
+      return normaliseVimeoUrl(extracted);
+    }
+    if (currentVideo.videoUrl) {
+      const decodedUrl = decodeHtmlUrl(currentVideo.videoUrl);
+      if (isYouTubeUrl(decodedUrl)) return normaliseYouTubeUrl(decodedUrl);
+      return normaliseVimeoUrl(decodedUrl);
+    }
     if (currentVideo.videoId && /^\d+$/.test(currentVideo.videoId)) {
       return normaliseVimeoUrl(`https://player.vimeo.com/video/${currentVideo.videoId}`);
     }
     return '';
   }, [currentVideo?.embedCode, currentVideo?.videoUrl, currentVideo?.videoId]);
+  const externalVideoUrl = useMemo(() => resolveExternalVideoUrl(currentVideo, embedSrc), [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]);
+
+  useEffect(() => {
+    const stored = getStoredProgress(currentVideo);
+    if (stored) {
+      setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
+    } else {
+      setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+    }
+  }, [currentVideo?.videoId]);
+
+  // Importante: resetar estado do player em `useLayoutEffect` evita corrida onde o iframe carrega do cache
+  // e dispara `onLoad` antes do `useEffect` (o que fazia a tela ficar "preta" até hard reload).
+  useLayoutEffect(() => {
+    clearPlayerTimers();
+    setPlayerMessage(null);
+    setShowPlayerFallback(false);
+
+    if (!currentVideo) return;
+
+    if (!embedSrc || embedSrc === 'about:blank' || !/^https?:\/\//i.test(embedSrc)) {
+      markPlayerError('Vídeo indisponível no momento.');
+      return;
+    }
+
+    setPlayerStatus('loading');
+  }, [currentVideo?.videoId, embedSrc, playerReloadKey, clearPlayerTimers, markPlayerError]);
+
+  useEffect(() => {
+    if (!currentVideo) return;
+    if (!embedSrc || embedSrc === 'about:blank' || !/^https?:\/\//i.test(embedSrc)) return;
+    if (playerStatus !== 'loading') return;
+
+    fallbackTimerRef.current = window.setTimeout(() => {
+      setShowPlayerFallback(true);
+    }, 8000);
+
+    const slowMessage = (() => {
+      const base = 'O player está demorando para carregar. Tente recarregar ou abrir em outra aba.';
+      if (/vimeo\.com/i.test(embedSrc)) {
+        const host = typeof window !== 'undefined' ? window.location.hostname : '';
+        if (host === 'localhost' || host === '127.0.0.1') {
+          return `${base} Em localhost isso pode acontecer se o Vimeo estiver com restrição de embed por domínio (whitelist).`;
+        }
+      }
+      return base;
+    })();
+
+    errorTimerRef.current = window.setTimeout(() => {
+      setPlayerStatus((prev) => (prev === 'loading' ? 'error' : prev));
+      setPlayerMessage((prev) => prev || slowMessage);
+      setShowPlayerFallback(true);
+    }, 25000);
+
+    return () => {
+      clearPlayerTimers();
+    };
+  }, [currentVideo?.videoId, embedSrc, playerReloadKey, playerStatus, clearPlayerTimers]);
   const persistProgress = useCallback(
     (rawWatched: number, rawDuration?: number) => {
       const lesson = videoList[currentIndex];
       if (!lesson) return;
-      const keyBase = lesson.videoUrl || lesson.videoId;
+      const keyBase = lesson.videoId;
       if (!keyBase) return;
 
       const stored = getStoredProgress(lesson);
@@ -222,6 +820,7 @@ const StreamerMestre = () => {
       try {
         localStorage.setItem(key, JSON.stringify(payload));
       } catch {}
+      setUiProgress({ watchedSeconds, durationSeconds });
 
       const bannerContinue = lesson.bannerContinue;
       const bannerPlayer = lesson.bannerPlayer;
@@ -239,9 +838,10 @@ const StreamerMestre = () => {
       const currentVideoData = {
         title: lesson.title,
         thumbnail: previewImage,
-        url: lesson.videoUrl || lesson.videoId,
+        url: lesson.videoId,
         index: currentIndex,
         id: lesson.videoId,
+        sourceUrl: lesson.videoUrl || null,
         subjectName: lesson.subjectName,
         subjectId: lesson.subjectId,
         bannerContinue: resolvedBannerContinue,
@@ -269,7 +869,13 @@ const StreamerMestre = () => {
           const existingWatchedRaw = localStorage.getItem('videos_assistidos');
           const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
           const filteredWatched = Array.isArray(existingWatched)
-            ? existingWatched.filter((video: any) => video.url !== currentVideoData.url)
+            ? existingWatched.filter((video: any) => {
+                const key = video?.id || video?.videoId || video?.video_id || video?.url;
+                if (!key) return true;
+                if (key === lesson.videoId) return false;
+                if (lesson.videoUrl && key === lesson.videoUrl) return false;
+                return true;
+              })
             : [];
           const updatedWatched = [currentVideoData, ...filteredWatched];
           const limitedWatched = updatedWatched.slice(0, 12);
@@ -279,13 +885,13 @@ const StreamerMestre = () => {
 
       const userId = getCurrentUserId();
       if (userId) {
-        const syncKey = `fiveone_progress_sync_${lesson.videoId || lesson.videoUrl}`;
+        const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
         if (now - lastSync > 15000) {
           sessionStorage.setItem(syncKey, String(now));
           upsertProgress({
             user_id: userId,
-            video_id: lesson.videoId || lesson.videoUrl || lesson.title,
+            video_id: lesson.videoId,
             last_at: new Date(now).toISOString(),
             watched_seconds: watchedSeconds,
             duration_seconds: durationSeconds || null,
@@ -417,39 +1023,13 @@ const StreamerMestre = () => {
       window.removeEventListener('resize', update);
       clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
     };
-  }, [currentVideo?.videoId, alignSidebar]);
-
-  useEffect(() => {
-    const lesson = videoList[currentIndex];
-    if (!lesson) return;
-    if (lesson.sourceType === 'VIMEO') return;
-
-    let destroyed = false;
-    let watchedBaseline = getStoredProgress(lesson)?.watchedSeconds || 0;
-    const durationBaseline = getStoredProgress(lesson)?.durationSeconds || 0;
-
-    const tick = () => {
-      if (destroyed) return;
-      watchedBaseline += 5;
-      persistProgress(watchedBaseline, durationBaseline);
-    };
-
-    const interval = window.setInterval(tick, 5000);
-    tick();
-    return () => {
-      destroyed = true;
-      window.clearInterval(interval);
-    };
-  }, [videoList, currentIndex, persistProgress]);
+  }, [currentVideo?.videoId, playerReloadKey, alignSidebar]);
 
   useEffect(() => {
     const lesson = currentVideo;
     const vimeoSrc = embedSrc;
     if (!lesson || lesson.sourceType !== 'VIMEO' || !vimeoSrc || !/vimeo\.com/i.test(vimeoSrc)) {
-      if (playerInstanceRef.current) {
-        playerInstanceRef.current.destroy().catch(() => {});
-        playerInstanceRef.current = null;
-      }
+      cleanupVimeoPlayer();
       return;
     }
 
@@ -465,12 +1045,21 @@ const StreamerMestre = () => {
         }
         const { default: Player } = await import('@vimeo/player');
         if (cancelled) return;
-        playerInstanceRef.current?.destroy().catch(() => {});
+        cleanupVimeoPlayer();
         const player = new Player(iframe);
-        iframe.setAttribute('src', vimeoSrc);
         playerInstanceRef.current = player;
         alignSidebar();
         setTimeout(() => alignSidebar(), 120);
+
+        // Em alguns cenários (cache/SPA/StrictMode) o evento `loaded` pode demorar.
+        // `ready()` nos dá um sinal mais confiável para liberar o iframe na UI.
+        player
+          .ready()
+          .then(() => {
+            if (cancelled) return;
+            markPlayerReady();
+          })
+          .catch(() => {});
 
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
@@ -490,6 +1079,7 @@ const StreamerMestre = () => {
 
         player.on('loaded', (data: any) => {
           lastProgressFlushRef.current = 0;
+          markPlayerReady();
           tryResume(Number(data?.duration)).catch(() => {});
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (duration > 0) {
@@ -510,7 +1100,6 @@ const StreamerMestre = () => {
           if (now - lastProgressFlushRef.current >= 5000) {
             lastProgressFlushRef.current = now;
             persistProgress(Number(data?.seconds || 0), duration);
-            alignSidebar();
           }
         });
 
@@ -518,7 +1107,6 @@ const StreamerMestre = () => {
           lastProgressFlushRef.current = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           persistProgress(Number(data?.seconds || 0), duration);
-          alignSidebar();
         });
 
         player.on('ended', async () => {
@@ -528,21 +1116,171 @@ const StreamerMestre = () => {
             duration = await player.getDuration();
           } catch {}
           persistProgress(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
-          alignSidebar();
+        });
+
+        player.on('error', (err: any) => {
+          console.warn('Erro no player Vimeo', err);
+          markPlayerError('O Vimeo não conseguiu carregar este vídeo.');
         });
       } catch (error) {
         console.warn('Falha ao inicializar player Vimeo', error);
+        markPlayerError('Falha ao inicializar o player do Vimeo.');
       }
     })();
 
     return () => {
       cancelled = true;
-      if (playerInstanceRef.current) {
-        playerInstanceRef.current.destroy().catch(() => {});
-        playerInstanceRef.current = null;
-      }
+      cleanupVimeoPlayer();
     };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, persistProgress, alignSidebar]);
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, persistProgress, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer]);
+
+  useEffect(() => {
+    const lesson = currentVideo;
+    const youtubeSrc = embedSrc;
+    if (!lesson || lesson.sourceType !== 'YOUTUBE' || !youtubeSrc || !isYouTubeUrl(youtubeSrc)) {
+      if (youtubePlayerRef.current) {
+        try {
+          youtubePlayerRef.current.destroy?.();
+        } catch {}
+        youtubePlayerRef.current = null;
+      }
+      return;
+    }
+
+    let cancelled = false;
+    lastProgressFlushRef.current = 0;
+
+    (async () => {
+      try {
+        await ensureYouTubeApi();
+        if (cancelled) return;
+
+        const iframe = videoRef.current?.querySelector('iframe');
+        if (!iframe) return;
+        const existingSrc = iframe.getAttribute('src');
+        if (existingSrc !== youtubeSrc) {
+          iframe.setAttribute('src', youtubeSrc);
+        }
+
+        try {
+          youtubePlayerRef.current?.destroy?.();
+        } catch {}
+        youtubePlayerRef.current = null;
+
+        const stored = getStoredProgress(lesson);
+        let pendingResume = stored?.watchedSeconds || 0;
+
+        const player = new window.YT.Player(iframe, {
+          events: {
+            onReady: (event: any) => {
+              if (cancelled) return;
+              markPlayerReady();
+              const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
+
+              if (duration > 0) {
+                persistProgress(stored?.watchedSeconds || 0, duration);
+              } else if (stored) {
+                setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
+              }
+
+              if (pendingResume && pendingResume > 5) {
+                const maxSeek = duration > 6 ? Math.max(0, duration - 2) : null;
+                const target = maxSeek !== null ? Math.min(pendingResume, maxSeek) : pendingResume;
+                if (target > 5) {
+                  try {
+                    event.target.seekTo(target, true);
+                  } catch {}
+                }
+              }
+              pendingResume = 0;
+            },
+            onStateChange: (event: any) => {
+              const state = Number(event?.data);
+              const playing = state === window.YT?.PlayerState?.PLAYING;
+              const paused = state === window.YT?.PlayerState?.PAUSED;
+              const ended = state === window.YT?.PlayerState?.ENDED;
+              const buffering = state === window.YT?.PlayerState?.BUFFERING;
+
+              if (!youtubePlayerRef.current) return;
+
+              const tick = (forcePersist: boolean) => {
+                try {
+                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
+                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
+                  if (!Number.isFinite(currentTime) || currentTime < 0) return;
+                  setUiProgress((prev) => ({
+                    watchedSeconds: currentTime,
+                    durationSeconds: duration > 0 ? duration : prev.durationSeconds,
+                  }));
+
+                  if (forcePersist) {
+                    lastProgressFlushRef.current = Date.now();
+                    persistProgress(currentTime, duration);
+                    return;
+                  }
+                  const now = Date.now();
+                  if (now - lastProgressFlushRef.current >= 5000) {
+                    lastProgressFlushRef.current = now;
+                    persistProgress(currentTime, duration);
+                  }
+                } catch {}
+              };
+
+              // Mantém um polling leve apenas quando está tocando (corrige o bug do "timer andando sozinho").
+              const startPolling = () => {
+                if ((youtubePlayerRef.current as any).__fiveonePoll) return;
+                (youtubePlayerRef.current as any).__fiveonePoll = window.setInterval(() => tick(false), 1000);
+                tick(false);
+              };
+              const stopPolling = (flush: boolean) => {
+                const id = (youtubePlayerRef.current as any).__fiveonePoll as number | undefined;
+                if (id) window.clearInterval(id);
+                delete (youtubePlayerRef.current as any).__fiveonePoll;
+                if (flush) tick(true);
+              };
+
+              if (playing || buffering) {
+                startPolling();
+              } else if (paused) {
+                stopPolling(true);
+              } else if (ended) {
+                stopPolling(false);
+                try {
+                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
+                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
+                  const finalTime = duration > 0 ? duration : currentTime;
+                  if (finalTime > 0) persistProgress(finalTime, duration || undefined);
+                } catch {}
+              } else {
+                stopPolling(false);
+              }
+            },
+            onError: (event: any) => {
+              console.warn('Erro no player YouTube', event);
+              markPlayerError('O YouTube não conseguiu carregar este vídeo.');
+            },
+          },
+        });
+
+        youtubePlayerRef.current = player;
+      } catch (error) {
+        console.warn('Falha ao inicializar player YouTube', error);
+        markPlayerError('Falha ao inicializar o player do YouTube.');
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+      try {
+        const id = (youtubePlayerRef.current as any)?.__fiveonePoll as number | undefined;
+        if (id) window.clearInterval(id);
+      } catch {}
+      try {
+        youtubePlayerRef.current?.destroy?.();
+      } catch {}
+      youtubePlayerRef.current = null;
+    };
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, persistProgress, markPlayerReady, markPlayerError]);
 
   const resolveLessonAssets = useCallback((lesson: LessonRef) => {
     const bannerContinue = lesson.bannerContinue;
@@ -561,7 +1299,7 @@ const StreamerMestre = () => {
   }, []);
 
   const resetLessonProgress = useCallback((lesson: LessonRef, index: number, durationSeconds?: number) => {
-    const base = lesson.videoUrl || lesson.videoId;
+    const base = lesson.videoId;
     if (!base) return;
     const now = Date.now();
     const duration = typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds : 0;
@@ -579,9 +1317,10 @@ const StreamerMestre = () => {
       const entry = {
         title: lesson.title,
         thumbnail: previewImage,
-        url: base,
+        url: lesson.videoId,
         index,
         id: lesson.videoId,
+        sourceUrl: lesson.videoUrl || null,
         subjectName: lesson.subjectName,
         subjectId: lesson.subjectId,
         bannerContinue: resolvedBannerContinue,
@@ -594,9 +1333,11 @@ const StreamerMestre = () => {
       const existing = existingRaw ? JSON.parse(existingRaw) : [];
       const filtered = Array.isArray(existing)
         ? existing.filter((video: any) => {
-            const key = video.id || video.videoId || video.url;
+            const key = video?.id || video?.videoId || video?.video_id || video?.url;
             if (!key) return true;
-            return key !== base;
+            if (key === lesson.videoId) return false;
+            if (lesson.videoUrl && key === lesson.videoUrl) return false;
+            return true;
           })
         : [];
       filtered.unshift(entry);
@@ -640,6 +1381,11 @@ const StreamerMestre = () => {
             try {
               await playerInstanceRef.current.setCurrentTime(0);
               await playerInstanceRef.current.pause();
+            } catch {}
+          } else if (youtubePlayerRef.current) {
+            try {
+              youtubePlayerRef.current.seekTo?.(0, true);
+              youtubePlayerRef.current.pauseVideo?.();
             } catch {}
           } else if (embedSrc) {
             const iframe = videoRef.current?.querySelector('iframe');
@@ -711,6 +1457,16 @@ const StreamerMestre = () => {
     })();
   }, []);
   const navigate = useNavigate();
+  // Mantém o link sempre canônico (vid=...) ao trocar de aula, para permitir refresh/compartilhamento.
+  useEffect(() => {
+    const lesson = videoList[currentIndex];
+    if (!lesson?.videoId) return;
+    const params = new URLSearchParams(searchKey);
+    const currentVid = params.get("vid");
+    const hasLegacy = params.has("i") || params.has("v");
+    if (!hasLegacy && currentVid === lesson.videoId) return;
+    navigate(`/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}`, { replace: true });
+  }, [videoList, currentIndex, searchKey, navigate]);
   // Filtro por matéria na sidebar
   const subjects: SubjectOption[] = useMemo(() => {
     const counts = new Map<string, { name: string; count: number }>();
@@ -741,8 +1497,8 @@ const StreamerMestre = () => {
   useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
   const currentLessonKey = useMemo(() => {
     if (!currentVideo) return '';
-    return currentVideo.videoId || currentVideo.videoUrl || currentVideo.id || '';
-  }, [currentVideo]);
+    return currentVideo.videoId || '';
+  }, [currentVideo?.videoId]);
   const handleNext = () => {
     if (currentIndex < videoList.length - 1) {
       setCurrentIndex(currentIndex + 1);
@@ -779,7 +1535,7 @@ const StreamerMestre = () => {
             </div>
           )}
           {isModuloAberto && currentVideo && (
-            <div className="video-and-sidebar">
+            <div className={`video-and-sidebar ${theaterMode ? 'is-theater' : ''}`}>
               <div className="video-content">
                 <div className="back-row">
                   <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
@@ -803,30 +1559,108 @@ const StreamerMestre = () => {
                     <span className="subject-pill">{currentVideo.subjectName}</span>
                   )}
                 </div>
-                <div className="video-container" ref={videoRef}>
-                  <iframe
-                    key={currentVideo.videoId || embedSrc || currentVideo.videoUrl || currentVideo.id}
+                <div
+                  className={`video-container ${playerStatus !== 'ready' ? 'is-loading' : ''} ${playerStatus === 'error' ? 'is-error' : ''}`}
+                  ref={videoRef}
+                >
+                  <DeferredIframe
+                    key={`${currentVideo.videoId || 'player'}-${playerReloadKey}`}
                     src={embedSrc || 'about:blank'}
                     title={currentVideo.title}
-                    frameBorder="0"
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                    loading="lazy"
-                    allowFullScreen
+                    onReady={markPlayerReady}
+                    onError={markPlayerError}
                   />
+                  {playerStatus !== 'ready' && (
+                    <div className="player-overlay" role="status" aria-live="polite">
+                      <div className="player-overlay-card">
+                        {playerStatus === 'loading' && <div className="player-spinner" aria-hidden />}
+                        <div className="player-overlay-title">
+                          {playerStatus === 'error' ? 'Não foi possível carregar o vídeo' : 'Carregando vídeo…'}
+                        </div>
+                        {playerMessage && <div className="player-overlay-message">{playerMessage}</div>}
+                        {import.meta.env.DEV && !!embedSrc && (
+                          <div className="player-overlay-debug" data-testid="player-overlay-debug">
+                            <div>embedSrc: {embedSrc}</div>
+                            <div>sourceType: {currentVideo.sourceType}</div>
+                            <div>videoId: {currentVideo.videoId}</div>
+                            {currentVideo.videoUrl && <div>videoUrl: {decodeHtmlUrl(currentVideo.videoUrl)}</div>}
+                            {currentVideo.embedCode && (
+                              <div>
+                                embedCode: {currentVideo.embedCode.slice(0, 180)}
+                                {currentVideo.embedCode.length > 180 ? '…' : ''}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {(showPlayerFallback || playerStatus === 'error') && (
+                          <div className="player-overlay-actions">
+                            <button type="button" className="player-overlay-btn" onClick={handleReloadPlayer}>
+                              Recarregar player
+                            </button>
+                            {externalVideoUrl && (
+                              <button
+                                type="button"
+                                className="player-overlay-btn secondary"
+                                onClick={() => window.open(externalVideoUrl, '_blank', 'noopener,noreferrer')}
+                              >
+                                Abrir em nova aba
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
+                {showPlayerFallback && playerStatus === 'ready' && (
+                  <div className="player-fallback-inline" role="note">
+                    <span className="player-fallback-text">Problemas com o player?</span>
+                    {import.meta.env.DEV && !!embedSrc && (
+                      <span className="player-fallback-debug">embedSrc: {embedSrc}</span>
+                    )}
+                    <button type="button" className="player-fallback-btn" onClick={handleReloadPlayer}>
+                      Recarregar
+                    </button>
+                    {externalVideoUrl && (
+                      <button
+                        type="button"
+                        className="player-fallback-btn secondary"
+                        onClick={() => window.open(externalVideoUrl, '_blank', 'noopener,noreferrer')}
+                      >
+                        Abrir em nova aba
+                      </button>
+                    )}
+                  </div>
+                )}
                 <div className="action-bar" role="toolbar" aria-label="Controles da aula">
                   <div className="action-left">
-                    <ReactionBar videoId={currentVideo.videoId || currentVideo.videoUrl || currentVideo.title} />
+                    <ReactionBar videoId={currentVideo.videoId} />
                   </div>
                   <div className="action-center">
                     {currentIndex > 0 && (
                       <button className="action-btn prev" onClick={handlePrevious}>Anterior</button>
                     )}
+                    <div className="action-progress" aria-label="Progresso da aula">
+                      Progresso{' '}
+                      {uiProgress.durationSeconds > 0
+                        ? `${formatClock(uiProgress.watchedSeconds)} / ${formatClock(uiProgress.durationSeconds)}`
+                        : formatClock(uiProgress.watchedSeconds)}
+                    </div>
                     {currentIndex < videoList.length - 1 && (
                       <button className="action-btn next" onClick={handleNext}>Próxima</button>
                     )}
                   </div>
                   <div className="action-right">
+                    <button
+                      type="button"
+                      className={`action-btn theater ${theaterMode ? 'is-on' : ''}`}
+                      onClick={() => setTheaterMode((prev) => !prev)}
+                      aria-pressed={theaterMode}
+                      title={theaterMode ? 'Sair do modo cinema' : 'Ativar modo cinema'}
+                    >
+                      {theaterMode ? 'Tela normal' : 'Modo cinema'}
+                    </button>
                     <button
                       className={`action-btn complete ${currentLessonKey && completedIds.has(currentLessonKey) ? 'is-done' : ''}`}
                       onClick={handleMarkAsCompleted}
@@ -850,7 +1684,7 @@ const StreamerMestre = () => {
                   </div>
                 )}
                 <div className="engagement-panel">
-                  <CommentSection videoId={currentVideo.videoId || currentVideo.videoUrl || currentVideo.title} />
+                  <CommentSection videoId={currentVideo.videoId} />
                 </div>
               </div>
               <div className="video-sidebar" ref={sidebarRef} data-filtered={filterSubject !== 'all'}>
@@ -864,7 +1698,7 @@ const StreamerMestre = () => {
                 <ul className="sidebar-list">
                   {(() => {
                     const items: JSX.Element[] = [];
-                    filteredList.forEach((video, index) => {
+                    filteredList.forEach((video, _index) => {
                       let globalIndex = videoList.findIndex(v => v.videoId === video.videoId);
                       if (globalIndex === -1) {
                         const fallbackKey = video.videoUrl || video.id || null;
@@ -873,11 +1707,19 @@ const StreamerMestre = () => {
                         }
                       }
                       if (globalIndex === -1) return;
-                      const itemKey = video.videoId || video.videoUrl || video.id || '';
-                      const isCompleted = itemKey ? completedIds.has(itemKey) : false;
+                      const itemKey = video.videoId;
+                      if (!itemKey) return;
+                      const isCompleted = completedIds.has(itemKey);
+                      const stored = getStoredProgress(video);
+                      const durationSeconds =
+                        (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
+                        (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
+                      const watchedSeconds = stored?.watchedSeconds || 0;
+                      const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
+                      const progress = isCompleted ? 1 : rawProgress;
                       items.push(
                         <li
-                          key={`${itemKey || `video-${index}`}-${index}`}
+                          key={itemKey}
                           className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''} ${isCompleted ? 'is-complete' : ''}`}
                           title={video.title}
                           onClick={() => setCurrentIndex(globalIndex)}
@@ -894,6 +1736,14 @@ const StreamerMestre = () => {
                           <div className="sidebar-video-info">
                             <div className="sidebar-video-title">{video.title}</div>
                             <div className="sidebar-video-subject">{video.subjectName}</div>
+                            <div className="sidebar-video-meta">
+                              {durationSeconds > 0 && <span className="sidebar-duration">{formatClock(durationSeconds)}</span>}
+                              {durationSeconds > 0 && (
+                                <div className="sidebar-progress" aria-label={`Progresso ${Math.round(progress * 100)}%`}>
+                                  <div className="sidebar-progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+                                </div>
+                              )}
+                            </div>
                             <div className="status-indicator">
                               {isCompleted && (
                                 <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
@@ -906,7 +1756,9 @@ const StreamerMestre = () => {
                     return items;
                   })()}
                 </ul>
-                <button className="sidebar-cta" onClick={handleNext}>Ir para o próximo módulo</button>
+                <button className="sidebar-cta" onClick={handleNext} disabled={currentIndex >= videoList.length - 1}>
+                  Próxima aula
+                </button>
               </div>
             </div>
           )}

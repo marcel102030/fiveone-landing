@@ -7,6 +7,7 @@ import { FormationKey, getUserByEmail, updateUserMemberLink, updateUserRole, ver
 import { getRedeMemberByEmail } from "../../services/redeIgrejas";
 import { storePlatformProfile } from "../../hooks/usePlatformUserProfile";
 import { getUserProfileDetails } from "../../services/userProfile";
+import { useNavigate } from "react-router-dom";
 
 const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const [email, setEmail] = useState("");
@@ -20,6 +21,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const isLocked = attempts >= MAX_ATTEMPTS;
   const [tocado, setTocado] = useState({ email: false, senha: false });
   const redirectTimeout = useRef<number | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -198,7 +200,14 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
                 </span>
                 Permanecer logado
               </label>
-              <a href="#" onClick={(event) => event.preventDefault()} className="student-login__link">
+              <a
+                href="/#/contato"
+                onClick={(event) => {
+                  event.preventDefault();
+                  navigate("/contato");
+                }}
+                className="student-login__link"
+              >
                 Esqueceu a senha?
               </a>
             </div>
@@ -208,7 +217,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
             <button
               type="button"
               className="student-btn ghost"
-              onClick={() => (window.location.href = "/inicio")}
+              onClick={() => navigate("/")}
             >
               Ir para o site Five One
             </button>
