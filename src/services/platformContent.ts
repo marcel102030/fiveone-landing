@@ -570,9 +570,14 @@ export function listLessons(options?: {
 export function subscribePlatformContent(listener: (content: PlatformContent) => void): () => void {
   listeners.add(listener);
   listener(cloneContent());
-  ensureLoaded()
-    .then(() => listener(cloneContent()))
-    .catch((error) => console.error(error));
+  // Só agenda segundo disparo se o cache estiver vazio (primeira carga).
+  // Se já tem dados, não dispara de novo como microtask — evita re-render duplo
+  // que interrompe a inicialização do player na navegação SPA.
+  if (!cache.ministries.length) {
+    ensureLoaded()
+      .then(() => listener(cloneContent()))
+      .catch((error) => console.error(error));
+  }
   return () => listeners.delete(listener);
 }
 

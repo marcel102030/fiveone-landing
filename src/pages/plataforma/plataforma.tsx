@@ -112,29 +112,43 @@ const PaginaInicial = () => {
         const rows = await fetchUserProgress(uid, 24);
         if (!active) return;
         if (rows && rows.length) {
-          const remote = rows.map(r => ({
-            id: r.video_id,
-            url: '',
-            index: undefined,
-            title: r.title,
-            thumbnail: r.thumbnail,
-            watchedSeconds: r.watched_seconds,
-            durationSeconds: r.duration_seconds || undefined,
-            lastAt: new Date(r.last_at).getTime(),
-            subjectName: lessonByVideoId.get(r.video_id)?.subjectName,
-            bannerContinue:
-              lessonByVideoId.get(r.video_id)?.bannerContinue?.url ||
-              lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl ||
-              null,
-            bannerMobile:
-              lessonByVideoId.get(r.video_id)?.bannerMobile?.url ||
-              lessonByVideoId.get(r.video_id)?.bannerMobile?.dataUrl ||
-              null,
-          }));
+          const remote = rows.map(r => {
+            // Para cada linha remota, verificar se localStorage tem progresso maior.
+            // O DB pode ter watched_seconds: 0 (salvo no onReady antes de assistir),
+            // enquanto localStorage já tem a posição real assistida.
+            const localWatched = (() => {
+              try {
+                const raw = localStorage.getItem(`fiveone_progress::${r.video_id}`);
+                if (!raw) return 0;
+                const parsed = JSON.parse(raw);
+                return Number(parsed.watchedSeconds || parsed.watched || 0);
+              } catch { return 0; }
+            })();
+            const watchedSeconds = Math.max(r.watched_seconds, localWatched);
+            return {
+              id: r.video_id,
+              url: '',
+              index: undefined,
+              title: r.title,
+              thumbnail: r.thumbnail,
+              watchedSeconds,
+              durationSeconds: r.duration_seconds || undefined,
+              lastAt: new Date(r.last_at).getTime(),
+              subjectName: lessonByVideoId.get(r.video_id)?.subjectName,
+              bannerContinue:
+                lessonByVideoId.get(r.video_id)?.bannerContinue?.url ||
+                lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl ||
+                null,
+              bannerMobile:
+                lessonByVideoId.get(r.video_id)?.bannerMobile?.url ||
+                lessonByVideoId.get(r.video_id)?.bannerMobile?.dataUrl ||
+                null,
+            };
+          });
           setLastWatchedArray(remote);
-        } else {
-          setLastWatchedArray([]);
         }
+        // Se o banco não retornou linhas, mantém dados do localStorage (step 1).
+        // Nunca sobrescrever com [] — banco pode estar vazio por sessão expirada.
         setProgressLoaded(true);
 
         const completions = await fetchCompletionsForUser(uid);

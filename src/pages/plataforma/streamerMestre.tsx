@@ -384,9 +384,11 @@ type DeferredIframeProps = {
   onError: (message: string) => void;
 };
 
+// DeferredIframe simplificado: sempre chama onReady no onLoad.
+// Os SDKs do YouTube e Vimeo também chamam markPlayerReady, que é idempotente.
+// Não usar managedBySdk — era frágil quando o SDK já estava em cache.
 const DeferredIframe = ({ src, title, allow, onReady, onError }: DeferredIframeProps) => {
   if (!src || src === 'about:blank') return null;
-
   return (
     <iframe
       id="fiveone-streamer-player"
@@ -537,21 +539,16 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
 };
 
 const StreamerMestre = () => {
-  useEffect(() => {
-    // Reload automático por URL: cada URL de aula recarrega uma vez.
-    // Resolve o problema de cache SPA onde o player não inicializa sem F5.
-    const key = 's_loaded::' + window.location.pathname + window.location.search;
-    if (!sessionStorage.getItem(key)) {
-      sessionStorage.setItem(key, '1');
-      window.location.reload();
-    }
-  }, []);
+
 
   const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
+  // Ref para persistProgress: permite usá-la nos effects do YouTube e Vimeo sem
+  // colocá-la nas deps — evita re-run do effect quando videoList muda de referência.
+  const persistProgressRef = useRef<((watched: number, duration?: number) => void) | null>(null);
   const cleanupVimeoPlayer = useCallback(() => {
     const player = playerInstanceRef.current;
     if (!player) return;
@@ -747,8 +744,10 @@ const StreamerMestre = () => {
     }
   }, [currentVideo?.videoId]);
 
-  // Importante: resetar estado do player em `useLayoutEffect` evita corrida onde o iframe carrega do cache
-  // e dispara `onLoad` antes do `useEffect` (o que fazia a tela ficar "preta" até hard reload).
+  // CRÍTICO: embedSrc NÃO pode estar nos deps deste useLayoutEffect.
+  // O subscribePlatformContent dispara após a navegação SPA e recomputa embedSrc
+  // (mesmo valor, novo objeto string — mesma referência), o que re-dispararia este effect
+  // DEPOIS que onLoad já chamou markPlayerReady(), travando o overlay em "loading" para sempre.
   useLayoutEffect(() => {
     clearPlayerTimers();
     setPlayerMessage(null);
@@ -760,14 +759,22 @@ const StreamerMestre = () => {
     youtubePlayerRef.current = null;
 
     if (!currentVideo) return;
-
-    if (!embedSrc || embedSrc === 'about:blank' || !/^https?:\/\//i.test(embedSrc)) {
-      markPlayerError('Vídeo indisponível no momento.');
-      return;
-    }
-
     setPlayerStatus('loading');
-  }, [currentVideo?.videoId, embedSrc, clearPlayerTimers, markPlayerError, cleanupVimeoPlayer]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.videoId]);
+
+  // Efeito separado: se embedSrc permanecer inválido após videoId mudar, marca erro.
+  // Delay de 4s para aguardar possíveis atualizações assíncronas do cache/Supabase.
+  useEffect(() => {
+    if (!currentVideo?.videoId) return;
+    if (embedSrc && /^https?:\/\//i.test(embedSrc)) return;
+    const t = window.setTimeout(() => {
+      if (!embedSrc || !/^https?:\/\//i.test(embedSrc)) {
+        markPlayerError('Vídeo indisponível no momento.');
+      }
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [currentVideo?.videoId, embedSrc, markPlayerError]);
 
   useEffect(() => {
     if (!currentVideo) return;
@@ -945,6 +952,8 @@ const StreamerMestre = () => {
     },
     [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds],
   );
+  // Mantém o ref sempre atualizado sem precisar colocar persistProgress nas deps dos effects.
+  persistProgressRef.current = persistProgress;
 
   const alignSidebar = useCallback(() => {
     const el = videoRef.current;
@@ -1090,7 +1099,15 @@ const StreamerMestre = () => {
           tryResume(Number(data?.duration)).catch(() => {});
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (duration > 0) {
-            persistProgress(stored?.watchedSeconds || 0, duration);
+            const resumeAt = stored?.watchedSeconds || 0;
+            if (resumeAt > 5) {
+              // Só sincroniza com o banco se há progresso real — evita salvar 0
+              // e sobrescrever um progresso válido que estava no banco.
+              persistProgressRef.current?.(resumeAt, duration);
+            } else {
+              // Sem progresso local: atualiza só a UI com a duração real
+              setUiProgress(prev => ({ ...prev, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+            }
           }
           alignSidebar();
           setTimeout(() => alignSidebar(), 100);
@@ -1106,14 +1123,14 @@ const StreamerMestre = () => {
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (now - lastProgressFlushRef.current >= 5000) {
             lastProgressFlushRef.current = now;
-            persistProgress(Number(data?.seconds || 0), duration);
+            persistProgressRef.current?.(Number(data?.seconds || 0), duration);
           }
         });
 
         player.on('seeked', (data: any) => {
           lastProgressFlushRef.current = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          persistProgress(Number(data?.seconds || 0), duration);
+          persistProgressRef.current?.(Number(data?.seconds || 0), duration);
         });
 
         player.on('ended', async () => {
@@ -1122,7 +1139,7 @@ const StreamerMestre = () => {
           try {
             duration = await player.getDuration();
           } catch {}
-          persistProgress(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
+          persistProgressRef.current?.(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
         });
 
         player.on('error', (err: any) => {
@@ -1139,7 +1156,11 @@ const StreamerMestre = () => {
       cancelled = true;
       cleanupVimeoPlayer();
     };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, persistProgress, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer]);
+  // embedSrc é capturado como `vimeoSrc` no início do effect — não precisa estar nos deps.
+  // Tê-lo aqui causaria re-inicialização do player quando embedSrc recomputa (mesmo videoId),
+  // destruindo o iframe no meio do carregamento.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.videoId, currentVideo?.sourceType, playerReloadKey, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer]);
 
   useEffect(() => {
     const lesson = currentVideo;
@@ -1192,7 +1213,15 @@ const StreamerMestre = () => {
               const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
 
               if (duration > 0) {
-                persistProgress(stored?.watchedSeconds || 0, duration);
+                const resumeAt = stored?.watchedSeconds || 0;
+                if (resumeAt > 5) {
+                  // Só sincroniza com o banco se há progresso real — evita salvar 0
+                  // e sobrescrever um progresso válido que estava no banco.
+                  persistProgressRef.current?.(resumeAt, duration);
+                } else {
+                  // Sem progresso local: atualiza só a UI com a duração real
+                  setUiProgress(prev => ({ ...prev, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+                }
               } else if (stored) {
                 setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
               }
@@ -1229,13 +1258,13 @@ const StreamerMestre = () => {
 
                   if (forcePersist) {
                     lastProgressFlushRef.current = Date.now();
-                    persistProgress(currentTime, duration);
+                    persistProgressRef.current?.(currentTime, duration);
                     return;
                   }
                   const now = Date.now();
                   if (now - lastProgressFlushRef.current >= 5000) {
                     lastProgressFlushRef.current = now;
-                    persistProgress(currentTime, duration);
+                    persistProgressRef.current?.(currentTime, duration);
                   }
                 } catch {}
               };
@@ -1263,7 +1292,7 @@ const StreamerMestre = () => {
                   const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
                   const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
                   const finalTime = duration > 0 ? duration : currentTime;
-                  if (finalTime > 0) persistProgress(finalTime, duration || undefined);
+                  if (finalTime > 0) persistProgressRef.current?.(finalTime, duration || undefined);
                 } catch {}
               } else {
                 stopPolling(false);
@@ -1294,7 +1323,10 @@ const StreamerMestre = () => {
       } catch {}
       youtubePlayerRef.current = null;
     };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, persistProgress, markPlayerReady, markPlayerError]);
+  // embedSrc é capturado como `youtubeSrc` no início do effect — não precisa estar nos deps.
+  // Tê-lo aqui causaria re-inicialização do player quando embedSrc recomputa (mesmo videoId).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.videoId, currentVideo?.sourceType, playerReloadKey, markPlayerReady, markPlayerError]);
 
   const resolveLessonAssets = useCallback((lesson: LessonRef) => {
     const bannerContinue = lesson.bannerContinue;
@@ -1614,7 +1646,7 @@ const StreamerMestre = () => {
                   ref={videoRef}
                 >
                   <DeferredIframe
-                    key={currentVideo?.videoId ?? currentIndex}
+                    key={`${currentIndex}-${playerReloadKey}`}
                     src={embedSrc || 'about:blank'}
                     title={currentVideo.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
