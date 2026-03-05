@@ -16,14 +16,14 @@ export type VideoComment = {
   } | null;
 };
 
-// Se o banco não tiver o relacionamento `video_comment -> platform_user_profile`,
+// Se o banco não tiver o relacionamento `platform_lesson_comment -> platform_user_profile`,
 // a consulta com embed retorna 400. Cacheamos esse suporte para evitar flood no console/rede.
 let supportsCommentProfileJoin: boolean | null = null;
 
 export async function fetchComments(videoId: string): Promise<VideoComment[]> {
   const run = (fields: string) =>
     supabase
-      .from('video_comment')
+      .from('platform_lesson_comment')
       .select(fields)
       .eq('video_id', videoId)
       .order('created_at', { ascending: true });
@@ -66,7 +66,7 @@ export async function fetchComments(videoId: string): Promise<VideoComment[]> {
 export async function addComment(userId: string, videoId: string, text: string, parentId?: string | null): Promise<void> {
   const payload: Record<string, any> = { user_id: userId, video_id: videoId, text, likes: 0 };
   if (parentId) payload.parent_id = parentId;
-  const { error } = await supabase.from('video_comment').insert(payload);
+  const { error } = await supabase.from('platform_lesson_comment').insert(payload);
   if (error) throw error;
 }
 
@@ -77,13 +77,13 @@ export async function likeComment(id: string): Promise<void> {
   // Fallback (não-atômico) caso a RPC não exista no banco.
   try {
     const { data, error: readError } = await supabase
-      .from("video_comment")
+      .from("platform_lesson_comment")
       .select("likes")
       .eq("id", id)
       .maybeSingle();
     if (readError || !data) return;
     const nextLikes = Number((data as any).likes || 0) + 1;
-    await supabase.from("video_comment").update({ likes: nextLikes }).eq("id", id);
+    await supabase.from("platform_lesson_comment").update({ likes: nextLikes }).eq("id", id);
   } catch {
     // mantém o incremento otimista na UI
   }

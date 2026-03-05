@@ -12,7 +12,7 @@ export type ProgressRow = {
 
 export async function fetchUserProgress(userId: string, limit = 20): Promise<ProgressRow[]> {
   const { data, error } = await supabase
-    .from("user_progress")
+    .from("platform_user_progress")
     .select("user_id, video_id, last_at, watched_seconds, duration_seconds, title, thumbnail")
     .eq("user_id", userId)
     .order("last_at", { ascending: false })
@@ -23,14 +23,14 @@ export async function fetchUserProgress(userId: string, limit = 20): Promise<Pro
 
 export async function upsertProgress(row: ProgressRow): Promise<void> {
   const { error } = await supabase
-    .from("user_progress")
+    .from("platform_user_progress")
     .upsert(row, { onConflict: "user_id,video_id" });
   if (error) throw error;
 }
 
 export async function deleteAllProgressForUser(userId: string): Promise<void> {
   const { error } = await supabase
-    .from('user_progress')
+    .from('platform_user_progress')
     .delete()
     .eq('user_id', userId);
   if (error) throw error;
@@ -38,7 +38,7 @@ export async function deleteAllProgressForUser(userId: string): Promise<void> {
 
 export async function deleteProgressExceptForUser(userId: string, keepVideoIds: string[]): Promise<void> {
   let query = supabase
-    .from('user_progress')
+    .from('platform_user_progress')
     .delete()
     .eq('user_id', userId);
 
@@ -53,7 +53,7 @@ export async function deleteProgressExceptForUser(userId: string, keepVideoIds: 
 
 export async function deleteProgressForUserVideo(userId: string, videoId: string): Promise<void> {
   const { error } = await supabase
-    .from('user_progress')
+    .from('platform_user_progress')
     .delete()
     .eq('user_id', userId)
     .eq('video_id', videoId);

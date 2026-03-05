@@ -181,7 +181,7 @@ export type Invite = { id: string; email: string; token: string; formation: Form
 export async function createInvite(email: string, formation: FormationKey, daysValid: number): Promise<Invite> {
   const token = cryptoRandom(32);
   const expires = new Date(Date.now() + daysValid*24*60*60*1000).toISOString();
-  const { data, error } = await supabase.from('user_invite').insert({ email: email.toLowerCase(), formation, token, expires_at: expires }).select().single();
+  const { data, error } = await supabase.from('platform_user_invite').insert({ email: email.toLowerCase(), formation, token, expires_at: expires }).select().single();
   if (error) throw error;
   return data as Invite;
 }
@@ -211,12 +211,12 @@ export async function getUserByEmail(email: string): Promise<PlatformUserListIte
   return (data as any) || null;
 }
 
-// Comments API (video_comment)
+// Comments API (platform_lesson_comment)
 export type UserComment = { id: string; video_id: string; text: string; likes: number | null; created_at: string; status?: 'pendente' | 'aprovado' };
 
 export async function getUserComments(email: string): Promise<UserComment[]> {
   const { data, error } = await supabase
-    .from('video_comment')
+    .from('platform_lesson_comment')
     .select('id,video_id,text,likes,created_at,status')
     .eq('user_id', email.toLowerCase())
     .order('created_at', { ascending: false });
@@ -225,12 +225,12 @@ export async function getUserComments(email: string): Promise<UserComment[]> {
 }
 
 export async function deleteUserComment(id: string): Promise<void> {
-  const { error } = await supabase.from('video_comment').delete().eq('id', id);
+  const { error } = await supabase.from('platform_lesson_comment').delete().eq('id', id);
   if (error) throw error;
 }
 
 export async function setUserCommentStatus(id: string, status: 'pendente'|'aprovado'): Promise<void> {
-  const { error } = await supabase.from('video_comment').update({ status }).eq('id', id);
+  const { error } = await supabase.from('platform_lesson_comment').update({ status }).eq('id', id);
   if (error) throw error;
 }
 

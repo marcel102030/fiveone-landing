@@ -12,12 +12,12 @@ export async function fetchReactionState(userId: string | null, videoId: string)
   try {
     const [likeRes, dislikeRes] = await Promise.all([
       supabase
-        .from("video_reaction")
+        .from("platform_lesson_reaction")
         .select("reaction", { count: "exact", head: true })
         .eq("video_id", videoId)
         .eq("reaction", "like"),
       supabase
-        .from("video_reaction")
+        .from("platform_lesson_reaction")
         .select("reaction", { count: "exact", head: true })
         .eq("video_id", videoId)
         .eq("reaction", "dislike"),
@@ -31,7 +31,7 @@ export async function fetchReactionState(userId: string | null, videoId: string)
   let selected: ReactionType | null = null;
   if (userId) {
     const { data: me, error: errMe } = await supabase
-      .from('video_reaction')
+      .from('platform_lesson_reaction')
       .select('reaction')
       .eq('video_id', videoId)
       .eq('user_id', userId)
@@ -49,13 +49,13 @@ export async function setReaction(userId: string, videoId: string, reaction: Rea
   if (!userId) return;
   if (reaction === null) {
     await supabase
-      .from('video_reaction')
+      .from('platform_lesson_reaction')
       .delete()
       .eq('user_id', userId)
       .eq('video_id', videoId);
     return;
   }
   await supabase
-    .from("video_reaction")
+    .from("platform_lesson_reaction")
     .upsert({ user_id: userId, video_id: videoId, reaction }, { onConflict: "user_id,video_id" });
 }
