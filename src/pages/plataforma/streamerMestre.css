@@ -167,7 +167,7 @@ border: 1px solid #43a047;
 font-weight: 700;
 }
 .action-bar .action-btn.complete.is-done::before {
-content: 'âœ”';
+content: "\2714";
 margin-right: 6px;
 font-weight: 900;
 color: #1b5e20;
@@ -990,7 +990,7 @@ font-weight:800;
 .subject-filter.custom .combo-item:hover { background:#163549; }
 .subject-filter.custom .combo-item.selected { background:#1e81b0; }
 .subject-filter.custom .combo-item.selected .combo-name { font-weight:800; }
-.subject-filter.custom .combo-item.selected::before { content:'âœ“'; color:#e7f2f9; margin-right:8px; }
+.subject-filter.custom .combo-item.selected::before { content:"\2713"; color:#e7f2f9; margin-right:8px; }
 .subject-filter.custom .combo-count { color:#9cc7de; font-weight:800; }
 
 @media (max-width: 768px) {
