@@ -1,0 +1,6 @@
+.claude/
+# Cypress
+cypress/
+cypress.config.ts
+cypress.config.js
+cypress.json
