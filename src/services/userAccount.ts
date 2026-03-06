@@ -210,9 +210,8 @@ export async function createInvite(email: string, formation: FormationKey, daysV
 
 function cryptoRandom(len: number): string {
   const alphabet = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let out = '';
-  for (let i=0;i<len;i++) out += alphabet[Math.floor(Math.random()*alphabet.length)];
-  return out;
+  const randomValues = crypto.getRandomValues(new Uint32Array(len));
+  return Array.from(randomValues, v => alphabet[v % alphabet.length]).join('');
 }
 
 export async function updateUserFormation(email: string, formation: FormationKey): Promise<void> {
@@ -257,16 +256,15 @@ export async function setUserCommentStatus(id: string, status: 'pendente'|'aprov
 }
 
 export type FormationCounts = { APOSTOLO: number; PROFETA: number; EVANGELISTA: number; PASTOR: number; MESTRE: number };
+
+/** Single-query formation count via DB aggregation — replaces 5 parallel COUNT requests. */
 export async function getFormationCounts(): Promise<FormationCounts> {
-  const entries = await Promise.all(FORMATION_KEYS.map(async (k) => {
-    const { count, error } = await supabase
-      .from('platform_user')
-      .select('email', { count: 'exact', head: true })
-      .eq('formation', k);
-    if (error) throw error;
-    return [k, count || 0] as const;
-  }));
+  const { data, error } = await supabase.rpc('get_formation_counts');
+  if (error) throw error;
   const out = Object.fromEntries(FORMATION_KEYS.map(k => [k, 0])) as FormationCounts;
-  for (const [k, v] of entries) out[k as FormationKey] = v;
+  for (const row of (data || [])) {
+    const key = (row.formation as string | null)?.toUpperCase() as FormationKey | undefined;
+    if (key && key in out) out[key] = Number(row.cnt);
+  }
   return out;
 }
