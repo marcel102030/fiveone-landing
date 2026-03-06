@@ -70,21 +70,49 @@ const PaginaInicial = () => {
   }, [mestreLessons]);
   useEffect(() => {
     let active = true;
+    const getKey = (video: any): string | null => {
+      if (!video) return null;
+      if (typeof video.id === 'string' && video.id) return video.id;
+      if (typeof video.videoId === 'string' && video.videoId) return video.videoId;
+      if (typeof video.video_id === 'string' && video.video_id) return video.video_id;
+      if (typeof video.url === 'string' && video.url) return video.url;
+      return null;
+    };
+    const mergeByRecency = (items: any[]): any[] => {
+      const byKey = new Map<string, any>();
+      items.forEach((item) => {
+        const key = getKey(item);
+        if (!key) return;
+        const prev = byKey.get(key);
+        if (!prev) {
+          byKey.set(key, item);
+          return;
+        }
+
+        const prevAt = Number(prev.lastAt || 0);
+        const nextAt = Number(item.lastAt || 0);
+        const primary = nextAt >= prevAt ? item : prev;
+        const secondary = nextAt >= prevAt ? prev : item;
+        byKey.set(key, {
+          ...secondary,
+          ...primary,
+          watchedSeconds: Math.max(Number(prev.watchedSeconds || 0), Number(item.watchedSeconds || 0)),
+          durationSeconds: Number(primary.durationSeconds || 0) || Number(secondary.durationSeconds || 0) || undefined,
+          lastAt: Math.max(prevAt, nextAt),
+        });
+      });
+      return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0));
+    };
+
+    let localEnriched: any[] = [];
     // 1) carrega localStorage imediatamente para evitar atraso
     try {
       const raw = localStorage.getItem('videos_assistidos');
       const parsed = raw ? JSON.parse(raw) : [];
-      const byKey = new Map<string, any>();
-      (parsed as any[]).forEach(v => {
-        const key = v.id || v.url;
-        const prev = byKey.get(key);
-        if (!prev || (v.lastAt || 0) > (prev.lastAt || 0)) byKey.set(key, v);
-      });
-      const localArr = Array.from(byKey.values());
-      localArr.sort((a,b)=> (b.lastAt||0) - (a.lastAt||0));
+      const localArr = mergeByRecency(Array.isArray(parsed) ? parsed : []);
       if (localArr.length) {
-        const enrichedLocal = localArr.map((item: any) => {
-          const lesson = lessonByVideoId.get(item.id || item.videoId || item.url);
+        localEnriched = localArr.map((item: any) => {
+          const lesson = lessonByVideoId.get(item.id || item.videoId || item.video_id || item.url);
           return {
             ...item,
             subjectName: item.subjectName || lesson?.subjectName,
@@ -100,7 +128,7 @@ const PaginaInicial = () => {
               item.bannerContinue,
           };
         });
-        setLastWatchedArray(enrichedLocal);
+        setLastWatchedArray(localEnriched);
       }
     } catch {}
 
@@ -145,7 +173,7 @@ const PaginaInicial = () => {
                 null,
             };
           });
-          setLastWatchedArray(remote);
+          setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]));
         }
         // Se o banco não retornou linhas, mantém dados do localStorage (step 1).
         // Nunca sobrescrever com [] — banco pode estar vazio por sessão expirada.
@@ -454,8 +482,8 @@ const PaginaInicial = () => {
                 const effectiveDuration = durationSeconds > 0 ? durationSeconds : Math.max(watchedSeconds, 1);
                 const progressPercent = effectiveDuration > 0 ? Math.min(100, Math.round((watchedSeconds / effectiveDuration) * 100)) : 0;
                 return (
-                  <div
-                    key={index}
+                <div
+                    key={video.id || video.videoId || video.video_id || video.url || index}
                     className="continuar-card"
                     style={cardStyle}
                     role="button"

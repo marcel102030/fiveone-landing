@@ -9,7 +9,5 @@ CREATE TABLE IF NOT EXISTS public.user_invite (
   used_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now()
 );
-
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_invite_token ON public.user_invite (token);
 CREATE INDEX IF NOT EXISTS idx_user_invite_email ON public.user_invite (LOWER(email));
-

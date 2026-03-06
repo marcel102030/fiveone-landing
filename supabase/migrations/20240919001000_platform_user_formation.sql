@@ -3,7 +3,6 @@
 
 ALTER TABLE IF EXISTS public.platform_user
   ADD COLUMN IF NOT EXISTS formation text NOT NULL DEFAULT 'MESTRE';
-
 -- Optional: constrain to known values (keep flexible; comment out if needed)
 DO $$
 BEGIN
@@ -15,4 +14,3 @@ BEGIN
       CHECK (formation IN ('APOSTOLO','PROFETA','EVANGELISTA','PASTOR','MESTRE'));
   END IF;
 END $$;
-

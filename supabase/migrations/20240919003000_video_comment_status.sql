@@ -2,7 +2,6 @@
 
 ALTER TABLE IF EXISTS public.video_comment
   ADD COLUMN IF NOT EXISTS status text NOT NULL DEFAULT 'pendente';
-
 DO $$
 BEGIN
   IF NOT EXISTS (
@@ -12,4 +11,3 @@ BEGIN
       ADD CONSTRAINT video_comment_status_chk CHECK (status IN ('pendente','aprovado'));
   END IF;
 END $$;
-

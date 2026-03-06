@@ -7,7 +7,6 @@ create table if not exists platform_ministry (
   gradient text,
   created_at timestamptz not null default now()
 );
-
 create table if not exists platform_module (
   id text primary key,
   ministry_id text not null references platform_ministry(id) on delete cascade,
@@ -19,9 +18,7 @@ create table if not exists platform_module (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create index if not exists platform_module_ministry_idx on platform_module(ministry_id, order_index);
-
 create table if not exists platform_lesson (
   id text primary key,
   module_id text not null references platform_module(id) on delete cascade,
@@ -49,9 +46,7 @@ create table if not exists platform_lesson (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
-
 create index if not exists platform_lesson_module_idx on platform_lesson(module_id, order_index);
-
 insert into platform_ministry (id, title, tagline, icon, focus_color, gradient)
 values
   ('APOSTOLO', 'Apóstolo', 'Governança e envio apostólico.', '/assets/icons/apostolo.svg', '#60a5fa', 'linear-gradient(135deg, #0f172a, #1d4ed8)'),
@@ -65,7 +60,6 @@ on conflict (id) do update set
   icon = excluded.icon,
   focus_color = excluded.focus_color,
   gradient = excluded.gradient;
-
 insert into platform_module (id, ministry_id, order_index, title, status)
 select
   format('%s-mod-%02s', m.id, i) as id,
@@ -80,7 +74,6 @@ on conflict (id) do update set
   title = excluded.title,
   status = excluded.status,
   updated_at = now();
-
 insert into platform_lesson (
   id,
   module_id,

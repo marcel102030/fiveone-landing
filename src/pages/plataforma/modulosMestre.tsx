@@ -6,6 +6,7 @@ import { useNavigate } from 'react-router-dom';
 import { getCurrentUserId } from '../../utils/user';
 import { fetchUserProgress } from '../../services/progress';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../../services/platformContent';
+import { listCompletedLessonIds } from '../../utils/completedLessons';
 
 type ModuleCard = {
   id: number;
@@ -33,8 +34,11 @@ const ModulosMestre = () => {
   const abrirModulo = async (module: ModuleCard) => {
     const moduleLessons = lessons.filter((lesson) => lesson.moduleId === module.moduleId);
     if (!moduleLessons.length) return;
+    const completedIds = new Set(listCompletedLessonIds());
     const idSet = new Set(moduleLessons.map((lesson) => lesson.videoId));
     const urlSet = new Set(moduleLessons.map((lesson) => lesson.videoUrl).filter(Boolean) as string[]);
+    const lessonById = new Map(moduleLessons.map((lesson) => [lesson.videoId, lesson] as const));
+    const lessonByUrl = new Map(moduleLessons.filter((lesson) => !!lesson.videoUrl).map((lesson) => [lesson.videoUrl as string, lesson] as const));
     const firstLesson = moduleLessons[0];
     // 1) caminho rápido: localStorage
     let localBest: string | null = null;
@@ -43,7 +47,9 @@ const ModulosMestre = () => {
       const raw = localStorage.getItem('videos_assistidos');
       const arr = raw ? JSON.parse(raw) : [];
       (arr as any[]).forEach(v => {
-        const key = v.id || v.url;
+        const key = v.id || v.videoId || v.video_id || v.url;
+        const lesson = lessonById.get(key) || lessonByUrl.get(key);
+        if (lesson && completedIds.has(lesson.videoId)) return;
         const at = v.lastAt || 0;
         if ((idSet.has(key) || urlSet.has(key)) && at > localAt) {
           localAt = at; localBest = key;
@@ -70,6 +76,7 @@ const ModulosMestre = () => {
         const rows = await fetchUserProgress(uid, 100);
         let best: string | null = null; let bestAt = 0;
         rows.forEach(r => {
+          if (completedIds.has(r.video_id)) return;
           if (idSet.has(r.video_id) || urlSet.has(r.video_id)) {
             const at = new Date(r.last_at).getTime();
             if (at > bestAt) { bestAt = at; best = r.video_id; }

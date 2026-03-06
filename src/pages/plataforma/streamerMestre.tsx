@@ -883,12 +883,15 @@ const StreamerMestre = () => {
       const clampedWatched = effectiveDuration > 0 ? Math.min(safeWatched, effectiveDuration) : safeWatched;
       const durationSeconds = effectiveDuration > 0 ? effectiveDuration : clampedWatched;
       const watchedSeconds = clampedWatched;
+      const storedWatched = Number(stored?.watchedSeconds || 0);
+      const hasRealProgress = watchedSeconds > 0 || storedWatched > 0;
       const now = Date.now();
       const key = `fiveone_progress::${keyBase}`;
       const payload: StoredProgress = {
         watchedSeconds,
         durationSeconds,
-        lastAt: now,
+        // Não atualiza recência com 0s para não poluir "Continuar assistindo".
+        lastAt: hasRealProgress ? now : Number(stored?.lastAt || 0),
       };
       try {
         localStorage.setItem(key, JSON.stringify(payload));
@@ -938,7 +941,7 @@ const StreamerMestre = () => {
               localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
             }
           }
-        } else {
+        } else if (hasRealProgress) {
           const existingWatchedRaw = localStorage.getItem('videos_assistidos');
           const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
           const filteredWatched = Array.isArray(existingWatched)
@@ -957,7 +960,7 @@ const StreamerMestre = () => {
       } catch {}
 
       const userId = getCurrentUserId();
-      if (userId) {
+      if (userId && watchedSeconds > 0) {
         const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
         if (now - lastSync > 15000) {
@@ -1164,7 +1167,11 @@ const StreamerMestre = () => {
           tryResume(Number(data?.duration)).catch(() => {});
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (duration > 0) {
-            persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+            if ((stored?.watchedSeconds || 0) > 0) {
+              persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+            } else {
+              setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+            }
           }
           alignSidebar();
           setTimeout(() => alignSidebar(), 100);
@@ -1259,7 +1266,11 @@ const StreamerMestre = () => {
               const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
 
               if (duration > 0) {
-                persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+                if ((stored?.watchedSeconds || 0) > 0) {
+                  persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+                } else {
+                  setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+                }
               } else if (stored) {
                 setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
               }
