@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { slugify } from '../../src/utils/slugify';
+import { slugify } from '../../src/shared/utils/slugify';
 
 type ChurchCreateBody = {
   name: string;
