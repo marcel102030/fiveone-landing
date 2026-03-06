@@ -1,50 +1,53 @@
-# React + TypeScript + Vite
+# Five One Landing
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Guia curto da convenção de pastas adotada no projeto.
 
-Currently, two official plugins are available:
+## Estrutura
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
-
-- Configure the top-level `parserOptions` property like this:
-
-```js
-export default tseslint.config({
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
+```text
+src/
+  features/
+    institucional/   # Site institucional, blog, quiz e formulários públicos
+    plataforma/      # Plataforma do aluno, admin da plataforma e serviços da plataforma
+    rede/            # Rede de igrejas, área de membro e serviços da rede
+  shared/            # Código reutilizável entre domínios
+    components/
+    lib/
+    styles/
+    utils/
+  assets/            # Imagens/arquivos estáticos globais do app
 ```
 
-- Replace `tseslint.configs.recommended` to `tseslint.configs.recommendedTypeChecked` or `tseslint.configs.strictTypeChecked`
-- Optionally add `...tseslint.configs.stylisticTypeChecked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and update the config:
+## Regras rápidas
 
-```js
-// eslint.config.js
-import react from 'eslint-plugin-react'
+1. Coloque páginas, componentes, dados e serviços **no domínio da feature** (`features/<dominio>`).
+2. Só mova para `shared/` o que for realmente reutilizado por mais de um domínio.
+3. Evite acoplamento entre domínios:
+   - `institucional` não deve depender de implementação interna de `rede`/`plataforma`.
+   - Se algo precisa ser comum, extraia para `shared`.
+4. Mantenha CSS próximo do componente/página (co-location).
+5. Novas rotas devem ser registradas em `src/App.tsx`.
 
-export default tseslint.config({
-  // Set the react version
-  settings: { react: { version: '18.3' } },
-  plugins: {
-    // Add the react plugin
-    react,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended rules
-    ...react.configs.recommended.rules,
-    ...react.configs['jsx-runtime'].rules,
-  },
-})
-```
+## Convenção por tipo
+
+- `features/<dominio>/pages`: páginas e rotas
+- `features/<dominio>/components`: componentes específicos do domínio
+- `features/<dominio>/services`: acesso a API/Supabase/regras de dados do domínio
+- `features/<dominio>/data`: dados estáticos do domínio
+- `features/<dominio>/hooks`: hooks específicos do domínio
+- `shared/components`: UI compartilhada
+- `shared/utils`: utilitários genéricos
+- `shared/lib`: clientes/base de integração (ex.: supabase client)
+
+## Scripts
+
+- `npm run dev`: ambiente local
+- `npm run build`: checagem TypeScript + build de produção
+- `npm run lint`: lint do projeto
+
+## Checklist antes de subir PR
+
+1. `npm run build` passando
+2. Imports sem caminhos antigos (`src/pages`, `src/components`, etc.)
+3. Arquivos novos no domínio correto
+4. Código compartilhado extraído para `shared` apenas quando necessário
