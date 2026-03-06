@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FormationKey, getUserByEmail } from '../services/userAccount';
+import { FormationKey, getUserByEmail, toFormationLabel } from '../services/userAccount';
 import { getUserProfileDetails } from '../services/userProfile';
 import { getCurrentUserId } from '../utils/user';
 
@@ -79,16 +79,6 @@ function computeInitials(name: string | null | undefined, email: string): string
   return (parts[0][0] + parts[1][0]).toUpperCase();
 }
 
-function formatFormationLabel(key: FormationKey): string {
-  switch (key) {
-    case 'APOSTOLO': return 'Apóstolo';
-    case 'PROFETA': return 'Profeta';
-    case 'EVANGELISTA': return 'Evangelista';
-    case 'PASTOR': return 'Pastor';
-    case 'MESTRE': return 'Mestre';
-    default: return key;
-  }
-}
 
 export function usePlatformUserProfile() {
   const [profile, setProfile] = useState<StoredPlatformUserProfile | null>(() => readStoredPlatformProfile());
@@ -191,7 +181,7 @@ export function usePlatformUserProfile() {
       || (profile.name && profile.name.trim())
       || profile.email;
     const initials = computeInitials(profile.displayName || profile.name, profile.email);
-    const formationLabel = profile.formation ? formatFormationLabel(profile.formation) : null;
+    const formationLabel = profile.formation ? toFormationLabel(profile.formation) : null;
     return {
       ...profile,
       displayName,

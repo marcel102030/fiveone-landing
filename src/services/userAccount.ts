@@ -10,6 +10,32 @@ export type PlatformUser = {
 };
 
 export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
+
+/** Ordered list of all formation keys — use this constant instead of repeating the array inline. */
+export const FORMATION_KEYS: FormationKey[] = ['APOSTOLO', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MESTRE'];
+
+/** Returns a human-readable Portuguese label for a FormationKey. */
+export function toFormationLabel(key: FormationKey | string | null | undefined): string {
+  switch (String(key || 'MESTRE').toUpperCase()) {
+    case 'APOSTOLO':    return 'Apóstolo';
+    case 'PROFETA':     return 'Profeta';
+    case 'EVANGELISTA': return 'Evangelista';
+    case 'PASTOR':      return 'Pastor';
+    case 'MESTRE':      return 'Mestre';
+    default:            return String(key || 'Mestre');
+  }
+}
+
+/**
+ * Normalises any ministry string to a FormationKey (uppercase).
+ * Use this when bridging between platform_user.formation (UPPERCASE)
+ * and the fivefold_ministry DB enum used in rede tables (lowercase).
+ */
+export function toFormationKey(s: string | null | undefined): FormationKey {
+  const upper = String(s || 'MESTRE').toUpperCase() as FormationKey;
+  return FORMATION_KEYS.includes(upper) ? upper : 'MESTRE';
+}
+
 export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
 export type PlatformUserCreateInput = PlatformUser & { password: string };
 
@@ -140,21 +166,17 @@ export async function deleteUser(email: string): Promise<void> {
   if (error) throw error;
 }
 
-// optional active flag helpers – will no-op if column doesn't exist
 export async function setUserActive(email: string, active: boolean): Promise<void> {
-  try {
-    const { error } = await supabase
-      .from('platform_user')
-      .update({ active })
-      .eq('email', email.toLowerCase());
-    if (error) throw error;
-  } catch { /* ignore if column doesn't exist */ }
+  const { error } = await supabase
+    .from('platform_user')
+    .update({ is_active: active })
+    .eq('email', email.toLowerCase());
+  if (error) throw error;
 }
 
-// Bulk helpers
 export async function setUsersActive(emails: string[], active: boolean): Promise<void> {
   if (!emails.length) return;
-  const { error } = await supabase.from('platform_user').update({ active }).in('email', emails.map(e=>e.toLowerCase()));
+  const { error } = await supabase.from('platform_user').update({ is_active: active }).in('email', emails.map(e => e.toLowerCase()));
   if (error) throw error;
 }
 
@@ -236,8 +258,7 @@ export async function setUserCommentStatus(id: string, status: 'pendente'|'aprov
 
 export type FormationCounts = { APOSTOLO: number; PROFETA: number; EVANGELISTA: number; PASTOR: number; MESTRE: number };
 export async function getFormationCounts(): Promise<FormationCounts> {
-  const keys: FormationKey[] = ['APOSTOLO','PROFETA','EVANGELISTA','PASTOR','MESTRE'];
-  const entries = await Promise.all(keys.map(async (k) => {
+  const entries = await Promise.all(FORMATION_KEYS.map(async (k) => {
     const { count, error } = await supabase
       .from('platform_user')
       .select('email', { count: 'exact', head: true })
@@ -245,7 +266,7 @@ export async function getFormationCounts(): Promise<FormationCounts> {
     if (error) throw error;
     return [k, count || 0] as const;
   }));
-  const out: any = { APOSTOLO:0, PROFETA:0, EVANGELISTA:0, PASTOR:0, MESTRE:0 };
-  for (const [k,v] of entries) out[k] = v;
-  return out as FormationCounts;
+  const out = Object.fromEntries(FORMATION_KEYS.map(k => [k, 0])) as FormationCounts;
+  for (const [k, v] of entries) out[k as FormationKey] = v;
+  return out;
 }

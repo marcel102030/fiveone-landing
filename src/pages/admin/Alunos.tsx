@@ -13,6 +13,8 @@ import {
   updateUserMemberLink,
   updateUserRole,
   FormationKey,
+  FORMATION_KEYS,
+  toFormationLabel,
   getUserComments,
   setUsersActive,
   updateUsersFormation,
@@ -165,7 +167,7 @@ export default function AdminAlunos() {
           <div style={{alignSelf:'end', color:'#9fb2c5'}}>Total: {total}</div>
           {counts && (
             <div style={{display:'flex', gap:6, flexWrap:'wrap', alignItems:'flex-end'}}>
-              {(['APOSTOLO','PROFETA','EVANGELISTA','PASTOR','MESTRE'] as FormationKey[]).map(k => (
+              {FORMATION_KEYS.map(k => (
                 <button
                   key={k}
                   className="adm5-pill"
@@ -715,15 +717,7 @@ function mockLastAccess(seed: string) {
 
 function hashCode(s: string){ let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
 
-function formatFormation(f: any) {
-  switch(String(f||'MESTRE')){
-    case 'APOSTOLO': return 'Apóstolo';
-    case 'PROFETA': return 'Profeta';
-    case 'EVANGELISTA': return 'Evangelista';
-    case 'PASTOR': return 'Pastor';
-    default: return 'Mestre';
-  }
-}
+const formatFormation = (f: any) => toFormationLabel(f);
 
 function renderAvatar(name: string, email: string) {
   const initials = name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || email.slice(0,2).toUpperCase();
