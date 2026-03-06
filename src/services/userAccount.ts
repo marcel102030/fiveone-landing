@@ -235,17 +235,15 @@ export async function setUserCommentStatus(id: string, status: 'pendente'|'aprov
 }
 
 export type FormationCounts = { APOSTOLO: number; PROFETA: number; EVANGELISTA: number; PASTOR: number; MESTRE: number };
+
+/** Single-query formation count via DB aggregation — replaces 5 parallel COUNT requests. */
 export async function getFormationCounts(): Promise<FormationCounts> {
-  const keys: FormationKey[] = ['APOSTOLO','PROFETA','EVANGELISTA','PASTOR','MESTRE'];
-  const entries = await Promise.all(keys.map(async (k) => {
-    const { count, error } = await supabase
-      .from('platform_user')
-      .select('email', { count: 'exact', head: true })
-      .eq('formation', k);
-    if (error) throw error;
-    return [k, count || 0] as const;
-  }));
-  const out: any = { APOSTOLO:0, PROFETA:0, EVANGELISTA:0, PASTOR:0, MESTRE:0 };
-  for (const [k,v] of entries) out[k] = v;
-  return out as FormationCounts;
+  const { data, error } = await supabase.rpc('get_formation_counts');
+  if (error) throw error;
+  const out = Object.fromEntries(FORMATION_KEYS.map(k => [k, 0])) as FormationCounts;
+  for (const row of (data || [])) {
+    const key = (row.formation as string | null)?.toUpperCase() as FormationKey | undefined;
+    if (key && key in out) out[key] = Number(row.cnt);
+  }
+  return out;
 }
