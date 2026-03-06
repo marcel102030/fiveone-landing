@@ -146,7 +146,7 @@ const PaginaInicial = () => {
             // enquanto localStorage já tem a posição real assistida.
             const localWatched = (() => {
               try {
-                const raw = localStorage.getItem(`fiveone_progress::${r.video_id}`);
+                const raw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`);
                 if (!raw) return 0;
                 const parsed = JSON.parse(raw);
                 return Number(parsed.watchedSeconds || parsed.watched || 0);
@@ -154,7 +154,7 @@ const PaginaInicial = () => {
             })();
             const watchedSeconds = Math.max(r.watched_seconds, localWatched);
             return {
-              id: r.video_id,
+              id: r.lesson_id,
               url: '',
               index: undefined,
               title: r.title,
@@ -162,14 +162,14 @@ const PaginaInicial = () => {
               watchedSeconds,
               durationSeconds: r.duration_seconds || undefined,
               lastAt: new Date(r.last_at).getTime(),
-              subjectName: lessonByVideoId.get(r.video_id)?.subjectName,
+              subjectName: lessonByVideoId.get(r.lesson_id)?.subjectName,
               bannerContinue:
-                lessonByVideoId.get(r.video_id)?.bannerContinue?.url ||
-                lessonByVideoId.get(r.video_id)?.bannerContinue?.dataUrl ||
+                lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url ||
+                lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl ||
                 null,
               bannerMobile:
-                lessonByVideoId.get(r.video_id)?.bannerMobile?.url ||
-                lessonByVideoId.get(r.video_id)?.bannerMobile?.dataUrl ||
+                lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url ||
+                lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl ||
                 null,
             };
           });

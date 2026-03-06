@@ -2,7 +2,7 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 
 export type ProgressRow = {
   user_id: string;
-  video_id: string;
+  lesson_id: string;
   last_at: string; // ISO string
   watched_seconds: number;
   duration_seconds: number | null;
@@ -13,7 +13,7 @@ export type ProgressRow = {
 export async function fetchUserProgress(userId: string, limit = 20): Promise<ProgressRow[]> {
   const { data, error } = await supabase
     .from("platform_user_progress")
-    .select("user_id, video_id, last_at, watched_seconds, duration_seconds, title, thumbnail")
+    .select("user_id, lesson_id, last_at, watched_seconds, duration_seconds, title, thumbnail")
     .eq("user_id", userId)
     .order("last_at", { ascending: false })
     .limit(limit);
@@ -24,7 +24,7 @@ export async function fetchUserProgress(userId: string, limit = 20): Promise<Pro
 export async function upsertProgress(row: ProgressRow): Promise<void> {
   const { error } = await supabase
     .from("platform_user_progress")
-    .upsert(row, { onConflict: "user_id,video_id" });
+    .upsert(row, { onConflict: "user_id,lesson_id" });
   if (error) throw error;
 }
 
@@ -44,7 +44,7 @@ export async function deleteProgressExceptForUser(userId: string, keepVideoIds: 
 
   if (keepVideoIds.length) {
     const formatted = `(${keepVideoIds.map((id) => `"${id.replace(/"/g, '\\"')}"`).join(',')})`;
-    query = query.not('video_id', 'in', formatted);
+    query = query.not('lesson_id', 'in', formatted);
   }
 
   const { error } = await query;
@@ -56,14 +56,14 @@ export async function deleteProgressForUserVideo(userId: string, videoId: string
     .from('platform_user_progress')
     .delete()
     .eq('user_id', userId)
-    .eq('video_id', videoId);
+    .eq('lesson_id', videoId);
   if (error) throw error;
 }
 
 export function toLocalRow(row: any): ProgressRow {
   return {
     user_id: row.user_id,
-    video_id: row.video_id,
+    lesson_id: row.lesson_id,
     last_at: row.last_at,
     watched_seconds: Number(row.watched_seconds || 0),
     duration_seconds: row.duration_seconds ? Number(row.duration_seconds) : null,
