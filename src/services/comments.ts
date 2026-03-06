@@ -3,7 +3,7 @@ import { supabase } from "../lib/supabaseClient";
 export type VideoComment = {
   id: string;
   user_id: string;
-  video_id: string;
+  lesson_id: string;
   text: string;
   created_at: string;
   likes: number;
@@ -25,18 +25,18 @@ export async function fetchComments(videoId: string): Promise<VideoComment[]> {
     supabase
       .from('platform_lesson_comment')
       .select(fields)
-      .eq('video_id', videoId)
+      .eq('lesson_id', videoId)
       .order('created_at', { ascending: true });
 
   if (supportsCommentProfileJoin === false) {
-    const fallback = await run('id,user_id,video_id,text,created_at,likes,parent_id');
+    const fallback = await run('id,user_id,lesson_id,text,created_at,likes,parent_id');
     if (fallback.error) throw fallback.error;
     return (fallback.data || []) as any;
   }
 
   // Tenta trazer o perfil junto (requer FK/relationship configurado no banco).
   const withProfile = await run(
-    'id,user_id,video_id,text,created_at,likes,parent_id,profile:platform_user_profile(display_name,first_name,last_name,avatar_url)',
+    'id,user_id,lesson_id,text,created_at,likes,parent_id,profile:platform_user_profile(display_name,first_name,last_name,avatar_url)',
   );
 
   if (!withProfile.error) {
@@ -58,13 +58,13 @@ export async function fetchComments(videoId: string): Promise<VideoComment[]> {
 
   supportsCommentProfileJoin = false;
   console.warn('fetchComments: fallback sem profile por incompatibilidade no banco:', withProfile.error);
-  const fallback = await run('id,user_id,video_id,text,created_at,likes,parent_id');
+  const fallback = await run('id,user_id,lesson_id,text,created_at,likes,parent_id');
   if (fallback.error) throw fallback.error;
   return (fallback.data || []) as any;
 }
 
 export async function addComment(userId: string, videoId: string, text: string, parentId?: string | null): Promise<void> {
-  const payload: Record<string, any> = { user_id: userId, video_id: videoId, text, likes: 0 };
+  const payload: Record<string, any> = { user_id: userId, lesson_id: videoId, text, likes: 0 };
   if (parentId) payload.parent_id = parentId;
   const { error } = await supabase.from('platform_lesson_comment').insert(payload);
   if (error) throw error;

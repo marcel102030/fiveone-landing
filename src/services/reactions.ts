@@ -8,18 +8,45 @@ export type ReactionState = {
 };
 
 export async function fetchReactionState(userId: string | null, videoId: string): Promise<ReactionState> {
+  // RPC get_reaction_state: agrupa 3 queries em 1 round-trip
+  try {
+    const { data, error } = await supabase
+      .rpc('get_reaction_state', {
+        p_user_id:   userId ?? '',
+        p_lesson_id: videoId,
+      })
+      .maybeSingle();
+
+    if (!error && data) {
+      const row = data as { like_count: number; dislike_count: number; user_reaction: string | null };
+      const selected = (row.user_reaction === 'like' || row.user_reaction === 'dislike')
+        ? row.user_reaction as ReactionType
+        : null;
+      return {
+        selected,
+        counts: {
+          like:    Number(row.like_count    ?? 0),
+          dislike: Number(row.dislike_count ?? 0),
+        },
+      };
+    }
+  } catch {
+    // fallback abaixo
+  }
+
+  // Fallback: 3 queries separadas caso a RPC não esteja disponível
   const counts = { like: 0, dislike: 0 };
   try {
     const [likeRes, dislikeRes] = await Promise.all([
       supabase
         .from("platform_lesson_reaction")
         .select("reaction", { count: "exact", head: true })
-        .eq("video_id", videoId)
+        .eq("lesson_id", videoId)
         .eq("reaction", "like"),
       supabase
         .from("platform_lesson_reaction")
         .select("reaction", { count: "exact", head: true })
-        .eq("video_id", videoId)
+        .eq("lesson_id", videoId)
         .eq("reaction", "dislike"),
     ]);
     if (!likeRes.error && typeof likeRes.count === "number") counts.like = likeRes.count;
@@ -33,7 +60,7 @@ export async function fetchReactionState(userId: string | null, videoId: string)
     const { data: me, error: errMe } = await supabase
       .from('platform_lesson_reaction')
       .select('reaction')
-      .eq('video_id', videoId)
+      .eq('lesson_id', videoId)
       .eq('user_id', userId)
       .maybeSingle();
     if (!errMe && me) {
@@ -52,10 +79,10 @@ export async function setReaction(userId: string, videoId: string, reaction: Rea
       .from('platform_lesson_reaction')
       .delete()
       .eq('user_id', userId)
-      .eq('video_id', videoId);
+      .eq('lesson_id', videoId);
     return;
   }
   await supabase
     .from("platform_lesson_reaction")
-    .upsert({ user_id: userId, video_id: videoId, reaction }, { onConflict: "user_id,video_id" });
+    .upsert({ user_id: userId, lesson_id: videoId, reaction }, { onConflict: "user_id,lesson_id" });
 }

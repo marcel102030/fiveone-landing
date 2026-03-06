@@ -523,7 +523,7 @@ export default function AdminAlunos() {
                   .map((c:any)=> (
                   <div key={c.id} style={{padding:'8px 10px', borderBottom:'1px solid #1e293b', display:'flex', justifyContent:'space-between', gap:8}}>
                     <div>
-                      <div style={{fontSize:12, color:'#9fb2c5'}}>{new Date(c.created_at).toLocaleString('pt-BR')} • Vídeo: {c.video_id} • Status: {(c.status||'pendente')}</div>
+                      <div style={{fontSize:12, color:'#9fb2c5'}}>{new Date(c.created_at).toLocaleString('pt-BR')} • Aula: {c.lesson_id} • Status: {(c.status||'pendente')}</div>
                       <div>{c.text}</div>
                     </div>
                     <div style={{display:'flex', gap:6}}>

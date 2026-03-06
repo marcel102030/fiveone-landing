@@ -967,7 +967,7 @@ const StreamerMestre = () => {
           sessionStorage.setItem(syncKey, String(now));
           upsertProgress({
             user_id: userId,
-            video_id: lesson.videoId,
+            lesson_id: lesson.videoId,
             last_at: new Date(now).toISOString(),
             watched_seconds: watchedSeconds,
             duration_seconds: durationSeconds || null,

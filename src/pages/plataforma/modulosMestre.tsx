@@ -76,10 +76,10 @@ const ModulosMestre = () => {
         const rows = await fetchUserProgress(uid, 100);
         let best: string | null = null; let bestAt = 0;
         rows.forEach(r => {
-          if (completedIds.has(r.video_id)) return;
-          if (idSet.has(r.video_id) || urlSet.has(r.video_id)) {
+          if (completedIds.has(r.lesson_id)) return;
+          if (idSet.has(r.lesson_id) || urlSet.has(r.lesson_id)) {
             const at = new Date(r.last_at).getTime();
-            if (at > bestAt) { bestAt = at; best = r.video_id; }
+            if (at > bestAt) { bestAt = at; best = r.lesson_id; }
           }
         });
         if (!navigated) {

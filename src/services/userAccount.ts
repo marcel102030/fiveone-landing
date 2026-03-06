@@ -211,12 +211,12 @@ export async function getUserByEmail(email: string): Promise<PlatformUserListIte
 }
 
 // Comments API (platform_lesson_comment)
-export type UserComment = { id: string; video_id: string; text: string; likes: number | null; created_at: string; status?: 'pendente' | 'aprovado' };
+export type UserComment = { id: string; lesson_id: string; text: string; likes: number | null; created_at: string; status?: 'pendente' | 'aprovado' };
 
 export async function getUserComments(email: string): Promise<UserComment[]> {
   const { data, error } = await supabase
     .from('platform_lesson_comment')
-    .select('id,video_id,text,likes,created_at,status')
+    .select('id,lesson_id,text,likes,created_at,status')
     .eq('user_id', email.toLowerCase())
     .order('created_at', { ascending: false });
   if (error) throw error;
