@@ -1,11 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 @import "./shared/styles/variables.css";
 
-/* CSS Reset */
+/* CSS Reset — mantido para compatibilidade com CSS legado */
 *,
 *::before,
 *::after {
-  margin: 0;
-  padding: 0;
   box-sizing: border-box;
 }
 
