@@ -56,6 +56,7 @@ import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
 
 import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
 import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
+import Favoritos from "./features/plataforma/pages/Favoritos";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 
 import "./App.css";
@@ -100,6 +101,7 @@ function AppContent() {
     location.pathname === "/streamer-mestre" ||
     location.pathname === "/modulos-mestre" ||
     location.pathname === "/perfil" ||
+    location.pathname === "/favoritos" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/membro") ||
     location.pathname.startsWith("/relatorio") ||
@@ -251,6 +253,14 @@ function AppContent() {
               element={
                 <StudentGuard>
                   <PerfilAluno />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/favoritos"
+              element={
+                <StudentGuard>
+                  <Favoritos />
                 </StudentGuard>
               }
             />

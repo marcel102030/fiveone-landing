@@ -1,640 +1,691 @@
-import Header from "./Header";
-import "./plataforma.css";
-import { Link, useNavigate } from "react-router-dom";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { getCurrentUserId } from "../../../shared/utils/user";
-import { fetchUserProgress, deleteProgressExceptForUser } from "../services/progress";
-import { listLessons, LessonRef, subscribePlatformContent } from "../services/platformContent";
+import Header from './Header'
+import { Link, useNavigate } from 'react-router-dom'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { getCurrentUserId } from '../../../shared/utils/user'
+import { fetchUserProgress, deleteProgressExceptForUser } from '../services/progress'
+import { listLessons, LessonRef, subscribePlatformContent } from '../services/platformContent'
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
   mergeCompletedLessons,
   readCompletedLessons,
   clearCompletedLessons,
-} from "../../../shared/utils/completedLessons";
-import { fetchCompletionsForUser } from "../services/completions";
+} from '../../../shared/utils/completedLessons'
+import { fetchCompletionsForUser } from '../services/completions'
+import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
+import { ConfirmModal, Modal } from '../../../shared/components/ui'
 
-type ModalState = {
-  title?: string;
-  message: string;
-  confirmLabel?: string;
-  cancelLabel?: string;
-  onConfirm?: () => Promise<void> | void;
-};
+// ── Ícones ────────────────────────────────────────────────────────────────────
+
+const PlayIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+    <polygon points="5 3 19 12 5 21 5 3" />
+  </svg>
+)
+
+const ChevronLeftIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="15 18 9 12 15 6" />
+  </svg>
+)
+
+const ChevronRightIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="9 18 15 12 9 6" />
+  </svg>
+)
+
+const BookOpenIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+  </svg>
+)
+
+const CheckCircleIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+    <polyline points="22 4 12 14.01 9 11.01" />
+  </svg>
+)
+
+const LayersIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+    <polygon points="12 2 2 7 12 12 22 7 12 2" />
+    <polyline points="2 17 12 22 22 17" />
+    <polyline points="2 12 12 17 22 12" />
+  </svg>
+)
+
+const TrashIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+  </svg>
+)
+
+// ── Dados estáticos das formações ─────────────────────────────────────────────
+
+const FORMACOES = [
+  {
+    id: 'APOSTOLO',
+    label: 'Apóstolo',
+    img: '/assets/images/apostolo.png',
+    active: false,
+    message: 'Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.',
+  },
+  {
+    id: 'PROFETA',
+    label: 'Profeta',
+    img: '/assets/images/profeta.png',
+    active: false,
+    message: 'Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.',
+  },
+  {
+    id: 'EVANGELISTA',
+    label: 'Evangelista',
+    img: '/assets/images/evangelista.png',
+    active: false,
+    message: 'Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.',
+  },
+  {
+    id: 'PASTOR',
+    label: 'Pastor',
+    img: '/assets/images/pastor.png',
+    active: false,
+    message: 'Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.',
+  },
+  {
+    id: 'MESTRE',
+    label: 'Mestre',
+    img: '/assets/images/mestre.png',
+    active: true,
+    route: '/modulos-mestre',
+  },
+]
+
+// ── Componente principal ──────────────────────────────────────────────────────
 
 const PaginaInicial = () => {
-  const [modalState, setModalState] = useState<ModalState | null>(null);
+  const navigate = useNavigate()
+  const { profile } = usePlatformUserProfile()
+  const carouselRef = useRef<HTMLDivElement>(null)
 
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
-  const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() => listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
-  const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
-  const [progressLoaded, setProgressLoaded] = useState(false);
-  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => readCompletedLessons());
-  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  // ── Estado de conteúdo ────────────────────────────────────────────────────
+  const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() =>
+    listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true })
+  )
+  const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([])
+  const [progressLoaded, setProgressLoaded] = useState(false)
+  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() =>
+    readCompletedLessons()
+  )
+  const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches)
+
+  // ── Modal "em breve" ──────────────────────────────────────────────────────
+  const [emBreveMessage, setEmBreveMessage] = useState<string | null>(null)
+
+  // ── Modal limpar histórico ────────────────────────────────────────────────
+  const [showClearConfirm, setShowClearConfirm] = useState(false)
+  const [clearing, setClearing] = useState(false)
+
+  // ── Responsividade ────────────────────────────────────────────────────────
   useEffect(() => {
-    const mq = window.matchMedia('(max-width: 640px)');
-    const update = () => setIsMobile(mq.matches);
-    update();
-    mq.addEventListener('change', update);
-    return () => mq.removeEventListener('change', update);
-  }, []);
+    const mq = window.matchMedia('(max-width: 640px)')
+    const update = () => setIsMobile(mq.matches)
+    mq.addEventListener('change', update)
+    return () => mq.removeEventListener('change', update)
+  }, [])
+
+  // ── Subscribe a mudanças de conteúdo ─────────────────────────────────────
   useEffect(() => {
-    setMestreLessons(listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
+    setMestreLessons(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }))
     const unsubscribe = subscribePlatformContent(() => {
-      setMestreLessons(listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
-    });
-    return () => unsubscribe();
-  }, []);
+      setMestreLessons(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }))
+    })
+    return () => unsubscribe()
+  }, [])
 
+  // ── Sync de completions ───────────────────────────────────────────────────
   useEffect(() => {
-    const sync = () => setCompletedMap(readCompletedLessons());
-    sync();
-    const handler = () => sync();
-    window.addEventListener(COMPLETED_EVENT, handler);
+    const sync = () => setCompletedMap(readCompletedLessons())
+    sync()
+    const handler = () => sync()
+    window.addEventListener(COMPLETED_EVENT, handler)
     const storageHandler = (event: StorageEvent) => {
-      if (event.key === 'fiveone_completed_lessons_v1') sync();
-    };
-    window.addEventListener('storage', storageHandler);
+      if (event.key === 'fiveone_completed_lessons_v1') sync()
+    }
+    window.addEventListener('storage', storageHandler)
     return () => {
-      window.removeEventListener(COMPLETED_EVENT, handler);
-      window.removeEventListener('storage', storageHandler);
-    };
-  }, []);
-  const lessonByVideoId = useMemo(() => {
-    const map = new Map<string, LessonRef>();
-    mestreLessons.forEach((lesson) => {
-      map.set(lesson.videoId, lesson);
-    });
-    return map;
-  }, [mestreLessons]);
-  useEffect(() => {
-    let active = true;
-    const getKey = (video: any): string | null => {
-      if (!video) return null;
-      if (typeof video.id === 'string' && video.id) return video.id;
-      if (typeof video.videoId === 'string' && video.videoId) return video.videoId;
-      if (typeof video.video_id === 'string' && video.video_id) return video.video_id;
-      if (typeof video.url === 'string' && video.url) return video.url;
-      return null;
-    };
-    const mergeByRecency = (items: any[]): any[] => {
-      const byKey = new Map<string, any>();
-      items.forEach((item) => {
-        const key = getKey(item);
-        if (!key) return;
-        const prev = byKey.get(key);
-        if (!prev) {
-          byKey.set(key, item);
-          return;
-        }
+      window.removeEventListener(COMPLETED_EVENT, handler)
+      window.removeEventListener('storage', storageHandler)
+    }
+  }, [])
 
-        const prevAt = Number(prev.lastAt || 0);
-        const nextAt = Number(item.lastAt || 0);
-        const primary = nextAt >= prevAt ? item : prev;
-        const secondary = nextAt >= prevAt ? prev : item;
+  // ── Map de lessonId → LessonRef ───────────────────────────────────────────
+  const lessonByVideoId = useMemo(() => {
+    const map = new Map<string, LessonRef>()
+    mestreLessons.forEach((lesson) => map.set(lesson.videoId, lesson))
+    return map
+  }, [mestreLessons])
+
+  // ── Carregar progresso (localStorage + remoto) ────────────────────────────
+  useEffect(() => {
+    let active = true
+
+    const getKey = (video: any): string | null => {
+      if (!video) return null
+      if (typeof video.id === 'string' && video.id) return video.id
+      if (typeof video.videoId === 'string' && video.videoId) return video.videoId
+      if (typeof video.video_id === 'string' && video.video_id) return video.video_id
+      if (typeof video.url === 'string' && video.url) return video.url
+      return null
+    }
+
+    const mergeByRecency = (items: any[]): any[] => {
+      const byKey = new Map<string, any>()
+      items.forEach((item) => {
+        const key = getKey(item)
+        if (!key) return
+        const prev = byKey.get(key)
+        if (!prev) { byKey.set(key, item); return }
+        const prevAt = Number(prev.lastAt || 0)
+        const nextAt = Number(item.lastAt || 0)
+        const primary = nextAt >= prevAt ? item : prev
+        const secondary = nextAt >= prevAt ? prev : item
         byKey.set(key, {
-          ...secondary,
-          ...primary,
+          ...secondary, ...primary,
           watchedSeconds: Math.max(Number(prev.watchedSeconds || 0), Number(item.watchedSeconds || 0)),
           durationSeconds: Number(primary.durationSeconds || 0) || Number(secondary.durationSeconds || 0) || undefined,
           lastAt: Math.max(prevAt, nextAt),
-        });
-      });
-      return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0));
-    };
+        })
+      })
+      return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
+    }
 
-    let localEnriched: any[] = [];
-    // 1) carrega localStorage imediatamente para evitar atraso
+    let localEnriched: any[] = []
     try {
-      const raw = localStorage.getItem('videos_assistidos');
-      const parsed = raw ? JSON.parse(raw) : [];
-      const localArr = mergeByRecency(Array.isArray(parsed) ? parsed : []);
+      const raw = localStorage.getItem('videos_assistidos')
+      const parsed = raw ? JSON.parse(raw) : []
+      const localArr = mergeByRecency(Array.isArray(parsed) ? parsed : [])
       if (localArr.length) {
         localEnriched = localArr.map((item: any) => {
-          const lesson = lessonByVideoId.get(item.id || item.videoId || item.video_id || item.url);
+          const lesson = lessonByVideoId.get(item.id || item.videoId || item.video_id || item.url)
           return {
             ...item,
             subjectName: item.subjectName || lesson?.subjectName,
             bannerContinue: item.bannerContinue || lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || null,
             bannerMobile: item.bannerMobile || lesson?.bannerMobile?.url || lesson?.bannerMobile?.dataUrl || null,
-            thumbnail:
-              item.thumbnail ||
-              lesson?.bannerContinue?.url ||
-              lesson?.bannerContinue?.dataUrl ||
-              lesson?.bannerMobile?.url ||
-              lesson?.bannerMobile?.dataUrl ||
-              lesson?.thumbnailUrl ||
-              item.bannerContinue,
-          };
-        });
-        setLastWatchedArray(localEnriched);
+            thumbnail: item.thumbnail || lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || lesson?.bannerMobile?.url || lesson?.bannerMobile?.dataUrl || lesson?.thumbnailUrl || item.bannerContinue,
+          }
+        })
+        setLastWatchedArray(localEnriched)
       }
     } catch {}
 
-    // 2) busca remota em background e atualiza caso tenha dados
-    (async () => {
-      const uid = getCurrentUserId();
-      if (!uid) { setProgressLoaded(true); return; }
+    ;(async () => {
+      const uid = getCurrentUserId()
+      if (!uid) { setProgressLoaded(true); return }
       try {
-        const rows = await fetchUserProgress(uid, 24);
-        if (!active) return;
+        const rows = await fetchUserProgress(uid, 24)
+        if (!active) return
         if (rows && rows.length) {
           const remote = rows.map(r => {
-            // Para cada linha remota, verificar se localStorage tem progresso maior.
-            // O DB pode ter watched_seconds: 0 (salvo no onReady antes de assistir),
-            // enquanto localStorage já tem a posição real assistida.
             const localWatched = (() => {
               try {
-                const raw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`);
-                if (!raw) return 0;
-                const parsed = JSON.parse(raw);
-                return Number(parsed.watchedSeconds || parsed.watched || 0);
-              } catch { return 0; }
-            })();
-            const watchedSeconds = Math.max(r.watched_seconds, localWatched);
+                const raw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`)
+                if (!raw) return 0
+                const parsed = JSON.parse(raw)
+                return Number(parsed.watchedSeconds || parsed.watched || 0)
+              } catch { return 0 }
+            })()
             return {
-              id: r.lesson_id,
-              url: '',
-              index: undefined,
-              title: r.title,
-              thumbnail: r.thumbnail,
-              watchedSeconds,
+              id: r.lesson_id, url: '', index: undefined,
+              title: r.title, thumbnail: r.thumbnail,
+              watchedSeconds: Math.max(r.watched_seconds, localWatched),
               durationSeconds: r.duration_seconds || undefined,
               lastAt: new Date(r.last_at).getTime(),
               subjectName: lessonByVideoId.get(r.lesson_id)?.subjectName,
-              bannerContinue:
-                lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url ||
-                lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl ||
-                null,
-              bannerMobile:
-                lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url ||
-                lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl ||
-                null,
-            };
-          });
-          setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]));
+              bannerContinue: lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url || lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
+              bannerMobile: lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url || lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
+            }
+          })
+          setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]))
         }
-        // Se o banco não retornou linhas, mantém dados do localStorage (step 1).
-        // Nunca sobrescrever com [] — banco pode estar vazio por sessão expirada.
-        setProgressLoaded(true);
+        setProgressLoaded(true)
 
-        const completions = await fetchCompletionsForUser(uid);
-        if (!active) return;
-        clearCompletedLessons();
+        const completions = await fetchCompletionsForUser(uid)
+        if (!active) return
+        clearCompletedLessons()
         if (completions && completions.length) {
-          const merged = mergeCompletedLessons(completions);
-          setCompletedMap(merged);
+          setCompletedMap(mergeCompletedLessons(completions))
         } else {
-          setCompletedMap(new Map<string, CompletedLessonInfo>());
+          setCompletedMap(new Map<string, CompletedLessonInfo>())
         }
       } catch {
-        if (active) setProgressLoaded(true);
+        if (active) setProgressLoaded(true)
       }
-    })();
+    })()
 
-    return () => { active = false; };
-  }, [lessonByVideoId]);
+    return () => { active = false }
+  }, [lessonByVideoId])
 
-  const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap]);
+  // ── IDs concluídos ────────────────────────────────────────────────────────
+  const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap])
 
   const getVideoKey = useCallback((video: any): string | null => {
-    if (!video) return null;
-    if (typeof video.id === 'string' && video.id) return video.id;
-    if (typeof video.videoId === 'string' && video.videoId) return video.videoId;
-    if (typeof video.video_id === 'string' && video.video_id) return video.video_id;
-    if (typeof video.url === 'string' && video.url) return video.url;
-    return null;
-  }, []);
+    if (!video) return null
+    if (typeof video.id === 'string' && video.id) return video.id
+    if (typeof video.videoId === 'string' && video.videoId) return video.videoId
+    if (typeof video.video_id === 'string' && video.video_id) return video.video_id
+    if (typeof video.url === 'string' && video.url) return video.url
+    return null
+  }, [])
 
   const visibleLastWatched = useMemo(() => {
-    if (!lastWatchedArray.length) return [] as any[];
+    if (!lastWatchedArray.length) return [] as any[]
     return lastWatchedArray.filter((item) => {
-      const key = getVideoKey(item);
-      if (!key) return true;
-      return !completedIds.has(key);
-    });
-  }, [lastWatchedArray, completedIds, getVideoKey]);
+      const key = getVideoKey(item)
+      if (!key) return true
+      return !completedIds.has(key)
+    })
+  }, [lastWatchedArray, completedIds, getVideoKey])
 
+  // ── Stats ─────────────────────────────────────────────────────────────────
+  const totalCompleted = completedIds.size
+  const totalLessons = mestreLessons.length
+  const progressPercent = totalLessons > 0 ? Math.min(100, Math.round((totalCompleted / totalLessons) * 100)) : 0
+
+  // ── Navegar para aula ─────────────────────────────────────────────────────
+  const goToLesson = useCallback((video: any) => {
+    if (video.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(video.id)}`)
+    else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`)
+    else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`)
+  }, [navigate])
+
+  // ── Limpar histórico ──────────────────────────────────────────────────────
   const performClearHistory = useCallback(async () => {
-    const completedIdList = Array.from(completedIds.values()).filter((id): id is string => typeof id === 'string' && id.length > 0);
-    const keepBases = new Set<string>();
-    let storedWatched: Array<{ id?: string; videoId?: string; url?: string }> = [];
-
+    const completedIdList = Array.from(completedIds.values()).filter((id): id is string => typeof id === 'string' && id.length > 0)
+    const keepBases = new Set<string>()
+    let storedWatched: Array<{ id?: string; videoId?: string; url?: string }> = []
     try {
-      const watchedRaw = localStorage.getItem('videos_assistidos');
+      const watchedRaw = localStorage.getItem('videos_assistidos')
       if (watchedRaw) {
-        const parsed = JSON.parse(watchedRaw);
-        if (Array.isArray(parsed)) storedWatched = parsed as Array<{ id?: string; videoId?: string; url?: string }>;
+        const parsed = JSON.parse(watchedRaw)
+        if (Array.isArray(parsed)) storedWatched = parsed
       }
     } catch {}
 
     if (completedIdList.length) {
       mestreLessons.forEach((lesson) => {
-        if (!lesson.videoId) return;
-        if (!completedIds.has(lesson.videoId)) return;
-        keepBases.add(lesson.videoId);
-        if (lesson.videoUrl) keepBases.add(lesson.videoUrl);
-      });
+        if (!lesson.videoId || !completedIds.has(lesson.videoId)) return
+        keepBases.add(lesson.videoId)
+        if (lesson.videoUrl) keepBases.add(lesson.videoUrl)
+      })
       storedWatched.forEach((item) => {
-        const candidateId = item?.id || item?.videoId;
+        const candidateId = item?.id || item?.videoId
         if (candidateId && completedIds.has(candidateId)) {
-          keepBases.add(candidateId);
-          if (typeof item?.url === 'string' && item.url) keepBases.add(item.url);
+          keepBases.add(candidateId)
+          if (typeof item?.url === 'string' && item.url) keepBases.add(item.url)
         }
-      });
+      })
     }
+
+    localStorage.removeItem('videos_assistidos')
+    const progressPrefix = 'fiveone_progress::'
+    const progressKeys: string[] = []
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i)
+      if (key && key.startsWith(progressPrefix)) {
+        const base = key.slice(progressPrefix.length)
+        if (!keepBases.has(base)) progressKeys.push(key)
+      }
+    }
+    progressKeys.forEach((key) => { try { localStorage.removeItem(key) } catch {} })
 
     try {
-      localStorage.removeItem('videos_assistidos');
-      const progressPrefix = 'fiveone_progress::';
-      const progressKeys: string[] = [];
-      for (let i = 0; i < localStorage.length; i += 1) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(progressPrefix)) {
-          const base = key.slice(progressPrefix.length);
-          if (!keepBases.has(base)) {
-            progressKeys.push(key);
-          }
+      const syncPrefix = 'fiveone_progress_sync_'
+      for (let i = 0; i < sessionStorage.length; i++) {
+        const key = sessionStorage.key(i)
+        if (key && key.startsWith(syncPrefix)) {
+          try { sessionStorage.removeItem(key) } catch {}
         }
       }
-      progressKeys.forEach((key) => {
-        try { localStorage.removeItem(key); } catch {}
-      });
+    } catch {}
 
-      try {
-        const syncPrefix = 'fiveone_progress_sync_';
-        const syncKeys: string[] = [];
-        for (let i = 0; i < sessionStorage.length; i += 1) {
-          const key = sessionStorage.key(i);
-          if (key && key.startsWith(syncPrefix)) {
-            syncKeys.push(key);
-          }
-        }
-        syncKeys.forEach((key) => {
-          try { sessionStorage.removeItem(key); } catch {}
-        });
-      } catch {}
+    const uid = getCurrentUserId()
+    if (uid) await deleteProgressExceptForUser(uid, completedIdList)
+    setLastWatchedArray([])
+  }, [completedIds, mestreLessons])
 
-      const uid = getCurrentUserId();
-      if (uid) {
-        await deleteProgressExceptForUser(uid, completedIdList);
-      }
-
-      setLastWatchedArray([]);
-    } catch (error) {
-      console.error('Falha ao limpar histórico', error);
-      throw error;
+  const handleClearHistory = useCallback(async () => {
+    setClearing(true)
+    try {
+      await performClearHistory()
+    } finally {
+      setClearing(false)
+      setShowClearConfirm(false)
     }
-  }, [completedIds, mestreLessons]);
+  }, [performClearHistory])
 
-  const handleClearContinue = useCallback(() => {
-    setModalState({
-      title: 'Limpar histórico',
-      message:
-        'Ao limpar o histórico, todas as aulas que não foram concluídas terão o progresso reiniciado. As aulas já concluídas continuarão marcadas como concluídas. Deseja continuar?',
-      cancelLabel: 'Cancelar',
-      confirmLabel: 'Limpar histórico',
-      onConfirm: async () => {
-        await performClearHistory();
-      },
-    });
-  }, [performClearHistory]);
-
+  // ── Scroll do carrossel ───────────────────────────────────────────────────
   const scrollCarousel = (direction: number) => {
     if (carouselRef.current) {
-      carouselRef.current.scrollBy({
-        left: direction * 300,
-        behavior: "smooth",
-      });
+      carouselRef.current.scrollBy({ left: direction * 300, behavior: 'smooth' })
     }
-  };
+  }
 
-  const handleShowModal = (message: string, title?: string) => {
-    setModalState({ message, title });
-  };
+  // ── Saudação ──────────────────────────────────────────────────────────────
+  const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
+  const formationLabel = profile?.formationLabel || null
 
-  const handleCloseModal = () => {
-    setModalState(null);
-  };
-
-  const handleModalConfirm = useCallback(async () => {
-    const action = modalState?.onConfirm;
-    setModalState(null);
-    if (!action) return;
-    try {
-      await action();
-    } catch (error) {
-      console.error('Ação do modal falhou', error);
-      setModalState({ title: 'Ops!', message: 'Não foi possível concluir a ação. Tente novamente em instantes.' });
-    }
-  }, [modalState]);
-
-  const scrollToId = (id: string) => {
-    const el = document.getElementById(id);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
-
-  const heroSlides = [
-    { title: 'Escola de Formação Ministerial', text: 'Conteúdos bíblicos e ministeriais para sua jornada.' },
-    { title: 'Estude no seu ritmo', text: 'Aulas organizadas por módulos, com histórico e materiais.' },
-    { title: 'Faça parte da comunidade', text: 'Conecte-se e cresça junto com outros alunos.' },
-  ];
-
-  const bemVindosRef = useRef<HTMLDivElement | null>(null);
-
-  const scrollBemVindos = (direction: 1 | -1) => {
-    const container = bemVindosRef.current;
-    if (!container) return;
-    const scrollAmount = container.clientWidth * 0.8;
-    container.scrollBy({ left: scrollAmount * direction, behavior: 'smooth' });
-  };
-  const [hsIndex, setHsIndex] = useState(0);
-  useEffect(() => {
-    const id = setInterval(() => setHsIndex((i) => (i + 1) % heroSlides.length), 5000);
-    return () => clearInterval(id);
-  }, []);
-
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       <Header />
-      <div id="inicio" className="inicio-container">
-        <div className="hero-slider" role="region" aria-label="Destaques">
-          <div className="hs-track">
-            {heroSlides.map((s, i) => (
-              <div key={i} className={`hs-slide ${i === hsIndex ? 'active' : ''}`} aria-hidden={i !== hsIndex}>
-                <h2 className="hs-title">{s.title}</h2>
-                <p className="hs-text">{s.text}</p>
-              </div>
-            ))}
+
+      <main id="inicio" className="min-h-screen bg-navy">
+
+        {/* ── HERO ────────────────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden bg-gradient-to-br from-navy to-navy-light border-b border-slate/10">
+          {/* Decoração de fundo */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-mint/5 blur-3xl" />
+            <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-mint/5 blur-3xl" />
           </div>
-          <div className="hs-actions">
-            <button className="hs-btn primary" onClick={() => scrollToId('sec-formacao')}>Explorar módulos</button>
-            {visibleLastWatched.length > 0 && (
-              <button
-                className="hs-btn outline"
-                onClick={() => {
-                  const v:any = visibleLastWatched[0];
-                  if (v.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(v.id)}`);
-                  else if (typeof v.index === 'number') navigate(`/streamer-mestre?i=${v.index}`);
-                  else navigate(`/streamer-mestre?v=${encodeURIComponent(v.url)}`);
-                }}
-              >
-                Retomar aula
-              </button>
-            )}
-          </div>
-          <div className="hs-dots" role="tablist">
-            {heroSlides.map((_, i) => (
-              <button
-                key={i}
-                className={`hs-dot ${i === hsIndex ? 'active' : ''}`}
-                aria-label={`Ir para slide ${i + 1}`}
-                aria-selected={i === hsIndex}
-                onClick={() => setHsIndex(i)}
-              />
-            ))}
-          </div>
-        </div>
-        <button className="section-arrow" aria-label="Ir para Bem-vindos" onClick={() => scrollToId(visibleLastWatched.length ? 'sec-bem-vindos' : 'sec-formacao')}>
-          <span className="chevron" />
-        </button>
-      </div>
-      <section id="sec-bem-vindos" className="bem-vindos">
-        {visibleLastWatched.length ? (
-          <div className="continuar-banner">
-            <div className="continuar-banner-info">
-              <div className="cb-title">Última Aula Assistida</div>
-              <div className="cb-sub">{visibleLastWatched[0].title}</div>
-              {visibleLastWatched[0].subjectName && (
-                <div className="cb-pill">{visibleLastWatched[0].subjectName}</div>
+
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
+            {/* Saudação */}
+            <div className="mb-8">
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-white mb-1">
+                Olá, {firstName} 👋
+              </h1>
+              {formationLabel && (
+                <p className="text-sm text-slate">
+                  Formação: <span className="text-mint font-medium">{formationLabel}</span>
+                </p>
               )}
             </div>
-            <button className="cb-btn" onClick={() => {
-              const v:any = visibleLastWatched[0];
-              if (v.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(v.id)}`);
-              else if (typeof v.index === 'number') navigate(`/streamer-mestre?i=${v.index}`);
-              else navigate(`/streamer-mestre?v=${encodeURIComponent(v.url)}`);
-            }}>Retomar aula</button>
-          </div>
-        ) : null}
-        <h2>Bem-Vindos</h2>
-        <p>Sua Jornada Começa aqui</p>
-        <div className="bem-vindos-carousel" aria-label="Bem-vindos">
-          <button type="button" className="bw-arrow bw-arrow--prev" onClick={() => scrollBemVindos(-1)} aria-label="Cartões anteriores">
-            ‹
-          </button>
-          <div className="bem-vindos-container" ref={bemVindosRef}>
-            <div
-              className="bem-vindos-item"
-              role="button"
-              style={{ backgroundImage: "url('/assets/images/BemVindo.png')" }}
-            />
-            <div
-              className="bem-vindos-item"
-              role="button"
-              style={{ backgroundImage: "url('/assets/images/OQueEFiveOne.png')" }}
-            />
-            <div
-              className="bem-vindos-item"
-              role="button"
-              style={{ backgroundImage: "url('/assets/images/SuaJornada.png')" }}
-            />
-            <div
-              className="bem-vindos-item"
-              role="button"
-              style={{ backgroundImage: "url('/assets/images/Conectese.png')" }}
-            />
-            <div
-              className="bem-vindos-item"
-              role="button"
-              style={{ backgroundImage: "url('/assets/images/Explore.png')" }}
-            />
-          </div>
-          <button type="button" className="bw-arrow bw-arrow--next" onClick={() => scrollBemVindos(1)} aria-label="Próximos cartões">
-            ›
-          </button>
-        </div>
-        <div className="section-arrow-wrap">
-          <button className="section-arrow" aria-label="Ir para Continuar Assistindo" onClick={() => scrollToId(visibleLastWatched.length ? 'sec-continuar' : 'sec-formacao')}>
-            <span className="chevron" />
-          </button>
-        </div>
-      </section>
-      {visibleLastWatched.length ? (
-        <section id="sec-continuar" className="continuar-assistindo">
-          <div className="continuar-seta">↓</div>
-          <h2>Continuar Assistindo</h2>
-          <button className="clear-continue-btn" onClick={handleClearContinue}>Limpar histórico</button>
-          <div className="carousel-wrapper">
-            <button className="arrow left" onClick={() => scrollCarousel(-1)}>‹</button>
-            <div
-              className={`continuar-container ${visibleLastWatched.length <= 1 ? 'single' : ''}`}
-              ref={carouselRef}
-            >
-              {visibleLastWatched.map((video: any, index: number) => {
-                const desktopImage = video.thumbnail || video.bannerContinue || video.bannerMobile || '/assets/images/miniatura_fundamentos_mestre.png';
-                const mobileImage = video.bannerMobile || video.bannerContinue || video.thumbnail || desktopImage;
-                const selectedImage = isMobile ? mobileImage : desktopImage;
-                const cardStyle = selectedImage ? { backgroundImage: `url('${selectedImage}')` } : undefined;
-                const watchedSeconds = Number(video.watchedSeconds || 0);
-                const durationSeconds = Number(video.durationSeconds || 0);
-                const effectiveDuration = durationSeconds > 0 ? durationSeconds : Math.max(watchedSeconds, 1);
-                const progressPercent = effectiveDuration > 0 ? Math.min(100, Math.round((watchedSeconds / effectiveDuration) * 100)) : 0;
-                return (
-                <div
-                    key={video.id || video.videoId || video.video_id || video.url || index}
-                    className="continuar-card"
-                    style={cardStyle}
-                    role="button"
-                    title={video.title}
-                    onClick={() => {
-                      if (video.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(video.id)}`);
-                      else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`);
-                      else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`);
-                    }}
-                  >
-                    <div className="continuar-overlay">
-                      <p>{video.title}</p>
-                      {video.subjectName && <span className="continuar-subject">{video.subjectName}</span>}
-                      <div className="continuar-meta">
-                        {durationSeconds > 0 ? (
-                          <span className="dur">{Math.floor(durationSeconds/60)}:{String(Math.floor(durationSeconds%60)).padStart(2,'0')}</span>
-                        ) : (
-                          <span className="dur">{Math.max(1, Math.floor(watchedSeconds/60))} min vistos</span>
-                        )}
-                      </div>
-                      <div className="play-badge" aria-hidden>▶</div>
-                      <div className="continuar-progress">
-                        <div className="bar" style={{ width: `${progressPercent}%` }} />
-                      </div>
-                    </div>
+
+            {/* Stats */}
+            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-lg">
+              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center mb-1 text-mint">
+                  <CheckCircleIcon />
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalCompleted}</p>
+                <p className="text-xs text-slate mt-0.5">
+                  {totalCompleted === 1 ? 'Aula concluída' : 'Aulas concluídas'}
+                </p>
+              </div>
+              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center mb-1 text-mint">
+                  <LayersIcon />
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalLessons}</p>
+                <p className="text-xs text-slate mt-0.5">
+                  {totalLessons === 1 ? 'Aula disponível' : 'Aulas disponíveis'}
+                </p>
+              </div>
+              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                <div className="flex items-center justify-center mb-1 text-mint">
+                  <BookOpenIcon />
+                </div>
+                <p className="text-xl sm:text-2xl font-bold text-slate-white">{progressPercent}%</p>
+                <p className="text-xs text-slate mt-0.5">Concluído</p>
+                {/* Mini barra de progresso */}
+                {totalLessons > 0 && (
+                  <div className="mt-2 h-1 bg-navy-lighter rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-mint rounded-full transition-all duration-700"
+                      style={{ width: `${progressPercent}%` }}
+                    />
                   </div>
-                );
-              })}
+                )}
+              </div>
             </div>
-            <button className="arrow right" onClick={() => scrollCarousel(1)}>›</button>
-          </div>
-          <div className="section-arrow-wrap">
-            <button className="section-arrow" aria-label="Ir para Formação Ministerial" onClick={() => scrollToId('sec-formacao')}>
-              <span className="chevron" />
-            </button>
+
+            {/* CTAs */}
+            <div className="flex flex-wrap gap-3">
+              {visibleLastWatched.length > 0 && (
+                <button
+                  onClick={() => goToLesson(visibleLastWatched[0])}
+                  className="flex items-center gap-2 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                >
+                  <PlayIcon />
+                  Retomar aula
+                </button>
+              )}
+              <Link
+                to="/modulos-mestre"
+                className="flex items-center gap-2 px-5 py-2.5 bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
+              >
+                Explorar módulos
+              </Link>
+            </div>
           </div>
         </section>
-      ) : progressLoaded && mestreLessons.length > 0 ? (
-        <section id="sec-comecar" className="comecar-jornada">
-          <div className="comecar-card">
-            <div className="comecar-icon" aria-hidden>▶</div>
-            <div className="comecar-text">
-              <h3 className="comecar-title">Sua jornada começa agora</h3>
-              <p className="comecar-sub">
-                Você ainda não assistiu nenhuma aula. Acesse o primeiro módulo e comece sua formação ministerial.
+
+        {/* ── CONTINUAR ASSISTINDO ─────────────────────────────────────────── */}
+        {visibleLastWatched.length > 0 && (
+          <section className="py-8 sm:py-10 border-b border-slate/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="flex items-center justify-between mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-white">Continuar Assistindo</h2>
+                  <p className="text-sm text-slate mt-0.5">{visibleLastWatched.length} aula{visibleLastWatched.length !== 1 ? 's' : ''} em andamento</p>
+                </div>
+                <button
+                  onClick={() => setShowClearConfirm(true)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
+                >
+                  <TrashIcon />
+                  Limpar histórico
+                </button>
+              </div>
+
+              {/* Carrossel */}
+              <div className="relative">
+                <button
+                  onClick={() => scrollCarousel(-1)}
+                  className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex"
+                  aria-label="Anterior"
+                >
+                  <ChevronLeftIcon />
+                </button>
+
+                <div
+                  ref={carouselRef}
+                  className="flex gap-4 overflow-x-auto pb-2 scroll-smooth"
+                  style={{ scrollbarWidth: 'none' }}
+                >
+                  {visibleLastWatched.map((video: any, index: number) => {
+                    const desktopImg = video.thumbnail || video.bannerContinue || video.bannerMobile || '/assets/images/miniatura_fundamentos_mestre.png'
+                    const mobileImg = video.bannerMobile || video.bannerContinue || video.thumbnail || desktopImg
+                    const img = isMobile ? mobileImg : desktopImg
+                    const watchedSec = Number(video.watchedSeconds || 0)
+                    const durationSec = Number(video.durationSeconds || 0)
+                    const effectiveDur = durationSec > 0 ? durationSec : Math.max(watchedSec, 1)
+                    const pct = effectiveDur > 0 ? Math.min(100, Math.round((watchedSec / effectiveDur) * 100)) : 0
+
+                    return (
+                      <button
+                        key={video.id || video.videoId || video.video_id || video.url || index}
+                        onClick={() => goToLesson(video)}
+                        className="flex-none w-56 sm:w-64 group relative rounded-xl overflow-hidden bg-navy-lighter border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 hover:shadow-card-hover transition-all"
+                        title={video.title}
+                      >
+                        {/* Imagem */}
+                        <div className="relative h-36 bg-navy-lighter">
+                          {img && (
+                            <img src={img} alt={video.title} className="w-full h-full object-cover" />
+                          )}
+                          {/* Overlay play */}
+                          <div className="absolute inset-0 bg-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-mint/90 flex items-center justify-center text-navy shadow-mint">
+                              <PlayIcon />
+                            </div>
+                          </div>
+                        </div>
+                        {/* Info */}
+                        <div className="p-3">
+                          <p className="text-xs font-medium text-slate-white line-clamp-2 text-left">{video.title}</p>
+                          {video.subjectName && (
+                            <p className="text-xs text-mint/80 mt-1 truncate text-left">{video.subjectName}</p>
+                          )}
+                          {/* Barra de progresso */}
+                          <div className="mt-2 h-1 bg-navy rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-mint rounded-full transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <p className="text-xs text-slate/60 mt-1 text-left">
+                            {pct}% assistido
+                          </p>
+                        </div>
+                      </button>
+                    )
+                  })}
+                </div>
+
+                <button
+                  onClick={() => scrollCarousel(1)}
+                  className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex"
+                  aria-label="Próximo"
+                >
+                  <ChevronRightIcon />
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── CTA "Comece agora" (sem histórico, com conteúdo) ─────────────── */}
+        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && (
+          <section className="py-8 sm:py-10 border-b border-slate/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-mint/10 border border-mint/20 flex items-center justify-center flex-shrink-0">
+                  <div className="text-mint">
+                    <PlayIcon />
+                  </div>
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-lg font-bold text-slate-white">Sua jornada começa agora</h3>
+                  <p className="text-sm text-slate mt-1">
+                    Você ainda não assistiu nenhuma aula. Acesse o primeiro módulo e comece sua formação ministerial.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/modulos-mestre')}
+                  className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                >
+                  Acessar Módulo 1 →
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── FORMAÇÃO MINISTERIAL ─────────────────────────────────────────── */}
+        <section className="py-10 sm:py-14">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="mb-8 text-center">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-white">Sua Formação Ministerial</h2>
+              <p className="text-sm text-slate mt-2">
+                Explore as 5 formações do movimento Five One
               </p>
             </div>
-            <button
-              className="comecar-btn"
-              onClick={() => navigate('/modulos-mestre')}
-            >
-              Acessar Módulo 1 →
-            </button>
-          </div>
-        </section>
-      ) : null}
-      <section id="sec-formacao" className="formacao-ministerial">
-        {/* <div className="arrow-icon">↓</div> */}
-        <h2>Sua Formação Ministerial</h2>
-        <div className="formacao-container">
-          <div
-            className="formacao-item"
-            onClick={() => handleShowModal('Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleShowModal('Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.');
-              }
-            }}
-          >
-            <img src="/assets/images/apostolo.png" alt="Formação Apostólica em breve" loading="lazy" />
-          </div>
-          <div
-            className="formacao-item"
-            onClick={() => handleShowModal('Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleShowModal('Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.');
-              }
-            }}
-          >
-            <img src="/assets/images/profeta.png" alt="Formação Profética em breve" loading="lazy" />
-          </div>
-          <div
-            className="formacao-item"
-            onClick={() => handleShowModal('Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleShowModal('Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.');
-              }
-            }}
-          >
-            <img src="/assets/images/evangelista.png" alt="Formação Evangelística em breve" loading="lazy" />
-          </div>
-          <div
-            className="formacao-item"
-            onClick={() => handleShowModal('Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.')}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter' || event.key === ' ') {
-                event.preventDefault();
-                handleShowModal('Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.');
-              }
-            }}
-          >
-            <img src="/assets/images/pastor.png" alt="Formação Pastoral em breve" loading="lazy" />
-          </div>
-          <Link to="/modulos-mestre" className="formacao-item" aria-label="Acessar formação Mestre">
-            <img src="/assets/images/mestre.png" alt="Formação Mestre" loading="lazy" />
-          </Link>
-        </div>
-        {modalState && (
-          <div className="custom-modal-overlay" role="dialog" aria-modal="true" onClick={handleCloseModal}>
-            <div className="custom-modal" onClick={(e) => e.stopPropagation()}>
-              {modalState.title && <h3>{modalState.title}</h3>}
-              <p>{modalState.message}</p>
-              {modalState.onConfirm ? (
-                <div className="custom-modal-actions">
-                  <button type="button" className="custom-modal-button secondary" onClick={handleCloseModal}>
-                    {modalState.cancelLabel || 'Cancelar'}
+
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+              {FORMACOES.map((formacao) =>
+                formacao.active ? (
+                  <Link
+                    key={formacao.id}
+                    to={formacao.route!}
+                    className="group relative rounded-2xl overflow-hidden border border-mint/30 hover:border-mint/60 hover:-translate-y-1 hover:shadow-mint transition-all"
+                    aria-label={`Acessar formação ${formacao.label}`}
+                  >
+                    <img
+                      src={formacao.img}
+                      alt={formacao.label}
+                      loading="lazy"
+                      className="w-full aspect-square object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                      <span className="text-xs font-semibold text-mint">Acessar →</span>
+                    </div>
+                  </Link>
+                ) : (
+                  <button
+                    key={formacao.id}
+                    onClick={() => setEmBreveMessage(formacao.message ?? null)}
+                    className="group relative rounded-2xl overflow-hidden border border-slate/20 hover:border-slate/40 hover:-translate-y-0.5 hover:shadow-card transition-all opacity-70 hover:opacity-90"
+                    aria-label={`${formacao.label} — em breve`}
+                  >
+                    <img
+                      src={formacao.img}
+                      alt={`${formacao.label} - em breve`}
+                      loading="lazy"
+                      className="w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all"
+                    />
+                    <div className="absolute top-2 right-2">
+                      <span className="text-2xs font-semibold text-slate bg-navy/80 border border-slate/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                        Em breve
+                      </span>
+                    </div>
                   </button>
-                  <button type="button" className="custom-modal-button primary" onClick={handleModalConfirm}>
-                    {modalState.confirmLabel || 'Confirmar'}
-                  </button>
-                </div>
-              ) : (
-                <div className="custom-modal-actions single">
-                  <button type="button" className="custom-modal-button primary" onClick={handleCloseModal}>
-                    Fechar
-                  </button>
-                </div>
+                )
               )}
             </div>
           </div>
+        </section>
+
+        {/* ── SKELETON (carregando progresso) ──────────────────────────────── */}
+        {!progressLoaded && (
+          <div className="sr-only" aria-live="polite" aria-label="Carregando progresso..." />
         )}
-      </section>
+      </main>
+
+      {/* ── MODAL "EM BREVE" ────────────────────────────────────────────────── */}
+      <Modal
+        open={!!emBreveMessage}
+        onClose={() => setEmBreveMessage(null)}
+        title="Em breve"
+        size="sm"
+      >
+        <p className="text-sm text-slate-light leading-relaxed">{emBreveMessage}</p>
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={() => setEmBreveMessage(null)}
+            className="px-4 py-2 bg-mint text-navy text-sm font-semibold rounded-xl hover:bg-mint/90 transition-colors"
+          >
+            Entendido
+          </button>
+        </div>
+      </Modal>
+
+      {/* ── MODAL LIMPAR HISTÓRICO ───────────────────────────────────────────── */}
+      <ConfirmModal
+        open={showClearConfirm}
+        onClose={() => setShowClearConfirm(false)}
+        onConfirm={() => { void handleClearHistory() }}
+        title="Limpar histórico"
+        description="Ao limpar o histórico, todas as aulas que não foram concluídas terão o progresso reiniciado. As aulas já concluídas continuarão marcadas como concluídas. Deseja continuar?"
+        confirmLabel="Limpar histórico"
+        loading={clearing}
+        danger
+      />
     </>
-  );
-};
+  )
+}
 
-const AppRouter = () => {
-  return <PaginaInicial />;
-};
+const AppRouter = () => <PaginaInicial />
 
-export default AppRouter;
+export default AppRouter
