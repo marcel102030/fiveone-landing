@@ -10,6 +10,7 @@ export type PlatformUser = {
 };
 
 export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
+export const FORMATION_KEYS: FormationKey[] = ['APOSTOLO', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MESTRE'];
 export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
 export type PlatformUserCreateInput = PlatformUser & { password: string };
 
