@@ -77,7 +77,7 @@ function renderCommentText(text: string) {
   text.replace(mentionRegex, (match, _p1, offset) => {
     pushPlain(text.slice(cursor, offset));
     elements.push(
-      <span key={`mention-${key++}`} className="comment-mention">
+      <span key={`mention-${key++}`} className="text-mint font-medium">
         {match}
       </span>
     );
@@ -202,10 +202,13 @@ function MentionTextarea({ value, onChange, placeholder, disabled, autoFocus, on
   };
 
   return (
-    <div className="comment-composer">
+    <div className="relative">
       <textarea
         ref={textareaRef}
-        className="comments-input"
+        className="w-full bg-navy-lighter border border-slate/20 rounded-xl px-3 py-2 text-sm
+                   text-slate-white placeholder-slate resize-none
+                   focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/30
+                   transition-colors disabled:opacity-50"
         value={value}
         onChange={handleChange}
         onKeyDown={handleKeyDown}
@@ -216,30 +219,34 @@ function MentionTextarea({ value, onChange, placeholder, disabled, autoFocus, on
         rows={Math.min(4, Math.max(1, value.split(/\n/).length))}
       />
       {mentionState && suggestions.length > 0 && (
-        <div className="mention-suggestions">
+        <div className="absolute z-50 left-0 mt-1 w-64 bg-navy-lighter border border-slate/20 rounded-xl shadow-card overflow-hidden">
           {suggestions.map((option) => (
             <button
               key={option.email}
               type="button"
-              className="mention-suggestion"
+              className="flex items-center gap-2 w-full px-3 py-2 text-left hover:bg-navy-lighter/80 transition-colors"
               onMouseDown={(evt) => {
                 evt.preventDefault();
                 insertMention(option);
               }}
             >
-              <span className={`mention-avatar ${option.avatarUrl ? 'mention-avatar--image' : ''}`}>
-                {option.avatarUrl ? <img src={option.avatarUrl} alt={option.name} /> : option.initials}
+              <span className="w-7 h-7 rounded-full bg-navy flex items-center justify-center flex-shrink-0 text-xs font-bold text-mint overflow-hidden">
+                {option.avatarUrl
+                  ? <img src={option.avatarUrl} alt={option.name} className="w-full h-full object-cover" />
+                  : option.initials}
               </span>
-              <span className="mention-info">
-                <strong>{option.name}</strong>
-                <small>{option.email}</small>
+              <span className="min-w-0">
+                <strong className="block text-sm text-slate-white truncate">{option.name}</strong>
+                <small className="block text-xs text-slate truncate">{option.email}</small>
               </span>
             </button>
           ))}
         </div>
       )}
       {mentionState && loadingSuggestions && suggestions.length === 0 && (
-        <div className="mention-suggestions mention-suggestions--loading">Procurando alunos…</div>
+        <div className="absolute z-50 left-0 mt-1 w-48 bg-navy-lighter border border-slate/20 rounded-xl shadow-card px-3 py-2 text-xs text-slate">
+          Procurando alunos…
+        </div>
       )}
     </div>
   );
@@ -433,55 +440,74 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     const isCollapsed = typeof storedCollapsed === "boolean" ? storedCollapsed : defaultCollapsed;
 
     return (
-      <li key={comment.id} className={`comment-item ${depth > 0 ? 'comment-item--reply' : ''}`}>
-        <div className="comment-main">
-          <div className={`comment-avatar ${comment.author.avatarUrl ? 'comment-avatar--image' : 'comment-avatar--initials'}`}>
-            {comment.author.avatarUrl ? (
-              <img src={comment.author.avatarUrl} alt={`Logo do aluno ${comment.author.name}`} />
-            ) : (
-              <span>{comment.author.initials}</span>
-            )}
+      <li key={comment.id} className={depth > 0 ? "ml-10" : ""}>
+        <div className="flex gap-3 py-3 border-b border-slate/10">
+          {/* Avatar */}
+          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-navy-lighter border border-slate/20
+                          flex items-center justify-center text-xs font-bold text-mint overflow-hidden">
+            {comment.author.avatarUrl
+              ? <img src={comment.author.avatarUrl} alt={`Avatar ${comment.author.name}`} className="w-full h-full object-cover" />
+              : <span>{comment.author.initials}</span>
+            }
           </div>
-          <div className="comment-body">
-            <div className="comment-author-block">
-              <span className="comment-author">{comment.author.name}</span>
-              <span className="comment-dot">—</span>
-              <span className="comment-time" title={new Date(comment.ts).toLocaleString("pt-BR")}>{relativeTime(comment.ts)}</span>
+
+          {/* Body */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-sm font-semibold text-slate-white">{comment.author.name}</span>
+              <span className="text-xs text-slate" title={new Date(comment.ts).toLocaleString("pt-BR")}>
+                {relativeTime(comment.ts)}
+              </span>
             </div>
-            <div className="comment-text">{renderCommentText(comment.text)}</div>
-            <div className="comment-actions">
-              <button type="button" className="comment-action" onClick={() => handleLike(comment.id)} disabled={!userId || likedIds.has(comment.id)}>
-                <FiThumbsUp /> Gostei {comment.likes > 0 && <span className="comment-likes-count">{comment.likes}</span>}
+            <div className="text-sm text-slate-light mt-1 leading-relaxed">
+              {renderCommentText(comment.text)}
+            </div>
+
+            {/* Actions */}
+            <div className="flex items-center gap-3 mt-2">
+              <button
+                type="button"
+                onClick={() => handleLike(comment.id)}
+                disabled={!userId || likedIds.has(comment.id)}
+                className={`flex items-center gap-1 text-xs transition-colors
+                            ${likedIds.has(comment.id) ? 'text-mint' : 'text-slate hover:text-slate-white'}
+                            disabled:cursor-not-allowed`}
+              >
+                <FiThumbsUp className="w-3.5 h-3.5" />
+                Gostei {comment.likes > 0 && <span className="ml-0.5">{comment.likes}</span>}
               </button>
               <button
                 type="button"
-                className="comment-action"
                 onClick={() => {
                   if (!userId) return;
                   setActiveReply((prev) => (prev === comment.id ? null : comment.id));
                   setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
                 }}
                 disabled={!userId}
+                className="flex items-center gap-1 text-xs text-slate hover:text-slate-white transition-colors disabled:cursor-not-allowed"
               >
-                <FiMessageCircle /> Responder
+                <FiMessageCircle className="w-3.5 h-3.5" />
+                Responder
               </button>
             </div>
+
+            {/* Toggle replies */}
             {comment.replies.length > 0 && (
               <button
                 type="button"
-                className={`comment-toggle ${isCollapsed ? 'is-collapsed' : ''}`}
-                onClick={() => {
-                  toggleReplies(comment.id, !isCollapsed);
-                }}
+                className="flex items-center gap-1 text-xs text-mint hover:underline mt-2"
+                onClick={() => toggleReplies(comment.id, !isCollapsed)}
               >
-                {isCollapsed ? <FiChevronRight /> : <FiChevronDown />}
+                {isCollapsed ? <FiChevronRight className="w-3.5 h-3.5" /> : <FiChevronDown className="w-3.5 h-3.5" />}
                 {isCollapsed
                   ? `Mostrar ${comment.replies.length} ${comment.replies.length === 1 ? 'resposta' : 'respostas'}`
                   : `Ocultar ${comment.replies.length} ${comment.replies.length === 1 ? 'resposta' : 'respostas'}`}
               </button>
             )}
+
+            {/* Reply form */}
             {activeReply === comment.id && (
-              <div className="comment-reply">
+              <div className="mt-3 space-y-2">
                 <MentionTextarea
                   value={replyDrafts[comment.id] || ''}
                   onChange={(value) => setReplyDrafts((prev) => ({ ...prev, [comment.id]: value }))}
@@ -490,16 +516,30 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                   autoFocus
                   onSubmit={() => handleReplySubmit(comment.id)}
                 />
-                <div className="comment-reply-actions">
-                  <button type="button" className="comment-cancel" onClick={() => setActiveReply(null)}>Cancelar</button>
-                  <button type="button" className="comment-send" onClick={() => handleReplySubmit(comment.id)} disabled={!userId}>
-                    <FiSend /> Enviar
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    className="text-xs text-slate hover:text-slate-white transition-colors"
+                    onClick={() => setActiveReply(null)}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg
+                               bg-mint text-navy hover:bg-mint/90 transition-colors disabled:opacity-40"
+                    onClick={() => handleReplySubmit(comment.id)}
+                    disabled={!userId}
+                  >
+                    <FiSend className="w-3 h-3" /> Enviar
                   </button>
                 </div>
               </div>
             )}
+
+            {/* Replies */}
             {comment.replies.length > 0 && !isCollapsed && (
-              <ul className="comment-replies">
+              <ul className="mt-1 border-l-2 border-slate/20 pl-3">
                 {comment.replies.map((reply) => renderThread(reply, depth + 1))}
               </ul>
             )}
@@ -510,14 +550,14 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   };
 
   const renderSkeleton = () => (
-    <div className="comments-skeleton" aria-busy="true" aria-label="Carregando comentários">
+    <div className="space-y-4" aria-busy="true" aria-label="Carregando comentários">
       {[1, 2, 3].map((i) => (
-        <div key={i} className="comment-skeleton-item">
-          <div className="skeleton-avatar" />
-          <div className="skeleton-body">
-            <div className="skeleton-line skeleton-line--name" />
-            <div className="skeleton-line skeleton-line--text" />
-            <div className="skeleton-line skeleton-line--text skeleton-line--short" />
+        <div key={i} className="flex gap-3 py-3 border-b border-slate/10">
+          <div className="w-8 h-8 rounded-full bg-navy-lighter animate-pulse flex-shrink-0" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 bg-navy-lighter rounded animate-pulse w-1/4" />
+            <div className="h-3 bg-navy-lighter rounded animate-pulse w-3/4" />
+            <div className="h-3 bg-navy-lighter rounded animate-pulse w-1/2" />
           </div>
         </div>
       ))}
@@ -525,13 +565,15 @@ export default function CommentSection({ videoId }: { videoId: string }) {
   );
 
   return (
-    <div className="comments-wrap comments-modern">
-      <div className="comments-header">
-        <h4>Comentários</h4>
-        <span className="comments-counter">{countLabel}</span>
+    <div className="mt-8">
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-4">
+        <h4 className="text-base font-semibold text-slate-white">Comentários</h4>
+        <span className="text-xs text-slate bg-navy-lighter px-2 py-0.5 rounded-full">{countLabel}</span>
       </div>
 
-      <form onSubmit={handleSubmit} className="comments-form comments-form--stack">
+      {/* Form */}
+      <form onSubmit={handleSubmit} className="flex flex-col gap-2 mb-6">
         <MentionTextarea
           value={text}
           onChange={setText}
@@ -539,19 +581,28 @@ export default function CommentSection({ videoId }: { videoId: string }) {
           disabled={!userId}
           onSubmit={() => submitComment(text, null, () => setText(""))}
         />
-        <button className="comments-send" type="submit" disabled={!userId}>
-          <FiSend /> Enviar
-        </button>
+        <div className="flex justify-end">
+          <button
+            className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg
+                       bg-mint text-navy hover:bg-mint/90 transition-colors
+                       disabled:opacity-40 disabled:cursor-not-allowed"
+            type="submit"
+            disabled={!userId}
+          >
+            <FiSend className="w-3.5 h-3.5" /> Enviar
+          </button>
+        </div>
       </form>
 
+      {/* List */}
       {isLoading ? (
         renderSkeleton()
       ) : threads.length > 0 ? (
-        <ul className="comments-list">
+        <ul className="divide-y divide-transparent">
           {threads.map((comment) => renderThread(comment))}
         </ul>
       ) : (
-        <div className="comment-empty">Seja o primeiro a comentar.</div>
+        <div className="text-sm text-slate text-center py-6">Seja o primeiro a comentar.</div>
       )}
     </div>
   );

@@ -66,14 +66,41 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
   }
 
   return (
-    <div className="reaction-bar reaction-modern">
-      <button className={`react-btn thumb up ${selected === "like" ? "active" : ""}`} onClick={() => toggle("like")} aria-label="Curtir">
-        <span className="icon" aria-hidden />
-        <span className="react-count">{counts.like}</span>
+    <div className="flex items-center gap-2">
+      {/* Curtir */}
+      <button
+        onClick={() => toggle("like")}
+        aria-label="Curtir"
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+          selected === "like"
+            ? "bg-mint/20 text-mint border border-mint/40"
+            : "bg-navy-lighter text-slate hover:text-slate-white border border-transparent"
+        }`}
+      >
+        {/* Thumbs-up SVG */}
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3z"/>
+          <path d="M7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+        </svg>
+        <span>{counts.like > 0 ? counts.like : ""}</span>
       </button>
-      <button className={`react-btn thumb down ${selected === "dislike" ? "active" : ""}`} onClick={() => toggle("dislike")} aria-label="Não curtir">
-        <span className="icon" aria-hidden />
-        <span className="react-count">{counts.dislike}</span>
+
+      {/* Não curtir */}
+      <button
+        onClick={() => toggle("dislike")}
+        aria-label="Não curtir"
+        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+          selected === "dislike"
+            ? "bg-red-500/20 text-red-400 border border-red-500/40"
+            : "bg-navy-lighter text-slate hover:text-slate-white border border-transparent"
+        }`}
+      >
+        {/* Thumbs-down SVG */}
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3z"/>
+          <path d="M17 2h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/>
+        </svg>
+        <span>{counts.dislike > 0 ? counts.dislike : ""}</span>
       </button>
     </div>
   );

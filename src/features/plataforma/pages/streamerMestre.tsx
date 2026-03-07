@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import './streamerMestre.css';
-import '../components/Streamer/streamerShared.css';
 import ReactionBar from '../components/Streamer/ReactionBar';
 import CommentSection from '../components/Streamer/CommentSection';
+import NotesPanel from '../components/Streamer/NotesPanel';
 import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../../shared/utils/user';
@@ -18,8 +17,11 @@ import {
 import { LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
 import SubjectDropdown, { SubjectOption } from '../components/SubjectDropdown/SubjectDropdown';
 import { openStoredFile } from '../../../shared/utils/storedFile';
+import { ConfirmModal } from '../../../shared/components/ui';
+import { isFavorite, toggleFavorite } from '../services/favorites';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 
-
+// ── Utility: slugify ────────────────────────────────────────────────────────
 const slugify = (value: string): string =>
   value
     .trim()
@@ -31,29 +33,14 @@ const slugify = (value: string): string =>
 
 const decodeHtmlEntities = (value: string): string => {
   let out = value;
-  // Alguns conteúdos do banco podem vir com entidades duplicadas (ex: &amp;amp;).
   for (let i = 0; i < 4; i += 1) {
     const prev = out;
     out = prev
-      // Ampersand
-      .replace(/&amp;/gi, '&')
-      .replace(/&#0*38;/gi, '&')
-      .replace(/&#x0*26;/gi, '&')
-      // Quotes
-      .replace(/&quot;/gi, '"')
-      .replace(/&#0*34;/gi, '"')
-      .replace(/&#x0*22;/gi, '"')
-      // Apostrophe
-      .replace(/&apos;/gi, "'")
-      .replace(/&#0*39;/gi, "'")
-      .replace(/&#x0*27;/gi, "'")
-      // Angle brackets (às vezes o iframe inteiro vem como &lt;iframe ...&gt;)
-      .replace(/&lt;/gi, '<')
-      .replace(/&#0*60;/gi, '<')
-      .replace(/&#x0*3c;/gi, '<')
-      .replace(/&gt;/gi, '>')
-      .replace(/&#0*62;/gi, '>')
-      .replace(/&#x0*3e;/gi, '>');
+      .replace(/&amp;/gi, '&').replace(/&#0*38;/gi, '&').replace(/&#x0*26;/gi, '&')
+      .replace(/&quot;/gi, '"').replace(/&#0*34;/gi, '"').replace(/&#x0*22;/gi, '"')
+      .replace(/&apos;/gi, "'").replace(/&#0*39;/gi, "'").replace(/&#x0*27;/gi, "'")
+      .replace(/&lt;/gi, '<').replace(/&#0*60;/gi, '<').replace(/&#x0*3c;/gi, '<')
+      .replace(/&gt;/gi, '>').replace(/&#0*62;/gi, '>').replace(/&#x0*3e;/gi, '>');
     if (out === prev) break;
   }
   return out;
@@ -67,12 +54,7 @@ const maybeDecodeURIComponentUrl = (value: string): string => {
       out.startsWith('%2F%2F') ||
       out.startsWith('%2f%2f');
     if (!looksEncodedUrl) break;
-    try {
-      const decoded = decodeURIComponent(out);
-      out = decoded;
-    } catch {
-      break;
-    }
+    try { out = decodeURIComponent(out); } catch { break; }
   }
   return out;
 };
@@ -94,268 +76,107 @@ const decodeHtmlUrl = (value: string): string => {
   if (out.startsWith('//')) out = `https:${out}`;
   return out;
 };
+
 const extractEmbedSrc = (raw?: string | null): string | null => {
   if (!raw) return null;
   const trimmed = raw.trim();
   if (!trimmed) return null;
-  const decoded = decodeHtmlEntities(trimmed);
-  const decodedMaybeUrl = decodeHtmlUrl(decoded);
-  if (/^https?:\/\//i.test(decodedMaybeUrl)) return decodedMaybeUrl;
-  const doubleMatch = decoded.match(/src\s*=\s*"([^"]+)"/i);
-  if (doubleMatch?.[1]) return decodeHtmlUrl(doubleMatch[1]);
-  const singleMatch = decoded.match(/src\s*=\s*'([^']+)'/i);
-  if (singleMatch?.[1]) return decodeHtmlUrl(singleMatch[1]);
-  const unquotedMatch = decoded.match(/src\s*=\s*([^\s>]+)/i);
-  if (unquotedMatch?.[1]) return decodeHtmlUrl(unquotedMatch[1].replace(/^['"]|['"]$/g, ''));
-  try {
-    if (typeof DOMParser !== 'undefined') {
-      const doc = new DOMParser().parseFromString(decoded, 'text/html');
-      const src = doc.querySelector('iframe')?.getAttribute('src');
-      if (src) return decodeHtmlUrl(src);
+
+  if (trimmed.startsWith('<')) {
+    const decoded = decodeHtmlEntities(trimmed);
+    const srcMatch = decoded.match(/\bsrc=["']([^"']+)["']/i);
+    if (srcMatch?.[1]) {
+      const candidate = decodeHtmlUrl(srcMatch[1]);
+      if (/^https?:\/\//i.test(candidate)) return candidate;
     }
+    return null;
+  }
+
+  const candidate = decodeHtmlUrl(trimmed);
+  if (/^https?:\/\//i.test(candidate)) return candidate;
+  return null;
+};
+
+const normaliseVimeoUrl = (raw: string): string => {
+  try {
+    const url = new URL(raw);
+    if (!url.searchParams.has('badge')) url.searchParams.set('badge', '0');
+    if (!url.searchParams.has('autopause')) url.searchParams.set('autopause', '0');
+    if (!url.searchParams.has('player_id')) url.searchParams.set('player_id', '0');
+    if (!url.searchParams.has('app_id')) url.searchParams.set('app_id', '58479');
+    return url.toString();
+  } catch {
+    return raw;
+  }
+};
+
+const isYouTubeUrl = (url: string): boolean =>
+  /(?:youtube\.com|youtu\.be)/i.test(url);
+
+const extractYouTubeVideoId = (url: string): string | null => {
+  try {
+    const u = new URL(url);
+    const fromEmbed = u.pathname.match(/\/embed\/([^/?#]+)/i);
+    if (fromEmbed?.[1]) return fromEmbed[1];
+    const fromV = u.searchParams.get('v');
+    if (fromV) return fromV;
+    const fromShort = u.hostname === 'youtu.be' ? u.pathname.slice(1).split('/')[0] : null;
+    if (fromShort) return fromShort;
   } catch {}
   return null;
 };
 
-const normaliseVimeoUrl = (url: string): string => {
-  if (!url) return url;
-  const cleanUrl = decodeHtmlUrl(url).trim();
-  if (!cleanUrl) return url;
-  // Caso comum: salvar apenas o ID numérico do Vimeo.
-  if (/^\d+$/.test(cleanUrl)) {
-    return `https://player.vimeo.com/video/${cleanUrl}`;
-  }
-
-  const parsed = (() => {
-    try {
-      return new URL(cleanUrl);
-    } catch {
-      return null;
-    }
-  })();
-  if (!parsed) return url;
-
-  const normaliseParamKey = (key: string): string => {
-    let out = key.trim();
-    if (!out) return '';
-    // Corrige URLs vindas de HTML (ex: "...&amp;h=..." vira "amp;h" como chave).
-    for (let i = 0; i < 4; i += 1) {
-      const lower = out.toLowerCase();
-      if (lower.startsWith('amp;')) {
-        out = out.slice(4);
-        continue;
-      }
-      break;
-    }
-    out = out.trim();
-    // Se a chave contém '=' geralmente é sinal de query corrompida (ex: "amp;=auto").
-    if (!out || out.includes('=')) return '';
-    return out;
-  };
-
-  const findVideoId = (): string | null => {
-    // player.vimeo.com/video/<id>
-    const direct = parsed.pathname.match(/\/video\/(\d+)/i);
-    if (direct?.[1]) return direct[1];
-    // Links do Vimeo vêm em vários formatos (channels, groups, etc). Pega o último segmento numérico.
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    for (let i = segments.length - 1; i >= 0; i -= 1) {
-      if (/^\d+$/.test(segments[i])) return segments[i];
-    }
-    const clip = parsed.searchParams.get('clip_id');
-    if (clip && /^\d+$/.test(clip)) return clip;
-    return null;
-  };
-
-  const videoId = findVideoId();
-  if (!videoId) return url;
-
-  let hParam = parsed.searchParams.get('h');
-  if (!hParam) {
-    for (const [key, value] of parsed.searchParams.entries()) {
-      const normalized = normaliseParamKey(key);
-      if (normalized.toLowerCase() === 'h' && value) {
-        hParam = value;
-        break;
-      }
-    }
-  }
-  if (!hParam) {
-    const segments = parsed.pathname.split('/').filter(Boolean);
-    const idx = segments.lastIndexOf(videoId);
-    const maybeHash = idx >= 0 ? segments[idx + 1] : null;
-    if (maybeHash && /^[0-9a-z]+$/i.test(maybeHash)) hParam = maybeHash;
-  }
-
-  const out = new URL(`https://player.vimeo.com/video/${videoId}`);
-
-  // Mantém apenas parâmetros relevantes (evita query corrompida derrubar embeds, ex: perder o `h=`).
-  const allowed = new Set([
-    'h',
-    'app_id',
-    'autoplay',
-    'player_id',
-    'muted',
-    'loop',
-    'controls',
-    'title',
-    'byline',
-    'portrait',
-    'badge',
-    'autopause',
-    'dnt',
-    'pip',
-    'playsinline',
-  ]);
-  parsed.searchParams.forEach((value, key) => {
-    const normalizedKey = normaliseParamKey(key);
-    if (!normalizedKey) return;
-    if (!allowed.has(normalizedKey)) return;
-    out.searchParams.set(normalizedKey, value);
-  });
-  if (hParam) out.searchParams.set('h', hParam);
-  out.searchParams.delete('background');
-  if (out.searchParams.get('controls') === '0') out.searchParams.set('controls', '1');
-  // Regra da plataforma: a aula deve abrir pausada para o aluno iniciar no play.
-  out.searchParams.set('autoplay', '0');
-
-  return out.toString();
-};
-
-const isYouTubeUrl = (url: string): boolean => /(?:youtube\.com|youtu\.be)/i.test(url);
-
-const extractYouTubeVideoId = (url: string): string | null => {
+const parseYouTubeStart = (url: string): number => {
   try {
-    const parsed = new URL(url);
-    const host = parsed.hostname.replace(/^www\./, '').toLowerCase();
-    if (host === 'youtu.be') {
-      const id = parsed.pathname.replace(/^\//, '').split('/')[0];
-      return id || null;
+    const u = new URL(url);
+    const start = u.searchParams.get('start') || u.searchParams.get('t');
+    if (start) {
+      const n = Number(start);
+      if (Number.isFinite(n) && n > 0) return Math.floor(n);
     }
-    const embed = parsed.pathname.match(/\/embed\/([^/?]+)/i);
-    if (embed?.[1]) return embed[1];
-    const watch = parsed.searchParams.get('v');
-    if (watch) return watch;
-    const shorts = parsed.pathname.match(/\/shorts\/([^/?]+)/i);
-    if (shorts?.[1]) return shorts[1];
-    return null;
-  } catch {
-    return null;
-  }
+  } catch {}
+  return 0;
 };
 
-function parseYouTubeStart(raw: string | null): number | null {
-  if (!raw) return null;
-  const value = raw.trim();
-  if (!value) return null;
-  if (/^\d+$/.test(value)) return Number(value);
-  let seconds = 0;
-  const h = value.match(/(\d+)\s*h/i);
-  const m = value.match(/(\d+)\s*m/i);
-  const s = value.match(/(\d+)\s*s/i);
-  if (!h && !m && !s) return null;
-  if (h) seconds += Number(h[1]) * 3600;
-  if (m) seconds += Number(m[1]) * 60;
-  if (s) seconds += Number(s[1]);
-  return seconds > 0 ? seconds : null;
-}
-
-const normaliseYouTubeUrl = (url: string): string => {
-  if (!url) return url;
-  const cleanUrl = url.trim();
-  if (!cleanUrl) return url;
-
-  const asUrl = (() => {
-    try {
-      return new URL(cleanUrl);
-    } catch {
-      return null;
-    }
-  })();
-  if (!asUrl) return url;
-
-  const host = asUrl.hostname.replace(/^www\./, "").toLowerCase();
-  const isShort = host === "youtu.be";
-  const isYouTube = host.endsWith("youtube.com") || isShort;
-  if (!isYouTube) return url;
-
-  const start =
-    parseYouTubeStart(asUrl.searchParams.get("start")) ?? parseYouTubeStart(asUrl.searchParams.get("t"));
-
-  const embed = (() => {
-    // Se já for embed, mantém o path.
-    const embedMatch = asUrl.pathname.match(/\/embed\/([^/]+)/i);
-    if (embedMatch?.[1]) return `https://www.youtube.com/embed/${embedMatch[1]}`;
-
-    // youtu.be/<id>
-    if (isShort) {
-      const id = asUrl.pathname.replace(/^\//, "").split("/")[0];
-      if (id) return `https://www.youtube.com/embed/${id}`;
-    }
-
-    // /watch?v=<id>
-    const watchId = asUrl.searchParams.get("v");
-    if (watchId) return `https://www.youtube.com/embed/${watchId}`;
-
-    // /shorts/<id>
-    const shortsMatch = asUrl.pathname.match(/\/shorts\/([^/]+)/i);
-    if (shortsMatch?.[1]) return `https://www.youtube.com/embed/${shortsMatch[1]}`;
-
-    return asUrl.toString();
-  })();
-
-  const out = (() => {
-    try {
-      return new URL(embed);
-    } catch {
-      return null;
-    }
-  })();
-  if (!out) return embed;
-
-  out.searchParams.set("enablejsapi", "1");
-  out.searchParams.set("playsinline", "1");
-  out.searchParams.set("rel", "0");
-  // Regra da plataforma: a aula deve abrir pausada para o aluno iniciar no play.
-  out.searchParams.set("autoplay", "0");
-  if (typeof window !== "undefined") {
-    if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-      out.searchParams.set("origin", window.location.origin);
-    }
+const normaliseYouTubeUrl = (raw: string): string => {
+  try {
+    const videoId = extractYouTubeVideoId(raw);
+    if (!videoId) return raw;
+    const start = parseYouTubeStart(raw);
+    const out = new URL(`https://www.youtube.com/embed/${videoId}`);
+    out.searchParams.set('enablejsapi', '1');
+    out.searchParams.set('origin', window.location.origin);
+    out.searchParams.set('rel', '0');
+    if (start > 0) out.searchParams.set('start', String(start));
+    return out.toString();
+  } catch {
+    return raw;
   }
-  if (typeof start === "number" && Number.isFinite(start) && start > 0) {
-    out.searchParams.set("start", String(Math.floor(start)));
-  }
-  return out.toString();
 };
 
 declare global {
   interface Window {
-    YT?: any;
-    onYouTubeIframeAPIReady?: () => void;
+    YT: any;
+    onYouTubeIframeAPIReady: (() => void) | undefined;
   }
 }
 
 let youtubeApiPromise: Promise<void> | null = null;
 
 function ensureYouTubeApi(): Promise<void> {
-  if (typeof window === "undefined") {
-    return Promise.reject(new Error("YouTube API requires window"));
-  }
+  if (typeof window === 'undefined') return Promise.reject(new Error('YouTube API requires window'));
   if (window.YT?.Player) return Promise.resolve();
   if (youtubeApiPromise) return youtubeApiPromise;
 
   youtubeApiPromise = new Promise<void>((resolve, reject) => {
     const timeout = window.setTimeout(() => {
       youtubeApiPromise = null;
-      reject(new Error("Timeout ao carregar YouTube IFrame API"));
+      reject(new Error('Timeout ao carregar YouTube IFrame API'));
     }, 15_000);
 
     const prev = window.onYouTubeIframeAPIReady;
     window.onYouTubeIframeAPIReady = () => {
-      try {
-        if (typeof prev === "function") prev();
-      } catch {}
+      try { if (typeof prev === 'function') prev(); } catch {}
       window.clearTimeout(timeout);
       resolve();
     };
@@ -363,13 +184,13 @@ function ensureYouTubeApi(): Promise<void> {
     const existing = document.querySelector('script[src="https://www.youtube.com/iframe_api"]');
     if (existing) return;
 
-    const script = document.createElement("script");
-    script.src = "https://www.youtube.com/iframe_api";
+    const script = document.createElement('script');
+    script.src = 'https://www.youtube.com/iframe_api';
     script.async = true;
     script.onerror = () => {
       window.clearTimeout(timeout);
       youtubeApiPromise = null;
-      reject(new Error("Falha ao carregar YouTube IFrame API"));
+      reject(new Error('Falha ao carregar YouTube IFrame API'));
     };
     document.head.appendChild(script);
   });
@@ -404,12 +225,10 @@ type DeferredIframeProps = {
   allow: string;
   onReady: () => void;
   onError: (message: string) => void;
+  className?: string;
 };
 
-// DeferredIframe simplificado: sempre chama onReady no onLoad.
-// Os SDKs do YouTube e Vimeo também chamam markPlayerReady, que é idempotente.
-// Não usar managedBySdk — era frágil quando o SDK já estava em cache.
-const DeferredIframe = ({ src, title, allow, onReady, onError }: DeferredIframeProps) => {
+const DeferredIframe = ({ src, title, allow, onReady, onError, className }: DeferredIframeProps) => {
   if (!src || src === 'about:blank') return null;
   return (
     <iframe
@@ -418,6 +237,7 @@ const DeferredIframe = ({ src, title, allow, onReady, onError }: DeferredIframeP
       title={title}
       frameBorder="0"
       allow={allow}
+      className={className}
       onLoad={(event) => {
         if (!src || src === 'about:blank') return;
         try {
@@ -470,16 +290,10 @@ const resolveExternalVideoUrl = (lesson: LessonRef | null | undefined, embedSrc:
           for (const [key, value] of url.searchParams.entries()) {
             let normalized = key.trim();
             for (let i = 0; i < 4; i += 1) {
-              if (normalized.toLowerCase().startsWith('amp;')) {
-                normalized = normalized.slice(4);
-                continue;
-              }
+              if (normalized.toLowerCase().startsWith('amp;')) { normalized = normalized.slice(4); continue; }
               break;
             }
-            if (normalized.toLowerCase() === 'h' && value) {
-              h = value;
-              break;
-            }
+            if (normalized.toLowerCase() === 'h' && value) { h = value; break; }
           }
         }
         if (!h) {
@@ -522,10 +336,7 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
         if (!base || base === canonicalBase) continue;
         const candidateKey = `fiveone_progress::${base}`;
         const candidate = localStorage.getItem(candidateKey);
-        if (candidate) {
-          keyUsed = candidateKey;
-          return candidate;
-        }
+        if (candidate) { keyUsed = candidateKey; return candidate; }
       }
     } catch {}
     return null;
@@ -545,7 +356,6 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
         durationSeconds: Number.isFinite(durationSeconds) ? Math.max(0, durationSeconds) : 0,
         lastAt: Number.isFinite(lastAt) ? lastAt : 0,
       };
-      // Migra dados legados para a chave canônica (melhor esforço).
       try {
         if (keyUsed !== canonicalKey) {
           localStorage.setItem(canonicalKey, raw);
@@ -560,66 +370,66 @@ const getStoredProgress = (video?: LessonRef | null): StoredProgress | null => {
   }
 };
 
+// ── File helpers ────────────────────────────────────────────────────────────
+function getFileIcon(name: string, type?: string): { emoji: string; bg: string } {
+  const ext = (name ?? '').split('.').pop()?.toLowerCase() ?? '';
+  const mime = (type ?? '').toLowerCase();
+  if (mime.includes('pdf') || ext === 'pdf') return { emoji: '📄', bg: 'bg-red-400/10' };
+  if (mime.includes('powerpoint') || mime.includes('presentation') || ext === 'ppt' || ext === 'pptx')
+    return { emoji: '📊', bg: 'bg-orange-400/10' };
+  if (mime.includes('word') || mime.includes('document') || ext === 'doc' || ext === 'docx')
+    return { emoji: '📝', bg: 'bg-blue-400/10' };
+  return { emoji: '📁', bg: 'bg-slate/10' };
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes || bytes <= 0) return '';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+// ── Component ───────────────────────────────────────────────────────────────
 const StreamerMestre = () => {
+  const { email } = useAuth();
 
-
-  const [videoList, setVideoList] = useState<LessonRef[]>(() => listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }));
+  const [videoList, setVideoList] = useState<LessonRef[]>(() =>
+    listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true })
+  );
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
   const persistProgressRef = useRef<((rawWatched: number, rawDuration?: number) => void) | null>(null);
+
   const cleanupVimeoPlayer = useCallback(() => {
     const player = playerInstanceRef.current;
     if (!player) return;
-
-    // IMPORTANTE: não use `destroy()` aqui.
-    // `player.destroy()` remove o iframe do DOM — e como este iframe é renderizado pelo React,
-    // isso pode causar "tela preta" em navegação SPA (o React não recria o elemento automaticamente).
     try {
-      player.off('loaded');
-      player.off('durationchange');
-      player.off('timeupdate');
-      player.off('seeked');
-      player.off('ended');
-      player.off('error');
+      player.off('loaded'); player.off('durationchange'); player.off('timeupdate');
+      player.off('seeked'); player.off('ended'); player.off('error');
     } catch {}
-    try {
-      player.unload().catch(() => {});
-    } catch {}
-
+    try { player.unload().catch(() => {}); } catch {}
     playerInstanceRef.current = null;
   }, []);
+
   const clearYouTubePoll = useCallback(() => {
     try {
       const id = (youtubePlayerRef.current as any)?.__fiveonePoll as number | undefined;
       if (id) window.clearInterval(id);
-      if (youtubePlayerRef.current) {
-        delete (youtubePlayerRef.current as any).__fiveonePoll;
-      }
+      if (youtubePlayerRef.current) delete (youtubePlayerRef.current as any).__fiveonePoll;
     } catch {}
   }, []);
+
   const cleanupYouTubePlayer = useCallback((hardDestroy = false) => {
     const player = youtubePlayerRef.current;
     clearYouTubePoll();
-    if (!player) {
-      youtubePlayerRef.current = null;
-      return;
-    }
-
+    if (!player) { youtubePlayerRef.current = null; return; }
     if (hardDestroy) {
-      try {
-        player.destroy?.();
-      } catch {}
+      try { player.destroy?.(); } catch {}
     } else {
-      // Evita `destroy()` em ciclos automáticos do React (StrictMode/SPA),
-      // pois o YouTube pode remover o iframe do DOM.
-      try {
-        player.pauseVideo?.();
-      } catch {}
-      try {
-        player.stopVideo?.();
-      } catch {}
+      try { player.pauseVideo?.(); } catch {}
+      try { player.stopVideo?.(); } catch {}
     }
     youtubePlayerRef.current = null;
   }, [clearYouTubePoll]);
@@ -629,24 +439,28 @@ const StreamerMestre = () => {
   const [showPlayerFallback, setShowPlayerFallback] = useState(false);
   const fallbackTimerRef = useRef<number | null>(null);
   const errorTimerRef = useRef<number | null>(null);
+
   const clearPlayerTimers = useCallback(() => {
     if (fallbackTimerRef.current) window.clearTimeout(fallbackTimerRef.current);
     if (errorTimerRef.current) window.clearTimeout(errorTimerRef.current);
     fallbackTimerRef.current = null;
     errorTimerRef.current = null;
   }, []);
+
   const markPlayerReady = useCallback(() => {
     clearPlayerTimers();
     setPlayerStatus('ready');
     setPlayerMessage(null);
     setShowPlayerFallback(false);
   }, [clearPlayerTimers]);
+
   const markPlayerError = useCallback((message?: string) => {
     clearPlayerTimers();
     setPlayerStatus('error');
     setPlayerMessage(message || 'Não foi possível carregar o vídeo agora.');
     setShowPlayerFallback(true);
   }, [clearPlayerTimers]);
+
   const handleReloadPlayer = useCallback(() => {
     clearPlayerTimers();
     setPlayerStatus('loading');
@@ -660,79 +474,62 @@ const StreamerMestre = () => {
 
   const [theaterMode, setTheaterMode] = useState(() => {
     if (typeof window === 'undefined') return false;
-    try {
-      return localStorage.getItem('fiveone_theater_mode') === '1';
-    } catch {
-      return false;
-    }
+    try { return localStorage.getItem('fiveone_theater_mode') === '1'; } catch { return false; }
   });
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    try {
-      localStorage.setItem('fiveone_theater_mode', theaterMode ? '1' : '0');
-    } catch {}
+    try { localStorage.setItem('fiveone_theater_mode', theaterMode ? '1' : '0'); } catch {}
   }, [theaterMode]);
 
   const [uiProgress, setUiProgress] = useState<{ watchedSeconds: number; durationSeconds: number }>({
-    watchedSeconds: 0,
-    durationSeconds: 0,
+    watchedSeconds: 0, durationSeconds: 0,
   });
+
+  // ── Favorites ─────────────────────────────────────────────────────────────
+  const [isFav, setIsFav] = useState(false);
+  const [isFavLoading, setIsFavLoading] = useState(false);
+
+  // ── Auto-play ─────────────────────────────────────────────────────────────
+  const [autoPlay, setAutoPlay] = useState(() => {
+    try { return localStorage.getItem('fiveone_autoplay') === '1'; } catch { return false; }
+  });
+  const [autoPlayPending, setAutoPlayPending] = useState(false);
+  const [autoPlayCountdown, setAutoPlayCountdown] = useState<number | null>(null);
+  const autoPlayTimerRef = useRef<number | null>(null);
+  const autoPlayIntervalRef = useRef<number | null>(null);
+  const autoPlayRef = useRef(autoPlay);
+  const autoPlayTriggeredRef = useRef(false);
+
+  useEffect(() => {
+    autoPlayRef.current = autoPlay;
+    try { localStorage.setItem('fiveone_autoplay', autoPlay ? '1' : '0'); } catch {}
+  }, [autoPlay]);
+
+  const cancelAutoPlay = useCallback(() => {
+    if (autoPlayTimerRef.current) window.clearTimeout(autoPlayTimerRef.current);
+    if (autoPlayIntervalRef.current) window.clearInterval(autoPlayIntervalRef.current);
+    autoPlayTimerRef.current = null;
+    autoPlayIntervalRef.current = null;
+    setAutoPlayCountdown(null);
+    setAutoPlayPending(false);
+  }, []);
 
   const [searchParams] = useSearchParams();
   const [currentIndex, setCurrentIndex] = useState(0);
   const searchKey = searchParams.toString();
 
-  // Monta uma vez: lê mod= do React Router (já correto na montagem SPA) e filtra
+  // Reset auto-play trigger when video changes
   useEffect(() => {
-    const modId = new URLSearchParams(searchKey).get('mod') || undefined;
-    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
-    const unsubscribe = subscribePlatformContent(() => {
-      // Mantém o filtro de módulo ao receber atualizações do admin
-      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
-    });
-    return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  // [] intencional: searchKey via React Router já está correto na montagem
-  useEffect(() => {
-    if (!videoList.length) return;
-    const params = new URLSearchParams(searchKey);
-    const vid = params.get('vid');
-    const idxParam = params.get('i');
-    const urlParam = params.get('v');
-    let resolved = 0;
-    if (vid) {
-      let idx = videoList.findIndex(item => item.videoId === vid);
-      // compat: se alguém salvar/compartilhar um `vid` antigo (URL/embed), tenta resolver também
-      if (idx < 0) {
-        idx = videoList.findIndex((item) => {
-          const url = item.videoUrl || '';
-          const extracted = extractEmbedSrc(item.embedCode) || '';
-          return item.id === vid || vid === url || vid === extracted || (url && (vid.includes(url) || url.includes(vid)));
-        });
-      }
-      if (idx >= 0) resolved = idx;
-    } else if (idxParam) {
-      const idx = Number(idxParam);
-      if (!Number.isNaN(idx) && idx >= 0 && idx < videoList.length) resolved = idx;
-    } else if (urlParam) {
-      const decoded = decodeURIComponent(urlParam);
-      const idx = videoList.findIndex(item => {
-        const url = item.videoUrl || '';
-        return url === decoded || (url && (decoded.includes(url) || url.includes(decoded)));
-      });
-      if (idx >= 0) resolved = idx;
-    }
-    setCurrentIndex(prev => (resolved !== prev ? resolved : prev));
-  }, [videoList, searchKey]);
-  useEffect(() => {
-    if (!videoList.length) return;
-    setCurrentIndex(prev => Math.min(prev, videoList.length - 1));
-  }, [videoList.length]);
+    cancelAutoPlay();
+    autoPlayTriggeredRef.current = false;
+  }, [currentIndex, cancelAutoPlay]);
+
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set(listCompletedLessonIds()));
-  // Página de player não mostra mais a grade de módulos
   const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
-  const sidebarRef = useRef<HTMLDivElement>(null);
+  const sidebarListRef = useRef<HTMLUListElement>(null);
+
   const getPlayerIframe = useCallback((): HTMLIFrameElement | null => {
     const container = videoRef.current;
     if (container) {
@@ -744,7 +541,7 @@ const StreamerMestre = () => {
     const globalById = document.getElementById('fiveone-streamer-player');
     return globalById instanceof HTMLIFrameElement ? globalById : null;
   }, []);
-  // searchParams já usado acima
+
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toastState, setToastState] = useState<ToastState | null>(null);
@@ -781,6 +578,53 @@ const StreamerMestre = () => {
     };
   }, [syncCompletedIds]);
 
+  // ── Subscribe to content updates ──────────────────────────────────────────
+  useEffect(() => {
+    const modId = new URLSearchParams(searchKey).get('mod') || undefined;
+    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
+    const unsubscribe = subscribePlatformContent(() => {
+      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
+    });
+    return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!videoList.length) return;
+    const params = new URLSearchParams(searchKey);
+    const vid = params.get('vid');
+    const idxParam = params.get('i');
+    const urlParam = params.get('v');
+    let resolved = 0;
+    if (vid) {
+      let idx = videoList.findIndex(item => item.videoId === vid);
+      if (idx < 0) {
+        idx = videoList.findIndex((item) => {
+          const url = item.videoUrl || '';
+          const extracted = extractEmbedSrc(item.embedCode) || '';
+          return item.id === vid || vid === url || vid === extracted || (url && (vid.includes(url) || url.includes(vid)));
+        });
+      }
+      if (idx >= 0) resolved = idx;
+    } else if (idxParam) {
+      const idx = Number(idxParam);
+      if (!Number.isNaN(idx) && idx >= 0 && idx < videoList.length) resolved = idx;
+    } else if (urlParam) {
+      const decoded = decodeURIComponent(urlParam);
+      const idx = videoList.findIndex(item => {
+        const url = item.videoUrl || '';
+        return url === decoded || (url && (decoded.includes(url) || url.includes(decoded)));
+      });
+      if (idx >= 0) resolved = idx;
+    }
+    setCurrentIndex(prev => (resolved !== prev ? resolved : prev));
+  }, [videoList, searchKey]);
+
+  useEffect(() => {
+    if (!videoList.length) return;
+    setCurrentIndex(prev => Math.min(prev, videoList.length - 1));
+  }, [videoList.length]);
+
   const currentVideo = videoList[currentIndex];
   const embedSrc = useMemo(() => {
     if (!currentVideo) return '';
@@ -799,8 +643,14 @@ const StreamerMestre = () => {
     }
     return '';
   }, [currentVideo?.embedCode, currentVideo?.videoUrl, currentVideo?.videoId]);
-  const externalVideoUrl = useMemo(() => resolveExternalVideoUrl(currentVideo, embedSrc), [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]);
 
+  const externalVideoUrl = useMemo(
+    () => resolveExternalVideoUrl(currentVideo, embedSrc),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]
+  );
+
+  // Load stored progress when video changes
   useEffect(() => {
     const stored = getStoredProgress(currentVideo);
     if (stored) {
@@ -810,65 +660,103 @@ const StreamerMestre = () => {
     }
   }, [currentVideo?.videoId]);
 
-  // CRÍTICO: embedSrc NÃO pode estar nos deps deste useLayoutEffect.
-  // O subscribePlatformContent dispara após a navegação SPA e recomputa embedSrc
-  // (mesmo valor, novo objeto string — mesma referência), o que re-dispararia este effect
-  // DEPOIS que onLoad já chamou markPlayerReady(), travando o overlay em "loading" para sempre.
+  // Load favorite state when video changes
+  useEffect(() => {
+    if (!email || !currentVideo?.videoId) { setIsFav(false); return; }
+    isFavorite(email, currentVideo.videoId).then(setIsFav).catch(() => setIsFav(false));
+  }, [email, currentVideo?.videoId]);
+
+  // Keyboard navigation (ArrowLeft/ArrowRight)
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName)) return;
+      if (target.isContentEditable) return;
+      if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.min(prev + 1, videoList.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setCurrentIndex(prev => Math.max(prev - 1, 0));
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [videoList.length]);
+
+  // Auto-play countdown effect
+  useEffect(() => {
+    if (!autoPlayPending) return;
+    if (currentIndex >= videoList.length - 1) { setAutoPlayPending(false); return; }
+    setAutoPlayPending(false);
+    let count = 3;
+    setAutoPlayCountdown(count);
+    autoPlayIntervalRef.current = window.setInterval(() => {
+      count -= 1;
+      setAutoPlayCountdown(count > 0 ? count : null);
+      if (count <= 0 && autoPlayIntervalRef.current) {
+        window.clearInterval(autoPlayIntervalRef.current);
+        autoPlayIntervalRef.current = null;
+      }
+    }, 1000);
+    autoPlayTimerRef.current = window.setTimeout(() => {
+      setAutoPlayCountdown(null);
+      setCurrentIndex(prev => prev + 1);
+    }, 3500);
+    return () => cancelAutoPlay();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoPlayPending]);
+
+  // Player overlay reset on video change
   useLayoutEffect(() => {
     clearPlayerTimers();
     setPlayerMessage(null);
     setShowPlayerFallback(false);
     cleanupVimeoPlayer();
     cleanupYouTubePlayer(false);
-
     if (!currentVideo) return;
     setPlayerStatus('loading');
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentVideo?.videoId]);
 
-  // Efeito separado: se embedSrc permanecer inválido após videoId mudar, marca erro.
-  // Delay de 4s para aguardar possíveis atualizações assíncronas do cache/Supabase.
+  // Error if embedSrc stays invalid
   useEffect(() => {
     if (!currentVideo?.videoId) return;
     if (embedSrc && /^https?:\/\//i.test(embedSrc)) return;
     const t = window.setTimeout(() => {
-      if (!embedSrc || !/^https?:\/\//i.test(embedSrc)) {
-        markPlayerError('Vídeo indisponível no momento.');
-      }
+      if (!embedSrc || !/^https?:\/\//i.test(embedSrc)) markPlayerError('Vídeo indisponível no momento.');
     }, 4000);
     return () => window.clearTimeout(t);
   }, [currentVideo?.videoId, embedSrc, markPlayerError]);
 
+  // Loading timers
   useEffect(() => {
     if (!currentVideo) return;
     if (!embedSrc || embedSrc === 'about:blank' || !/^https?:\/\//i.test(embedSrc)) return;
     if (playerStatus !== 'loading') return;
 
-    fallbackTimerRef.current = window.setTimeout(() => {
-      setShowPlayerFallback(true);
-    }, 8000);
+    fallbackTimerRef.current = window.setTimeout(() => setShowPlayerFallback(true), 8000);
 
     const slowMessage = (() => {
       const base = 'O player está demorando para carregar. Tente recarregar ou abrir em outra aba.';
       if (/vimeo\.com/i.test(embedSrc)) {
         const host = typeof window !== 'undefined' ? window.location.hostname : '';
-        if (host === 'localhost' || host === '127.0.0.1') {
+        if (host === 'localhost' || host === '127.0.0.1')
           return `${base} Em localhost isso pode acontecer se o Vimeo estiver com restrição de embed por domínio (whitelist).`;
-        }
       }
       return base;
     })();
 
     errorTimerRef.current = window.setTimeout(() => {
-      setPlayerStatus((prev) => (prev === 'loading' ? 'error' : prev));
-      setPlayerMessage((prev) => prev || slowMessage);
+      setPlayerStatus(prev => (prev === 'loading' ? 'error' : prev));
+      setPlayerMessage(prev => prev || slowMessage);
       setShowPlayerFallback(true);
     }, 25000);
 
-    return () => {
-      clearPlayerTimers();
-    };
+    return () => clearPlayerTimers();
   }, [currentVideo?.videoId, embedSrc, playerReloadKey, playerStatus, clearPlayerTimers]);
+
+  // ── persistProgress ────────────────────────────────────────────────────────
   const persistProgress = useCallback(
     (rawWatched: number, rawDuration?: number) => {
       const lesson = videoList[currentIndex];
@@ -890,12 +778,9 @@ const StreamerMestre = () => {
       const payload: StoredProgress = {
         watchedSeconds,
         durationSeconds,
-        // Não atualiza recência com 0s para não poluir "Continuar assistindo".
         lastAt: hasRealProgress ? now : Number(stored?.lastAt || 0),
       };
-      try {
-        localStorage.setItem(key, JSON.stringify(payload));
-      } catch {}
+      try { localStorage.setItem(key, JSON.stringify(payload)); } catch {}
       setUiProgress({ watchedSeconds, durationSeconds });
 
       const bannerContinue = lesson.bannerContinue;
@@ -904,12 +789,9 @@ const StreamerMestre = () => {
       const resolvedBannerContinue = bannerContinue?.url || bannerContinue?.dataUrl || null;
       const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
       const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
-
       const previewImage =
         (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
-        resolvedBannerMobile ||
-        lesson.thumbnailUrl ||
-        '/assets/images/miniatura_fundamentos_mestre.png';
+        resolvedBannerMobile || lesson.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
 
       const currentVideoData = {
         title: lesson.title,
@@ -934,9 +816,9 @@ const StreamerMestre = () => {
             const arr = JSON.parse(existingRaw);
             if (Array.isArray(arr)) {
               const filtered = arr.filter((video: any) => {
-                const key = video.id || video.videoId || video.url;
-                if (!key) return true;
-                return key !== lesson.videoId && key !== lesson.videoUrl;
+                const k = video.id || video.videoId || video.url;
+                if (!k) return true;
+                return k !== lesson.videoId && k !== lesson.videoUrl;
               });
               localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
             }
@@ -946,16 +828,14 @@ const StreamerMestre = () => {
           const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
           const filteredWatched = Array.isArray(existingWatched)
             ? existingWatched.filter((video: any) => {
-                const key = video?.id || video?.videoId || video?.video_id || video?.url;
-                if (!key) return true;
-                if (key === lesson.videoId) return false;
-                if (lesson.videoUrl && key === lesson.videoUrl) return false;
+                const k = video?.id || video?.videoId || video?.video_id || video?.url;
+                if (!k) return true;
+                if (k === lesson.videoId) return false;
+                if (lesson.videoUrl && k === lesson.videoUrl) return false;
                 return true;
               })
             : [];
-          const updatedWatched = [currentVideoData, ...filteredWatched];
-          const limitedWatched = updatedWatched.slice(0, 12);
-          localStorage.setItem('videos_assistidos', JSON.stringify(limitedWatched));
+          localStorage.setItem('videos_assistidos', JSON.stringify([currentVideoData, ...filteredWatched].slice(0, 12)));
         }
       } catch {}
 
@@ -989,30 +869,29 @@ const StreamerMestre = () => {
           const next = new Set(completedIds);
           next.add(lesson.videoId);
           setCompletedIds(next);
-          setLessonCompleted(lesson.videoId, {
-            previousWatched: watchedSeconds,
-            previousDuration: completionDuration,
-          });
+          setLessonCompleted(lesson.videoId, { previousWatched: watchedSeconds, previousDuration: completionDuration });
           try {
             const existingRaw = localStorage.getItem('videos_assistidos');
             if (existingRaw) {
               const arr = JSON.parse(existingRaw);
               if (Array.isArray(arr)) {
                 const filtered = arr.filter((video: any) => {
-                  const key = video.id || video.videoId || video.url;
-                  if (!key) return true;
-                  return key !== lesson.videoId && key !== lesson.videoUrl;
+                  const k = video.id || video.videoId || video.url;
+                  if (!k) return true;
+                  return k !== lesson.videoId && k !== lesson.videoUrl;
                 });
                 localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
               }
             }
           } catch {}
           const uid = getCurrentUserId();
-          if (uid) {
-            upsertCompletion(uid, lesson.videoId).catch(() => {});
-          }
-
+          if (uid) upsertCompletion(uid, lesson.videoId).catch(() => {});
           syncCompletedIds();
+          // Trigger auto-play for next lesson
+          if (autoPlayRef.current && currentIndex < videoList.length - 1 && !autoPlayTriggeredRef.current) {
+            autoPlayTriggeredRef.current = true;
+            setAutoPlayPending(true);
+          }
         }
       }
     },
@@ -1020,364 +899,23 @@ const StreamerMestre = () => {
   );
   persistProgressRef.current = persistProgress;
 
-  const alignSidebar = useCallback(() => {
-    const el = videoRef.current;
-    const side = sidebarRef.current;
-    if (!el || !side) return;
-    const mq = window.matchMedia('(max-width: 1024px)');
-    if (mq.matches) {
-      side.style.removeProperty('--sidebar-height');
-      side.style.height = 'auto';
-      side.style.marginTop = '0px';
-      return;
-    }
-    const iframe = el.querySelector('iframe');
-    const rect = (iframe || el).getBoundingClientRect();
-    const content = el.closest('.video-content') as HTMLElement | null;
-    const contentRect = content ? content.getBoundingClientRect() : rect;
-    const height = Math.max(320, Math.round(rect.height));
-    side.style.setProperty('--sidebar-height', `${height}px`);
-    side.style.height = `${height}px`;
-    const offset = Math.max(0, Math.round(rect.top - contentRect.top));
-    side.style.marginTop = `${offset}px`;
+  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
+    setToastState({ message, tone });
   }, []);
 
-
-  // Mantém a altura da sidebar alinhada com a altura do vídeo (iframe)
-  useLayoutEffect(() => {
-    const el = videoRef.current;
-    const side = sidebarRef.current;
-    if (!el || !side) return;
-
-    let destroyed = false;
-    const update = () => {
-      if (destroyed) return;
-      alignSidebar();
-    };
-
-    const observers: ResizeObserver[] = [];
-    const cleanups: Array<() => void> = [];
-
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    observers.push(ro);
-
-    const iframe = el.querySelector('iframe');
-    if (iframe) {
-      const roIframe = new ResizeObserver(update);
-      roIframe.observe(iframe);
-      observers.push(roIframe);
-      iframe.addEventListener('load', update, { once: true });
+  const handleFavoriteToggle = async () => {
+    if (!email || !currentVideo?.videoId || isFavLoading) return;
+    const prev = isFav;
+    setIsFav(!prev);
+    setIsFavLoading(true);
+    try {
+      await toggleFavorite(email, currentVideo.videoId, prev);
+    } catch {
+      setIsFav(prev);
+    } finally {
+      setIsFavLoading(false);
     }
-
-    const content = el.closest('.video-content') as HTMLElement | null;
-    if (content) {
-      const roContent = new ResizeObserver(update);
-      roContent.observe(content);
-      observers.push(roContent);
-
-      const imgs = Array.from(content.querySelectorAll('img')) as HTMLImageElement[];
-      imgs.forEach((img) => {
-        if (img.complete) return;
-        const handleLoad = () => update();
-        img.addEventListener('load', handleLoad);
-        cleanups.push(() => img.removeEventListener('load', handleLoad));
-      });
-    }
-
-    window.addEventListener('resize', update);
-
-    update();
-    const t1 = setTimeout(update, 60);
-    const t2 = setTimeout(update, 220);
-    const t3 = setTimeout(update, 640);
-
-    return () => {
-      destroyed = true;
-      observers.forEach((observer) => observer.disconnect());
-      cleanups.forEach((fn) => fn());
-      if (iframe) iframe.removeEventListener('load', update);
-      window.removeEventListener('resize', update);
-      clearTimeout(t1); clearTimeout(t2); clearTimeout(t3);
-    };
-  }, [currentVideo?.videoId, playerReloadKey, alignSidebar]);
-
-  useEffect(() => {
-    const lesson = currentVideo;
-    const vimeoSrc = embedSrc;
-    if (!lesson || lesson.sourceType !== 'VIMEO' || !vimeoSrc || !/vimeo\.com/i.test(vimeoSrc)) {
-      cleanupVimeoPlayer();
-      return;
-    }
-
-    let cancelled = false;
-    lastProgressFlushRef.current = 0;
-    (async () => {
-      try {
-        // Aguarda o iframe estar no DOM antes de importar o SDK
-        let iframe: HTMLIFrameElement | null = null;
-        for (let attempt = 0; attempt < 60; attempt++) {
-          iframe = getPlayerIframe();
-          if (iframe) break;
-          await new Promise(resolve => window.setTimeout(resolve, 100));
-          if (cancelled) return;
-        }
-        if (!iframe) return;
-
-        const { default: Player } = await import('@vimeo/player');
-        if (cancelled) return;
-        cleanupVimeoPlayer();
-        const player = new Player(iframe);
-        playerInstanceRef.current = player;
-        alignSidebar();
-        setTimeout(() => alignSidebar(), 120);
-
-        // Em alguns cenários (cache/SPA/StrictMode) o evento `loaded` pode demorar.
-        // `ready()` nos dá um sinal mais confiável para liberar o iframe na UI.
-        player
-          .ready()
-          .then(async () => {
-            if (cancelled) return;
-            markPlayerReady();
-            try {
-              await player.pause();
-            } catch {}
-          })
-          .catch(() => {});
-
-        const stored = getStoredProgress(lesson);
-        let pendingResume = stored?.watchedSeconds || 0;
-
-        const tryResume = async (durationHint?: number) => {
-          if (!pendingResume || pendingResume <= 5) return;
-          const duration = Number.isFinite(durationHint) && durationHint ? durationHint : stored?.durationSeconds || 0;
-          const maxSeek = duration > 6 ? Math.max(0, duration - 2) : undefined;
-          const target = maxSeek !== undefined ? Math.min(pendingResume, maxSeek) : pendingResume;
-          if (target > 5) {
-            try {
-              await player.setCurrentTime(target);
-            } catch {}
-          }
-          pendingResume = 0;
-        };
-
-        player.on('loaded', (data: any) => {
-          lastProgressFlushRef.current = 0;
-          markPlayerReady();
-          tryResume(Number(data?.duration)).catch(() => {});
-          const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          if (duration > 0) {
-            if ((stored?.watchedSeconds || 0) > 0) {
-              persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
-            } else {
-              setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
-            }
-          }
-          alignSidebar();
-          setTimeout(() => alignSidebar(), 100);
-        });
-
-        player.on('durationchange', (data: any) => {
-          tryResume(Number(data?.duration)).catch(() => {});
-          alignSidebar();
-        });
-
-        player.on('timeupdate', (data: any) => {
-          const now = Date.now();
-          const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          if (now - lastProgressFlushRef.current >= 5000) {
-            lastProgressFlushRef.current = now;
-            persistProgressRef.current?.(Number(data?.seconds || 0), duration);
-          }
-        });
-
-        player.on('seeked', (data: any) => {
-          lastProgressFlushRef.current = Date.now();
-          const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          persistProgressRef.current?.(Number(data?.seconds || 0), duration);
-        });
-
-        player.on('ended', async () => {
-          lastProgressFlushRef.current = Date.now();
-          let duration = stored?.durationSeconds || 0;
-          try {
-            duration = await player.getDuration();
-          } catch {}
-          persistProgressRef.current?.(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
-        });
-
-        player.on('error', (err: any) => {
-          console.warn('Erro no player Vimeo', err);
-          markPlayerError('O Vimeo não conseguiu carregar este vídeo.');
-        });
-      } catch (error) {
-        console.warn('Falha ao inicializar player Vimeo', error);
-        markPlayerError('Falha ao inicializar o player do Vimeo.');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      cleanupVimeoPlayer();
-    };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, alignSidebar, markPlayerReady, markPlayerError, cleanupVimeoPlayer, getPlayerIframe]);
-
-  useEffect(() => {
-    const lesson = currentVideo;
-    const youtubeSrc = embedSrc;
-    if (!lesson || lesson.sourceType !== 'YOUTUBE' || !youtubeSrc || !isYouTubeUrl(youtubeSrc)) {
-      cleanupYouTubePlayer(false);
-      return;
-    }
-
-    let cancelled = false;
-    lastProgressFlushRef.current = 0;
-
-    (async () => {
-      try {
-        await ensureYouTubeApi();
-        if (cancelled) return;
-
-        // Aguarda o iframe estar no DOM (o React pode ainda não ter pintado após o await assíncrono)
-        let iframe: HTMLIFrameElement | null = null;
-        for (let attempt = 0; attempt < 60; attempt++) {
-          iframe = getPlayerIframe();
-          if (iframe) break;
-          await new Promise(resolve => window.setTimeout(resolve, 100));
-          if (cancelled) return;
-        }
-        if (!iframe) {
-          // Evita falso erro no primeiro carregamento via navegação SPA/StrictMode.
-          // O fallback de timeout global ainda cobre falhas reais de renderização.
-          return;
-        }
-
-        cleanupYouTubePlayer(false);
-
-        const stored = getStoredProgress(lesson);
-        let pendingResume = stored?.watchedSeconds || 0;
-
-        // Passa o elemento diretamente — forma oficial e robusta da YouTube IFrame API
-        const player = new window.YT.Player(iframe, {
-          events: {
-            onReady: (event: any) => {
-              if (cancelled) return;
-              markPlayerReady();
-              const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
-
-              if (duration > 0) {
-                if ((stored?.watchedSeconds || 0) > 0) {
-                  persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
-                } else {
-                  setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
-                }
-              } else if (stored) {
-                setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
-              }
-
-              if (pendingResume && pendingResume > 5) {
-                const maxSeek = duration > 6 ? Math.max(0, duration - 2) : null;
-                const target = maxSeek !== null ? Math.min(pendingResume, maxSeek) : pendingResume;
-                if (target > 5) {
-                  try {
-                    const resumeVideoId = extractYouTubeVideoId(youtubeSrc);
-                    if (resumeVideoId) {
-                      event.target.cueVideoById?.({ videoId: resumeVideoId, startSeconds: target });
-                    } else {
-                      event.target.seekTo?.(target, true);
-                    }
-                  } catch {
-                    try {
-                      event.target.seekTo?.(target, true);
-                    } catch {}
-                  }
-                }
-              }
-              try {
-                event.target.pauseVideo?.();
-              } catch {}
-              pendingResume = 0;
-            },
-            onStateChange: (event: any) => {
-              const state = Number(event?.data);
-              const playing = state === window.YT?.PlayerState?.PLAYING;
-              const paused = state === window.YT?.PlayerState?.PAUSED;
-              const ended = state === window.YT?.PlayerState?.ENDED;
-              const buffering = state === window.YT?.PlayerState?.BUFFERING;
-
-              if (!youtubePlayerRef.current) return;
-
-              const tick = (forcePersist: boolean) => {
-                try {
-                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
-                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
-                  if (!Number.isFinite(currentTime) || currentTime < 0) return;
-                  setUiProgress((prev) => ({
-                    watchedSeconds: currentTime,
-                    durationSeconds: duration > 0 ? duration : prev.durationSeconds,
-                  }));
-
-                  if (forcePersist) {
-                    lastProgressFlushRef.current = Date.now();
-                    persistProgressRef.current?.(currentTime, duration);
-                    return;
-                  }
-                  const now = Date.now();
-                  if (now - lastProgressFlushRef.current >= 5000) {
-                    lastProgressFlushRef.current = now;
-                    persistProgressRef.current?.(currentTime, duration);
-                  }
-                } catch {}
-              };
-
-              // Mantém um polling leve apenas quando está tocando (corrige o bug do "timer andando sozinho").
-              const startPolling = () => {
-                if ((youtubePlayerRef.current as any).__fiveonePoll) return;
-                (youtubePlayerRef.current as any).__fiveonePoll = window.setInterval(() => tick(false), 1000);
-                tick(false);
-              };
-              const stopPolling = (flush: boolean) => {
-                const id = (youtubePlayerRef.current as any).__fiveonePoll as number | undefined;
-                if (id) window.clearInterval(id);
-                delete (youtubePlayerRef.current as any).__fiveonePoll;
-                if (flush) tick(true);
-              };
-
-              if (playing || buffering) {
-                startPolling();
-              } else if (paused) {
-                stopPolling(true);
-              } else if (ended) {
-                stopPolling(false);
-                try {
-                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
-                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
-                  const finalTime = duration > 0 ? duration : currentTime;
-                  if (finalTime > 0) persistProgressRef.current?.(finalTime, duration || undefined);
-                } catch {}
-              } else {
-                stopPolling(false);
-              }
-            },
-            onError: (event: any) => {
-              console.warn('Erro no player YouTube', event);
-              markPlayerError('O YouTube não conseguiu carregar este vídeo.');
-            },
-          },
-        });
-
-        youtubePlayerRef.current = player;
-      } catch (error) {
-        console.warn('Falha ao inicializar player YouTube', error);
-        markPlayerError('Falha ao inicializar o player do YouTube.');
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-      cleanupYouTubePlayer(false);
-    };
-  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, markPlayerReady, markPlayerError, getPlayerIframe, cleanupYouTubePlayer]);
+  };
 
   const resolveLessonAssets = useCallback((lesson: LessonRef) => {
     const bannerContinue = lesson.bannerContinue;
@@ -1387,11 +925,8 @@ const StreamerMestre = () => {
     const resolvedBannerPlayer = bannerPlayer?.url || bannerPlayer?.dataUrl || null;
     const resolvedBannerMobile = bannerMobile?.url || bannerMobile?.dataUrl || null;
     const previewImage =
-      resolvedBannerContinue ||
-      resolvedBannerPlayer ||
-      resolvedBannerMobile ||
-      lesson.thumbnailUrl ||
-      '/assets/images/miniatura_fundamentos_mestre.png';
+      resolvedBannerContinue || resolvedBannerPlayer || resolvedBannerMobile ||
+      lesson.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
     return { previewImage, resolvedBannerContinue, resolvedBannerMobile };
   }, []);
 
@@ -1400,40 +935,24 @@ const StreamerMestre = () => {
     if (!base) return;
     const now = Date.now();
     const duration = typeof durationSeconds === 'number' && durationSeconds > 0 ? durationSeconds : 0;
-    const payload: StoredProgress = {
-      watchedSeconds: 0,
-      durationSeconds: duration,
-      lastAt: now,
-    };
-    try {
-      localStorage.setItem(`fiveone_progress::${base}`, JSON.stringify(payload));
-    } catch {}
-
+    const payload: StoredProgress = { watchedSeconds: 0, durationSeconds: duration, lastAt: now };
+    try { localStorage.setItem(`fiveone_progress::${base}`, JSON.stringify(payload)); } catch {}
     try {
       const { previewImage, resolvedBannerContinue, resolvedBannerMobile } = resolveLessonAssets(lesson);
       const entry = {
-        title: lesson.title,
-        thumbnail: previewImage,
-        url: lesson.videoId,
-        index,
-        id: lesson.videoId,
-        sourceUrl: lesson.videoUrl || null,
-        subjectName: lesson.subjectName,
-        subjectId: lesson.subjectId,
-        bannerContinue: resolvedBannerContinue,
-        bannerMobile: resolvedBannerMobile,
-        watchedSeconds: 0,
-        durationSeconds: duration,
-        lastAt: now,
+        title: lesson.title, thumbnail: previewImage, url: lesson.videoId, index, id: lesson.videoId,
+        sourceUrl: lesson.videoUrl || null, subjectName: lesson.subjectName, subjectId: lesson.subjectId,
+        bannerContinue: resolvedBannerContinue, bannerMobile: resolvedBannerMobile,
+        watchedSeconds: 0, durationSeconds: duration, lastAt: now,
       };
       const existingRaw = localStorage.getItem('videos_assistidos');
       const existing = existingRaw ? JSON.parse(existingRaw) : [];
       const filtered = Array.isArray(existing)
         ? existing.filter((video: any) => {
-            const key = video?.id || video?.videoId || video?.video_id || video?.url;
-            if (!key) return true;
-            if (key === lesson.videoId) return false;
-            if (lesson.videoUrl && key === lesson.videoUrl) return false;
+            const k = video?.id || video?.videoId || video?.video_id || video?.url;
+            if (!k) return true;
+            if (k === lesson.videoId) return false;
+            if (lesson.videoUrl && k === lesson.videoUrl) return false;
             return true;
           })
         : [];
@@ -1441,10 +960,6 @@ const StreamerMestre = () => {
       localStorage.setItem('videos_assistidos', JSON.stringify(filtered.slice(0, 12)));
     } catch {}
   }, [resolveLessonAssets]);
-
-  const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
-    setToastState({ message, tone });
-  }, []);
 
   const handleMarkAsCompleted = async () => {
     const lesson = videoList[currentIndex];
@@ -1475,26 +990,17 @@ const StreamerMestre = () => {
           resetLessonProgress(lessonSnapshot, indexSnapshot, durationGuess);
 
           if (playerInstanceRef.current) {
-            try {
-              await playerInstanceRef.current.setCurrentTime(0);
-              await playerInstanceRef.current.pause();
-            } catch {}
+            try { await playerInstanceRef.current.setCurrentTime(0); await playerInstanceRef.current.pause(); } catch {}
           } else if (youtubePlayerRef.current) {
-            try {
-              youtubePlayerRef.current.seekTo?.(0, true);
-              youtubePlayerRef.current.pauseVideo?.();
-            } catch {}
+            try { youtubePlayerRef.current.seekTo?.(0, true); youtubePlayerRef.current.pauseVideo?.(); } catch {}
           } else if (embedSrc) {
             const iframe = videoRef.current?.querySelector('iframe');
             if (iframe) iframe.setAttribute('src', embedSrc);
           }
           if (uid) {
-            try {
-              await deleteCompletion(uid, lessonSnapshot.videoId);
-            } catch {}
+            try { await deleteCompletion(uid, lessonSnapshot.videoId); } catch {}
             deleteProgressForUserVideo(uid, lessonSnapshot.videoId).catch(() => {});
           }
-
           syncCompletedIds();
           showToast('Aula marcada como não concluída.', 'info');
         },
@@ -1518,30 +1024,19 @@ const StreamerMestre = () => {
     const watchedBefore = storedProgress?.watchedSeconds ?? null;
     const total = duration && duration > 0 ? duration : watchedBefore ?? 0;
 
-    setCompletedIds((prev) => {
-      const next = new Set(prev);
-      next.add(lessonId);
-      return next;
-    });
+    setCompletedIds((prev) => { const next = new Set(prev); next.add(lessonId); return next; });
     setLessonCompleted(lessonId, {
       previousWatched: watchedBefore,
       previousDuration: storedProgress?.durationSeconds ?? duration ?? null,
     });
 
-    if (total > 0) {
-      persistProgress(total, duration ?? undefined);
-    }
-
-    if (uid) {
-      try {
-        await upsertCompletion(uid, lessonId);
-      } catch {}
-    }
-
+    if (total > 0) persistProgress(total, duration ?? undefined);
+    if (uid) { try { await upsertCompletion(uid, lessonId); } catch {} }
     syncCompletedIds();
     showToast('Aula marcada como concluída.', 'success');
   };
-  // Load completions for user once
+
+  // Load completions from server
   useEffect(() => {
     const uid = getCurrentUserId();
     if (!uid) return;
@@ -1553,18 +1048,21 @@ const StreamerMestre = () => {
       } catch {}
     })();
   }, []);
+
   const navigate = useNavigate();
-  // Mantém o link sempre canônico (vid=...) ao trocar de aula, para permitir refresh/compartilhamento.
+
+  // Keep URL canonical
   useEffect(() => {
     const lesson = videoList[currentIndex];
     if (!lesson?.videoId) return;
     const params = new URLSearchParams(searchKey);
-    const currentVid = params.get("vid");
-    const hasLegacy = params.has("i") || params.has("v");
+    const currentVid = params.get('vid');
+    const hasLegacy = params.has('i') || params.has('v');
     if (!hasLegacy && currentVid === lesson.videoId) return;
     navigate(`/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}`, { replace: true });
   }, [videoList, currentIndex, searchKey, navigate]);
-  // Filtro por matéria na sidebar
+
+  // Subjects for filter
   const subjects: SubjectOption[] = useMemo(() => {
     const counts = new Map<string, { name: string; count: number }>();
     videoList.forEach((v) => {
@@ -1572,18 +1070,16 @@ const StreamerMestre = () => {
       if (!id) return;
       const name = v.subjectName || v.subjectId || id;
       const entry = counts.get(id);
-      if (entry) {
-        entry.count += 1;
-        if (name && entry.name !== name) entry.name = name;
-      } else {
-        counts.set(id, { name, count: 1 });
-      }
+      if (entry) { entry.count += 1; if (name && entry.name !== name) entry.name = name; }
+      else counts.set(id, { name, count: 1 });
     });
     const arr = Array.from(counts.entries()).map(([id, info]) => ({ id, name: info.name, count: info.count }));
     arr.sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
     return [{ id: 'all', name: 'Todas', count: videoList.length }, ...arr];
   }, [videoList]);
+
   const [filterSubject, setFilterSubject] = useState<string>('all');
+
   const filteredList = useMemo(() => {
     if (filterSubject === 'all') return videoList;
     return videoList.filter((v) => {
@@ -1591,110 +1087,306 @@ const StreamerMestre = () => {
       return id === filterSubject;
     });
   }, [videoList, filterSubject]);
-  const groupedList = useMemo(() => {
-    type SidebarGroup = {
-      moduleTitle: string;
-      moduleOrder: number;
-      items: { video: LessonRef; globalIndex: number }[];
-    };
 
+  const groupedList = useMemo(() => {
+    type SidebarGroup = { moduleTitle: string; moduleOrder: number; items: { video: LessonRef; globalIndex: number }[] };
     const groups: SidebarGroup[] = [];
     const groupMap = new Map<string, SidebarGroup>();
-
     filteredList.forEach((video) => {
       let globalIndex = videoList.findIndex((v) => v.videoId === video.videoId);
       if (globalIndex === -1) {
         const fallbackKey = video.videoUrl || video.id || null;
-        if (fallbackKey) {
-          globalIndex = videoList.findIndex((v) => v.videoUrl === fallbackKey || v.id === fallbackKey);
-        }
+        if (fallbackKey) globalIndex = videoList.findIndex((v) => v.videoUrl === fallbackKey || v.id === fallbackKey);
       }
       if (globalIndex === -1) return;
-
       const key = video.moduleId || video.moduleTitle || 'default';
       if (!groupMap.has(key)) {
-        const group: SidebarGroup = {
-          moduleTitle: video.moduleTitle || 'Módulo',
-          moduleOrder: video.moduleOrder ?? 0,
-          items: [],
-        };
+        const group: SidebarGroup = { moduleTitle: video.moduleTitle || 'Módulo', moduleOrder: video.moduleOrder ?? 0, items: [] };
         groupMap.set(key, group);
         groups.push(group);
       }
       groupMap.get(key)!.items.push({ video, globalIndex });
     });
-
     groups.sort((a, b) => a.moduleOrder - b.moduleOrder);
     return groups;
   }, [filteredList, videoList]);
-  useEffect(()=>{ sidebarRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
-  const currentLessonKey = useMemo(() => {
-    if (!currentVideo) return '';
-    return currentVideo.videoId || '';
-  }, [currentVideo?.videoId]);
-  const handleNext = () => {
-    if (currentIndex < videoList.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+
+  // Scroll sidebar to top when filter changes
+  useEffect(() => { sidebarListRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
+
+  const currentLessonKey = useMemo(() => currentVideo?.videoId || '', [currentVideo?.videoId]);
+
+  const handleNext = () => { if (currentIndex < videoList.length - 1) setCurrentIndex(currentIndex + 1); };
+  const handlePrevious = () => { if (currentIndex > 0) setCurrentIndex(currentIndex - 1); };
+
+  // ── Vimeo player effect ───────────────────────────────────────────────────
+  useEffect(() => {
+    const lesson = currentVideo;
+    const vimeoSrc = embedSrc;
+    if (!lesson || lesson.sourceType !== 'VIMEO' || !vimeoSrc || !/vimeo\.com/i.test(vimeoSrc)) {
+      cleanupVimeoPlayer(); return;
     }
-  };
+    let cancelled = false;
+    lastProgressFlushRef.current = 0;
+    (async () => {
+      try {
+        let iframe: HTMLIFrameElement | null = null;
+        for (let attempt = 0; attempt < 60; attempt++) {
+          iframe = getPlayerIframe();
+          if (iframe) break;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+          if (cancelled) return;
+        }
+        if (!iframe) return;
+        const { default: Player } = await import('@vimeo/player');
+        if (cancelled) return;
+        cleanupVimeoPlayer();
+        const player = new Player(iframe);
+        playerInstanceRef.current = player;
 
-  // já abrimos direto com os estados iniciais
+        player.ready().then(async () => {
+          if (cancelled) return;
+          markPlayerReady();
+          try { await player.pause(); } catch {}
+        }).catch(() => {});
 
-  const handlePrevious = () => {
-    if (currentIndex > 0) {
-      setCurrentIndex(currentIndex - 1);
+        const stored = getStoredProgress(lesson);
+        let pendingResume = stored?.watchedSeconds || 0;
+
+        const tryResume = async (durationHint?: number) => {
+          if (!pendingResume || pendingResume <= 5) return;
+          const duration = Number.isFinite(durationHint) && durationHint ? durationHint : stored?.durationSeconds || 0;
+          const maxSeek = duration > 6 ? Math.max(0, duration - 2) : undefined;
+          const target = maxSeek !== undefined ? Math.min(pendingResume, maxSeek) : pendingResume;
+          if (target > 5) { try { await player.setCurrentTime(target); } catch {} }
+          pendingResume = 0;
+        };
+
+        player.on('loaded', (data: any) => {
+          lastProgressFlushRef.current = 0;
+          markPlayerReady();
+          tryResume(Number(data?.duration)).catch(() => {});
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          if (duration > 0) {
+            if ((stored?.watchedSeconds || 0) > 0) {
+              persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+            } else {
+              setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+            }
+          }
+        });
+
+        player.on('durationchange', (data: any) => { tryResume(Number(data?.duration)).catch(() => {}); });
+        player.on('timeupdate', (data: any) => {
+          const now = Date.now();
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          if (now - lastProgressFlushRef.current >= 5000) {
+            lastProgressFlushRef.current = now;
+            persistProgressRef.current?.(Number(data?.seconds || 0), duration);
+          }
+        });
+        player.on('seeked', (data: any) => {
+          lastProgressFlushRef.current = Date.now();
+          const duration = Number(data?.duration || stored?.durationSeconds || 0);
+          persistProgressRef.current?.(Number(data?.seconds || 0), duration);
+        });
+        player.on('ended', async () => {
+          lastProgressFlushRef.current = Date.now();
+          let duration = stored?.durationSeconds || 0;
+          try { duration = await player.getDuration(); } catch {}
+          persistProgressRef.current?.(duration || stored?.durationSeconds || 0, duration || stored?.durationSeconds || 0);
+        });
+        player.on('error', (err: any) => {
+          console.warn('Erro no player Vimeo', err);
+          markPlayerError('O Vimeo não conseguiu carregar este vídeo.');
+        });
+      } catch (error) {
+        console.warn('Falha ao inicializar player Vimeo', error);
+        markPlayerError('Falha ao inicializar o player do Vimeo.');
+      }
+    })();
+    return () => { cancelled = true; cleanupVimeoPlayer(); };
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, markPlayerReady, markPlayerError, cleanupVimeoPlayer, getPlayerIframe]);
+
+  // ── YouTube player effect ─────────────────────────────────────────────────
+  useEffect(() => {
+    const lesson = currentVideo;
+    const youtubeSrc = embedSrc;
+    if (!lesson || lesson.sourceType !== 'YOUTUBE' || !youtubeSrc || !isYouTubeUrl(youtubeSrc)) {
+      cleanupYouTubePlayer(false); return;
     }
-  };
+    let cancelled = false;
+    lastProgressFlushRef.current = 0;
+    (async () => {
+      try {
+        await ensureYouTubeApi();
+        if (cancelled) return;
+        let iframe: HTMLIFrameElement | null = null;
+        for (let attempt = 0; attempt < 60; attempt++) {
+          iframe = getPlayerIframe();
+          if (iframe) break;
+          await new Promise(resolve => window.setTimeout(resolve, 100));
+          if (cancelled) return;
+        }
+        if (!iframe) return;
+        cleanupYouTubePlayer(false);
+        const stored = getStoredProgress(lesson);
+        let pendingResume = stored?.watchedSeconds || 0;
 
-  // jumpToLastWatchedIfAny removido ao separar a página de módulos
+        const player = new window.YT.Player(iframe, {
+          events: {
+            onReady: (event: any) => {
+              if (cancelled) return;
+              markPlayerReady();
+              const duration = Number(event?.target?.getDuration?.() || stored?.durationSeconds || 0);
+              if (duration > 0) {
+                if ((stored?.watchedSeconds || 0) > 0) {
+                  persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
+                } else {
+                  setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+                }
+              } else if (stored) {
+                setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
+              }
+              if (pendingResume && pendingResume > 5) {
+                const maxSeek = duration > 6 ? Math.max(0, duration - 2) : null;
+                const target = maxSeek !== null ? Math.min(pendingResume, maxSeek) : pendingResume;
+                if (target > 5) {
+                  try {
+                    const resumeVideoId = extractYouTubeVideoId(youtubeSrc);
+                    if (resumeVideoId) event.target.cueVideoById?.({ videoId: resumeVideoId, startSeconds: target });
+                    else event.target.seekTo?.(target, true);
+                  } catch { try { event.target.seekTo?.(target, true); } catch {} }
+                }
+              }
+              try { event.target.pauseVideo?.(); } catch {}
+              pendingResume = 0;
+            },
+            onStateChange: (event: any) => {
+              const state = Number(event?.data);
+              const playing = state === window.YT?.PlayerState?.PLAYING;
+              const paused = state === window.YT?.PlayerState?.PAUSED;
+              const ended = state === window.YT?.PlayerState?.ENDED;
+              const buffering = state === window.YT?.PlayerState?.BUFFERING;
+              if (!youtubePlayerRef.current) return;
 
+              const tick = (forcePersist: boolean) => {
+                try {
+                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
+                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
+                  if (!Number.isFinite(currentTime) || currentTime < 0) return;
+                  setUiProgress((prev) => ({ watchedSeconds: currentTime, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
+                  if (forcePersist) {
+                    lastProgressFlushRef.current = Date.now();
+                    persistProgressRef.current?.(currentTime, duration);
+                    return;
+                  }
+                  const now = Date.now();
+                  if (now - lastProgressFlushRef.current >= 5000) {
+                    lastProgressFlushRef.current = now;
+                    persistProgressRef.current?.(currentTime, duration);
+                  }
+                } catch {}
+              };
+
+              const startPolling = () => {
+                if ((youtubePlayerRef.current as any).__fiveonePoll) return;
+                (youtubePlayerRef.current as any).__fiveonePoll = window.setInterval(() => tick(false), 1000);
+                tick(false);
+              };
+              const stopPolling = (flush: boolean) => {
+                const id = (youtubePlayerRef.current as any).__fiveonePoll as number | undefined;
+                if (id) window.clearInterval(id);
+                delete (youtubePlayerRef.current as any).__fiveonePoll;
+                if (flush) tick(true);
+              };
+
+              if (playing || buffering) startPolling();
+              else if (paused) stopPolling(true);
+              else if (ended) {
+                stopPolling(false);
+                try {
+                  const currentTime = Number(youtubePlayerRef.current.getCurrentTime?.() || 0);
+                  const duration = Number(youtubePlayerRef.current.getDuration?.() || stored?.durationSeconds || 0);
+                  const finalTime = duration > 0 ? duration : currentTime;
+                  if (finalTime > 0) persistProgressRef.current?.(finalTime, duration || undefined);
+                } catch {}
+              } else stopPolling(false);
+            },
+            onError: (event: any) => {
+              console.warn('Erro no player YouTube', event);
+              markPlayerError('O YouTube não conseguiu carregar este vídeo.');
+            },
+          },
+        });
+        youtubePlayerRef.current = player;
+      } catch (error) {
+        console.warn('Falha ao inicializar player YouTube', error);
+        markPlayerError('Falha ao inicializar o player do YouTube.');
+      }
+    })();
+    return () => { cancelled = true; cleanupYouTubePlayer(false); };
+  }, [currentVideo?.videoId, currentVideo?.sourceType, embedSrc, playerReloadKey, markPlayerReady, markPlayerError, getPlayerIframe, cleanupYouTubePlayer]);
+
+  // ── JSX ───────────────────────────────────────────────────────────────────
+  const heroBanner = currentVideo?.bannerPlayer?.url || currentVideo?.bannerPlayer?.dataUrl;
 
   return (
     <>
       <Header />
-      <div className="wrapper-central">
-        <main className="streamer-video-area">
+      <div className="min-h-screen bg-navy pb-16">
+        <div className="max-w-screen-2xl mx-auto px-4 py-6">
+
+          {/* Empty state */}
           {!videoList.length && (
-            <div className="video-and-sidebar">
-              <div className="video-content">
-                <div className="back-row">
-                  <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
-                </div>
-                <h2 className="streamer-titulo">Conteúdo em preparação</h2>
-                <p style={{ color: '#94a3b8', marginTop: 12 }}>
-                  Nenhuma aula publicada para esta formação ainda. Assim que novas aulas forem disponibilizadas, elas aparecerão aqui automaticamente.
-                </p>
-              </div>
+            <div className="max-w-2xl">
+              <button
+                onClick={() => navigate('/modulos-mestre')}
+                className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors"
+              >
+                ← Voltar aos Módulos
+              </button>
+              <h2 className="text-xl font-bold text-slate-white mt-4">Conteúdo em preparação</h2>
+              <p className="text-slate mt-3 text-sm">
+                Nenhuma aula publicada para esta formação ainda. Assim que novas aulas forem disponibilizadas, elas aparecerão aqui automaticamente.
+              </p>
             </div>
           )}
+
           {isModuloAberto && currentVideo && (
-            <div className={`video-and-sidebar ${theaterMode ? 'is-theater' : ''}`}>
-              <div className="video-content">
-                <div className="back-row">
-                  <button className="back-to-modules" onClick={() => navigate('/modulos-mestre')}>← Voltar aos Módulos</button>
-                </div>
-                {(() => {
-                  const heroBanner = currentVideo.bannerPlayer?.url || currentVideo.bannerPlayer?.dataUrl;
-                  return heroBanner ? (
-                  <div className="video-banner">
-                    <img src={heroBanner} alt={`Banner da aula ${currentVideo.title}`} />
+            <div className={`flex gap-6 ${theaterMode ? 'flex-col' : 'items-start lg:flex-row'}`}>
+
+              {/* ── LEFT COLUMN ────────────────────────────────────────────── */}
+              <div className="flex-1 min-w-0">
+                {/* Back button */}
+                <button
+                  onClick={() => navigate('/modulos-mestre')}
+                  className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors"
+                >
+                  ← Voltar aos Módulos
+                </button>
+
+                {/* Banner */}
+                {heroBanner && (
+                  <div className="mt-4 rounded-xl overflow-hidden">
+                    <img src={heroBanner} alt={`Banner da aula ${currentVideo.title}`} className="w-full object-cover" />
                   </div>
-                  ) : null;
-                })()}
-                <h2 className="streamer-titulo">{currentVideo.title}</h2>
-                <div className="subject-info">
-                  {currentVideo.subjectName && currentVideo.instructor && (
-                    <span className="subject-pill" title={`${currentVideo.subjectName} • ${currentVideo.instructor}`}>
-                      {currentVideo.subjectName} • {currentVideo.instructor}
-                    </span>
-                  )}
-                  {currentVideo.subjectName && !currentVideo.instructor && (
-                    <span className="subject-pill">{currentVideo.subjectName}</span>
-                  )}
-                </div>
+                )}
+
+                {/* Title + subject */}
+                <h2 className="text-xl font-bold text-slate-white mt-4 leading-snug">{currentVideo.title}</h2>
+                {(currentVideo.subjectName || currentVideo.instructor) && (
+                  <p className="text-sm text-slate mt-1">
+                    {[currentVideo.subjectName, currentVideo.instructor].filter(Boolean).join(' • ')}
+                  </p>
+                )}
+
+                {/* Video container */}
                 <div
-                  className={`video-container ${playerStatus !== 'ready' ? 'is-loading' : ''} ${playerStatus === 'error' ? 'is-error' : ''}`}
                   ref={videoRef}
+                  className={`relative aspect-video rounded-xl overflow-hidden bg-navy-lighter mt-3 ${
+                    playerStatus !== 'ready' ? 'ring-1 ring-slate/10' : ''
+                  }`}
                 >
                   <DeferredIframe
                     key={`${currentIndex}-${playerReloadKey}`}
@@ -1703,253 +1395,406 @@ const StreamerMestre = () => {
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     onReady={markPlayerReady}
                     onError={markPlayerError}
+                    className="absolute inset-0 w-full h-full"
                   />
+
+                  {/* Player loading/error overlay */}
                   {playerStatus !== 'ready' && (
-                    <div className="player-overlay" role="status" aria-live="polite">
-                      <div className="player-overlay-card">
-                        {playerStatus === 'loading' && <div className="player-spinner" aria-hidden />}
-                        <div className="player-overlay-title">
-                          {playerStatus === 'error' ? 'Não foi possível carregar o vídeo' : 'Carregando vídeo…'}
-                        </div>
-                        {playerMessage && <div className="player-overlay-message">{playerMessage}</div>}
-                        {import.meta.env.DEV && !!embedSrc && (
-                          <div className="player-overlay-debug" data-testid="player-overlay-debug">
-                            <div>embedSrc: {embedSrc}</div>
-                            <div>sourceType: {currentVideo.sourceType}</div>
-                            <div>videoId: {currentVideo.videoId}</div>
-                            {currentVideo.videoUrl && <div>videoUrl: {decodeHtmlUrl(currentVideo.videoUrl)}</div>}
-                            {currentVideo.embedCode && (
-                              <div>
-                                embedCode: {currentVideo.embedCode.slice(0, 180)}
-                                {currentVideo.embedCode.length > 180 ? '…' : ''}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                        {(showPlayerFallback || playerStatus === 'error') && (
-                          <div className="player-overlay-actions">
-                            <button type="button" className="player-overlay-btn" onClick={handleReloadPlayer}>
-                              Recarregar player
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy-lighter/95 z-10 gap-4 p-6" role="status" aria-live="polite">
+                      {playerStatus === 'loading' && (
+                        <svg className="w-10 h-10 text-mint animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M21 12a9 9 0 1 1-6.219-8.56"/>
+                        </svg>
+                      )}
+                      <p className="text-slate-white font-medium text-sm text-center">
+                        {playerStatus === 'error' ? 'Não foi possível carregar o vídeo' : 'Carregando vídeo…'}
+                      </p>
+                      {playerMessage && (
+                        <p className="text-slate text-xs text-center max-w-xs leading-relaxed">{playerMessage}</p>
+                      )}
+                      {import.meta.env.DEV && !!embedSrc && (
+                        <pre className="text-xs text-slate/60 max-w-xs break-all text-left border border-slate/10 rounded p-2 bg-navy/50">
+                          {embedSrc.slice(0, 120)}{embedSrc.length > 120 ? '…' : ''}
+                        </pre>
+                      )}
+                      {(showPlayerFallback || playerStatus === 'error') && (
+                        <div className="flex flex-wrap gap-2 justify-center">
+                          <button
+                            type="button"
+                            onClick={handleReloadPlayer}
+                            className="px-4 py-2 text-sm bg-mint text-navy rounded-lg font-medium hover:bg-mint/90 transition-colors"
+                          >
+                            Recarregar player
+                          </button>
+                          {externalVideoUrl && (
+                            <button
+                              type="button"
+                              onClick={() => window.open(externalVideoUrl, '_blank', 'noopener,noreferrer')}
+                              className="px-4 py-2 text-sm bg-navy text-slate-white rounded-lg font-medium border border-slate/20 hover:border-mint/30 transition-colors"
+                            >
+                              Abrir em nova aba
                             </button>
-                            {externalVideoUrl && (
-                              <button
-                                type="button"
-                                className="player-overlay-btn secondary"
-                                onClick={() => window.open(externalVideoUrl, '_blank', 'noopener,noreferrer')}
-                              >
-                                Abrir em nova aba
-                              </button>
-                            )}
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Auto-play countdown overlay */}
+                  {autoPlayCountdown !== null && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy/80 z-20 gap-4 backdrop-blur-sm">
+                      <p className="text-slate-white font-semibold text-lg">Próxima aula em {autoPlayCountdown}s…</p>
+                      <button
+                        onClick={cancelAutoPlay}
+                        className="px-5 py-2 text-sm font-medium bg-navy-lighter text-slate-white rounded-lg border border-slate/20 hover:border-mint/30 hover:text-mint transition-all"
+                      >
+                        Cancelar
+                      </button>
                     </div>
                   )}
                 </div>
+
+                {/* Progress bar */}
                 {uiProgress.durationSeconds > 0 && (
-                  <div className="video-progress-track" aria-hidden>
+                  <div className="h-1 bg-navy-lighter rounded-full mt-2" aria-hidden>
                     <div
-                      className="video-progress-fill"
-                      style={{
-                        width: `${Math.min(100, Math.round((uiProgress.watchedSeconds / uiProgress.durationSeconds) * 100))}%`
-                      }}
+                      className="h-1 bg-mint rounded-full transition-all duration-300"
+                      style={{ width: `${Math.min(100, Math.round((uiProgress.watchedSeconds / uiProgress.durationSeconds) * 100))}%` }}
                     />
                   </div>
                 )}
+
+                {/* Player fallback (player ready but had issues) */}
                 {showPlayerFallback && playerStatus === 'ready' && (
-                  <div className="player-fallback-inline" role="note">
-                    <span className="player-fallback-text">Problemas com o player?</span>
+                  <div className="flex items-center gap-3 mt-2 px-3 py-2 bg-navy-lighter/40 rounded-lg border border-slate/10 text-sm" role="note">
+                    <span className="text-slate flex-1 text-xs">Problemas com o player?</span>
                     {import.meta.env.DEV && !!embedSrc && (
-                      <span className="player-fallback-debug">embedSrc: {embedSrc}</span>
+                      <span className="text-slate/50 text-xs hidden lg:block truncate max-w-xs">{embedSrc.slice(0, 60)}</span>
                     )}
-                    <button type="button" className="player-fallback-btn" onClick={handleReloadPlayer}>
-                      Recarregar
-                    </button>
+                    <button onClick={handleReloadPlayer} className="text-mint hover:underline text-xs">Recarregar</button>
                     {externalVideoUrl && (
                       <button
-                        type="button"
-                        className="player-fallback-btn secondary"
                         onClick={() => window.open(externalVideoUrl, '_blank', 'noopener,noreferrer')}
+                        className="text-slate hover:text-slate-white text-xs transition-colors"
                       >
                         Abrir em nova aba
                       </button>
                     )}
                   </div>
                 )}
-                <div className="action-bar" role="toolbar" aria-label="Controles da aula">
-                  <div className="action-left">
+
+                {/* Action bar */}
+                <div
+                  className="flex items-center justify-between mt-4 flex-wrap gap-3"
+                  role="toolbar"
+                  aria-label="Controles da aula"
+                >
+                  {/* Left: Reactions + Favorite */}
+                  <div className="flex items-center gap-2">
                     <ReactionBar videoId={currentVideo.videoId} />
+                    <button
+                      onClick={handleFavoriteToggle}
+                      disabled={isFavLoading}
+                      aria-label={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      title={isFav ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all border disabled:opacity-50 ${
+                        isFav
+                          ? 'bg-red-500/20 text-red-400 border-red-500/40'
+                          : 'bg-navy-lighter text-slate hover:text-slate-white border-transparent hover:border-slate/20'
+                      }`}
+                    >
+                      <svg
+                        className={`w-4 h-4 transition-all ${isFav ? 'fill-red-400 stroke-red-400' : 'fill-none stroke-current'}`}
+                        viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
+                      >
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                      </svg>
+                    </button>
                   </div>
-                  <div className="action-center">
+
+                  {/* Center: Navigation + Progress */}
+                  <div className="flex items-center gap-2">
                     {currentIndex > 0 && (
-                      <button className="action-btn prev" onClick={handlePrevious}>Anterior</button>
+                      <button
+                        onClick={handlePrevious}
+                        className="px-3 py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all"
+                      >
+                        ← Anterior
+                      </button>
                     )}
-                    <div className="action-progress" aria-label="Progresso da aula">
-                      Progresso{' '}
+                    <span className="text-sm text-slate px-1 tabular-nums" aria-label="Progresso da aula">
                       {uiProgress.durationSeconds > 0
                         ? `${formatClock(uiProgress.watchedSeconds)} / ${formatClock(uiProgress.durationSeconds)}`
                         : formatClock(uiProgress.watchedSeconds)}
-                    </div>
+                    </span>
                     {currentIndex < videoList.length - 1 && (
-                      <button className="action-btn next" onClick={handleNext}>Próxima</button>
+                      <button
+                        onClick={handleNext}
+                        className="px-3 py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all"
+                      >
+                        Próxima →
+                      </button>
                     )}
                   </div>
-                  <div className="action-right">
+
+                  {/* Right: Cinema + Complete */}
+                  <div className="flex items-center gap-2">
                     <button
-                      type="button"
-                      className={`action-btn theater ${theaterMode ? 'is-on' : ''}`}
                       onClick={() => setTheaterMode((prev) => !prev)}
                       aria-pressed={theaterMode}
                       title={theaterMode ? 'Sair do modo cinema' : 'Ativar modo cinema'}
+                      className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                        theaterMode
+                          ? 'bg-mint/10 text-mint border-mint/30'
+                          : 'bg-navy-lighter text-slate hover:text-slate-white border-transparent hover:border-slate/20'
+                      }`}
                     >
                       {theaterMode ? 'Tela normal' : 'Modo cinema'}
                     </button>
                     <button
-                      className={`action-btn complete ${currentLessonKey && completedIds.has(currentLessonKey) ? 'is-done' : ''}`}
                       onClick={handleMarkAsCompleted}
-                      type="button"
+                      className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${
+                        currentLessonKey && completedIds.has(currentLessonKey)
+                          ? 'bg-mint/10 text-mint border border-mint/30'
+                          : 'bg-mint text-navy hover:bg-mint/90'
+                      }`}
                     >
-                      {currentLessonKey && completedIds.has(currentLessonKey) ? 'Concluída' : 'Concluir'}
+                      {currentLessonKey && completedIds.has(currentLessonKey) ? '✓ Concluída' : 'Concluir aula'}
                     </button>
                   </div>
                 </div>
 
+                {/* Auto-play toggle */}
+                {currentIndex < videoList.length - 1 && (
+                  <label className="flex items-center gap-2 mt-3 cursor-pointer select-none w-fit">
+                    <input
+                      type="checkbox"
+                      checked={autoPlay}
+                      onChange={(e) => setAutoPlay(e.target.checked)}
+                      className="rounded border-slate/30 bg-navy-lighter accent-mint"
+                    />
+                    <span className="text-sm text-slate">Reproduzir próxima aula automaticamente</span>
+                  </label>
+                )}
+
+                {/* Material */}
                 {currentVideo.materialFile && (
-                  <div className="material-card">
-                    <div className="material-info">
-                      <div className="material-icon" aria-hidden />
-                      <div className="material-text">
-                        <div className="material-title">Material complementar <span className="badge-pdf">PDF</span></div>
-                        <div className="material-sub">{currentVideo.materialFile.name}</div>
-                      </div>
+                  <div className="flex items-center gap-4 p-4 bg-navy-lighter/50 border border-slate/10 rounded-xl mt-6 hover:border-mint/30 transition-colors group">
+                    {(() => {
+                      const file = currentVideo.materialFile as any;
+                      const { emoji, bg } = getFileIcon(file.name ?? '', file.type);
+                      return (
+                        <div className={`p-3 rounded-lg ${bg} flex-shrink-0`}>
+                          <span className="text-2xl" role="img" aria-hidden>{emoji}</span>
+                        </div>
+                      );
+                    })()}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-slate-white truncate">
+                        {(currentVideo.materialFile as any).name}
+                      </p>
+                      {(currentVideo.materialFile as any).size && (
+                        <p className="text-xs text-slate mt-0.5">
+                          {formatBytes((currentVideo.materialFile as any).size)}
+                        </p>
+                      )}
                     </div>
-                    <button className="material-btn" onClick={() => openStoredFile(currentVideo.materialFile)}>Ver/baixar PDF</button>
+                    <button
+                      onClick={() => openStoredFile(currentVideo.materialFile)}
+                      className="flex-shrink-0 px-4 py-2 text-sm font-medium rounded-lg border border-slate/20 text-slate-light hover:border-mint/30 hover:text-mint transition-all"
+                    >
+                      Ver/baixar
+                    </button>
                   </div>
                 )}
-                <div className="engagement-panel">
+
+                {/* Notes Panel */}
+                <NotesPanel lessonId={currentVideo.videoId} currentSeconds={uiProgress.watchedSeconds} />
+
+                {/* Comments */}
+                <div className="mt-6">
                   <CommentSection videoId={currentVideo.videoId} />
                 </div>
               </div>
-              <div className="video-sidebar" ref={sidebarRef} data-filtered={filterSubject !== 'all'}>
-                {videoList.length > 0 && (
-                  <div className="sidebar-progress-summary">
-                    <span className="sidebar-progress-count">
-                      {completedIds.size} de {videoList.length} aulas concluídas
-                    </span>
-                    <div className="sidebar-progress-bar">
-                      <div
-                        className="sidebar-progress-bar-fill"
-                        style={{ width: `${Math.round((completedIds.size / videoList.length) * 100)}%` }}
-                      />
+
+              {/* ── RIGHT COLUMN — sidebar ──────────────────────────────────── */}
+              <div className={`w-full flex-shrink-0 ${theaterMode ? '' : 'lg:w-80 xl:w-96'}`}>
+                <div className="lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden max-h-[calc(100vh-5rem)]">
+
+                  {/* Progress summary */}
+                  {videoList.length > 0 && (
+                    <div className="p-4 border-b border-slate/10 flex-shrink-0">
+                      <p className="text-sm font-semibold text-slate-white">
+                        {completedIds.size} de {videoList.length} aulas concluídas
+                      </p>
+                      <div className="h-1.5 bg-navy-lighter rounded-full mt-2">
+                        <div
+                          className="h-1.5 bg-mint rounded-full transition-all duration-300"
+                          style={{ width: `${Math.round((completedIds.size / videoList.length) * 100)}%` }}
+                        />
+                      </div>
                     </div>
+                  )}
+
+                  {/* Filter */}
+                  <div className="px-4 pt-3 pb-2 border-b border-slate/10 flex-shrink-0">
+                    <SubjectDropdown
+                      label="Matéria"
+                      value={filterSubject}
+                      onChange={setFilterSubject}
+                      options={subjects}
+                    />
                   </div>
-                )}
-                <h3 className="sidebar-title">Próximas Aulas</h3>
-                <SubjectDropdown
-                  label="Matéria"
-                  value={filterSubject}
-                  onChange={setFilterSubject}
-                  options={subjects}
-                />
-                <ul className="sidebar-list">
-                  {groupedList.map((group) => (
-                    <li key={`${group.moduleOrder}-${group.moduleTitle}`} className="sidebar-group">
-                      <div className="sidebar-module-header">{group.moduleTitle}</div>
-                      <ul className="sidebar-group-list">
-                        {group.items.map(({ video, globalIndex }) => {
-                          const itemKey = video.videoId;
-                          if (!itemKey) return null;
-                          const isCompleted = completedIds.has(itemKey);
-                          const stored = getStoredProgress(video);
-                          const durationSeconds =
-                            (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
-                            (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
-                          const watchedSeconds = stored?.watchedSeconds || 0;
-                          const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
-                          const progress = isCompleted ? 1 : rawProgress;
-                          return (
-                            <li
-                              key={itemKey}
-                              className={`sidebar-item ${globalIndex === currentIndex ? 'active' : ''} ${isCompleted ? 'is-complete' : ''}`}
-                              title={video.title}
-                              onClick={() => setCurrentIndex(globalIndex)}
-                            >
-                              <img
-                                src={
-                                  isMobile
-                                    ? video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
-                                    : video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.bannerPlayer?.url || video.bannerPlayer?.dataUrl || video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
-                                }
-                                alt={`Miniatura ${video.title}`}
-                                className="sidebar-thumbnail"
-                              />
-                              <div className="sidebar-video-info">
-                                <div className="sidebar-video-title">{video.title}</div>
-                                <div className="sidebar-video-subject">{video.subjectName}</div>
-                                <div className="sidebar-video-meta">
-                                  {durationSeconds > 0 && <span className="sidebar-duration">{formatClock(durationSeconds)}</span>}
-                                  {durationSeconds > 0 && (
-                                    <div className="sidebar-progress" aria-label={`Progresso ${Math.round(progress * 100)}%`}>
-                                      <div className="sidebar-progress-fill" style={{ width: `${Math.round(progress * 100)}%` }} />
+
+                  {/* Scrollable lesson list */}
+                  <ul ref={sidebarListRef} className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+                    {groupedList.map((group) => (
+                      <li key={`${group.moduleOrder}-${group.moduleTitle}`}>
+                        <div className="text-xs font-semibold text-slate uppercase tracking-wider px-2 py-2">
+                          {group.moduleTitle}
+                        </div>
+                        <ul className="space-y-0.5">
+                          {group.items.map(({ video, globalIndex }) => {
+                            const itemKey = video.videoId;
+                            if (!itemKey) return null;
+                            const isActive = globalIndex === currentIndex;
+                            const isCompleted = completedIds.has(itemKey);
+                            const stored = getStoredProgress(video);
+                            const durationSeconds =
+                              (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
+                              (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
+                            const watchedSeconds = stored?.watchedSeconds || 0;
+                            const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
+                            const progress = isCompleted ? 1 : rawProgress;
+                            const thumbnail = isMobile
+                              ? video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png'
+                              : video.bannerContinue?.url || video.bannerContinue?.dataUrl || video.bannerPlayer?.url || video.bannerPlayer?.dataUrl || video.bannerMobile?.url || video.bannerMobile?.dataUrl || video.thumbnailUrl || '/assets/images/miniatura_fundamentos_apostololicos.png';
+
+                            return (
+                              <li
+                                key={itemKey}
+                                onClick={() => setCurrentIndex(globalIndex)}
+                                title={video.title}
+                                className={`flex gap-2.5 p-2 rounded-lg cursor-pointer transition-all ${
+                                  isActive
+                                    ? 'bg-navy-lighter border-l-2 border-mint pl-[6px]'
+                                    : 'hover:bg-navy-lighter/60 border-l-2 border-transparent'
+                                }`}
+                              >
+                                <div className="relative flex-shrink-0">
+                                  <img
+                                    src={thumbnail}
+                                    alt={`Miniatura ${video.title}`}
+                                    className="w-16 h-10 object-cover rounded"
+                                  />
+                                  {isCompleted && (
+                                    <div className="absolute inset-0 bg-navy/50 rounded flex items-center justify-center">
+                                      <svg className="w-4 h-4 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                        <polyline points="20 6 9 17 4 12"/>
+                                      </svg>
                                     </div>
                                   )}
                                 </div>
-                                <div className="status-indicator">
-                                  {isCompleted && (
-                                    <span className="completed-badge" aria-label="Aula concluída">Concluída</span>
+                                <div className="flex-1 min-w-0">
+                                  <p className={`text-xs font-medium truncate leading-snug ${isActive ? 'text-mint' : 'text-slate-white'}`}>
+                                    {video.title}
+                                  </p>
+                                  {video.subjectName && (
+                                    <p className="text-xs text-slate truncate mt-0.5">{video.subjectName}</p>
+                                  )}
+                                  <div className="flex items-center gap-2 mt-1">
+                                    {durationSeconds > 0 && (
+                                      <span className="text-xs text-slate/70 tabular-nums">{formatClock(durationSeconds)}</span>
+                                    )}
+                                    {isCompleted && (
+                                      <span className="text-xs text-mint font-medium">✓ Concluída</span>
+                                    )}
+                                  </div>
+                                  {!isCompleted && durationSeconds > 0 && progress > 0 && (
+                                    <div className="h-0.5 bg-navy rounded-full mt-1.5">
+                                      <div
+                                        className="h-0.5 bg-mint/60 rounded-full"
+                                        style={{ width: `${Math.round(progress * 100)}%` }}
+                                      />
+                                    </div>
                                   )}
                                 </div>
-                              </div>
-                            </li>
-                          );
-                        })}
-                      </ul>
-                    </li>
-                  ))}
-                </ul>
-                <button className="sidebar-cta" onClick={handleNext} disabled={currentIndex >= videoList.length - 1}>
-                  Próxima aula
-                </button>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Next lesson CTA */}
+                  <div className="p-3 border-t border-slate/10 flex-shrink-0">
+                    <button
+                      onClick={handleNext}
+                      disabled={currentIndex >= videoList.length - 1}
+                      className="w-full py-2 text-sm font-medium text-mint rounded-lg border border-mint/30 hover:bg-mint/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                    >
+                      Próxima aula →
+                    </button>
+                  </div>
+                </div>
               </div>
+
             </div>
           )}
-        </main>
-      </div>
-      {confirmState && (
-        <div className="custom-modal-overlay" role="dialog" aria-modal="true" onClick={() => setConfirmState(null)}>
-          <div className="custom-modal" onClick={(event) => event.stopPropagation()}>
-            {confirmState.title && <h3>{confirmState.title}</h3>}
-            <p>{confirmState.message}</p>
-            <div className="custom-modal-actions">
-              <button type="button" className="custom-modal-button secondary" onClick={() => setConfirmState(null)}>
-                {confirmState.cancelLabel || 'Cancelar'}
-              </button>
-              <button
-                type="button"
-                className="custom-modal-button primary"
-                onClick={() => {
-                  try {
-                    const outcome = confirmState.onConfirm();
-                    if (outcome instanceof Promise) {
-                      outcome.catch((error) => {
-                        console.error(error);
-                        showToast('Não foi possível atualizar o status da aula.', 'error');
-                      });
-                    }
-                  } catch (error) {
-                    console.error(error);
-                    showToast('Não foi possível atualizar o status da aula.', 'error');
-                  }
-                }}
-              >
-                {confirmState.confirmLabel || 'Confirmar'}
-              </button>
-            </div>
-          </div>
         </div>
-      )}
+      </div>
+
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={!!confirmState}
+        onClose={() => setConfirmState(null)}
+        onConfirm={() => {
+          const state = confirmState;
+          if (!state) return;
+          try {
+            const outcome = state.onConfirm();
+            if (outcome instanceof Promise) {
+              outcome.catch((err) => {
+                console.error(err);
+                showToast('Não foi possível atualizar o status da aula.', 'error');
+              });
+            }
+          } catch (err) {
+            console.error(err);
+            showToast('Não foi possível atualizar o status da aula.', 'error');
+          }
+        }}
+        title={confirmState?.title ?? ''}
+        description={confirmState?.message}
+        confirmLabel={confirmState?.confirmLabel}
+        cancelLabel={confirmState?.cancelLabel}
+        danger={false}
+      />
+
+      {/* Toast */}
       {toastState && (
-        <div className={`streamer-toast ${toastState.tone || 'info'}`} role="status" aria-live="polite">
+        <div
+          role="status"
+          aria-live="polite"
+          className={`fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl shadow-lg text-sm font-medium ${
+            toastState.tone === 'success'
+              ? 'bg-mint text-navy'
+              : toastState.tone === 'error'
+              ? 'bg-red-500/90 text-white'
+              : 'bg-navy-lighter text-slate-white border border-slate/20'
+          }`}
+        >
+          {toastState.tone === 'success' && (
+            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+          )}
+          {toastState.tone === 'error' && (
+            <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          )}
           {toastState.message}
         </div>
       )}
