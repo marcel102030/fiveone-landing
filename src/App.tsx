@@ -54,6 +54,10 @@ import TreinamentoForm from "./features/institucional/pages/forms/TreinamentoFor
 import ImersaoForm from "./features/institucional/pages/forms/ImersaoForm";
 import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
 
+import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
+import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
+import { AuthProvider } from "./shared/contexts/AuthContext";
+
 import "./App.css";
 
 import Footer from "./shared/components/layout/Footer/Footer";
@@ -90,6 +94,8 @@ function AppContent() {
   const hideLayout =
     location.pathname === "/plataforma" ||
     location.pathname === "/login-aluno" ||
+    location.pathname === "/esqueci-senha" ||
+    location.pathname === "/redefinir-senha" ||
     location.pathname === "/streamer-apostolo" ||
     location.pathname === "/streamer-mestre" ||
     location.pathname === "/modulos-mestre" ||
@@ -248,7 +254,9 @@ function AppContent() {
                 </StudentGuard>
               }
             />
-            <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
+            <Route path="/login-aluno"    element={<LoginAluno onLogin={handleLogin} />} />
+            <Route path="/esqueci-senha"  element={<EsqueciSenha />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           </Routes>
         </main>
         <ScrollToTop />
@@ -261,7 +269,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }
