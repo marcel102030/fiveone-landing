@@ -596,49 +596,74 @@ const PaginaInicial = () => {
         {/* ── FORMAÇÃO MINISTERIAL ─────────────────────────────────────────── */}
         <section className="py-10 sm:py-14">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="mb-8 text-center">
-              <h2 className="text-xl sm:text-2xl font-bold text-slate-white">Sua Formação Ministerial</h2>
-              <p className="text-sm text-slate mt-2">
-                Explore as 5 formações do movimento Five One
+            <div className="mb-8 sm:mb-10 text-center max-w-3xl mx-auto">
+              <span className="inline-flex items-center rounded-full border border-mint/20 bg-mint/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
+                Five One
+              </span>
+              <h2 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white leading-tight">
+                Sua Formação Ministerial
+              </h2>
+              <p className="text-sm sm:text-base text-slate mt-3 leading-relaxed">
+                Escolha a trilha ministerial que representa seu chamado e acompanhe sua jornada de formação na plataforma.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 lg:gap-6 items-stretch">
               {FORMACOES.map((formacao) =>
                 formacao.active ? (
                   <Link
                     key={formacao.id}
                     to={formacao.route!}
-                    className="group relative rounded-2xl overflow-hidden border border-mint/30 hover:border-mint/60 hover:-translate-y-1 hover:shadow-mint transition-all"
+                    className="group relative min-h-[320px] sm:min-h-[360px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
                     aria-label={`Acessar formação ${formacao.label}`}
                   >
                     <img
                       src={formacao.img}
                       alt={formacao.label}
                       loading="lazy"
-                      className="w-full aspect-square object-cover"
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
-                    <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
-                      <span className="text-xs font-semibold text-mint">Acessar →</span>
+                    <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
+
+                    <div className="absolute top-4 left-4 z-10 flex items-start">
+                      <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
+                        Disponível agora
+                      </span>
+                    </div>
+
+                    <div className="absolute right-3 bottom-3 z-10">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-mint/20 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-mint backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/40 group-hover:bg-navy/72">
+                        <span>Entrar</span>
+                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                      </div>
                     </div>
                   </Link>
                 ) : (
                   <button
                     key={formacao.id}
                     onClick={() => setEmBreveMessage(formacao.message ?? null)}
-                    className="group relative rounded-2xl overflow-hidden border border-slate/20 hover:border-slate/40 hover:-translate-y-0.5 hover:shadow-card transition-all opacity-70 hover:opacity-90"
+                    className="group relative min-h-[320px] sm:min-h-[360px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-slate/15 bg-navy-lighter text-left hover:border-slate/35 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(2,8,23,0.42)] transition-all duration-300"
                     aria-label={`${formacao.label} — em breve`}
                   >
                     <img
                       src={formacao.img}
                       alt={`${formacao.label} - em breve`}
                       loading="lazy"
-                      className="w-full aspect-square object-cover grayscale group-hover:grayscale-0 transition-all"
+                      className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-500"
                     />
-                    <div className="absolute top-2 right-2">
-                      <span className="text-2xs font-semibold text-slate bg-navy/80 border border-slate/20 px-2 py-0.5 rounded-full backdrop-blur-sm">
+                    <div className="absolute inset-0 bg-gradient-to-b from-navy/5 via-navy/35 to-navy/95" />
+
+                    <div className="absolute top-4 left-4 z-10 flex items-start">
+                      <span className="inline-flex items-center rounded-full border border-slate/20 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-light backdrop-blur-md">
                         Em breve
                       </span>
+                    </div>
+
+                    <div className="absolute right-3 bottom-3 z-10">
+                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-slate-light backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/25 group-hover:bg-navy/72 group-hover:text-mint">
+                        <span>Detalhes</span>
+                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                      </div>
                     </div>
                   </button>
                 )
