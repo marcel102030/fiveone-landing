@@ -77,28 +77,28 @@ const FORMACOES = [
     label: 'Apóstolo',
     img: '/assets/images/apostolo.png',
     active: false,
-    message: 'Em breve: O Dom Apostólico estará disponível com conteúdos exclusivos sobre como reconhecê-lo e desenvolvê-lo.',
+    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
   },
   {
     id: 'PROFETA',
     label: 'Profeta',
     img: '/assets/images/profeta.png',
     active: false,
-    message: 'Em breve: O Dom Profético será ativado com recursos para interpretação, proclamação e exortação segundo a Palavra.',
+    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
   },
   {
     id: 'EVANGELISTA',
     label: 'Evangelista',
     img: '/assets/images/evangelista.png',
     active: false,
-    message: 'Em breve: Conteúdos evangelísticos para equipar você na proclamação do Evangelho serão liberados.',
+    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
   },
   {
     id: 'PASTOR',
     label: 'Pastor',
     img: '/assets/images/pastor.png',
     active: false,
-    message: 'Em breve: O Dom Pastoral estará disponível com fundamentos para cuidado e discipulado cristão.',
+    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
   },
   {
     id: 'MESTRE',
@@ -384,6 +384,27 @@ const PaginaInicial = () => {
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
   const formationLabel = profile?.formationLabel || null
 
+  const orderedFormacoes = useMemo(() => {
+    if (!formationLabel) return FORMACOES
+
+    const normalize = (value: string) =>
+      value
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase()
+
+    const normalizedFormation = normalize(formationLabel)
+    const currentFormation = FORMACOES.find((formacao) => normalize(formacao.label) === normalizedFormation)
+
+    if (!currentFormation) return FORMACOES
+
+    return [
+      currentFormation,
+      ...FORMACOES.filter((formacao) => formacao.id !== currentFormation.id),
+    ]
+  }, [formationLabel])
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
@@ -604,12 +625,12 @@ const PaginaInicial = () => {
                 Sua Formação Ministerial
               </h2>
               <p className="text-sm sm:text-base text-slate mt-3 leading-relaxed">
-                Escolha a trilha ministerial que representa seu chamado e acompanhe sua jornada de formação na plataforma.
+                Acompanhe sua jornada de formação na plataforma.
               </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 lg:gap-6 items-stretch">
-              {FORMACOES.map((formacao) =>
+              {orderedFormacoes.map((formacao) =>
                 formacao.active ? (
                   <Link
                     key={formacao.id}
@@ -627,7 +648,7 @@ const PaginaInicial = () => {
 
                     <div className="absolute top-4 left-4 z-10 flex items-start">
                       <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
-                        Disponível agora
+                        Sua trilha disponível
                       </span>
                     </div>
 
@@ -655,7 +676,7 @@ const PaginaInicial = () => {
 
                     <div className="absolute top-4 left-4 z-10 flex items-start">
                       <span className="inline-flex items-center rounded-full border border-slate/20 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-light backdrop-blur-md">
-                        Em breve
+                        Outras trilhas
                       </span>
                     </div>
 
@@ -682,7 +703,7 @@ const PaginaInicial = () => {
       <Modal
         open={!!emBreveMessage}
         onClose={() => setEmBreveMessage(null)}
-        title="Em breve"
+        title="Outras formações ministeriais"
         size="sm"
       >
         <p className="text-sm text-slate-light leading-relaxed">{emBreveMessage}</p>
