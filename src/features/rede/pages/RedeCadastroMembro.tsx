@@ -221,22 +221,12 @@ export default function RedeCadastroMembro() {
   const [visitorStep, setVisitorStep] = useState(1);
 
   const houseOptions = useMemo(() => houses, [houses]);
-  const isVisitor = invite && invite.member_type === "visitante";
+  const isVisitor = invite?.member_type === "visitante";
   const invitedBySelected = visitExperience.includes("convidado_alguem");
   const headerTitle = isVisitor ? "Cadastro de visitante" : "Cadastro de membro";
   const headerSubtitle = isVisitor
     ? "Compartilhe com a gente como foi sua visita para que possamos acolher você com carinho."
     : "Preencha seus dados para solicitar seu cadastro na rede.";
-
-    if (loading || !invite) {
-      return (
-        <div className="rede-signup-wrap">
-          <div className="rede-signup-card">
-            <p>Carregando convite...</p>
-          </div>
-        </div>
-      );
-    }
 
   useEffect(() => {
     if (isVisitor) setVisitorStep(1);
