@@ -51,11 +51,11 @@ import {
 import { updateUserMemberLink, updateUserRole } from "../../../plataforma/services/userAccount";
 
 const MINISTRY_OPTIONS = [
-  { value: "apostolo", label: "Tenho identificação com o dom Apostólico" },
-  { value: "profeta", label: "Tenho identificação com o dom Profético" },
-  { value: "evangelista", label: "Tenho identificação com o dom Evangelístico" },
-  { value: "pastor", label: "Tenho identificação com o dom Pastoral" },
-  { value: "mestre", label: "Tenho identificação com o dom de Mestre" },
+  { value: "apostolo", label: "Apóstolo" },
+  { value: "profeta", label: "Profeta" },
+  { value: "evangelista", label: "Evangelista" },
+  { value: "pastor", label: "Pastor" },
+  { value: "mestre", label: "Mestre" },
 ];
 
 const MEMBER_TYPE_OPTIONS = [
@@ -1529,10 +1529,10 @@ export default function AdminRedeIgrejas() {
 
       <nav className="rede-tabs" aria-label="Cadastros da rede">
         {[
-          { key: "members", label: "Membros", count: members.length, icon: "members" },
-          { key: "houses", label: "Igrejas nas casas", count: houses.length, icon: "houses" },
-          { key: "presbiteros", label: "Presbíteros", count: presbiteros.length, icon: "presbiteros" },
-          { key: "leaders", label: "Líderes 5 ministérios", count: leaders.length, icon: "leaders" },
+          { key: "members", label: "MEMBROS", count: members.length, icon: "members" },
+          { key: "houses", label: "IGREJA NAS CASAS", count: houses.length, icon: "houses" },
+          { key: "presbiteros", label: "PRESBITEROS", count: presbiteros.length, icon: "presbiteros" },
+          { key: "leaders", label: "LIDERES CINCO MINISTÉRIOS", count: leaders.length, icon: "leaders" },
         ].map((tab) => (
           <button
             key={tab.key}
