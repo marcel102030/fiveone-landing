@@ -109,6 +109,7 @@ type HouseFormState = {
   status: string;
   presbitero_id: string;
   presbitero_id_2: string;
+  whatsapp_group_url: string;
   notes: string;
 };
 
@@ -324,6 +325,7 @@ const emptyHouseForm: HouseFormState = {
   status: "ativa",
   presbitero_id: "",
   presbitero_id_2: "",
+  whatsapp_group_url: "",
   notes: "",
 };
 
@@ -935,6 +937,7 @@ export default function AdminRedeIgrejas() {
       status: house.status || "ativa",
       presbitero_id: house.presbitero_id || "",
       presbitero_id_2: house.presbitero_id_2 || "",
+      whatsapp_group_url: house.whatsapp_group_url || "",
       notes: house.notes || "",
     });
     setHouseMembersSelected(memberIds);
@@ -1414,6 +1417,7 @@ export default function AdminRedeIgrejas() {
         status: toNull(houseForm.status) || "ativa",
         presbitero_id: toNull(houseForm.presbitero_id),
         presbitero_id_2: toNull(houseForm.presbitero_id_2),
+        whatsapp_group_url: toNull(houseForm.whatsapp_group_url),
         notes: toNull(houseForm.notes),
       };
 
@@ -3029,6 +3033,19 @@ export default function AdminRedeIgrejas() {
                     </div>
                   </div>
                 </details>
+
+                <label className="admin-field">Grupo de WhatsApp da casa
+                  <input
+                    className="admin-input"
+                    type="url"
+                    value={houseForm.whatsapp_group_url}
+                    onChange={(event) => setHouseForm((prev) => ({ ...prev, whatsapp_group_url: event.target.value }))}
+                    placeholder="https://chat.whatsapp.com/..."
+                  />
+                  <span style={{ fontSize: 12, color: "#64748b" }}>
+                    URL do grupo de WhatsApp — aparece na tela de sucesso do formulário de visitante.
+                  </span>
+                </label>
 
                 <label className="admin-field">Observações
                   <textarea
