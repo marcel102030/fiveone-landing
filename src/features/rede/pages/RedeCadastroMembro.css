@@ -230,7 +230,11 @@
 
 .rede-signup-checks input[type="checkbox"],
 .rede-signup-checks input[type="radio"] {
-  /* override do seletor genérico — mantém o tamanho nativo */
+  /* Restaura aparência nativa — o seletor genérico acima aplica
+     -webkit-appearance:none em TODOS os inputs, o que remove o
+     preenchimento do radio/checkbox quando selecionado */
+  -webkit-appearance: auto;
+  appearance: auto;
   min-height: unset;
   width: 20px;
   height: 20px;
