@@ -167,9 +167,6 @@ const encontros = [
 const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
 const instagramUrl = 'https://www.instagram.com/redeigrejasfiveone';
 const whatsappLink = 'https://wa.me/5583987181731?text=Olá%2C%20vim%20do%20site%20da%20Rede%20de%20Igrejas%20nas%20Casas%20Five%20One';
-const whatsappHeroLink = `https://wa.me/5583987181731?text=${encodeURIComponent(
-  'Olá! Quero visitar uma casa da Rede de Igrejas nas Casas Five One. Pode me orientar com os próximos passos?',
-)}`;
 const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4';
 
 const PUBLIC_VISITOR_TOKEN = 'd8a7f3b2-1c0e-4a69-8b95-6f4e3d2c1b0a';
