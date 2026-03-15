@@ -774,14 +774,14 @@ export async function listRedeMemberApplications(): Promise<RedeMemberApplicatio
   return safeList<RedeMemberApplication>(data);
 }
 
-export async function createRedeMemberApplication(payload: RedeMemberApplicationInsert): Promise<RedeMemberApplication> {
-  const { data, error } = await supabase
+export async function createRedeMemberApplication(payload: RedeMemberApplicationInsert): Promise<void> {
+  // Não usa .select() para evitar falha de RLS:
+  // o role anon tem política de INSERT mas não de SELECT,
+  // então tentar retornar o dado após inserir levanta "violates RLS policy".
+  const { error } = await supabase
     .from("rede_member_application")
-    .insert(payload)
-    .select("*")
-    .single();
+    .insert(payload);
   if (error) throw error;
-  return data as RedeMemberApplication;
 }
 
 export async function updateRedeMemberApplication(
