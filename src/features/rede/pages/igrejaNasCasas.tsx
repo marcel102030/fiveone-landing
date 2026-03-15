@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { listRedeHouseChurches, RedeHouseChurch } from '../services/redeIgrejas';
 import encontro1 from '../../../assets/images/encontro1.jpg';
 import encontro2 from '../../../assets/images/encontro2.png';
 import encontro3 from '../../../assets/images/encontro1.jpg';
@@ -66,25 +67,6 @@ const heroImageAlts: Record<string, string> = {
   [principal8]: 'Rede Five One — comunhão intergeracional nas casas',
   [principal9]: 'Rede Five One — discipulado e alegria na rede',
 };
-
-const estatisticasRede = (() => {
-  const casasAtivas = igrejas.length;
-  const bairros = new Set(
-    igrejas.map((igreja) => igreja.endereco.split(',')[0]?.trim() || igreja.endereco),
-  ).size;
-  const cidades = new Set(igrejas.map((igreja) => igreja.cidade)).size;
-  return {
-    casasAtivas,
-    bairros,
-    cidades,
-  };
-})();
-
-const heroHighlights = [
-  { label: 'Casas ativas', value: estatisticasRede.casasAtivas.toString() },
-  { label: 'Bairros', value: estatisticasRede.bairros.toString() },
-  { label: 'Cidades', value: estatisticasRede.cidades.toString() },
-];
 
 const destaqueCards = destaqueCardsData;
 
@@ -190,6 +172,9 @@ const whatsappHeroLink = `https://wa.me/5583987181731?text=${encodeURIComponent(
 )}`;
 const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4';
 
+const PUBLIC_VISITOR_TOKEN = 'd8a7f3b2-1c0e-4a69-8b95-6f4e3d2c1b0a';
+const visitorFormPath = `/rede/cadastro?token=${PUBLIC_VISITOR_TOKEN}`;
+
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
   { id: 'confissao', label: 'Confissão de Fé' },
@@ -211,6 +196,36 @@ const IgrejaNasCasas: React.FC = () => {
   const heroGridRef = useRef<HTMLDivElement | null>(null);
   const [heroImagesActive, setHeroImagesActive] = useState<boolean>(typeof window === 'undefined');
   const currentYear = new Date().getFullYear();
+  const [liveHouses, setLiveHouses] = useState<RedeHouseChurch[]>([]);
+
+  useEffect(() => {
+    listRedeHouseChurches()
+      .then((data) => {
+        setLiveHouses(data.filter((h) => !h.status || h.status === 'ativa'));
+      })
+      .catch(() => {
+        // fallback to hardcoded data on error
+      });
+  }, []);
+
+  const dynamicStats = useMemo(() => {
+    const source = liveHouses.length > 0 ? liveHouses : igrejas.map((ig) => ({
+      id: ig.nome, name: ig.nome, city: ig.cidade, neighborhood: ig.bairro,
+      address: ig.endereco, meeting_day: null, meeting_time: null,
+      capacity: null, status: 'ativa', presbitero_id: null, presbitero_id_2: null,
+      notes: null, whatsapp_group_url: null,
+    } as RedeHouseChurch));
+    const casasAtivas = source.length;
+    const bairros = new Set(source.map((h) => h.neighborhood || h.city || '')).size;
+    const cidades = new Set(source.map((h) => h.city || '')).size;
+    return { casasAtivas, bairros, cidades };
+  }, [liveHouses]);
+
+  const heroHighlights = [
+    { label: 'Casas ativas', value: dynamicStats.casasAtivas.toString() },
+    { label: 'Bairros', value: dynamicStats.bairros.toString() },
+    { label: 'Cidades', value: dynamicStats.cidades.toString() },
+  ];
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'development') {
@@ -469,14 +484,12 @@ const IgrejaNasCasas: React.FC = () => {
             ))}
           </nav>
           <div className="page-strip__actions">
-            <a
-              href={whatsappLink}
+            <Link
+              to={visitorFormPath}
               className="page-strip__cta"
-              target="_blank"
-              rel="noreferrer"
             >
               FAÇA PARTE DA REDE
-            </a>
+            </Link>
             <button
               type="button"
               className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
@@ -525,9 +538,9 @@ const IgrejaNasCasas: React.FC = () => {
             do novo testamento, uma igreja para a cidade, ativando dons e construindo famílias espirituais que alcançam cada bairro.
           </p>
           <div className="hero-actions">
-            <a className="btn primary" href={whatsappHeroLink} target="_blank" rel="noopener noreferrer">
+            <Link className="btn primary" to={visitorFormPath}>
               Quero Visitar Uma Casa
-            </a>
+            </Link>
             <button className="btn ghost" type="button" onClick={() => scrollToSection('mapa')}>
               Encontrar uma casa perto de mim
             </button>
@@ -712,6 +725,22 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
+      <section className="visita-cta" id="visita">
+        <div className="visita-cta__inner">
+          <div className="visita-cta__icon" aria-hidden>🏠</div>
+          <h2>Você visitou uma de nossas casas?</h2>
+          <p>
+            Registre sua visita em menos de 2 minutos. Nossa liderança vai entrar em contato para caminhar com você.
+          </p>
+          <Link className="btn primary" to={visitorFormPath}>
+            Fazer meu cadastro de visitante
+          </Link>
+          <p className="visita-cta__hint">
+            Gratuito · Sem compromisso · Seu líder cuida de você 🙏
+          </p>
+        </div>
+      </section>
+
       <section className="participe" id="participe">
         <div className="participe-content">
           <h2>Entre para a Rede de Igrejas nas Casas</h2>
@@ -720,14 +749,9 @@ const IgrejaNasCasas: React.FC = () => {
             descubra como podemos caminhar juntos.
           </p>
           <div className="participe-actions">
-            <a
-              className="btn primary"
-              href="https://wa.me/5583987181731?text=Quero%20participar%20da%20Rede%20Five%20One"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Quero participar
-            </a>
+            <Link className="btn primary" to={visitorFormPath}>
+              Registrar minha visita
+            </Link>
             <a
               className="btn ghost"
               href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
@@ -840,29 +864,35 @@ const IgrejaNasCasas: React.FC = () => {
             className="contato-form"
             onSubmit={(event) => {
               event.preventDefault();
-              const anchor = document.createElement('a');
-              anchor.href = 'mailto:redeigrejasfiveone@gmail.com?subject=Contato%20Rede%20Five%20One';
-              anchor.click();
+              const formEl = event.currentTarget;
+              const nome = (formEl.elements.namedItem('nome') as HTMLInputElement)?.value || '';
+              const mensagem = (formEl.elements.namedItem('mensagem') as HTMLTextAreaElement)?.value || '';
+              const texto = `Olá! Vim do site da Rede Five One.\n\nNome: ${nome}\nMensagem: ${mensagem}`;
+              window.open(
+                `https://wa.me/5583987181731?text=${encodeURIComponent(texto)}`,
+                '_blank',
+                'noopener,noreferrer',
+              );
             }}
           >
             <label>
               Nome
-              <input type="text" placeholder="Como podemos te chamar?" required />
+              <input name="nome" type="text" placeholder="Como podemos te chamar?" required />
             </label>
             <label>
               E-mail
-              <input type="email" placeholder="seuemail@exemplo.com" required />
+              <input name="email" type="email" placeholder="seuemail@exemplo.com" />
             </label>
             <label>
               Telefone / WhatsApp
-              <input type="tel" placeholder="+55 (83) 98718-1731" />
+              <input name="telefone" type="tel" placeholder="+55 (83) 98718-1731" />
             </label>
             <label>
               Mensagem
-              <textarea rows={4} placeholder="Compartilhe como podemos ajudar." required />
+              <textarea name="mensagem" rows={4} placeholder="Compartilhe como podemos ajudar." required />
             </label>
             <button type="submit" className="btn primary">
-              Iniciar conversa
+              Enviar pelo WhatsApp
             </button>
           </form>
           <div className="contato-info">

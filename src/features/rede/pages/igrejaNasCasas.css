@@ -2241,3 +2241,50 @@
     max-width: 220px;
   }
 }
+
+/* ── Visitor CTA section ── */
+.visita-cta {
+  border-radius: var(--casas-radius);
+  background:
+    radial-gradient(circle at 30% 40%, rgba(35, 211, 185, 0.18), transparent 60%),
+    radial-gradient(circle at 80% 70%, rgba(94, 200, 255, 0.12), transparent 55%),
+    rgba(6, 16, 38, 0.95);
+  border: 1px solid rgba(35, 211, 185, 0.3);
+  box-shadow: var(--casas-shadow), 0 0 60px rgba(35, 211, 185, 0.08);
+  overflow: hidden;
+}
+
+.visita-cta__inner {
+  display: grid;
+  gap: 20px;
+  justify-items: center;
+  text-align: center;
+  padding: clamp(40px, 6vw, 80px) clamp(24px, 6vw, 80px);
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.visita-cta__icon {
+  font-size: 3.5rem;
+  line-height: 1;
+}
+
+.visita-cta h2 {
+  font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.15;
+}
+
+.visita-cta p {
+  color: var(--casas-muted);
+  font-size: 1.1rem;
+  line-height: 1.7;
+  max-width: 520px;
+}
+
+.visita-cta__hint {
+  font-size: 0.88rem !important;
+  color: rgba(145, 165, 202, 0.7) !important;
+  margin-top: -8px;
+}
