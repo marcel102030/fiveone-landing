@@ -632,46 +632,7 @@ function ChurchReportInner() {
         </div>
       </header>
 
-      {/* O que este relatório mostra */}
-      <section className="report-profile" aria-label="O que este relatório mostra">
-        <div className="report-profile-header">
-          <div>
-            <span className="report-kicker">Guia de leitura</span>
-            <h2 className="report-profile-title">O que este relatório mostra</h2>
-          </div>
-          <div className="report-profile-note">Diagnóstico inicial do período, baseado nas respostas do teste, que prepara a leitura das ênfases percebidas</div>
-        </div>
-        <div className="report-profile-grid">
-          <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
-            <span className="profile-insight-label">Orientação</span>
-            <p>{REPORT_WHAT_THIS_SHOWS_TEXT}</p>
-            <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.7.</span>
-          </div>
-        </div>
-      </section>
-
-      {executive && (
-        <section className="report-profile" aria-label="Resumo executivo">
-          <div className="report-profile-header">
-            <div>
-              <span className="report-kicker">Para líderes</span>
-              <h2 className="report-profile-title">{executive.title}</h2>
-            </div>
-            <div className="report-profile-note">Síntese pastoral do período para orientar decisões</div>
-          </div>
-          <div className="report-profile-grid">
-            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
-              <span className="profile-insight-label">Leitura em 6–8 linhas</span>
-              {executive.lines.map((line, index) => (
-                <p key={`exec-${index}`}>{line}</p>
-              ))}
-              <span className="profile-insight-base">{executive.base}</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Filtros de período */}
+      {/* Filtros de período — vêm primeiro para contextualizar toda a análise abaixo */}
       <section className="report-toolbar">
         <div className="report-toolbar-left">
           <label className="field">
@@ -691,6 +652,73 @@ function ChurchReportInner() {
 
       {loading && <p>Carregando dados…</p>}
       {error && <p style={{ color: "#ef4444" }}>Erro: {error}</p>}
+
+      {/* Banner: período sem dados mas há respostas no total */}
+      {!loading && !error && summary && summary.total === 0 && typeof data?.participation?.overallTotal === 'number' && data.participation.overallTotal > 0 && (
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.08)',
+          border: '1px solid rgba(245, 158, 11, 0.3)',
+          borderRadius: 12,
+          padding: '16px 20px',
+          marginBottom: 8,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 12,
+          flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: 20 }}>⚠️</span>
+          <div style={{ flex: 1 }}>
+            <strong style={{ color: '#fbbf24' }}>Nenhuma resposta no período selecionado.</strong>
+            <span style={{ color: '#94a3b8', marginLeft: 8 }}>
+              Há {data.participation.overallTotal} resposta{data.participation.overallTotal !== 1 ? 's' : ''} no total — clique em "Tudo" para visualizar a análise completa.
+            </span>
+          </div>
+          <button className="btn pill" onClick={() => { setFrom("" as any); setTo("" as any); }}>
+            Ver tudo
+          </button>
+        </div>
+      )}
+
+      {/* O que este relatório mostra */}
+      {summary && summary.total > 0 && (
+        <section className="report-profile" aria-label="O que este relatório mostra">
+          <div className="report-profile-header">
+            <div>
+              <span className="report-kicker">Guia de leitura</span>
+              <h2 className="report-profile-title">O que este relatório mostra</h2>
+            </div>
+            <div className="report-profile-note">Diagnóstico inicial do período, baseado nas respostas do teste, que prepara a leitura das ênfases percebidas</div>
+          </div>
+          <div className="report-profile-grid">
+            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
+              <span className="profile-insight-label">Orientação</span>
+              <p>{REPORT_WHAT_THIS_SHOWS_TEXT}</p>
+              <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.7.</span>
+            </div>
+          </div>
+        </section>
+      )}
+
+      {executive && summary && summary.total > 0 && (
+        <section className="report-profile" aria-label="Resumo executivo">
+          <div className="report-profile-header">
+            <div>
+              <span className="report-kicker">Para líderes</span>
+              <h2 className="report-profile-title">{executive.title}</h2>
+            </div>
+            <div className="report-profile-note">Síntese pastoral do período para orientar decisões</div>
+          </div>
+          <div className="report-profile-grid">
+            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
+              <span className="profile-insight-label">Leitura em 6–8 linhas</span>
+              {executive.lines.map((line, index) => (
+                <p key={`exec-${index}`}>{line}</p>
+              ))}
+              <span className="profile-insight-base">{executive.base}</span>
+            </div>
+          </div>
+        </section>
+      )}
 
       {summary && (
         <>

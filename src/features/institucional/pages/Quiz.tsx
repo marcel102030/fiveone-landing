@@ -731,18 +731,21 @@ const Quiz = () => {
                   // Salva a resposta agregada por igreja (não bloqueia UI)
                   (() => {
                     try {
-                      // 1) Calcula percentuais com base no estado atual
+                      // 1) Calcula percentuais com base no total de pontos somados (não por TOTAL_QUESTIONS)
+                      const totalScore = Object.values(categoryScores).reduce((s, v) => s + v, 0);
                       const scoresPercent: Record<string, number> = {};
                       Object.entries(categoryScores).forEach(([key, value]) => {
-                        const pct = Math.round((Number(value) / TOTAL_QUESTIONS) * 100);
+                        const pct = totalScore > 0 ? Math.round((Number(value) / totalScore) * 100) : 0;
                         scoresPercent[key] = isNaN(pct) ? 0 : pct;
                       });
 
-                      // 2) Top e empates (tolerância igual à do PDF)
-                      const sorted = Object.entries(scoresPercent).sort((a, b) => b[1] - a[1]);
-                      const topValue = sorted[0]?.[1] ?? 0;
-                      const ties = sorted.filter(([_, v]) => Math.abs(v - topValue) < 0.0001).map(([k]) => k);
-                      const topDom = sorted[0]?.[0] ?? '';
+                      // 2) Top e empates usando contagem bruta (inteiro, sem problema de float)
+                      const sortedRaw = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+                      const topRawValue = sortedRaw[0]?.[1] ?? 0;
+                      const ties = topRawValue > 0
+                        ? sortedRaw.filter(([_, v]) => v === topRawValue).map(([k]) => k)
+                        : [];
+                      const topDom = sortedRaw[0]?.[0] ?? '';
 
                       // 3) Igreja via URL e dados da pessoa
                       const churchCtx = getChurchFromURL();

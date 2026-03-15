@@ -31,22 +31,36 @@ export const onRequestGet = async (ctx: any) => {
     // 2) pega todas as respostas e agrega no código (simples e funciona bem neste volume)
     const { data: responses, error: errResp } = await admin
       .from('quiz_response')
-      .select('church_id');
+      .select('church_id, created_at');
 
     if (errResp) return new Response(JSON.stringify({ error: errResp.message }), { status: 500 });
 
     const counts = new Map<string, number>();
-    (responses || []).forEach(r => {
+    const lastResponseMap = new Map<string, string>();
+    (responses || []).forEach((r: { church_id: string; created_at: string }) => {
       counts.set(r.church_id, (counts.get(r.church_id) || 0) + 1);
+      const current = lastResponseMap.get(r.church_id);
+      if (!current || r.created_at > current) {
+        lastResponseMap.set(r.church_id, r.created_at);
+      }
     });
 
-    const payload = (churches || []).map((c: Church) => ({
-      ...c,
-      total_responses: counts.get(c.id) || 0,
-      report_url: `${site}/#/relatorio/${c.slug}`,
-      invite_url: `${site}/c/${c.slug}`,
-      quiz_url: `${site}/#/c/${c.slug}`,
-    }));
+    const payload = (churches || []).map((c: Church) => {
+      const total = counts.get(c.id) || 0;
+      const participationPct =
+        c.expected_members && c.expected_members > 0
+          ? Math.round((total / c.expected_members) * 100)
+          : null;
+      return {
+        ...c,
+        total_responses: total,
+        participation_pct: participationPct,
+        last_response_at: lastResponseMap.get(c.id) ?? null,
+        report_url: `${site}/#/relatorio/${c.slug}`,
+        invite_url: `${site}/c/${c.slug}`,
+        quiz_url: `${site}/#/c/${c.slug}`,
+      };
+    });
 
     return new Response(JSON.stringify({ ok: true, churches: payload }), {
       headers: { 'content-type': 'application/json' },
