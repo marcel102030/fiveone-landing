@@ -189,6 +189,8 @@ export type RedeMemberApplicationInsert = {
   available_for_training?: boolean;
   available_for_missions?: boolean;
   notes?: string | null;
+  meeting_highlight?: string | null;
+  wants_to_return?: string | null;
   followup_status?: string | null;
   created_by_member_id?: string | null;
   updated_by_member_id?: string | null;
@@ -253,6 +255,7 @@ export type RedeHouseChurch = {
   presbitero_id: string | null;
   presbitero_id_2: string | null;
   notes: string | null;
+  whatsapp_group_url: string | null;
   created_at?: string;
   updated_at?: string;
 };
@@ -269,6 +272,7 @@ export type RedeHouseChurchInsert = {
   presbitero_id?: string | null;
   presbitero_id_2?: string | null;
   notes?: string | null;
+  whatsapp_group_url?: string | null;
 };
 
 export type RedeHouseMember = {

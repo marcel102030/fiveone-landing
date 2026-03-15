@@ -62,17 +62,16 @@ type VisitorOption = {
 };
 
 const VISIT_EXPERIENCE: VisitorOption[] = [
-  { id: "culto_casa", label: "Participei de um culto na casa" },
+  { id: "encontro_casa", label: "Participei de um encontro da Igreja na Casa" },
   { id: "estudo_biblico", label: "Participei de um estudo bíblico" },
-  { id: "convidado_alguem", label: "Fui convidado(a) por alguém" },
   { id: "nao_participei", label: "Ainda não participei, mas gostaria" },
   { id: "redes_sociais", label: "Conheci a igreja pelas redes sociais" },
   { id: "nao_sei", label: "Não sei / prefiro não responder" },
 ];
 
 const CARE_NEEDS: VisitorOption[] = [
-  { id: "caminhar", label: "Gostaria que alguém caminhasse comigo mais de perto" },
-  { id: "conversar_lideranca", label: "Gostaria de conversar com alguém da liderança" },
+  { id: "discipulado", label: "Gostaria de caminhar com alguém no discipulado" },
+  { id: "conversar_lideranca", label: "Gostaria de conversar com um líder" },
   { id: "oracao", label: "Gostaria de receber oração" },
   { id: "momento_dificil", label: "Estou passando por um momento difícil" },
   { id: "apenas_conhecendo", label: "Apenas conhecendo por enquanto" },
@@ -88,13 +87,15 @@ const FAITH_JOURNEY: VisitorOption[] = [
   { id: "prefiro_nao_informar", label: "Prefiro não informar agora" },
 ];
 
+// Próximos passos na fé — substitui as antigas "dúvidas bíblicas/teológicas"
 const DOUBTS_INTERESTS: VisitorOption[] = [
-  { id: "duvidas_biblicas", label: "Tenho dúvidas bíblicas" },
-  { id: "duvidas_teologicas", label: "Tenho dúvidas teológicas" },
-  { id: "duvidas_igreja_casas", label: "Tenho dúvidas sobre a Igreja nas Casas" },
-  { id: "entender_evangelho", label: "Gostaria de entender melhor o Evangelho" },
-  { id: "estudar_biblia", label: "Gostaria de estudar a Bíblia" },
-  { id: "nenhuma_duvida", label: "Não tenho dúvidas no momento" },
+  { id: "conhecer_jesus", label: "Quero conhecer mais sobre Jesus" },
+  { id: "aprender_biblia", label: "Quero aprender a ler a Bíblia" },
+  { id: "aprender_orar", label: "Quero aprender a orar" },
+  { id: "batismo", label: "Gostaria de ser batizado(a)" },
+  { id: "participar_discipulado", label: "Gostaria de participar de um discipulado" },
+  { id: "sobre_igreja_casas", label: "Quero entender melhor a Igreja nas Casas" },
+  { id: "apenas_conhecer", label: "Quero apenas conhecer por enquanto" },
 ];
 
 const CONTACT_PREFERENCES: VisitorOption[] = [
@@ -221,11 +222,14 @@ export default function RedeCadastroMembro() {
   const [visitorStep, setVisitorStep] = useState(1);
 
   const houseOptions = useMemo(() => houses, [houses]);
+  const [cameWithSomeone, setCameWithSomeone] = useState<"sim" | "nao" | "">("");
+  const [meetingHighlight, setMeetingHighlight] = useState("");
+  const [wantToReturn, setWantToReturn] = useState("");
+
   const isVisitor = invite?.member_type === "visitante";
-  const invitedBySelected = visitExperience.includes("convidado_alguem");
   const headerTitle = isVisitor ? "Cadastro de visitante" : "Cadastro de membro";
   const headerSubtitle = isVisitor
-    ? "Compartilhe com a gente como foi sua visita para que possamos acolher você com carinho."
+    ? "Ficamos muito felizes com a sua visita! Queremos caminhar com você e cuidar de cada pessoa que Deus traz até nós. Compartilhe um pouco sobre sua experiência."
     : "Preencha seus dados para solicitar seu cadastro na rede.";
 
   useEffect(() => {
@@ -336,21 +340,21 @@ export default function RedeCadastroMembro() {
     }
     if (step === 2) {
       if (!visitExperience.length) {
-        setError("Selecione ao menos uma opção em \"Sua visita à Igreja nas Casas\".");
+        setError("Selecione ao menos uma opção em \"Sua experiência\".");
         return false;
       }
       if (!careNeeds.length) {
-        setError("Selecione ao menos uma opção em \"Acompanhamento e cuidado\".");
+        setError("Selecione ao menos uma opção em \"Como podemos cuidar de você?\".");
         return false;
       }
       if (!faithJourney.length) {
-        setError("Selecione ao menos uma opção em \"Caminhada cristã\".");
+        setError("Selecione ao menos uma opção em \"Caminhada com Deus\".");
         return false;
       }
     }
     if (step === 3) {
       if (!doubtsInterests.length) {
-        setError("Selecione ao menos uma opção em \"Dúvidas e interesses\".");
+        setError("Selecione ao menos uma opção em \"Próximos passos na fé\".");
         return false;
       }
       if (!contactPreferences.length) {
@@ -386,6 +390,11 @@ export default function RedeCadastroMembro() {
         : contactPreferences.includes("ligacao")
           ? "ligacao"
           : null;
+      // Se veio com alguém, adiciona à lista de experiências
+      const finalVisitExperience = cameWithSomeone === "sim"
+        ? [...visitExperience, "convidado_alguem"]
+        : visitExperience;
+
       await createRedeMemberApplication({
         invite_token: token,
         full_name: visitorForm.full_name.trim(),
@@ -398,15 +407,17 @@ export default function RedeCadastroMembro() {
         member_type: "visitante",
         house_id: visitorForm.house_id && visitorForm.house_id !== "__none__" ? visitorForm.house_id : null,
         gifts: [],
-        visit_experience: visitExperience,
+        visit_experience: finalVisitExperience,
         invited_by_member_id: null,
-        invited_by_name: invitedBySelected ? visitorForm.invited_by || null : null,
+        invited_by_name: cameWithSomeone === "sim" ? visitorForm.invited_by || null : null,
         care_needs: careNeeds,
         faith_journey: faithJourney,
         doubts_interests: doubtsInterests,
         contact_preferences: contactPreferences,
         allow_contact: allowContact,
         preferred_contact_channel: preferredContactChannel,
+        meeting_highlight: meetingHighlight.trim() || null,
+        wants_to_return: wantToReturn || null,
         followup_assigned_member_id: invitePresbiteroMemberId || null,
         followup_status: invitePresbiteroMemberId ? "em_acompanhamento" : "pendente",
         followup_started_at: invitePresbiteroMemberId ? new Date().toISOString() : null,
@@ -522,12 +533,38 @@ export default function RedeCadastroMembro() {
 
         {!loading && !error && success && (
           <div className="rede-signup-success">
-            <h2>Cadastro enviado!</h2>
-            <p>
-              {isVisitor
-                ? "Obrigado por compartilhar. Em breve alguém da equipe entrará em contato, se você desejar."
-                : "Seu cadastro foi enviado e será analisado pela equipe. Você receberá o retorno em breve."}
-            </p>
+            {isVisitor ? (
+              <>
+                <div className="rede-signup-success-icon">🙏</div>
+                <h2>Obrigado por compartilhar conosco!</h2>
+                <p>
+                  Ficamos felizes em ter você aqui. Um líder da Igreja na Casa pode entrar em contato para caminhar com você — que Deus te abençoe!
+                </p>
+                {(() => {
+                  const house = houseOptions.find(
+                    (h) => h.id === (visitorForm.house_id && visitorForm.house_id !== "__none__" ? visitorForm.house_id : "")
+                  );
+                  if (house?.whatsapp_group_url) {
+                    return (
+                      <a
+                        href={house.whatsapp_group_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rede-signup-wa-btn"
+                      >
+                        💬 Entrar no grupo de WhatsApp da casa
+                      </a>
+                    );
+                  }
+                  return null;
+                })()}
+              </>
+            ) : (
+              <>
+                <h2>Cadastro enviado!</h2>
+                <p>Seu cadastro foi enviado e será analisado pela equipe. Você receberá o retorno em breve.</p>
+              </>
+            )}
           </div>
         )}
 
@@ -536,9 +573,9 @@ export default function RedeCadastroMembro() {
             {isVisitor ? (
               <>
                 <div className="rede-signup-stepper">
-                  <span className={`rede-signup-step ${visitorStep >= 1 ? "is-active" : ""}`}>1. Dados básicos</span>
-                  <span className={`rede-signup-step ${visitorStep >= 2 ? "is-active" : ""}`}>2. Sua visita</span>
-                  <span className={`rede-signup-step ${visitorStep >= 3 ? "is-active" : ""}`}>3. Preferências</span>
+                  <span className={`rede-signup-step ${visitorStep >= 1 ? "is-active" : ""}`}>1. Quem é você</span>
+                  <span className={`rede-signup-step ${visitorStep >= 2 ? "is-active" : ""}`}>2. Sua experiência</span>
+                  <span className={`rede-signup-step ${visitorStep >= 3 ? "is-active" : ""}`}>3. Caminho espiritual</span>
                 </div>
 
                 {visitorStep === 1 && (
@@ -599,6 +636,41 @@ export default function RedeCadastroMembro() {
                         </select>
                       </label>
                     </div>
+
+                    <div className="rede-signup-section">
+                      <div className="rede-signup-section-header">
+                        <h3>Você veio com alguém?</h3>
+                      </div>
+                      <div className="rede-signup-checks rede-signup-checks--radio">
+                        {[
+                          { value: "sim", label: "Sim, fui convidado(a)" },
+                          { value: "nao", label: "Não, vim por conta própria" },
+                        ].map((opt) => (
+                          <label key={opt.value}>
+                            <input
+                              type="radio"
+                              name="came_with_someone"
+                              value={opt.value}
+                              checked={cameWithSomeone === opt.value}
+                              onChange={() => setCameWithSomeone(opt.value as "sim" | "nao")}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
+                      {cameWithSomeone === "sim" && (
+                        <label className="rede-signup-inline" style={{ marginTop: 8 }}>
+                          Quem te convidou? <span style={{ color: "#64748b", fontWeight: 400 }}>(opcional)</span>
+                          <input
+                            type="text"
+                            value={visitorForm.invited_by}
+                            onChange={(event) => setVisitorForm((prev) => ({ ...prev, invited_by: event.target.value }))}
+                            placeholder="Nome da pessoa"
+                          />
+                        </label>
+                      )}
+                    </div>
+
                     <p className="rede-signup-hint">Campos com * são obrigatórios.</p>
                   </>
                 )}
@@ -607,7 +679,7 @@ export default function RedeCadastroMembro() {
                   <>
                     <div className="rede-signup-section">
                       <div className="rede-signup-section-header">
-                        <h3>Sua visita à Igreja nas Casas</h3>
+                        <h3>O que você vivenciou?</h3>
                         <span className="rede-signup-required-label">Obrigatório</span>
                       </div>
                       <div className="rede-signup-checks">
@@ -622,22 +694,45 @@ export default function RedeCadastroMembro() {
                           </label>
                         ))}
                       </div>
-                      {invitedBySelected && (
-                        <label className="rede-signup-inline">
-                          Quem te convidou?
-                          <input
-                            type="text"
-                            value={visitorForm.invited_by}
-                            onChange={(event) => setVisitorForm((prev) => ({ ...prev, invited_by: event.target.value }))}
-                            placeholder="Nome da pessoa (opcional)"
-                          />
-                        </label>
-                      )}
+                    </div>
+
+                    <label className="rede-signup-notes">
+                      O que mais marcou você? <span className="rede-signup-hint-inline">(opcional)</span>
+                      <textarea
+                        rows={2}
+                        value={meetingHighlight}
+                        onChange={(e) => setMeetingHighlight(e.target.value)}
+                        placeholder="Compartilhe o que foi mais especial para você…"
+                      />
+                    </label>
+
+                    <div className="rede-signup-section">
+                      <div className="rede-signup-section-header">
+                        <h3>Você gostaria de participar novamente?</h3>
+                      </div>
+                      <div className="rede-signup-checks rede-signup-checks--radio">
+                        {[
+                          { value: "sim", label: "Sim, com certeza!" },
+                          { value: "talvez", label: "Talvez, preciso pensar" },
+                          { value: "ainda_nao_sei", label: "Ainda não sei" },
+                        ].map((opt) => (
+                          <label key={opt.value}>
+                            <input
+                              type="radio"
+                              name="want_to_return"
+                              value={opt.value}
+                              checked={wantToReturn === opt.value}
+                              onChange={() => setWantToReturn(opt.value)}
+                            />
+                            {opt.label}
+                          </label>
+                        ))}
+                      </div>
                     </div>
 
                     <div className="rede-signup-section">
                       <div className="rede-signup-section-header">
-                        <h3>Acompanhamento e cuidado</h3>
+                        <h3>Como podemos cuidar de você?</h3>
                         <span className="rede-signup-required-label">Obrigatório</span>
                       </div>
                       <div className="rede-signup-checks">
@@ -656,7 +751,7 @@ export default function RedeCadastroMembro() {
 
                     <div className="rede-signup-section">
                       <div className="rede-signup-section-header">
-                        <h3>Caminhada cristã</h3>
+                        <h3>Caminhada com Deus</h3>
                         <span className="rede-signup-required-label">Obrigatório</span>
                       </div>
                       <div className="rede-signup-checks">
@@ -679,9 +774,12 @@ export default function RedeCadastroMembro() {
                   <>
                     <div className="rede-signup-section">
                       <div className="rede-signup-section-header">
-                        <h3>Dúvidas e interesses</h3>
+                        <h3>Próximos passos na fé</h3>
                         <span className="rede-signup-required-label">Obrigatório</span>
                       </div>
+                      <p className="rede-signup-hint" style={{ marginBottom: 10 }}>
+                        O que você gostaria de vivenciar na sua caminhada com Deus?
+                      </p>
                       <div className="rede-signup-checks">
                         {DOUBTS_INTERESTS.map((item) => (
                           <label key={item.id}>
@@ -716,12 +814,12 @@ export default function RedeCadastroMembro() {
                     </div>
 
                     <label className="rede-signup-notes">
-                      Quer compartilhar algo conosco?
+                      Gostaria que orássemos por algo específico? <span className="rede-signup-hint-inline">(opcional)</span>
                       <textarea
                         rows={3}
                         value={visitorForm.notes}
                         onChange={(event) => setVisitorForm((prev) => ({ ...prev, notes: event.target.value }))}
-                        placeholder="Se quiser, conte brevemente sobre sua história, dúvidas ou algo pelo qual possamos orar."
+                        placeholder="Compartilhe um pedido de oração ou algo que você gostaria que a gente soubesse…"
                       />
                     </label>
 
