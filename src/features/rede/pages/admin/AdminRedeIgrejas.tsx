@@ -108,6 +108,7 @@ type HouseFormState = {
   capacity: string;
   status: string;
   presbitero_id: string;
+  presbitero_id_2: string;
   notes: string;
 };
 
@@ -322,6 +323,7 @@ const emptyHouseForm: HouseFormState = {
   capacity: "",
   status: "ativa",
   presbitero_id: "",
+  presbitero_id_2: "",
   notes: "",
 };
 
@@ -680,6 +682,7 @@ export default function AdminRedeIgrejas() {
     const map = new Map<string, RedeHouseChurch>();
     houses.forEach((house) => {
       if (house.presbitero_id) map.set(house.presbitero_id, house);
+      if (house.presbitero_id_2) map.set(house.presbitero_id_2, house);
     });
     return map;
   }, [houses]);
@@ -931,6 +934,7 @@ export default function AdminRedeIgrejas() {
       capacity: house.capacity?.toString() || "",
       status: house.status || "ativa",
       presbitero_id: house.presbitero_id || "",
+      presbitero_id_2: house.presbitero_id_2 || "",
       notes: house.notes || "",
     });
     setHouseMembersSelected(memberIds);
@@ -1409,6 +1413,7 @@ export default function AdminRedeIgrejas() {
         capacity: toNumberOrNull(houseForm.capacity),
         status: toNull(houseForm.status) || "ativa",
         presbitero_id: toNull(houseForm.presbitero_id),
+        presbitero_id_2: toNull(houseForm.presbitero_id_2),
         notes: toNull(houseForm.notes),
       };
 
@@ -1437,12 +1442,14 @@ export default function AdminRedeIgrejas() {
 
   const selectedMemberHouse = memberForm.house_id ? houseMap.get(memberForm.house_id) : null;
   const selectedInviteHouse = inviteHouseId ? houseMap.get(inviteHouseId) : null;
-  const selectedInvitePresbName = selectedInviteHouse?.presbitero_id
-    ? presbiteroNameMap.get(selectedInviteHouse.presbitero_id) || "-"
-    : "-";
-  const selectedPresbName = selectedMemberHouse?.presbitero_id
-    ? presbiteroNameMap.get(selectedMemberHouse.presbitero_id) || "-"
-    : "-";
+  const selectedInvitePresbName = [
+    selectedInviteHouse?.presbitero_id ? presbiteroNameMap.get(selectedInviteHouse.presbitero_id) : null,
+    selectedInviteHouse?.presbitero_id_2 ? presbiteroNameMap.get(selectedInviteHouse.presbitero_id_2) : null,
+  ].filter(Boolean).join(", ") || "-";
+  const selectedPresbName = [
+    selectedMemberHouse?.presbitero_id ? presbiteroNameMap.get(selectedMemberHouse.presbitero_id) : null,
+    selectedMemberHouse?.presbitero_id_2 ? presbiteroNameMap.get(selectedMemberHouse.presbitero_id_2) : null,
+  ].filter(Boolean).join(", ") || "-";
 
   return (
     <div className="admin-wrap rede-wrap">
@@ -1637,7 +1644,10 @@ export default function AdminRedeIgrejas() {
                   {filteredMembers.map((member) => {
                     const houseId = memberHouseMap.get(member.id)?.house_id || "";
                     const house = houseMap.get(houseId);
-                    const presbName = house?.presbitero_id ? presbiteroNameMap.get(house.presbitero_id) : null;
+                    const presbName = [
+                      house?.presbitero_id ? presbiteroNameMap.get(house.presbitero_id) : null,
+                      house?.presbitero_id_2 ? presbiteroNameMap.get(house.presbitero_id_2) : null,
+                    ].filter(Boolean).join(", ") || null;
                     const gifts = memberGiftMap.get(member.id) || [];
                     return (
                       <tr key={member.id} className="admin-row">
@@ -2838,7 +2848,10 @@ export default function AdminRedeIgrejas() {
                 </thead>
                 <tbody>
                   {houses.map((house) => {
-                    const presbName = house.presbitero_id ? presbiteroNameMap.get(house.presbitero_id) : null;
+                    const presbName = [
+                      house.presbitero_id ? presbiteroNameMap.get(house.presbitero_id) : null,
+                      house.presbitero_id_2 ? presbiteroNameMap.get(house.presbitero_id_2) : null,
+                    ].filter(Boolean).join(", ") || null;
                     const count = houseMemberCounts.get(house.id) || 0;
                     return (
                       <tr key={house.id} className="admin-row">
@@ -2951,11 +2964,23 @@ export default function AdminRedeIgrejas() {
                       onChange={(event) => setHouseForm((prev) => ({ ...prev, meeting_time: event.target.value }))}
                     />
                   </label>
-                  <label className="admin-field">Presbítero
+                  <label className="admin-field">Presbítero 1
                     <select
                       className="admin-input"
                       value={houseForm.presbitero_id}
                       onChange={(event) => setHouseForm((prev) => ({ ...prev, presbitero_id: event.target.value }))}
+                    >
+                      <option value="">Selecione</option>
+                      {presbiteros.map((presb) => (
+                        <option key={presb.id} value={presb.id}>{presb.member?.full_name || "(Sem nome)"}</option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="admin-field">Presbítero 2
+                    <select
+                      className="admin-input"
+                      value={houseForm.presbitero_id_2}
+                      onChange={(event) => setHouseForm((prev) => ({ ...prev, presbitero_id_2: event.target.value }))}
                     >
                       <option value="">Selecione</option>
                       {presbiteros.map((presb) => (

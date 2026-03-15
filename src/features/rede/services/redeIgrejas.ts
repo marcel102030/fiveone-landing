@@ -251,6 +251,7 @@ export type RedeHouseChurch = {
   capacity: number | null;
   status: string | null;
   presbitero_id: string | null;
+  presbitero_id_2: string | null;
   notes: string | null;
   created_at?: string;
   updated_at?: string;
@@ -266,6 +267,7 @@ export type RedeHouseChurchInsert = {
   capacity?: number | null;
   status?: string | null;
   presbitero_id?: string | null;
+  presbitero_id_2?: string | null;
   notes?: string | null;
 };
 
@@ -1330,15 +1332,34 @@ export async function assignPresbiteroToHouse(
   presbiteroId: string,
   houseId: string | null
 ): Promise<void> {
-  const { error: clearError } = await supabase
+  const { error: clear1Error } = await supabase
     .from("rede_house_church")
     .update({ presbitero_id: null })
     .eq("presbitero_id", presbiteroId);
-  if (clearError) throw clearError;
-  if (!houseId) return;
-  const { error } = await supabase
+  if (clear1Error) throw clear1Error;
+  const { error: clear2Error } = await supabase
     .from("rede_house_church")
-    .update({ presbitero_id: presbiteroId })
-    .eq("id", houseId);
-  if (error) throw error;
+    .update({ presbitero_id_2: null })
+    .eq("presbitero_id_2", presbiteroId);
+  if (clear2Error) throw clear2Error;
+  if (!houseId) return;
+  const { data: house, error: fetchError } = await supabase
+    .from("rede_house_church")
+    .select("presbitero_id, presbitero_id_2")
+    .eq("id", houseId)
+    .single();
+  if (fetchError) throw fetchError;
+  if (!house.presbitero_id) {
+    const { error } = await supabase
+      .from("rede_house_church")
+      .update({ presbitero_id: presbiteroId })
+      .eq("id", houseId);
+    if (error) throw error;
+  } else {
+    const { error } = await supabase
+      .from("rede_house_church")
+      .update({ presbitero_id_2: presbiteroId })
+      .eq("id", houseId);
+    if (error) throw error;
+  }
 }
