@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useEffect, useMemo, useState } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import "./RedeCadastroMembro.css";
 import {
@@ -222,6 +222,9 @@ export default function RedeCadastroMembro() {
   const [visitorStep, setVisitorStep] = useState(1);
 
   const houseOptions = useMemo(() => houses, [houses]);
+  const cardRef = useRef<HTMLDivElement>(null);
+  const errorRef = useRef<HTMLParagraphElement>(null);
+
   const [cameWithSomeone, setCameWithSomeone] = useState<"sim" | "nao" | "">("");
   const [meetingHighlight, setMeetingHighlight] = useState("");
   const [wantToReturn, setWantToReturn] = useState("");
@@ -366,14 +369,35 @@ export default function RedeCadastroMembro() {
     return true;
   };
 
+  const scrollToTop = () => {
+    // Rola para o topo do card (mobile: ainda pode estar na metade do form)
+    if (cardRef.current) {
+      cardRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  const scrollToError = () => {
+    if (errorRef.current) {
+      errorRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  };
+
   const nextVisitorStep = () => {
-    if (!validateVisitorStep(visitorStep)) return;
+    if (!validateVisitorStep(visitorStep)) {
+      // Pequeno delay para o estado de erro ser aplicado antes do scroll
+      setTimeout(scrollToError, 50);
+      return;
+    }
     setVisitorStep((prev) => Math.min(prev + 1, 3));
+    setTimeout(scrollToTop, 50);
   };
 
   const prevVisitorStep = () => {
     setError(null);
     setVisitorStep((prev) => Math.max(prev - 1, 1));
+    setTimeout(scrollToTop, 50);
   };
 
   const submitVisitor = async () => {
@@ -521,7 +545,7 @@ export default function RedeCadastroMembro() {
 
   return (
     <div className="rede-signup-wrap">
-      <div className="rede-signup-card">
+      <div className="rede-signup-card" ref={cardRef}>
         <header>
           <span className="rede-signup-pill">{headerTitle}</span>
           <h1>Rede de Igrejas nas Casas</h1>
@@ -529,7 +553,7 @@ export default function RedeCadastroMembro() {
         </header>
 
         {loading && <p className="rede-signup-msg">Carregando...</p>}
-        {!loading && error && <p className="rede-signup-error">{error}</p>}
+        {!loading && error && <p className="rede-signup-error" ref={errorRef}>{error}</p>}
 
         {!loading && !error && success && (
           <div className="rede-signup-success">
