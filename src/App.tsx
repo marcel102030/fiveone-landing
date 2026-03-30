@@ -45,6 +45,8 @@ import AdminAlunos from "./features/plataforma/pages/admin/Alunos";
 import AdminConteudoPlataforma from "./features/plataforma/pages/admin/ConteudoPlataforma";
 import AdminRelatorioQuiz from "./features/plataforma/pages/admin/RelatorioQuiz";
 import AdminBlogSite from "./features/plataforma/pages/admin/BlogSite";
+import ModeracaoComentarios from "./features/plataforma/pages/admin/ModeracaoComentarios";
+import EmitirCertificados from "./features/plataforma/pages/admin/EmitirCertificados";
 import ChurchReport from "./features/rede/pages/ChurchReport";
 import ChurchCreateInvite from "./features/rede/pages/ChurchCreateInvite";
 import CopyLink from "./features/rede/pages/CopyLink";
@@ -53,6 +55,12 @@ import PalestraForm from "./features/institucional/pages/forms/PalestraForm";
 import TreinamentoForm from "./features/institucional/pages/forms/TreinamentoForm";
 import ImersaoForm from "./features/institucional/pages/forms/ImersaoForm";
 import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
+
+import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
+import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
+import Favoritos from "./features/plataforma/pages/Favoritos";
+import CertificadoPublico from "./features/plataforma/pages/CertificadoPublico";
+import { AuthProvider } from "./shared/contexts/AuthContext";
 
 import "./App.css";
 
@@ -90,10 +98,13 @@ function AppContent() {
   const hideLayout =
     location.pathname === "/plataforma" ||
     location.pathname === "/login-aluno" ||
+    location.pathname === "/esqueci-senha" ||
+    location.pathname === "/redefinir-senha" ||
     location.pathname === "/streamer-apostolo" ||
     location.pathname === "/streamer-mestre" ||
     location.pathname === "/modulos-mestre" ||
     location.pathname === "/perfil" ||
+    location.pathname === "/favoritos" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/membro") ||
     location.pathname.startsWith("/relatorio") ||
@@ -101,6 +112,7 @@ function AppContent() {
     location.pathname === "/cadastrar-igreja" ||
     location.pathname === "/copiar" ||
     location.pathname.startsWith("/rede/cadastro") ||
+    location.pathname.startsWith("/certificado/") ||
     isInviteTest ||
     isIgrejasStandalone;
 
@@ -186,6 +198,22 @@ function AppContent() {
                 </AdminGuard>
               }
             />
+            <Route
+              path="/admin/moderacao"
+              element={
+                <AdminGuard>
+                  <ModeracaoComentarios />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/certificados"
+              element={
+                <AdminGuard>
+                  <EmitirCertificados />
+                </AdminGuard>
+              }
+            />
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
@@ -248,7 +276,18 @@ function AppContent() {
                 </StudentGuard>
               }
             />
-            <Route path="/login-aluno" element={<LoginAluno onLogin={handleLogin} />} />
+            <Route
+              path="/favoritos"
+              element={
+                <StudentGuard>
+                  <Favoritos />
+                </StudentGuard>
+              }
+            />
+            <Route path="/certificado/:verifyCode" element={<CertificadoPublico />} />
+            <Route path="/login-aluno"    element={<LoginAluno onLogin={handleLogin} />} />
+            <Route path="/esqueci-senha"  element={<EsqueciSenha />} />
+            <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           </Routes>
         </main>
         <ScrollToTop />
@@ -261,7 +300,9 @@ function AppContent() {
 function App() {
   return (
     <Router>
-      <AppContent />
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
     </Router>
   );
 }
