@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import Header from './Header';
-import './streamerMestre.css';
-import '../components/Streamer/streamerShared.css';
 import { useNavigate } from 'react-router-dom';
 import { getCurrentUserId } from '../../../shared/utils/user';
 import { fetchUserProgress } from '../services/progress';
@@ -131,16 +129,18 @@ const ModulosMestre = () => {
   return (
     <>
       <Header />
-      <div className="wrapper-central">
-        <div className="modulos-wrapper">
-          <div className="modulos-container">
+      <div className="min-h-screen bg-navy pt-6 pb-12 px-4">
+        <div className="max-w-screen-xl mx-auto">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             {modules.map((m) => {
               const clickable = !m.soon;
               const handle = () => { if (clickable) abrirModulo(m); };
               return (
                 <div
                   key={m.id}
-                  className={`modulo-card ${clickable ? 'clickable' : 'disabled'}`}
+                  className={`group relative rounded-2xl overflow-hidden aspect-[3/4] transition-all duration-300 ${
+                    clickable ? 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl' : 'cursor-default opacity-80'
+                  }`}
                   role={clickable ? 'button' : undefined}
                   tabIndex={clickable ? 0 : -1}
                   onClick={handle}
@@ -148,27 +148,57 @@ const ModulosMestre = () => {
                     if (!clickable) return;
                     if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handle(); }
                   }}
-                  style={{ transition: 'all 0.3s ease', cursor: clickable ? 'pointer' : 'default' }}
                   aria-label={`${m.title}${clickable ? '' : ' (em breve)'}`}
                 >
-                  <div className="aula-card modulo" style={m.banner ? { backgroundImage: `url(${m.banner})` } : undefined}>
-                    {!m.banner && (
-                      <img src={m.image} alt={m.title} className="modulo-card-image" loading="lazy" />
-                    )}
-                    {m.soon && <div className="badge-embreve">Em Breve</div>}
-                    <div className="modulo-card-label">{m.title}</div>
-                    <div className="modulo-overlay">
-                      <div className="mo-panel">
-                        <div className="mo-title">O que você vai ver</div>
-                        <ul className="mo-list">
-                          {m.topics.map((t, i) => (
-                            <li key={i} className="mo-item">{t}</li>
-                          ))}
-                        </ul>
-                        {clickable ? <button className="mo-cta">Entrar</button> : <div className="mo-disabled">Em breve</div>}
-                      </div>
+                  {/* Background image */}
+                  {m.banner ? (
+                    <div
+                      className="absolute inset-0 bg-cover bg-center"
+                      style={{ backgroundImage: `url(${m.banner})` }}
+                    />
+                  ) : (
+                    <img
+                      src={m.image}
+                      alt={m.title}
+                      className="absolute inset-0 w-full h-full object-cover"
+                      loading="lazy"
+                    />
+                  )}
+
+                  {/* Gradient overlay always visible */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+
+                  {/* Em Breve badge */}
+                  {m.soon && (
+                    <div className="absolute top-3 right-3 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
+                      Em Breve
                     </div>
+                  )}
+
+                  {/* Title at bottom */}
+                  <div className="absolute bottom-3 left-3 right-3 text-white font-semibold text-sm z-10 group-hover:opacity-0 transition-opacity duration-200">
+                    {m.title}
                   </div>
+
+                  {/* Hover overlay with topics */}
+                  {clickable && (
+                    <div className="absolute inset-0 bg-navy/90 flex flex-col justify-center items-center p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
+                      <p className="text-mint text-xs font-semibold uppercase tracking-wider mb-3">
+                        O que você vai ver
+                      </p>
+                      <ul className="space-y-1 mb-4 w-full">
+                        {m.topics.map((t, i) => (
+                          <li key={i} className="text-slate-300 text-xs flex items-start gap-1.5">
+                            <span className="text-mint mt-0.5">›</span>
+                            <span className="line-clamp-2">{t}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <button className="bg-mint text-navy text-xs font-bold px-4 py-2 rounded-full hover:bg-mint/90 transition-colors">
+                        Entrar →
+                      </button>
+                    </div>
+                  )}
                 </div>
               );
             })}

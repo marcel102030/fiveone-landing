@@ -14,7 +14,7 @@ import {
   removeLessonCompleted,
   setLessonCompleted,
 } from '../../../shared/utils/completedLessons';
-import { LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
+import { LessonRef, listLessons, MinistryKey, subscribePlatformContent } from '../services/platformContent';
 import SubjectDropdown, { SubjectOption } from '../components/SubjectDropdown/SubjectDropdown';
 import { openStoredFile } from '../../../shared/utils/storedFile';
 import { ConfirmModal } from '../../../shared/components/ui';
@@ -390,11 +390,11 @@ function formatBytes(bytes: number): string {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-const StreamerMestre = () => {
+const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey }) => {
   const { email } = useAuth();
 
   const [videoList, setVideoList] = useState<LessonRef[]>(() =>
-    listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true })
+    listLessons({ ministryId, onlyPublished: true, onlyActive: true })
   );
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
@@ -581,9 +581,9 @@ const StreamerMestre = () => {
   // ── Subscribe to content updates ──────────────────────────────────────────
   useEffect(() => {
     const modId = new URLSearchParams(searchKey).get('mod') || undefined;
-    setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
+    setVideoList(listLessons({ ministryId, onlyPublished: true, onlyActive: true, moduleId: modId }));
     const unsubscribe = subscribePlatformContent(() => {
-      setVideoList(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true, moduleId: modId }));
+      setVideoList(listLessons({ ministryId, onlyPublished: true, onlyActive: true, moduleId: modId }));
     });
     return () => unsubscribe();
   // eslint-disable-next-line react-hooks/exhaustive-deps
