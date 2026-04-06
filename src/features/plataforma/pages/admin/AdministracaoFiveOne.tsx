@@ -19,6 +19,7 @@ const navCards = [
   { to: "/admin/rede-igrejas", title: "Rede de Igrejas", desc: "Cadastros da rede nas casas.", icon: "🏘️" },
   { to: "/admin/relatorio-quiz", title: "Relatório Quiz", desc: "Consolidados e exportações.", icon: "📊" },
   { to: "/admin/blog", title: "Blog Site", desc: "Postagens e categorias.", icon: "✍️" },
+  { to: "/admin/admins", title: "Administradores", desc: "Gerenciar acessos de admin.", icon: "🔑" },
 ];
 
 function StatCard({ label, value, sub, accent }: { label: string; value: string | number; sub?: string; accent?: boolean }) {
