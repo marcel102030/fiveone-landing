@@ -93,7 +93,6 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     });
 
     if (authError) {
-      // Se já existe no Auth mas não em platform_user, continuar para inserir o registro
       const alreadyInAuth = authError.message.toLowerCase().includes('already been registered')
         || authError.message.toLowerCase().includes('already exists');
 
@@ -102,6 +101,15 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
           JSON.stringify({ ok: false, error: authError.message }),
           { status: 422, headers: { 'content-type': 'application/json', ...CORS } }
         );
+      }
+
+      // O e-mail já existe no Auth mas não em platform_user (caso raro de inconsistência).
+      // Atualiza a senha no Auth para a senha informada, garantindo que o e-mail enviado
+      // e as credenciais reais do Auth estejam em sincronia.
+      const { data: listData } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const existingAuthUser = listData?.users?.find(u => u.email?.toLowerCase() === email);
+      if (existingAuthUser) {
+        await admin.auth.admin.updateUserById(existingAuthUser.id, { password });
       }
     }
 
