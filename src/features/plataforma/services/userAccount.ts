@@ -40,20 +40,21 @@ export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
 export type PlatformUserCreateInput = PlatformUser & { password: string };
 
 export async function createUser(u: PlatformUserCreateInput): Promise<void> {
-  const { error: authError } = await supabase.auth.signUp({
-    email: u.email.toLowerCase(),
-    password: u.password,
+  // Usa a Admin API via Cloudflare Function — jamais usar supabase.auth.signUp()
+  // no painel admin, pois esse método é para auto-cadastro e falha com 422 para
+  // e-mails já existentes no Auth (mesmo que seja o próprio admin tentando criar outro).
+  const res = await fetch('/api/create-student', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: u.email.toLowerCase(),
+      password: u.password,
+      name: u.name || null,
+      formation: u.formation || 'MESTRE',
+    }),
   });
-  if (authError) throw authError;
-
-  const { error: dbError } = await supabase.from('platform_user').insert({
-    email: u.email.toLowerCase(),
-    name: u.name || null,
-    formation: u.formation || 'MESTRE',
-    role: u.role || 'STUDENT',
-    member_id: u.member_id || null,
-  });
-  if (dbError) throw dbError;
+  const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error || 'Erro ao criar aluno');
 }
 
 export async function verifyUser(email: string, password: string): Promise<boolean> {
@@ -72,6 +73,7 @@ export type PlatformUserListItem = {
   formation?: FormationKey;
   role?: PlatformUserRole | null;
   member_id?: string | null;
+  is_active?: boolean | null;
 };
 
 export async function listUsers(q?: string): Promise<PlatformUserListItem[]> {
@@ -98,7 +100,7 @@ export async function listUsersPage(params: { q?: string; page: number; pageSize
   const to = from + pageSize - 1;
   let query = supabase
     .from('platform_user')
-    .select('email,name,created_at,formation,role,member_id', { count: 'exact' })
+    .select('email,name,created_at,formation,role,member_id,is_active', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
   if (q && q.trim()) query = query.ilike('email', `%${q.trim()}%`);
@@ -149,9 +151,16 @@ export async function updateUserName(email: string, name: string | null): Promis
   if (error) throw error;
 }
 
-export async function resetUserPassword(_email: string, newPassword: string): Promise<void> {
-  const { error } = await supabase.auth.updateUser({ password: newPassword });
-  if (error) throw error;
+export async function resetUserPassword(email: string, newPassword: string): Promise<void> {
+  // Usa a Admin API via Cloudflare Function — supabase.auth.updateUser() só
+  // alteraria a senha do usuário ATUALMENTE LOGADO, não do aluno alvo.
+  const res = await fetch('/api/reset-student-password', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase(), password: newPassword }),
+  });
+  const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error || 'Erro ao redefinir senha');
 }
 
 export async function signOut(): Promise<void> {

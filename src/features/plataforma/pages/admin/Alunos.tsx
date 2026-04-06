@@ -10,19 +10,15 @@ import {
   deleteUser,
   setUserActive,
   updateUserFormation,
-  updateUserMemberLink,
-  updateUserRole,
   FormationKey,
   FORMATION_KEYS,
   toFormationLabel,
   getUserComments,
   setUsersActive,
   updateUsersFormation,
-  resetUsersPasswords,
   deleteUsers,
   createInvite,
 } from "../../services/userAccount";
-import { RedeMember, listRedeMembers } from "../../../rede/services/redeIgrejas";
 import "./AdministracaoFiveOne.css";
 import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
@@ -56,19 +52,7 @@ export default function AdminAlunos() {
   const [details, setDetails] = useState<null | { email: string; loading: boolean; data: UserProfileDetails | null }>(null);
   const [bulkPassword, setBulkPassword] = useState<null | { emails: string[] }>(null);
   const [bulkRemove, setBulkRemove] = useState<null | { emails: string[] }>(null);
-  const [members, setMembers] = useState<RedeMember[]>([]);
-  const [linking, setLinking] = useState<null | { email: string; memberId: string }>(null);
-  const [linkSaving, setLinkSaving] = useState(false);
   const toast = useAdminToast();
-
-  async function ensureMembersLoaded() {
-    if (members.length) return;
-    try {
-      setMembers(await listRedeMembers());
-    } catch {
-      setMembers([]);
-    }
-  }
 
   async function load() {
     setLoading(true);
@@ -113,7 +97,12 @@ export default function AdminAlunos() {
       toast.error('E-mail já cadastrado', 'Escolha outro endereço de e-mail.');
       return;
     }
-    await createUser({ email: form.email, password: form.password, name: form.name, formation: form.formation as FormationKey });
+    try {
+      await createUser({ email: form.email, password: form.password, name: form.name, formation: form.formation as FormationKey });
+    } catch (err: any) {
+      toast.error('Erro ao criar aluno', err?.message || 'Tente novamente em instantes.');
+      return;
+    }
     if (sendEmail) {
       try {
         await fetch('/api/student-created-email', {
@@ -296,10 +285,6 @@ export default function AdminAlunos() {
                         setDetails({ email: normalized, loading: false, data: null });
                       });
                     }}>Detalhes</button>
-                    <button className="admin-btn" onClick={async ()=> {
-                      await ensureMembersLoaded();
-                      setLinking({ email: u.email, memberId: (u as any).member_id || "" });
-                    }}>Vincular membro</button>
                     <button className="admin-btn" onClick={()=> setReset({ email: u.email })}>Redefinir senha</button>
                     <button className="admin-btn" onClick={()=> setConfirmDel({ email: u.email })}>Remover</button>
                   </td>
@@ -317,7 +302,9 @@ export default function AdminAlunos() {
                   <td className="admin-td">{mockLastAccess(u.email)}</td>
                   <td className="admin-td">{formatFormation((u as any).formation || 'MESTRE')}</td>
                   <td className="admin-td">
-                    <span className="badge-high">Ativo</span>
+                    {(u as any).is_active !== false
+                      ? <span className="badge-high">Ativo</span>
+                      : <span className="badge-low">Inativo</span>}
                   </td>
                 </tr>
               ))
@@ -411,68 +398,6 @@ export default function AdminAlunos() {
         </div>
       )}
 
-      {linking && (
-        <div className="custom-modal-overlay" onClick={()=> setLinking(null)}>
-          <div className="custom-modal" style={{ maxWidth: 520, width: '100%' }} onClick={(e)=> e.stopPropagation()}>
-            <h3>Vincular membro</h3>
-            <p style={{ marginTop: -6, color: '#9fb2c5' }}>{linking.email}</p>
-            <label className="admin-field">Membro da rede
-              <select
-                className="admin-input"
-                value={linking.memberId}
-                onChange={(e)=> setLinking(prev => prev ? ({ ...prev, memberId: e.target.value }) : prev)}
-              >
-                <option value="">Selecione</option>
-                {members.map((m) => (
-                  <option key={m.id} value={m.id}>{m.full_name}</option>
-                ))}
-              </select>
-            </label>
-            <div style={{display:'flex', justifyContent:'space-between', gap:8, marginTop:12}}>
-              <button className="admin-btn" onClick={async ()=>{
-                setLinkSaving(true);
-                try {
-                  await updateUserMemberLink(linking.email, null);
-                  await updateUserRole(linking.email, "STUDENT");
-                  toast.success('Vinculo removido', 'O usuario foi desvinculado do membro.');
-                  setLinking(null);
-                  await load();
-                } catch {
-                  toast.error('Nao foi possivel remover', 'Tente novamente em instantes.');
-                } finally {
-                  setLinkSaving(false);
-                }
-              }} disabled={linkSaving}>
-                Desvincular
-              </button>
-              <div style={{display:'flex', gap:8}}>
-                <button className="admin-btn" onClick={()=> setLinking(null)} disabled={linkSaving}>Cancelar</button>
-                <button className="admin-btn primary" onClick={async ()=>{
-                  if (!linking.memberId) {
-                    toast.warning('Selecione um membro', 'Escolha o membro para vincular.');
-                    return;
-                  }
-                  setLinkSaving(true);
-                  try {
-                    await updateUserMemberLink(linking.email, linking.memberId);
-                    await updateUserRole(linking.email, "MEMBER");
-                    toast.success('Vinculo salvo', 'O usuario agora esta vinculado ao membro.');
-                    setLinking(null);
-                    await load();
-                  } catch {
-                    toast.error('Nao foi possivel salvar', 'Tente novamente em instantes.');
-                  } finally {
-                    setLinkSaving(false);
-                  }
-                }} disabled={linkSaving}>
-                  {linkSaving ? "Salvando..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
       {edit && (
         <div className="custom-modal-overlay" onClick={()=> setEdit(null)}>
           <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
@@ -560,9 +485,13 @@ export default function AdminAlunos() {
                 toast.error('Senha muito fraca', 'Use ao menos 8 caracteres com letras e números.');
                 return;
               }
-              await resetUserPassword(reset.email, pw);
-              setReset(null);
-              toast.success('Senha atualizada', 'O aluno receberá a nova senha no próximo acesso.');
+              try {
+                await resetUserPassword(reset.email, pw);
+                setReset(null);
+                toast.success('Senha atualizada', 'O aluno já pode usar a nova senha.');
+              } catch (err: any) {
+                toast.error('Erro ao redefinir senha', err?.message || 'Tente novamente em instantes.');
+              }
             }} style={{display:'grid', gap:10}}>
               <input id="newPw" className="admin-input" type="password" placeholder="Nova senha" />
               <div style={{display:'flex', justifyContent:'flex-end', gap:8}}>
@@ -663,7 +592,9 @@ export default function AdminAlunos() {
                   return;
                 }
                 try {
-                  await resetUsersPasswords(bulkPassword.emails, value);
+                  for (const email of bulkPassword.emails) {
+                    await resetUserPassword(email, value);
+                  }
                   setBulkPassword(null);
                   setSelected({});
                   toast.success('Senhas redefinidas', 'Os alunos terão acesso com a nova senha temporária.');
