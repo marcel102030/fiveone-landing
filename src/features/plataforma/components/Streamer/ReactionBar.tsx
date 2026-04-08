@@ -71,7 +71,7 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
       <button
         onClick={() => toggle("like")}
         aria-label="Curtir"
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+        className={`flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 rounded-full text-sm font-medium transition-all min-h-[44px] sm:min-h-0 ${
           selected === "like"
             ? "bg-mint/20 text-mint border border-mint/40"
             : "bg-navy-lighter text-slate hover:text-slate-white border border-transparent"
@@ -89,7 +89,7 @@ export default function ReactionBar({ videoId }: { videoId: string }) {
       <button
         onClick={() => toggle("dislike")}
         aria-label="Não curtir"
-        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-medium transition-all ${
+        className={`flex items-center gap-1.5 px-3 py-2.5 sm:py-1.5 rounded-full text-sm font-medium transition-all min-h-[44px] sm:min-h-0 ${
           selected === "dislike"
             ? "bg-red-500/20 text-red-400 border border-red-500/40"
             : "bg-navy-lighter text-slate hover:text-slate-white border border-transparent"

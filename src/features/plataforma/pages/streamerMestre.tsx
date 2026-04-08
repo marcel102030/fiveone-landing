@@ -1518,12 +1518,12 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                     {currentIndex > 0 && (
                       <button
                         onClick={handlePrevious}
-                        className="px-3 py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all"
+                        className="px-4 py-2.5 sm:py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0"
                       >
                         ← Anterior
                       </button>
                     )}
-                    <span className="text-sm text-slate px-1 tabular-nums" aria-label="Progresso da aula">
+                    <span className="text-xs sm:text-sm text-slate px-1 tabular-nums" aria-label="Progresso da aula">
                       {uiProgress.durationSeconds > 0
                         ? `${formatClock(uiProgress.watchedSeconds)} / ${formatClock(uiProgress.durationSeconds)}`
                         : formatClock(uiProgress.watchedSeconds)}
@@ -1531,7 +1531,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                     {currentIndex < videoList.length - 1 && (
                       <button
                         onClick={handleNext}
-                        className="px-3 py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all"
+                        className="px-4 py-2.5 sm:py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0"
                       >
                         Próxima →
                       </button>
@@ -1554,7 +1554,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                     </button>
                     <button
                       onClick={handleMarkAsCompleted}
-                      className={`px-4 py-1.5 text-sm font-semibold rounded-lg transition-all ${
+                      className={`px-4 py-2.5 sm:py-1.5 text-sm font-semibold rounded-lg transition-all min-h-[44px] sm:min-h-0 ${
                         currentLessonKey && completedIds.has(currentLessonKey)
                           ? 'bg-mint/10 text-mint border border-mint/30'
                           : 'bg-mint text-navy hover:bg-mint/90'
@@ -1580,7 +1580,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
 
                 {/* Material */}
                 {currentVideo.materialFile && (
-                  <div className="flex items-center gap-4 p-4 bg-navy-lighter/50 border border-slate/10 rounded-xl mt-6 hover:border-mint/30 transition-colors group">
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-navy-lighter/50 border border-slate/10 rounded-xl mt-6 hover:border-mint/30 transition-colors group">
                     {(() => {
                       const file = currentVideo.materialFile as any;
                       const { emoji, bg } = getFileIcon(file.name ?? '', file.type);
@@ -1602,7 +1602,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                     </div>
                     <button
                       onClick={() => openStoredFile(currentVideo.materialFile)}
-                      className="flex-shrink-0 px-4 py-2 text-sm font-medium rounded-lg border border-slate/20 text-slate-light hover:border-mint/30 hover:text-mint transition-all"
+                      className="flex-shrink-0 px-4 py-2.5 sm:py-2 text-sm font-medium rounded-lg border border-slate/20 text-slate-light hover:border-mint/30 hover:text-mint transition-all min-h-[44px] sm:min-h-0 w-full sm:w-auto text-center"
                     >
                       Ver/baixar
                     </button>

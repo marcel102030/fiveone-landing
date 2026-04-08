@@ -197,8 +197,8 @@ export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps
           <button
             type="submit"
             disabled={!draft.trim() || adding}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg
-                       bg-mint text-navy transition-all
+            className="flex items-center gap-1.5 px-4 py-2.5 sm:py-1.5 text-xs font-medium rounded-lg
+                       bg-mint text-navy transition-all min-h-[44px] sm:min-h-0
                        hover:bg-mint/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {adding ? (
@@ -253,13 +253,13 @@ export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps
                     <div className="flex gap-2">
                       <button
                         onClick={() => void handleEditSave(note.id)}
-                        className="text-xs text-mint hover:underline"
+                        className="text-xs text-mint hover:underline px-2 py-1.5 min-h-[36px]"
                       >
                         Salvar
                       </button>
                       <button
                         onClick={() => setEditId(null)}
-                        className="text-xs text-slate hover:text-slate-white"
+                        className="text-xs text-slate hover:text-slate-white px-2 py-1.5 min-h-[36px]"
                       >
                         Cancelar
                       </button>
@@ -272,12 +272,12 @@ export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps
                 )}
               </div>
 
-              {/* Actions */}
+              {/* Actions — sempre visível no mobile, hover no desktop */}
               {editId !== note.id && (
-                <div className="flex-shrink-0 flex items-start gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex-shrink-0 flex items-start gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                   <button
                     onClick={() => startEdit(note)}
-                    className="p-1 text-slate hover:text-slate-white rounded transition-colors"
+                    className="p-2 text-slate hover:text-slate-white rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
                     title="Editar nota"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -287,7 +287,7 @@ export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps
                   </button>
                   <button
                     onClick={() => void handleDelete(note.id)}
-                    className="p-1 text-slate hover:text-red-400 rounded transition-colors"
+                    className="p-2 text-slate hover:text-red-400 rounded transition-colors min-w-[36px] min-h-[36px] flex items-center justify-center"
                     title="Excluir nota"
                   >
                     <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

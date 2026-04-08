@@ -219,7 +219,7 @@ function MentionTextarea({ value, onChange, placeholder, disabled, autoFocus, on
         rows={Math.min(4, Math.max(1, value.split(/\n/).length))}
       />
       {mentionState && suggestions.length > 0 && (
-        <div className="absolute z-50 left-0 mt-1 w-64 bg-navy-lighter border border-slate/20 rounded-xl shadow-card overflow-hidden">
+        <div className="absolute z-50 left-0 mt-1 w-full max-w-xs bg-navy-lighter border border-slate/20 rounded-xl shadow-card overflow-hidden">
           {suggestions.map((option) => (
             <button
               key={option.email}
@@ -244,7 +244,7 @@ function MentionTextarea({ value, onChange, placeholder, disabled, autoFocus, on
         </div>
       )}
       {mentionState && loadingSuggestions && suggestions.length === 0 && (
-        <div className="absolute z-50 left-0 mt-1 w-48 bg-navy-lighter border border-slate/20 rounded-xl shadow-card px-3 py-2 text-xs text-slate">
+        <div className="absolute z-50 left-0 mt-1 w-full max-w-xs bg-navy-lighter border border-slate/20 rounded-xl shadow-card px-3 py-2 text-xs text-slate">
           Procurando alunos…
         </div>
       )}
@@ -440,7 +440,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     const isCollapsed = typeof storedCollapsed === "boolean" ? storedCollapsed : defaultCollapsed;
 
     return (
-      <li key={comment.id} className={depth > 0 ? "ml-10" : ""}>
+      <li key={comment.id} className={depth > 0 ? "ml-4 sm:ml-10" : ""}>
         <div className="flex gap-3 py-3 border-b border-slate/10">
           {/* Avatar */}
           <div className="flex-shrink-0 w-8 h-8 rounded-full bg-navy-lighter border border-slate/20
@@ -464,13 +464,13 @@ export default function CommentSection({ videoId }: { videoId: string }) {
             </div>
 
             {/* Actions */}
-            <div className="flex items-center gap-3 mt-2">
+            <div className="flex items-center gap-1 mt-2 -ml-2">
               <button
                 type="button"
                 onClick={() => handleLike(comment.id)}
                 disabled={!userId || likedIds.has(comment.id)}
-                className={`flex items-center gap-1 text-xs transition-colors
-                            ${likedIds.has(comment.id) ? 'text-mint' : 'text-slate hover:text-slate-white'}
+                className={`flex items-center gap-1 text-xs transition-colors px-2 py-2 rounded-lg min-h-[36px]
+                            ${likedIds.has(comment.id) ? 'text-mint' : 'text-slate hover:text-slate-white hover:bg-navy-lighter'}
                             disabled:cursor-not-allowed`}
               >
                 <FiThumbsUp className="w-3.5 h-3.5" />
@@ -484,7 +484,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                   setReplyDrafts((prev) => ({ ...prev, [comment.id]: prev[comment.id] || `@${comment.author.name} ` }));
                 }}
                 disabled={!userId}
-                className="flex items-center gap-1 text-xs text-slate hover:text-slate-white transition-colors disabled:cursor-not-allowed"
+                className="flex items-center gap-1 text-xs text-slate hover:text-slate-white transition-colors disabled:cursor-not-allowed px-2 py-2 rounded-lg min-h-[36px] hover:bg-navy-lighter"
               >
                 <FiMessageCircle className="w-3.5 h-3.5" />
                 Responder
@@ -526,8 +526,8 @@ export default function CommentSection({ videoId }: { videoId: string }) {
                   </button>
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg
-                               bg-mint text-navy hover:bg-mint/90 transition-colors disabled:opacity-40"
+                    className="flex items-center gap-1.5 px-4 py-2.5 sm:py-1.5 text-xs font-medium rounded-lg
+                               bg-mint text-navy hover:bg-mint/90 transition-colors disabled:opacity-40 min-h-[44px] sm:min-h-0"
                     onClick={() => handleReplySubmit(comment.id)}
                     disabled={!userId}
                   >
