@@ -39,3 +39,27 @@
   line-height: 1.6;
   max-width: 950px;
 }
+
+@media (max-width: 768px) {
+  #sobre {
+    padding: 3em 1.5em;
+  }
+
+  #sobre h2 {
+    font-size: 1.8em;
+  }
+
+  #sobre p {
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  #sobre {
+    padding: 2.5em 1rem;
+  }
+
+  #sobre h2 {
+    font-size: 1.5em;
+  }
+}

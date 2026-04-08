@@ -90,15 +90,32 @@
 }
 
 @media (max-width: 768px) {
-  .ministerio-cards {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 1rem;
-    padding: 0 1rem;
+  .conheca-mais {
+    padding: 3em 1.5em;
   }
 
   .conheca-mais h2 {
-    font-size: 2em;
+    font-size: 1.8em;
     margin-bottom: 1.5em;
+  }
+
+  .ministerio-cards {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .conheca-mais {
+    padding: 2.5em 1rem;
+  }
+
+  .conheca-mais h2 {
+    font-size: 1.5em;
+  }
+
+  .ministerio-cards {
+    grid-template-columns: 1fr;
   }
 }
 

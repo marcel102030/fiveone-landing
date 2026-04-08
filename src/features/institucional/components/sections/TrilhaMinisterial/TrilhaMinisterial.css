@@ -95,14 +95,31 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .trilha-cards {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    padding: 0 1rem;
+  .trilha-ministerial {
+    padding: 3em 1.5em;
   }
 
   .trilha-ministerial h2 {
-    font-size: 2em;
+    font-size: 1.8em;
     margin-bottom: 1.5em;
+  }
+
+  .trilha-cards {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .trilha-ministerial h2 {
+    font-size: 1.5em;
+  }
+
+  .trilha-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .trilha-card {
+    padding: 1.5rem;
   }
 }

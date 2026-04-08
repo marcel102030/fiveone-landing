@@ -69,6 +69,7 @@ import Footer from "./shared/components/layout/Footer/Footer";
 import Navbar from "./shared/components/layout/Navbar/Navbar";
 import ScrollToTop from "./shared/components/layout/ScrollToTop/ScrollToTop";
 import ScrollToTopOnMount from "./shared/components/layout/ScrollToTop/ScrollToTopOnMount";
+import PWAInstallBanner from "./shared/components/PWAInstallBanner/PWAInstallBanner";
 
 function AppContent() {
   const location = useLocation();
@@ -302,6 +303,7 @@ function AppContent() {
         <ScrollToTop />
         {!hideLayout && !isInviteTest && <Footer />}
       </div>
+      <PWAInstallBanner />
     </>
   );
 }
