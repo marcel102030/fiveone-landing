@@ -543,6 +543,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   }, []);
 
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toastState, setToastState] = useState<ToastState | null>(null);
 
@@ -1335,7 +1336,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     <>
       <Header />
       <div className="min-h-screen bg-navy pb-16">
-        <div className="max-w-screen-2xl mx-auto px-4 py-6">
+        <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
 
           {/* Empty state */}
           {!videoList.length && (
@@ -1354,7 +1355,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
           )}
 
           {isModuloAberto && currentVideo && (
-            <div className={`flex gap-6 ${theaterMode ? 'flex-col' : 'items-start lg:flex-row'}`}>
+            <div className={`flex flex-col gap-4 lg:gap-6 ${!theaterMode ? 'lg:flex-row lg:items-start' : ''}`}>
 
               {/* ── LEFT COLUMN ────────────────────────────────────────────── */}
               <div className="flex-1 min-w-0">
@@ -1485,12 +1486,12 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
 
                 {/* Action bar */}
                 <div
-                  className="flex items-center justify-between mt-4 flex-wrap gap-3"
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 gap-2 sm:gap-3"
                   role="toolbar"
                   aria-label="Controles da aula"
                 >
                   {/* Left: Reactions + Favorite */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 order-2 sm:order-1">
                     <ReactionBar videoId={currentVideo.videoId} />
                     <button
                       onClick={handleFavoriteToggle}
@@ -1513,7 +1514,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                   </div>
 
                   {/* Center: Navigation + Progress */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-center">
                     {currentIndex > 0 && (
                       <button
                         onClick={handlePrevious}
@@ -1538,12 +1539,12 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                   </div>
 
                   {/* Right: Cinema + Complete */}
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 order-3">
                     <button
                       onClick={() => setTheaterMode((prev) => !prev)}
                       aria-pressed={theaterMode}
                       title={theaterMode ? 'Sair do modo cinema' : 'Ativar modo cinema'}
-                      className={`px-3 py-1.5 text-sm rounded-lg border transition-all ${
+                      className={`hidden sm:block px-3 py-1.5 text-sm rounded-lg border transition-all ${
                         theaterMode
                           ? 'bg-mint/10 text-mint border-mint/30'
                           : 'bg-navy-lighter text-slate hover:text-slate-white border-transparent hover:border-slate/20'
@@ -1573,7 +1574,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                       onChange={(e) => setAutoPlay(e.target.checked)}
                       className="rounded border-slate/30 bg-navy-lighter accent-mint"
                     />
-                    <span className="text-sm text-slate">Reproduzir próxima aula automaticamente</span>
+                    <span className="text-xs sm:text-sm text-slate">Reproduzir próxima aula automaticamente</span>
                   </label>
                 )}
 
@@ -1618,8 +1619,16 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
               </div>
 
               {/* ── RIGHT COLUMN — sidebar ──────────────────────────────────── */}
-              <div className={`w-full flex-shrink-0 ${theaterMode ? '' : 'lg:w-80 xl:w-96'}`}>
-                <div className="lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden max-h-[calc(100vh-5rem)]">
+              <div className={`w-full flex-shrink-0 ${!theaterMode ? 'lg:w-80 xl:w-96' : ''}`}>
+                {/* Mobile: toggle para lista de aulas */}
+                <button
+                  className="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-navy-lighter/60 border border-slate/10 rounded-xl text-sm font-medium text-slate-white"
+                  onClick={() => setMobileSidebarOpen(v => !v)}
+                >
+                  <span>📋 Lista de aulas ({videoList.length})</span>
+                  <svg className={`w-4 h-4 text-slate transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                </button>
+                <div className={`lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden lg:max-h-[calc(100vh-5rem)] ${mobileSidebarOpen ? 'max-h-72 mt-2' : 'max-h-0'} lg:max-h-[calc(100vh-5rem)] transition-all duration-300 lg:mt-0`}>
 
                   {/* Progress summary */}
                   {videoList.length > 0 && (
