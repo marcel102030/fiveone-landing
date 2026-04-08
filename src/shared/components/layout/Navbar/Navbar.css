@@ -97,6 +97,10 @@
   cursor: pointer;
   padding: 0.5rem;
   z-index: 1001;
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
 }
 
 .hamburger {
@@ -142,7 +146,7 @@
 /* Mobile styles */
 @media screen and (max-width: 1024px) {
   .mobile-menu-button {
-    display: block;
+    display: flex;
   }
 
   .nav-links {

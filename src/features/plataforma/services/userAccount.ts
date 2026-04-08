@@ -272,6 +272,37 @@ export async function getUserByEmail(email: string): Promise<PlatformUserListIte
   return (data as any) || null;
 }
 
+// Admin management
+export type AdminUser = { email: string; name: string | null; created_at: string | null };
+
+export async function listAdmins(): Promise<AdminUser[]> {
+  const { data, error } = await supabase
+    .from('platform_user')
+    .select('email,name,created_at')
+    .eq('role', 'ADMIN')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data || []) as AdminUser[];
+}
+
+export async function createAdmin(email: string, password: string, name?: string | null): Promise<void> {
+  const res = await fetch('/api/create-admin', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase(), password, name: name || null }),
+  });
+  const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error || 'Erro ao criar administrador');
+}
+
+export async function revokeAdmin(email: string): Promise<void> {
+  const { error } = await supabase
+    .from('platform_user')
+    .update({ role: 'STUDENT' })
+    .eq('email', email.toLowerCase());
+  if (error) throw error;
+}
+
 // Comments API (platform_lesson_comment)
 export type UserComment = { id: string; lesson_id: string; text: string; likes: number | null; created_at: string; status?: 'pendente' | 'aprovado' };
 

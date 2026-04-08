@@ -60,6 +60,7 @@ import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
 import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
 import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
 import Favoritos from "./features/plataforma/pages/Favoritos";
+import CertificadoPublico from "./features/plataforma/pages/CertificadoPublico";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 
 import "./App.css";
@@ -68,6 +69,7 @@ import Footer from "./shared/components/layout/Footer/Footer";
 import Navbar from "./shared/components/layout/Navbar/Navbar";
 import ScrollToTop from "./shared/components/layout/ScrollToTop/ScrollToTop";
 import ScrollToTopOnMount from "./shared/components/layout/ScrollToTop/ScrollToTopOnMount";
+import PWAInstallBanner from "./shared/components/PWAInstallBanner/PWAInstallBanner";
 
 function AppContent() {
   const location = useLocation();
@@ -112,6 +114,7 @@ function AppContent() {
     location.pathname === "/cadastrar-igreja" ||
     location.pathname === "/copiar" ||
     location.pathname.startsWith("/rede/cadastro") ||
+    location.pathname.startsWith("/certificado/") ||
     isInviteTest ||
     isIgrejasStandalone;
 
@@ -291,6 +294,7 @@ function AppContent() {
                 </StudentGuard>
               }
             />
+            <Route path="/certificado/:verifyCode" element={<CertificadoPublico />} />
             <Route path="/login-aluno"    element={<LoginAluno onLogin={handleLogin} />} />
             <Route path="/esqueci-senha"  element={<EsqueciSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
@@ -299,6 +303,7 @@ function AppContent() {
         <ScrollToTop />
         {!hideLayout && !isInviteTest && <Footer />}
       </div>
+      <PWAInstallBanner />
     </>
   );
 }

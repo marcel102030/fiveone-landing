@@ -41,9 +41,8 @@ export default function ModeracaoComentarios() {
 
   return (
     <div className="min-h-screen bg-navy text-slate-white">
-      {/* Header */}
       <header className="border-b border-slate/10 px-6 py-4 flex items-center gap-4">
-        <Link to="/admin" className="text-slate hover:text-mint transition-colors text-sm">← Painel</Link>
+        <Link to="/admin/administracao" className="text-slate hover:text-mint transition-colors text-sm">← Painel</Link>
         <div>
           <h1 className="text-lg font-bold">Moderação de Comentários</h1>
           <p className="text-xs text-slate">{comments.length} comentário{comments.length !== 1 ? 's' : ''} pendente{comments.length !== 1 ? 's' : ''}</p>
@@ -69,7 +68,6 @@ export default function ModeracaoComentarios() {
               const busy = processing.has(c.id);
               return (
                 <div key={c.id} className="bg-navy-light rounded-2xl border border-slate/10 p-5">
-                  {/* Meta */}
                   <div className="flex items-center gap-2 mb-3 text-xs text-slate">
                     <span className="font-mono bg-navy-lighter px-2 py-0.5 rounded">{c.user_id.split('@')[0]}</span>
                     <span>·</span>
@@ -80,11 +78,7 @@ export default function ModeracaoComentarios() {
                       <span className="ml-auto bg-navy-lighter px-2 py-0.5 rounded text-slate">↩ resposta</span>
                     )}
                   </div>
-
-                  {/* Text */}
                   <p className="text-sm text-slate-white leading-relaxed mb-4">{c.text}</p>
-
-                  {/* Actions */}
                   <div className="flex gap-2">
                     <button
                       onClick={() => void handle(c.id, 'approve')}
@@ -106,7 +100,6 @@ export default function ModeracaoComentarios() {
         )}
       </main>
 
-      {/* Toast */}
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 px-5 py-3 rounded-xl shadow-lg text-sm font-medium ${
           toast.ok ? 'bg-mint text-navy' : 'bg-red-500/90 text-white'

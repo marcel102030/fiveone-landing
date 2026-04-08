@@ -96,7 +96,7 @@ export async function rejectComment(id: string): Promise<void> {
   await supabase.from('platform_lesson_comment').update({ status: 'rejected' }).eq('id', id);
 }
 
-export async function issueCertificate(userId: string, ministryId: string): Promise<void> {
+export async function issueCertificate(userId: string, ministryId: string): Promise<string> {
   const verifyCode = crypto.randomUUID();
   const { error } = await supabase.from('platform_certificate').insert({
     user_id: userId,
@@ -105,6 +105,7 @@ export async function issueCertificate(userId: string, ministryId: string): Prom
     verify_code: verifyCode,
   });
   if (error) throw error;
+  return verifyCode;
 }
 
 export async function fetchCertificates() {

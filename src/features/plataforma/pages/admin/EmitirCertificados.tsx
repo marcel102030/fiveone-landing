@@ -11,6 +11,20 @@ interface Certificate {
   verify_code: string;
 }
 
+async function sendCertEmail(opts: {
+  to: string; name: string | null; formation: string; verifyCode: string; issuedAt: string;
+}) {
+  try {
+    await fetch('/api/certificate-email', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts),
+    });
+  } catch {
+    // email failure is non-critical
+  }
+}
+
 export default function EmitirCertificados() {
   document.title = "Certificados | Five One Admin";
 
@@ -41,9 +55,20 @@ export default function EmitirCertificados() {
     if (!form.userId || !form.ministryId) return;
     setIssuing(true);
     try {
-      await issueCertificate(form.userId, form.ministryId);
+      const verifyCode = await issueCertificate(form.userId, form.ministryId);
       const updated = await fetchCertificates();
       setCerts(updated as Certificate[]);
+
+      // Enviar email ao aluno
+      const user = users.find(u => u.email === form.userId);
+      void sendCertEmail({
+        to: form.userId,
+        name: user?.name ?? null,
+        formation: toFormationLabel(form.ministryId),
+        verifyCode,
+        issuedAt: new Date().toISOString(),
+      });
+
       setForm({ userId: '', ministryId: '' });
       showToast('Certificado emitido com sucesso!', true);
     } catch {
@@ -65,7 +90,7 @@ export default function EmitirCertificados() {
   return (
     <div className="min-h-screen bg-navy text-slate-white">
       <header className="border-b border-slate/10 px-6 py-4 flex items-center gap-4">
-        <Link to="/admin" className="text-slate hover:text-mint transition-colors text-sm">← Painel</Link>
+        <Link to="/admin/administracao" className="text-slate hover:text-mint transition-colors text-sm">← Painel</Link>
         <div>
           <h1 className="text-lg font-bold">Certificados</h1>
           <p className="text-xs text-slate">{certs.length} emitido{certs.length !== 1 ? 's' : ''}</p>
@@ -133,9 +158,18 @@ export default function EmitirCertificados() {
                     <p className="text-sm font-medium text-slate-white truncate">{c.user_id}</p>
                     <p className="text-xs text-slate">{formationLabel[c.ministry_id] ?? c.ministry_id} · {formatDate(c.issued_at)}</p>
                   </div>
-                  <div className="text-right hidden sm:block">
-                    <p className="text-xs text-slate">Código</p>
-                    <p className="text-xs font-mono text-mint">{c.verify_code.slice(0, 8)}…</p>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-xs text-slate">Código</p>
+                      <p className="text-xs font-mono text-mint">{c.verify_code.slice(0, 8)}…</p>
+                    </div>
+                    <a
+                      href={`/#/certificado/${c.verify_code}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs px-3 py-1.5 rounded-lg bg-mint/10 text-mint border border-mint/20 hover:bg-mint/20 transition-colors whitespace-nowrap">
+                      Ver →
+                    </a>
                   </div>
                 </div>
               ))}
