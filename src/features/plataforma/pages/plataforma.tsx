@@ -538,11 +538,11 @@ const PaginaInicial = () => {
                       <button
                         key={video.id || video.videoId || video.video_id || video.url || index}
                         onClick={() => goToLesson(video)}
-                        className="flex-none w-56 sm:w-64 group relative rounded-xl overflow-hidden bg-navy-lighter border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 hover:shadow-card-hover transition-all"
+                        className="flex-none w-40 sm:w-52 lg:w-64 group relative rounded-xl overflow-hidden bg-navy-lighter border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 hover:shadow-card-hover transition-all"
                         title={video.title}
                       >
                         {/* Imagem */}
-                        <div className="relative h-36 bg-navy-lighter">
+                        <div className="relative h-28 sm:h-36 bg-navy-lighter">
                           {img && (
                             <img src={img} alt={video.title} className="w-full h-full object-cover" />
                           )}
@@ -591,7 +591,7 @@ const PaginaInicial = () => {
         {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && (
           <section className="py-8 sm:py-10 border-b border-slate/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-6 sm:p-8 flex flex-col sm:flex-row items-center gap-5">
+              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
                 <div className="w-14 h-14 rounded-2xl bg-mint/10 border border-mint/20 flex items-center justify-center flex-shrink-0">
                   <div className="text-mint">
                     <PlayIcon />
@@ -629,13 +629,13 @@ const PaginaInicial = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-5 lg:gap-6 items-stretch">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 lg:gap-6 items-stretch">
               {orderedFormacoes.map((formacao) =>
                 formacao.active ? (
                   <Link
                     key={formacao.id}
                     to={formacao.route!}
-                    className="group relative min-h-[320px] sm:min-h-[360px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
+                    className="group relative min-h-[280px] sm:min-h-[340px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
                     aria-label={`Acessar formação ${formacao.label}`}
                   >
                     <img

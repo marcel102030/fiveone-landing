@@ -131,7 +131,7 @@ const ModulosMestre = () => {
       <Header />
       <div className="min-h-screen bg-navy pt-6 pb-12 px-4">
         <div className="max-w-screen-xl mx-auto">
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {modules.map((m) => {
               const clickable = !m.soon;
               const handle = () => { if (clickable) abrirModulo(m); };
@@ -175,18 +175,18 @@ const ModulosMestre = () => {
                     </div>
                   )}
 
-                  {/* Title at bottom */}
-                  <div className="absolute bottom-3 left-3 right-3 text-white font-semibold text-sm z-10 group-hover:opacity-0 transition-opacity duration-200">
+                  {/* Title at bottom — always visible on touch, hidden on mouse hover */}
+                  <div className="absolute bottom-3 left-3 right-3 text-white font-semibold text-xs sm:text-sm z-10 group-hover:[@media(hover:hover)]:opacity-0 transition-opacity duration-200">
                     {m.title}
                   </div>
 
-                  {/* Hover overlay with topics */}
+                  {/* Hover overlay with topics — desktop only (hover:hover = mouse device) */}
                   {clickable && (
-                    <div className="absolute inset-0 bg-navy/90 flex flex-col justify-center items-center p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-20">
-                      <p className="text-mint text-xs font-semibold uppercase tracking-wider mb-3">
+                    <div className="absolute inset-0 bg-navy/90 flex flex-col justify-center items-center p-3 sm:p-4 opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200 z-20">
+                      <p className="text-mint text-xs font-semibold uppercase tracking-wider mb-2 sm:mb-3">
                         O que você vai ver
                       </p>
-                      <ul className="space-y-1 mb-4 w-full">
+                      <ul className="space-y-1 mb-3 sm:mb-4 w-full">
                         {m.topics.map((t, i) => (
                           <li key={i} className="text-slate-300 text-xs flex items-start gap-1.5">
                             <span className="text-mint mt-0.5">›</span>
@@ -197,6 +197,15 @@ const ModulosMestre = () => {
                       <button className="bg-mint text-navy text-xs font-bold px-4 py-2 rounded-full hover:bg-mint/90 transition-colors">
                         Entrar →
                       </button>
+                    </div>
+                  )}
+
+                  {/* Mobile: tap indicator at bottom right */}
+                  {clickable && (
+                    <div className="absolute bottom-2 right-2 z-10 [@media(hover:hover)]:hidden">
+                      <span className="bg-mint/90 text-navy text-[10px] font-bold px-2 py-1 rounded-full">
+                        Entrar →
+                      </span>
                     </div>
                   )}
                 </div>

@@ -138,7 +138,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
               Plataforma Five One
             </span>
           </div>
-          <h1 className="text-3xl font-bold text-slate-white leading-tight mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-white leading-tight mb-2">
             Entre na sua conta
           </h1>
           <p className="text-slate text-sm leading-relaxed">
@@ -203,7 +203,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
           </FormField>
 
           {/* Opções */}
-          <div className="flex items-center justify-between pt-1">
+          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
             <label className="flex items-center gap-2.5 cursor-pointer group select-none">
               <div
                 className={["relative w-10 h-6 rounded-full transition-colors duration-200",
