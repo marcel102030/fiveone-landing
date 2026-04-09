@@ -1010,6 +1010,31 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Salva progresso quando o usuário sai da aba / minimiza o app / fecha o browser.
+  // O evento 'visibilitychange' dispara ANTES do navegador cancelar requests pendentes,
+  // garantindo que o fetch de upsertProgress chegue ao servidor mesmo em fechamento.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== 'hidden') return;
+      const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
+      if (!lessonId || watchedSeconds <= 0) return;
+      const uid = getCurrentUserId() || email;
+      if (!uid) return;
+      upsertProgress({
+        user_id: uid,
+        lesson_id: lessonId,
+        last_at: new Date().toISOString(),
+        watched_seconds: watchedSeconds,
+        duration_seconds: durationSeconds || null,
+        title: lessonTitle,
+        thumbnail,
+      }).catch(() => {});
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  // email muda quando Supabase auth resolve — re-registra com valor atualizado
+  }, [email]);
+
   const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     setToastState({ message, tone });
   }, []);

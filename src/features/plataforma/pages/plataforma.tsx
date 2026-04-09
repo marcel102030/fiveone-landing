@@ -150,6 +150,9 @@ const PaginaInicial = () => {
   // useAuth lê a sessão Supabase via cookie — persiste mesmo quando
   // sessionStorage é limpo (browser fechado). É o identificador confiável.
   const { email: authEmail } = useAuth()
+  // Ref sempre atualizado — evita closure stale em handlers registrados via addEventListener.
+  const authEmailRef = useRef<string | null>(null)
+  authEmailRef.current = authEmail
   const carouselRef = useRef<HTMLDivElement>(null)
 
   // Identificador efetivo: custom storage (sincrono) ou Supabase auth (cookie).
@@ -364,8 +367,9 @@ const PaginaInicial = () => {
       if (now - lastFetch < DEBOUNCE_MS) return
       lastFetch = now
 
-      // Usa cookie do Supabase como fallback (persiste após fechar browser)
-      const uid = getCurrentUserId() || authEmail || null
+      // Usa cookie do Supabase como fallback (persiste após fechar browser).
+      // authEmailRef.current é sempre o valor mais recente — evita closure stale.
+      const uid = getCurrentUserId() || authEmailRef.current || null
       if (!uid) {
         // sem conta identificada: só relê localStorage local
         try {
