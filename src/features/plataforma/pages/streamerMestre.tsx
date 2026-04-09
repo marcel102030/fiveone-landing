@@ -5,7 +5,7 @@ import NotesPanel from '../components/Streamer/NotesPanel';
 import Header from './Header';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getCurrentUserId } from '../../../shared/utils/user';
-import { upsertProgress, deleteProgressForUserVideo } from '../services/progress';
+import { upsertProgress, deleteProgressForUserVideo, fetchUserProgress } from '../services/progress';
 import { upsertCompletion, deleteCompletion, fetchCompletionsForUser } from '../services/completions';
 import {
   COMPLETED_EVENT,
@@ -452,6 +452,20 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     setPlayerStatus('ready');
     setPlayerMessage(null);
     setShowPlayerFallback(false);
+    // Se havia um seek pendente (progresso vindo do Supabase), executa agora
+    const seekTo = pendingSeekRef.current;
+    if (seekTo > 0) {
+      pendingSeekRef.current = 0;
+      setTimeout(() => {
+        try {
+          if (youtubePlayerRef.current?.seekTo) {
+            youtubePlayerRef.current.seekTo(seekTo, true);
+          } else if (playerInstanceRef.current?.setCurrentTime) {
+            void playerInstanceRef.current.setCurrentTime(seekTo);
+          }
+        } catch {}
+      }, 300); // pequeno delay para o player estabilizar
+    }
   }, [clearPlayerTimers]);
 
   const markPlayerError = useCallback((message?: string) => {
@@ -485,6 +499,9 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   const [uiProgress, setUiProgress] = useState<{ watchedSeconds: number; durationSeconds: number }>({
     watchedSeconds: 0, durationSeconds: 0,
   });
+  // Quando o progresso é carregado do Supabase depois que o player já iniciou,
+  // pendingSeekRef guarda o tempo para fazer seek assim que o player estiver pronto.
+  const pendingSeekRef = useRef<number>(0);
 
   // ── Favorites ─────────────────────────────────────────────────────────────
   const [isFav, setIsFav] = useState(false);
@@ -672,14 +689,52 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]
   );
 
-  // Load stored progress when video changes
+  // Load stored progress when video changes.
+  // Se não há progresso local (dispositivo nunca assistiu), busca do Supabase
+  // e popula localStorage ANTES de inicializar o player — assim o seek funciona.
   useEffect(() => {
+    if (!currentVideo?.videoId) return;
     const stored = getStoredProgress(currentVideo);
-    if (stored) {
+    if (stored && stored.watchedSeconds > 0) {
       setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
-    } else {
-      setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+      return;
     }
+    // Sem progresso local — tenta buscar do Supabase
+    const uid = getCurrentUserId();
+    if (!uid) {
+      setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+      return;
+    }
+    setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+    const videoId = currentVideo.videoId;
+    fetchUserProgress(uid, 50).then(rows => {
+      const row = rows.find(r => r.lesson_id === videoId);
+      if (row && row.watched_seconds > 0) {
+        // Persiste no localStorage
+        const localKey = `fiveone_progress::${videoId}`;
+        try {
+          localStorage.setItem(localKey, JSON.stringify({
+            watchedSeconds: row.watched_seconds,
+            durationSeconds: row.duration_seconds || 0,
+            lastAt: new Date(row.last_at).getTime(),
+          }));
+        } catch {}
+        // Agenda seek para quando o player estiver pronto
+        pendingSeekRef.current = row.watched_seconds;
+        setUiProgress({
+          watchedSeconds: row.watched_seconds,
+          durationSeconds: row.duration_seconds || 0,
+        });
+        // Se o player já estiver disponível, faz o seek imediatamente
+        try {
+          if (youtubePlayerRef.current?.seekTo) {
+            youtubePlayerRef.current.seekTo(row.watched_seconds, true);
+          } else if (playerInstanceRef.current?.setCurrentTime) {
+            void playerInstanceRef.current.setCurrentTime(row.watched_seconds);
+          }
+        } catch {}
+      }
+    }).catch(() => {});
   }, [currentVideo?.videoId]);
 
   // Load favorite state when video changes
@@ -970,20 +1025,48 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
         localStorage.setItem('videos_assistidos', JSON.stringify(updated.slice(0, 12)));
       }
 
-      // Sincroniza com Supabase imediatamente ao abrir a aula (sem esperar 15s),
-      // para que outros dispositivos vejam a aula mais recente no "Retomar aula"
+      // Sincroniza com Supabase ao abrir a aula, mas NUNCA com watched_seconds=0
+      // pois isso destruiria o progresso salvo em outro dispositivo.
+      // Só enviamos se já temos progresso local real (> 0).
       const uid = getCurrentUserId();
       if (uid && lesson.videoId) {
         const stored = getStoredProgress(lesson);
-        upsertProgress({
-          user_id: uid,
-          lesson_id: lesson.videoId,
-          last_at: new Date(now).toISOString(),
-          watched_seconds: Number(stored?.watchedSeconds || 0),
-          duration_seconds: stored?.durationSeconds || null,
-          title: lesson.title,
-          thumbnail: thumb,
-        }).catch(() => {});
+        const localWatched = Number(stored?.watchedSeconds || 0);
+        if (localWatched > 0) {
+          // Tem progresso local → sync normal
+          upsertProgress({
+            user_id: uid,
+            lesson_id: lesson.videoId,
+            last_at: new Date(now).toISOString(),
+            watched_seconds: localWatched,
+            duration_seconds: stored?.durationSeconds || null,
+            title: lesson.title,
+            thumbnail: thumb,
+          }).catch(() => {});
+        } else {
+          // Sem progresso local → busca do Supabase e popula localStorage
+          // (cenário: celular abrindo aula que foi assistida no PC)
+          import('../services/progress').then(({ fetchUserProgress }) => {
+            fetchUserProgress(uid, 50).then(rows => {
+              const row = rows.find(r => r.lesson_id === lesson.videoId);
+              if (row && row.watched_seconds > 0) {
+                const key = `fiveone_progress::${lesson.videoId}`;
+                try {
+                  localStorage.setItem(key, JSON.stringify({
+                    watchedSeconds: row.watched_seconds,
+                    durationSeconds: row.duration_seconds || 0,
+                    lastAt: new Date(row.last_at).getTime(),
+                  }));
+                } catch {}
+                // Atualiza a UI de progresso
+                setUiProgress({
+                  watchedSeconds: row.watched_seconds,
+                  durationSeconds: row.duration_seconds || 0,
+                });
+              }
+            }).catch(() => {});
+          }).catch(() => {});
+        }
       }
     } catch {}
   }, [currentIndex, videoList]);
