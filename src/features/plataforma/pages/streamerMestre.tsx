@@ -516,8 +516,29 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   }, []);
 
   const [searchParams] = useSearchParams();
-  const [currentIndex, setCurrentIndex] = useState(0);
   const searchKey = searchParams.toString();
+
+  // Inicializa o índice SINCRONAMENTE a partir da URL para evitar flickering
+  const [currentIndex, setCurrentIndex] = useState(() => {
+    try {
+      const hash = window.location.hash; // e.g. "#/streamer-mestre?vid=xxx"
+      const qmark = hash.indexOf('?');
+      if (qmark < 0) return 0;
+      const params = new URLSearchParams(hash.slice(qmark + 1));
+      const vid = params.get('vid');
+      if (vid) {
+        const lessons = listLessons({ ministryId, onlyPublished: true, onlyActive: true });
+        const idx = lessons.findIndex(item => item.videoId === vid);
+        if (idx >= 0) return idx;
+      }
+      const idxParam = params.get('i');
+      if (idxParam) {
+        const i = Number(idxParam);
+        if (!Number.isNaN(i) && i >= 0) return i;
+      }
+    } catch {}
+    return 0;
+  });
 
   // Reset auto-play trigger when video changes
   useEffect(() => {
@@ -903,6 +924,31 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     setToastState({ message, tone });
   }, []);
+
+  // ── Rastreia última aula aberta (para "Retomar aula" em plataforma.tsx) ───
+  // Salva o videoId da aula atual SEMPRE que ela muda, independente de assistir.
+  // Também garante que videos_assistidos tenha essa aula com lastAt recente.
+  useEffect(() => {
+    const lesson = videoList[currentIndex];
+    if (!lesson?.videoId) return;
+    const LAST_KEY = 'fiveone_last_lesson';
+    try { localStorage.setItem(LAST_KEY, lesson.videoId); } catch {}
+    // Atualiza lastAt em videos_assistidos para manter a ordem correta no carousel
+    try {
+      const now = Date.now();
+      const raw = localStorage.getItem('videos_assistidos');
+      const arr: any[] = raw ? JSON.parse(raw) : [];
+      if (!Array.isArray(arr)) return;
+      const keyMatch = (v: any) => v?.id === lesson.videoId || v?.videoId === lesson.videoId || v?.video_id === lesson.videoId || v?.url === lesson.videoId;
+      const existing = arr.find(keyMatch);
+      if (!existing) return; // só atualiza se já estava na lista (foi assistida antes)
+      const updated = [
+        { ...existing, lastAt: now },
+        ...arr.filter(v => !keyMatch(v)),
+      ];
+      localStorage.setItem('videos_assistidos', JSON.stringify(updated.slice(0, 12)));
+    } catch {}
+  }, [currentIndex, videoList]);
 
   // ── Seek (timestamp das notas → posição no vídeo) ─────────────────────────
   const handleSeek = useCallback((seconds: number) => {

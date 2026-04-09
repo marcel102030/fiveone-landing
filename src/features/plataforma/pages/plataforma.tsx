@@ -275,31 +275,36 @@ const PaginaInicial = () => {
     return () => { active = false }
   }, [lessonByVideoId])
 
-  // ── Atualiza "Continuar assistindo" ao voltar para a página ───────────────
-  // O efeito acima só roda quando lessonByVideoId muda. Quando o aluno volta
-  // do streamer (browser back), o localStorage já foi atualizado pelo streamer,
-  // mas o estado ainda está desatualizado. Resolvemos re-lendo o localStorage
-  // sempre que a aba volta a ficar visível.
+  // ── Atualiza "Continuar Assistindo" ao voltar do streamer ────────────────
+  // Em SPA com HashRouter o componente não desmonta ao navegar para /streamer-mestre
+  // e depois voltar. Escutamos o evento 'storage' (dispara quando outra tab/janela
+  // muda o localStorage) E o evento 'focus' da janela (dispara ao voltar de outra
+  // rota no mesmo contexto). Isso garante que o carousel sempre reflete o estado
+  // mais recente do localStorage.
   useEffect(() => {
-    const refresh = () => {
-      if (document.visibilityState !== 'visible') return
+    const refreshFromStorage = () => {
       try {
         const raw = localStorage.getItem('videos_assistidos')
         if (!raw) return
         const parsed = JSON.parse(raw)
         if (!Array.isArray(parsed) || !parsed.length) return
-        const sorted = [...parsed].sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
+        const sorted = [...parsed].sort((a: any, b: any) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
         setLastWatchedArray(prev => {
-          // só atualiza se o primeiro item mudou (evita re-renders desnecessários)
-          const firstNew = sorted[0]?.id || sorted[0]?.videoId || sorted[0]?.video_id
-          const firstOld = prev[0]?.id || prev[0]?.videoId || prev[0]?.video_id
+          const firstNew = sorted[0]?.id || sorted[0]?.videoId || sorted[0]?.url
+          const firstOld = prev[0]?.id || prev[0]?.videoId || prev[0]?.url
           if (firstNew === firstOld && sorted.length === prev.length) return prev
           return sorted
         })
-      } catch { /* ignore */ }
+      } catch {}
     }
-    document.addEventListener('visibilitychange', refresh)
-    return () => document.removeEventListener('visibilitychange', refresh)
+    // 'storage' event: muda em outra aba/janela
+    window.addEventListener('storage', refreshFromStorage)
+    // 'focus' event: o aluno estava no streamer (mesma aba) e voltou para cá
+    window.addEventListener('focus', refreshFromStorage)
+    return () => {
+      window.removeEventListener('storage', refreshFromStorage)
+      window.removeEventListener('focus', refreshFromStorage)
+    }
   }, [])
 
   // ── IDs concluídos ────────────────────────────────────────────────────────
@@ -334,6 +339,20 @@ const PaginaInicial = () => {
     else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`)
     else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`)
   }, [navigate])
+
+  // "Retomar aula" — usa fiveone_last_lesson como fonte da verdade quando disponível
+  const handleResumeLesson = useCallback(() => {
+    try {
+      const lastId = localStorage.getItem('fiveone_last_lesson')
+      if (lastId) {
+        navigate(`/streamer-mestre?vid=${encodeURIComponent(lastId)}`)
+        return
+      }
+    } catch {}
+    // fallback: usa o primeiro item do carousel
+    if (visibleLastWatched.length > 0) goToLesson(visibleLastWatched[0])
+    else navigate('/streamer-mestre')
+  }, [navigate, visibleLastWatched, goToLesson])
 
   // ── Limpar histórico ──────────────────────────────────────────────────────
   const performClearHistory = useCallback(async () => {
@@ -502,7 +521,7 @@ const PaginaInicial = () => {
             <div className="flex flex-wrap gap-3">
               {visibleLastWatched.length > 0 && (
                 <button
-                  onClick={() => goToLesson(visibleLastWatched[0])}
+                  onClick={handleResumeLesson}
                   className="flex items-center gap-2 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
                   <PlayIcon />
