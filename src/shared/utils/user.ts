@@ -68,8 +68,9 @@ export function clearCurrentUser(): void {
   try { getStorage('session')?.removeItem(SESSION_STORAGE_KEY); } catch {}
   try { getStorage('local')?.removeItem(PROFILE_STORAGE_KEY); } catch {}
   try { getStorage('local')?.removeItem(FORMATION_STORAGE_KEY); } catch {}
-  // Reseta marcador de usuário ativo para que o próximo login limpe o progresso do usuário anterior
-  try { getStorage('local')?.removeItem('fiveone_active_user'); } catch {}
+  // Marca como "deslogado" (não remove) — permite distinguir troca de usuário
+  // na próxima sessão, sem apagar dados de quem reabriu o browser sem trocar de conta
+  try { getStorage('local')?.setItem('fiveone_active_user', '__logged_out__'); } catch {}
 }
 
 export default {

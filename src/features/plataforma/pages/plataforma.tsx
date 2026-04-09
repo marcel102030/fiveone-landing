@@ -14,6 +14,7 @@ import {
 import { fetchCompletionsForUser } from '../services/completions'
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
 import { ConfirmModal, Modal } from '../../../shared/components/ui'
+import { useAuth } from '../../../shared/contexts/AuthContext'
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -146,14 +147,26 @@ const FORMACOES = [
 const PaginaInicial = () => {
   const navigate = useNavigate()
   const { profile } = usePlatformUserProfile()
+  // useAuth lê a sessão Supabase via cookie — persiste mesmo quando
+  // sessionStorage é limpo (browser fechado). É o identificador confiável.
+  const { email: authEmail } = useAuth()
   const carouselRef = useRef<HTMLDivElement>(null)
 
-  // Garante isolamento entre usuários: limpa localStorage de progresso se o usuário mudou
+  // Identificador efetivo: custom storage (sincrono) ou Supabase auth (cookie).
+  // Nunca usa '' como fallback — null significa "ainda não identificado".
+  const effectiveUid = getCurrentUserId() || authEmail || null
+
+  // ── Isolamento entre usuários ─────────────────────────────────────────────
+  // Apaga cache local APENAS quando troca de usuário identificado.
+  // Nunca apaga quando uid é null (página recarregada, auth ainda carregando).
   useEffect(() => {
-    const uid = getCurrentUserId()
+    if (!effectiveUid) return // Ainda não identificado — não toca no cache
     try {
       const storedUser = localStorage.getItem('fiveone_active_user')
-      if (storedUser !== (uid || '')) {
+      const wasLoggedOut = storedUser === '__logged_out__'
+      const isDifferentUser = storedUser && !wasLoggedOut && storedUser !== effectiveUid
+      if (wasLoggedOut || isDifferentUser) {
+        // Troca real de usuário — apaga dados do anterior
         try { localStorage.removeItem('videos_assistidos') } catch {}
         try { localStorage.removeItem('fiveone_last_lesson') } catch {}
         const progressKeys: string[] = []
@@ -170,11 +183,12 @@ const PaginaInicial = () => {
           }
           syncKeys.forEach(k => { try { sessionStorage.removeItem(k) } catch {} })
         } catch {}
-        try { localStorage.setItem('fiveone_active_user', uid || '') } catch {}
       }
+      try { localStorage.setItem('fiveone_active_user', effectiveUid) } catch {}
     } catch {}
+  // effectiveUid muda quando authEmail resolve (auth async) — re-verificar nesse momento
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [effectiveUid])
 
   // ── Estado de conteúdo ────────────────────────────────────────────────────
   const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() =>
@@ -235,6 +249,9 @@ const PaginaInicial = () => {
   }, [mestreLessons])
 
   // ── Carregar progresso (localStorage + remoto) ────────────────────────────
+  // Depende de effectiveUid para re-disparar quando o Supabase auth resolve
+  // (cenário: login sem "lembrar-me", browser reaberto, sessionStorage vazio,
+  //  mas cookie do Supabase ainda válido → authEmail chega após o primeiro render)
   useEffect(() => {
     let active = true
 
@@ -259,7 +276,8 @@ const PaginaInicial = () => {
     } catch {}
 
     ;(async () => {
-      const uid = getCurrentUserId()
+      // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado
+      const uid = effectiveUid
       if (!uid) { setProgressLoaded(true); return }
       try {
         const rows = await fetchUserProgress(uid, 24)
@@ -329,7 +347,8 @@ const PaginaInicial = () => {
     })()
 
     return () => { active = false }
-  }, [lessonByVideoId])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonByVideoId, effectiveUid])
 
   // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
   // O localStorage é por dispositivo. Para sincronizar entre celular e PC
@@ -345,9 +364,10 @@ const PaginaInicial = () => {
       if (now - lastFetch < DEBOUNCE_MS) return
       lastFetch = now
 
-      const uid = getCurrentUserId()
+      // Usa cookie do Supabase como fallback (persiste após fechar browser)
+      const uid = getCurrentUserId() || authEmail || null
       if (!uid) {
-        // sem conta: só relê localStorage local
+        // sem conta identificada: só relê localStorage local
         try {
           const raw = localStorage.getItem('videos_assistidos')
           if (!raw) return
@@ -543,10 +563,10 @@ const PaginaInicial = () => {
       }
     } catch {}
 
-    const uid = getCurrentUserId()
+    const uid = effectiveUid
     if (uid) await deleteProgressExceptForUser(uid, completedIdList)
     setLastWatchedArray([])
-  }, [completedIds, mestreLessons])
+  }, [completedIds, mestreLessons, effectiveUid])
 
   const handleClearHistory = useCallback(async () => {
     setClearing(true)

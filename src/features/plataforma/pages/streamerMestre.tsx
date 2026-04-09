@@ -705,7 +705,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
       return;
     }
     // Sem progresso local — tenta buscar do Supabase
-    const uid = getCurrentUserId();
+    const uid = getCurrentUserId() || email;
     if (!uid) {
       setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
       return;
@@ -929,7 +929,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
         }
       } catch {}
 
-      const userId = getCurrentUserId();
+      const userId = getCurrentUserId() || email;
       if (userId && watchedSeconds > 0) {
         const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
@@ -974,7 +974,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
               }
             }
           } catch {}
-          const uid = getCurrentUserId();
+          const uid = getCurrentUserId() || email;
           if (uid) upsertCompletion(uid, lesson.videoId).catch(() => {});
           syncCompletedIds();
           // Trigger auto-play for next lesson
@@ -995,7 +995,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     return () => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
       if (!lessonId || watchedSeconds <= 0) return;
-      const uid = getCurrentUserId();
+      const uid = getCurrentUserId() || email;
       if (!uid) return;
       upsertProgress({
         user_id: uid,
@@ -1062,7 +1062,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
       // Sincroniza com Supabase ao abrir a aula, mas NUNCA com watched_seconds=0
       // pois isso destruiria o progresso salvo em outro dispositivo.
       // Só enviamos se já temos progresso local real (> 0).
-      const uid = getCurrentUserId();
+      const uid = getCurrentUserId() || email;
       if (uid && lesson.videoId) {
         const stored = getStoredProgress(lesson);
         const localWatched = Number(stored?.watchedSeconds || 0);
@@ -1190,7 +1190,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
         confirmLabel: 'Marcar como não concluída',
         onConfirm: async () => {
           setConfirmState(null);
-          const uid = getCurrentUserId();
+          const uid = getCurrentUserId() || email;
           setCompletedIds((prev) => {
             const next = new Set(prev);
             next.delete(lessonSnapshot.videoId);
@@ -1222,7 +1222,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
       return;
     }
 
-    const uid = getCurrentUserId();
+    const uid = getCurrentUserId() || email;
     const storedProgress = getStoredProgress(lesson);
     let duration = storedProgress?.durationSeconds ?? null;
     if ((!duration || duration <= 0) && lesson.sourceType === 'VIMEO' && playerInstanceRef.current) {
@@ -1252,7 +1252,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
 
   // Load completions from server
   useEffect(() => {
-    const uid = getCurrentUserId();
+    const uid = getCurrentUserId() || email;
     if (!uid) return;
     (async () => {
       try {
