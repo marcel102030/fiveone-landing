@@ -148,6 +148,34 @@ const PaginaInicial = () => {
   const { profile } = usePlatformUserProfile()
   const carouselRef = useRef<HTMLDivElement>(null)
 
+  // Garante isolamento entre usuários: limpa localStorage de progresso se o usuário mudou
+  useEffect(() => {
+    const uid = getCurrentUserId()
+    try {
+      const storedUser = localStorage.getItem('fiveone_active_user')
+      if (storedUser !== (uid || '')) {
+        try { localStorage.removeItem('videos_assistidos') } catch {}
+        try { localStorage.removeItem('fiveone_last_lesson') } catch {}
+        const progressKeys: string[] = []
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i)
+          if (k && k.startsWith('fiveone_progress::')) progressKeys.push(k)
+        }
+        progressKeys.forEach(k => { try { localStorage.removeItem(k) } catch {} })
+        try {
+          const syncKeys: string[] = []
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const k = sessionStorage.key(i)
+            if (k && k.startsWith('fiveone_progress_sync_')) syncKeys.push(k)
+          }
+          syncKeys.forEach(k => { try { sessionStorage.removeItem(k) } catch {} })
+        } catch {}
+        try { localStorage.setItem('fiveone_active_user', uid || '') } catch {}
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Estado de conteúdo ────────────────────────────────────────────────────
   const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() =>
     listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true })
