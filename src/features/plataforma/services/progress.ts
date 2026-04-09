@@ -22,9 +22,17 @@ export async function fetchUserProgress(userId: string, limit = 20): Promise<Pro
 }
 
 export async function upsertProgress(row: ProgressRow): Promise<void> {
-  const { error } = await supabase
-    .from("platform_user_progress")
-    .upsert(row, { onConflict: "user_id,lesson_id" });
+  // Usa RPC com GREATEST para garantir que watched_seconds nunca regride
+  // em caso de race condition (dois dispositivos enviando ao mesmo tempo).
+  const { error } = await supabase.rpc('upsert_progress_safe', {
+    p_user_id:          row.user_id,
+    p_lesson_id:        row.lesson_id,
+    p_last_at:          row.last_at,
+    p_watched_seconds:  row.watched_seconds,
+    p_duration_seconds: row.duration_seconds ?? null,
+    p_title:            row.title,
+    p_thumbnail:        row.thumbnail ?? null,
+  });
   if (error) throw error;
 }
 

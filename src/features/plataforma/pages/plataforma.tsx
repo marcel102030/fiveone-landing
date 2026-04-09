@@ -307,7 +307,11 @@ const PaginaInicial = () => {
             try { localStorage.setItem('fiveone_last_lesson', sortedRemote[0].id) } catch {}
           }
 
-          setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]))
+          const finalMerged = mergeByRecency([...localEnriched, ...remote])
+          // Persiste lista mesclada no localStorage para carregamento instantâneo
+          // na próxima visita neste dispositivo (sem precisar esperar o Supabase)
+          try { localStorage.setItem('videos_assistidos', JSON.stringify(finalMerged.slice(0, 12))) } catch {}
+          setLastWatchedArray(finalMerged)
         }
         setProgressLoaded(true)
 
@@ -420,6 +424,8 @@ const PaginaInicial = () => {
         if (merged[0]?.id) {
           try { localStorage.setItem('fiveone_last_lesson', merged[0].id) } catch {}
         }
+        // Persiste lista mesclada para carregamento instantâneo na próxima visita
+        try { localStorage.setItem('videos_assistidos', JSON.stringify(merged.slice(0, 12))) } catch {}
       } catch { /* rede indisponível — mantém estado atual */ }
     }
 

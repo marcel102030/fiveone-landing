@@ -401,6 +401,11 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
   const lastProgressFlushRef = useRef<number>(0);
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
   const persistProgressRef = useRef<((rawWatched: number, rawDuration?: number) => void) | null>(null);
+  // Guarda o progresso mais recente para flush imediato ao desmontar (sem throttle)
+  const unmountFlushRef = useRef<{
+    watchedSeconds: number; durationSeconds: number;
+    lessonId: string; lessonTitle: string; thumbnail: string;
+  }>({ watchedSeconds: 0, durationSeconds: 0, lessonId: '', lessonTitle: '', thumbnail: '' });
 
   const cleanupVimeoPlayer = useCallback(() => {
     const player = playerInstanceRef.current;
@@ -870,6 +875,14 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
         (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
         resolvedBannerMobile || lesson.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
 
+      // Atualiza ref de flush para garantir save mesmo sem os 15s do throttle
+      if (watchedSeconds > 0) {
+        unmountFlushRef.current = {
+          watchedSeconds, durationSeconds,
+          lessonId: keyBase, lessonTitle: lesson.title, thumbnail: previewImage,
+        };
+      }
+
       const currentVideoData = {
         title: lesson.title,
         thumbnail: previewImage,
@@ -975,6 +988,27 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds],
   );
   persistProgressRef.current = persistProgress;
+
+  // Flush imediato ao desmontar — salva progresso mesmo se o usuário saiu
+  // antes dos 15s do throttle dispararem (ex: assistiu 10s e voltou).
+  useEffect(() => {
+    return () => {
+      const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
+      if (!lessonId || watchedSeconds <= 0) return;
+      const uid = getCurrentUserId();
+      if (!uid) return;
+      upsertProgress({
+        user_id: uid,
+        lesson_id: lessonId,
+        last_at: new Date().toISOString(),
+        watched_seconds: watchedSeconds,
+        duration_seconds: durationSeconds || null,
+        title: lessonTitle,
+        thumbnail,
+      }).catch(() => {});
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     setToastState({ message, tone });
