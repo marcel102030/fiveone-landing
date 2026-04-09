@@ -120,7 +120,12 @@ const Header = () => {
 
   return (
     <>
-      <header className="sticky top-0 z-50 bg-navy/95 backdrop-blur-sm border-b border-slate/10 shadow-card">
+      {/* safe-area-top: no iPhone PWA (standalone) a status bar sobrepõe o header.
+          padding-top com env(safe-area-inset-top) empurra o conteúdo para baixo da notch. */}
+      <header
+        className="sticky top-0 z-50 bg-navy/95 backdrop-blur-sm border-b border-slate/10 shadow-card"
+        style={{ paddingTop: 'env(safe-area-inset-top)' }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
 
           {/* ── Logo ── */}
@@ -280,8 +285,11 @@ const Header = () => {
             className="fixed inset-0 z-40 bg-navy/80 backdrop-blur-sm md:hidden"
             onClick={() => setMenuOpen(false)}
           />
-          {/* Drawer */}
-          <div className="fixed top-16 left-0 right-0 z-40 bg-navy-light border-b border-slate/10 shadow-card-hover md:hidden animate-slide-in">
+          {/* Drawer — top compensa header (h-16) + safe-area-inset-top do iPhone */}
+          <div
+            className="fixed left-0 right-0 z-40 bg-navy-light border-b border-slate/10 shadow-card-hover md:hidden animate-slide-in"
+            style={{ top: 'calc(4rem + env(safe-area-inset-top))' }}
+          >
             <nav className="flex flex-col p-4 gap-1">
               {navLinks.map((link) =>
                 link.internal ? (

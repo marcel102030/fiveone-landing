@@ -238,14 +238,29 @@ const PaginaInicial = () => {
         if (!active) return
         if (rows && rows.length) {
           const remote = rows.map(r => {
-            const localWatched = (() => {
-              try {
-                const raw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`)
-                if (!raw) return 0
+            const localKey = `fiveone_progress::${r.lesson_id}`
+            let localWatched = 0
+            try {
+              const raw = localStorage.getItem(localKey)
+              if (raw) {
                 const parsed = JSON.parse(raw)
-                return Number(parsed.watchedSeconds || parsed.watched || 0)
-              } catch { return 0 }
-            })()
+                localWatched = Number(parsed.watchedSeconds || parsed.watched || 0)
+              }
+            } catch {}
+
+            // Escreve progresso remoto no localStorage para que o streamer
+            // retome no tempo certo ao abrir neste dispositivo
+            if (r.watched_seconds > localWatched) {
+              try {
+                localStorage.setItem(localKey, JSON.stringify({
+                  watchedSeconds: r.watched_seconds,
+                  durationSeconds: r.duration_seconds || 0,
+                  lastAt: new Date(r.last_at).getTime(),
+                }))
+              } catch {}
+              localWatched = r.watched_seconds
+            }
+
             return {
               id: r.lesson_id, url: '', index: undefined,
               title: r.title, thumbnail: r.thumbnail,
@@ -257,6 +272,13 @@ const PaginaInicial = () => {
               bannerMobile: lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url || lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
             }
           })
+
+          // Atualiza fiveone_last_lesson com o ID mais recente do servidor
+          const sortedRemote = [...remote].sort((a, b) => Number(b.lastAt) - Number(a.lastAt))
+          if (sortedRemote[0]?.id) {
+            try { localStorage.setItem('fiveone_last_lesson', sortedRemote[0].id) } catch {}
+          }
+
           setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]))
         }
         setProgressLoaded(true)
@@ -342,6 +364,28 @@ const PaginaInicial = () => {
           const firstOld = prev[0]?.id || prev[0]?.url
           if (firstNew === firstOld && merged.length === prev.length) return prev
           return merged
+        })
+
+        // ── CRÍTICO: escreve progresso remoto no localStorage local ───────
+        // O streamerMestre lê fiveone_progress::{id} para saber onde retomar.
+        // Se o aluno assistiu em outro dispositivo, esse dado só existe no
+        // Supabase. Precisamos populá-lo aqui para o streamer resumir no tempo certo.
+        rows.forEach(r => {
+          if (!r.lesson_id || r.watched_seconds <= 0) return
+          try {
+            const localKey = `fiveone_progress::${r.lesson_id}`
+            const existing = localStorage.getItem(localKey)
+            const localData = existing ? JSON.parse(existing) : null
+            const localWatched = Number(localData?.watchedSeconds || 0)
+            // só sobrescreve se o remoto tem mais progresso ou dado local inexistente
+            if (r.watched_seconds >= localWatched) {
+              localStorage.setItem(localKey, JSON.stringify({
+                watchedSeconds: r.watched_seconds,
+                durationSeconds: r.duration_seconds || localData?.durationSeconds || 0,
+                lastAt: new Date(r.last_at).getTime(),
+              }))
+            }
+          } catch {}
         })
 
         // Atualiza fiveone_last_lesson com o ID mais recente do servidor
