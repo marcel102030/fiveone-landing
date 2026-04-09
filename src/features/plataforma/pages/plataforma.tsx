@@ -69,6 +69,38 @@ const TrashIcon = () => (
   </svg>
 )
 
+// ── Helpers de progresso (fora do componente para reúso) ─────────────────────
+
+function getProgressKey(video: any): string | null {
+  if (!video) return null
+  if (typeof video.id === 'string' && video.id) return video.id
+  if (typeof video.videoId === 'string' && video.videoId) return video.videoId
+  if (typeof video.video_id === 'string' && video.video_id) return video.video_id
+  if (typeof video.url === 'string' && video.url) return video.url
+  return null
+}
+
+function mergeByRecency(items: any[]): any[] {
+  const byKey = new Map<string, any>()
+  items.forEach((item) => {
+    const key = getProgressKey(item)
+    if (!key) return
+    const prev = byKey.get(key)
+    if (!prev) { byKey.set(key, item); return }
+    const prevAt = Number(prev.lastAt || 0)
+    const nextAt = Number(item.lastAt || 0)
+    const primary = nextAt >= prevAt ? item : prev
+    const secondary = nextAt >= prevAt ? prev : item
+    byKey.set(key, {
+      ...secondary, ...primary,
+      watchedSeconds: Math.max(Number(prev.watchedSeconds || 0), Number(item.watchedSeconds || 0)),
+      durationSeconds: Number(primary.durationSeconds || 0) || Number(secondary.durationSeconds || 0) || undefined,
+      lastAt: Math.max(prevAt, nextAt),
+    })
+  })
+  return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
+}
+
 // ── Dados estáticos das formações ─────────────────────────────────────────────
 
 const FORMACOES = [
@@ -178,36 +210,6 @@ const PaginaInicial = () => {
   useEffect(() => {
     let active = true
 
-    const getKey = (video: any): string | null => {
-      if (!video) return null
-      if (typeof video.id === 'string' && video.id) return video.id
-      if (typeof video.videoId === 'string' && video.videoId) return video.videoId
-      if (typeof video.video_id === 'string' && video.video_id) return video.video_id
-      if (typeof video.url === 'string' && video.url) return video.url
-      return null
-    }
-
-    const mergeByRecency = (items: any[]): any[] => {
-      const byKey = new Map<string, any>()
-      items.forEach((item) => {
-        const key = getKey(item)
-        if (!key) return
-        const prev = byKey.get(key)
-        if (!prev) { byKey.set(key, item); return }
-        const prevAt = Number(prev.lastAt || 0)
-        const nextAt = Number(item.lastAt || 0)
-        const primary = nextAt >= prevAt ? item : prev
-        const secondary = nextAt >= prevAt ? prev : item
-        byKey.set(key, {
-          ...secondary, ...primary,
-          watchedSeconds: Math.max(Number(prev.watchedSeconds || 0), Number(item.watchedSeconds || 0)),
-          durationSeconds: Number(primary.durationSeconds || 0) || Number(secondary.durationSeconds || 0) || undefined,
-          lastAt: Math.max(prevAt, nextAt),
-        })
-      })
-      return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
-    }
-
     let localEnriched: any[] = []
     try {
       const raw = localStorage.getItem('videos_assistidos')
@@ -275,49 +277,108 @@ const PaginaInicial = () => {
     return () => { active = false }
   }, [lessonByVideoId])
 
-  // ── Atualiza "Continuar Assistindo" ao voltar do streamer ────────────────
-  // Em SPA com HashRouter o componente não desmonta ao navegar para /streamer-mestre
-  // e depois voltar. Escutamos o evento 'storage' (dispara quando outra tab/janela
-  // muda o localStorage) E o evento 'focus' da janela (dispara ao voltar de outra
-  // rota no mesmo contexto). Isso garante que o carousel sempre reflete o estado
-  // mais recente do localStorage.
+  // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
+  // O localStorage é por dispositivo. Para sincronizar entre celular e PC
+  // consultamos o Supabase sempre que a janela recebe foco. Isso garante que
+  // ao abrir no celular após assistir no PC (ou vice-versa), o carousel reflita
+  // o progresso real do servidor.
   useEffect(() => {
-    const refreshFromStorage = () => {
+    let lastFetch = 0
+    const DEBOUNCE_MS = 3000 // não busca mais de 1x a cada 3s
+
+    const syncFromSupabase = async () => {
+      const now = Date.now()
+      if (now - lastFetch < DEBOUNCE_MS) return
+      lastFetch = now
+
+      const uid = getCurrentUserId()
+      if (!uid) {
+        // sem conta: só relê localStorage local
+        try {
+          const raw = localStorage.getItem('videos_assistidos')
+          if (!raw) return
+          const parsed = JSON.parse(raw)
+          if (!Array.isArray(parsed) || !parsed.length) return
+          const sorted = [...parsed].sort((a: any, b: any) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
+          setLastWatchedArray(prev => {
+            const firstNew = sorted[0]?.id || sorted[0]?.url
+            const firstOld = prev[0]?.id || prev[0]?.url
+            if (firstNew === firstOld && sorted.length === prev.length) return prev
+            return sorted
+          })
+        } catch {}
+        return
+      }
+
+      try {
+        const rows = await fetchUserProgress(uid, 24)
+        if (!rows?.length) return
+        const remote = rows.map(r => ({
+          id: r.lesson_id,
+          url: '',
+          title: r.title,
+          thumbnail: r.thumbnail,
+          watchedSeconds: r.watched_seconds,
+          durationSeconds: r.duration_seconds || undefined,
+          lastAt: new Date(r.last_at).getTime(),
+          subjectName: lessonByVideoId.get(r.lesson_id)?.subjectName,
+          bannerContinue: lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url || lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
+          bannerMobile: lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url || lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
+        }))
+
+        // Lê local também para o merge
+        let localArr: any[] = []
+        try {
+          const raw = localStorage.getItem('videos_assistidos')
+          if (raw) {
+            const parsed = JSON.parse(raw)
+            if (Array.isArray(parsed)) localArr = parsed
+          }
+        } catch {}
+
+        const merged = mergeByRecency([...localArr, ...remote])
+        setLastWatchedArray(prev => {
+          const firstNew = merged[0]?.id || merged[0]?.url
+          const firstOld = prev[0]?.id || prev[0]?.url
+          if (firstNew === firstOld && merged.length === prev.length) return prev
+          return merged
+        })
+
+        // Atualiza fiveone_last_lesson com o ID mais recente do servidor
+        if (merged[0]?.id) {
+          try { localStorage.setItem('fiveone_last_lesson', merged[0].id) } catch {}
+        }
+      } catch { /* rede indisponível — mantém estado atual */ }
+    }
+
+    // 'focus': ao voltar para a aba/app (funciona no PWA e mobile)
+    window.addEventListener('focus', syncFromSupabase)
+    // 'storage': outra aba/janela mudou o localStorage (mesma sessão, outro dispositivo não dispara isso)
+    window.addEventListener('storage', () => {
       try {
         const raw = localStorage.getItem('videos_assistidos')
         if (!raw) return
         const parsed = JSON.parse(raw)
-        if (!Array.isArray(parsed) || !parsed.length) return
+        if (!Array.isArray(parsed)) return
         const sorted = [...parsed].sort((a: any, b: any) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
         setLastWatchedArray(prev => {
-          const firstNew = sorted[0]?.id || sorted[0]?.videoId || sorted[0]?.url
-          const firstOld = prev[0]?.id || prev[0]?.videoId || prev[0]?.url
+          const firstNew = sorted[0]?.id || sorted[0]?.url
+          const firstOld = prev[0]?.id || prev[0]?.url
           if (firstNew === firstOld && sorted.length === prev.length) return prev
           return sorted
         })
       } catch {}
-    }
-    // 'storage' event: muda em outra aba/janela
-    window.addEventListener('storage', refreshFromStorage)
-    // 'focus' event: o aluno estava no streamer (mesma aba) e voltou para cá
-    window.addEventListener('focus', refreshFromStorage)
+    })
+
     return () => {
-      window.removeEventListener('storage', refreshFromStorage)
-      window.removeEventListener('focus', refreshFromStorage)
+      window.removeEventListener('focus', syncFromSupabase)
     }
-  }, [])
+  }, [lessonByVideoId])
 
   // ── IDs concluídos ────────────────────────────────────────────────────────
   const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap])
 
-  const getVideoKey = useCallback((video: any): string | null => {
-    if (!video) return null
-    if (typeof video.id === 'string' && video.id) return video.id
-    if (typeof video.videoId === 'string' && video.videoId) return video.videoId
-    if (typeof video.video_id === 'string' && video.video_id) return video.video_id
-    if (typeof video.url === 'string' && video.url) return video.url
-    return null
-  }, [])
+  const getVideoKey = useCallback((video: any) => getProgressKey(video), [])
 
   const visibleLastWatched = useMemo(() => {
     if (!lastWatchedArray.length) return [] as any[]

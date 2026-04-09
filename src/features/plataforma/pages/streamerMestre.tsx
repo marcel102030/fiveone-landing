@@ -941,12 +941,50 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
       if (!Array.isArray(arr)) return;
       const keyMatch = (v: any) => v?.id === lesson.videoId || v?.videoId === lesson.videoId || v?.video_id === lesson.videoId || v?.url === lesson.videoId;
       const existing = arr.find(keyMatch);
-      if (!existing) return; // só atualiza se já estava na lista (foi assistida antes)
-      const updated = [
-        { ...existing, lastAt: now },
-        ...arr.filter(v => !keyMatch(v)),
-      ];
-      localStorage.setItem('videos_assistidos', JSON.stringify(updated.slice(0, 12)));
+      // Resolve thumbnail inline (sem depender de resolveLessonAssets callback)
+      const bc = lesson.bannerContinue;
+      const bm = lesson.bannerMobile;
+      const bp = lesson.bannerPlayer;
+      const resolvedBc = bc?.url || bc?.dataUrl || null;
+      const resolvedBm = bm?.url || bm?.dataUrl || null;
+      const resolvedBp = bp?.url || bp?.dataUrl || null;
+      const thumb = resolvedBc || resolvedBp || resolvedBm || lesson.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
+
+      if (!existing) {
+        // Ainda não estava na lista → adiciona para que ao abrir em outro
+        // dispositivo já apareça no "Continuar Assistindo"
+        const entry = {
+          id: lesson.videoId, url: lesson.videoId, index: currentIndex,
+          title: lesson.title, thumbnail: thumb,
+          watchedSeconds: 0, durationSeconds: undefined,
+          subjectName: lesson.subjectName, subjectId: lesson.subjectId,
+          bannerContinue: resolvedBc, bannerMobile: resolvedBm,
+          lastAt: now,
+        };
+        localStorage.setItem('videos_assistidos', JSON.stringify([entry, ...arr].slice(0, 12)));
+      } else {
+        const updated = [
+          { ...existing, lastAt: now },
+          ...arr.filter(v => !keyMatch(v)),
+        ];
+        localStorage.setItem('videos_assistidos', JSON.stringify(updated.slice(0, 12)));
+      }
+
+      // Sincroniza com Supabase imediatamente ao abrir a aula (sem esperar 15s),
+      // para que outros dispositivos vejam a aula mais recente no "Retomar aula"
+      const uid = getCurrentUserId();
+      if (uid && lesson.videoId) {
+        const stored = getStoredProgress(lesson);
+        upsertProgress({
+          user_id: uid,
+          lesson_id: lesson.videoId,
+          last_at: new Date(now).toISOString(),
+          watched_seconds: Number(stored?.watchedSeconds || 0),
+          duration_seconds: stored?.durationSeconds || null,
+          title: lesson.title,
+          thumbnail: thumb,
+        }).catch(() => {});
+      }
     } catch {}
   }, [currentIndex, videoList]);
 
