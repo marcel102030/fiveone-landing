@@ -27,6 +27,35 @@ const PaginaInicial = () => {
 
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+
+  // Garante isolamento entre usuários: limpa localStorage de progresso se o usuário mudou
+  useEffect(() => {
+    const uid = getCurrentUserId();
+    try {
+      const storedUser = localStorage.getItem('fiveone_active_user');
+      if (storedUser !== (uid || '')) {
+        // Usuário diferente (ou primeiro acesso) — apaga dados do usuário anterior
+        try { localStorage.removeItem('videos_assistidos'); } catch {}
+        try { localStorage.removeItem('fiveone_last_lesson'); } catch {}
+        const progressKeys: string[] = [];
+        for (let i = 0; i < localStorage.length; i++) {
+          const k = localStorage.key(i);
+          if (k && k.startsWith('fiveone_progress::')) progressKeys.push(k);
+        }
+        progressKeys.forEach(k => { try { localStorage.removeItem(k); } catch {} });
+        try {
+          const syncKeys: string[] = [];
+          for (let i = 0; i < sessionStorage.length; i++) {
+            const k = sessionStorage.key(i);
+            if (k && k.startsWith('fiveone_progress_sync_')) syncKeys.push(k);
+          }
+          syncKeys.forEach(k => { try { sessionStorage.removeItem(k); } catch {} });
+        } catch {}
+        try { localStorage.setItem('fiveone_active_user', uid || ''); } catch {}
+      }
+    } catch {}
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() => listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
   const [progressLoaded, setProgressLoaded] = useState(false);
@@ -140,6 +169,25 @@ const PaginaInicial = () => {
         const rows = await fetchUserProgress(uid, 24);
         if (!active) return;
         if (rows && rows.length) {
+          // Escreve cada linha de volta ao localStorage para sincronizar entre dispositivos
+          rows.forEach(r => {
+            if (r.watched_seconds > 0) {
+              try {
+                const existingRaw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`);
+                const existingWatched = existingRaw ? Number(JSON.parse(existingRaw).watchedSeconds || 0) : 0;
+                if (r.watched_seconds >= existingWatched) {
+                  localStorage.setItem(`fiveone_progress::${r.lesson_id}`, JSON.stringify({
+                    watchedSeconds: r.watched_seconds,
+                    durationSeconds: r.duration_seconds || 0,
+                    lastAt: new Date(r.last_at).getTime(),
+                  }));
+                }
+              } catch {}
+            }
+          });
+          // Salva a aula mais recente como last_lesson
+          try { localStorage.setItem('fiveone_last_lesson', rows[0].lesson_id); } catch {}
+
           const remote = rows.map(r => {
             // Para cada linha remota, verificar se localStorage tem progresso maior.
             // O DB pode ter watched_seconds: 0 (salvo no onReady antes de assistir),

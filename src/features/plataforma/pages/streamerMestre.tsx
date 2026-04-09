@@ -567,6 +567,7 @@ const StreamerMestre = () => {
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
+  const pendingSeekRef = useRef<number>(0);
   const [playerReloadKey, setPlayerReloadKey] = useState(0);
   const persistProgressRef = useRef<((rawWatched: number, rawDuration?: number) => void) | null>(null);
   const cleanupVimeoPlayer = useCallback(() => {
@@ -640,6 +641,16 @@ const StreamerMestre = () => {
     setPlayerStatus('ready');
     setPlayerMessage(null);
     setShowPlayerFallback(false);
+    const seekTo = pendingSeekRef.current;
+    if (seekTo > 0) {
+      pendingSeekRef.current = 0;
+      setTimeout(() => {
+        try {
+          if (youtubePlayerRef.current?.seekTo) youtubePlayerRef.current.seekTo(seekTo, true);
+          else if (playerInstanceRef.current?.setCurrentTime) void playerInstanceRef.current.setCurrentTime(seekTo);
+        } catch {}
+      }, 300);
+    }
   }, [clearPlayerTimers]);
   const markPlayerError = useCallback((message?: string) => {
     clearPlayerTimers();
@@ -802,12 +813,42 @@ const StreamerMestre = () => {
   const externalVideoUrl = useMemo(() => resolveExternalVideoUrl(currentVideo, embedSrc), [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]);
 
   useEffect(() => {
-    const stored = getStoredProgress(currentVideo);
-    if (stored) {
-      setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
-    } else {
+    if (!currentVideo?.videoId) {
       setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+      return;
     }
+    pendingSeekRef.current = 0;
+    const stored = getStoredProgress(currentVideo);
+    if (stored && stored.watchedSeconds > 0) {
+      setUiProgress({ watchedSeconds: stored.watchedSeconds, durationSeconds: stored.durationSeconds });
+      return;
+    }
+    // Sem dado local — busca do Supabase para sincronizar entre dispositivos
+    const uid = getCurrentUserId();
+    if (!uid) { setUiProgress({ watchedSeconds: 0, durationSeconds: 0 }); return; }
+    setUiProgress({ watchedSeconds: 0, durationSeconds: 0 });
+    const videoId = currentVideo.videoId;
+    import('../services/progress').then(({ fetchUserProgress }) => {
+      fetchUserProgress(uid, 50).then(rows => {
+        const row = rows.find(r => r.lesson_id === videoId);
+        if (row && row.watched_seconds > 0) {
+          try {
+            localStorage.setItem(`fiveone_progress::${videoId}`, JSON.stringify({
+              watchedSeconds: row.watched_seconds,
+              durationSeconds: row.duration_seconds || 0,
+              lastAt: new Date(row.last_at).getTime(),
+            }));
+          } catch {}
+          pendingSeekRef.current = row.watched_seconds;
+          setUiProgress({ watchedSeconds: row.watched_seconds, durationSeconds: row.duration_seconds || 0 });
+          // Tenta seek imediato caso o player já esteja pronto
+          try {
+            if (youtubePlayerRef.current?.seekTo) youtubePlayerRef.current.seekTo(row.watched_seconds, true);
+            else if (playerInstanceRef.current?.setCurrentTime) void playerInstanceRef.current.setCurrentTime(row.watched_seconds);
+          } catch {}
+        }
+      }).catch(() => {});
+    }).catch(() => {});
   }, [currentVideo?.videoId]);
 
   // CRÍTICO: embedSrc NÃO pode estar nos deps deste useLayoutEffect.

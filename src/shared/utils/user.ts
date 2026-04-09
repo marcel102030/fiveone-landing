@@ -68,6 +68,8 @@ export function clearCurrentUser(): void {
   try { getStorage('session')?.removeItem(SESSION_STORAGE_KEY); } catch {}
   try { getStorage('local')?.removeItem(PROFILE_STORAGE_KEY); } catch {}
   try { getStorage('local')?.removeItem(FORMATION_STORAGE_KEY); } catch {}
+  // Reseta o marcador de usuário ativo para que o próximo login limpe o localStorage de progresso
+  try { getStorage('local')?.removeItem('fiveone_active_user'); } catch {}
 }
 
 export default {
