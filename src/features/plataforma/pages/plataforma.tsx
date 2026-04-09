@@ -275,6 +275,33 @@ const PaginaInicial = () => {
     return () => { active = false }
   }, [lessonByVideoId])
 
+  // ── Atualiza "Continuar assistindo" ao voltar para a página ───────────────
+  // O efeito acima só roda quando lessonByVideoId muda. Quando o aluno volta
+  // do streamer (browser back), o localStorage já foi atualizado pelo streamer,
+  // mas o estado ainda está desatualizado. Resolvemos re-lendo o localStorage
+  // sempre que a aba volta a ficar visível.
+  useEffect(() => {
+    const refresh = () => {
+      if (document.visibilityState !== 'visible') return
+      try {
+        const raw = localStorage.getItem('videos_assistidos')
+        if (!raw) return
+        const parsed = JSON.parse(raw)
+        if (!Array.isArray(parsed) || !parsed.length) return
+        const sorted = [...parsed].sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
+        setLastWatchedArray(prev => {
+          // só atualiza se o primeiro item mudou (evita re-renders desnecessários)
+          const firstNew = sorted[0]?.id || sorted[0]?.videoId || sorted[0]?.video_id
+          const firstOld = prev[0]?.id || prev[0]?.videoId || prev[0]?.video_id
+          if (firstNew === firstOld && sorted.length === prev.length) return prev
+          return sorted
+        })
+      } catch { /* ignore */ }
+    }
+    document.addEventListener('visibilitychange', refresh)
+    return () => document.removeEventListener('visibilitychange', refresh)
+  }, [])
+
   // ── IDs concluídos ────────────────────────────────────────────────────────
   const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap])
 

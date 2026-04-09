@@ -904,6 +904,18 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     setToastState({ message, tone });
   }, []);
 
+  // ── Seek (timestamp das notas → posição no vídeo) ─────────────────────────
+  const handleSeek = useCallback((seconds: number) => {
+    if (!Number.isFinite(seconds) || seconds < 0) return;
+    try {
+      if (currentVideo?.sourceType === 'YOUTUBE' && youtubePlayerRef.current) {
+        youtubePlayerRef.current.seekTo?.(seconds, true);
+      } else if (currentVideo?.sourceType === 'VIMEO' && playerInstanceRef.current) {
+        void playerInstanceRef.current.setCurrentTime(seconds);
+      }
+    } catch { /* ignore */ }
+  }, [currentVideo?.sourceType]);
+
   const handleFavoriteToggle = async () => {
     if (!email || !currentVideo?.videoId || isFavLoading) return;
     const prev = isFav;
@@ -1610,7 +1622,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
                 )}
 
                 {/* Notes Panel */}
-                <NotesPanel lessonId={currentVideo.videoId} currentSeconds={uiProgress.watchedSeconds} />
+                <NotesPanel lessonId={currentVideo.videoId} currentSeconds={uiProgress.watchedSeconds} onSeek={handleSeek} />
 
                 {/* Comments */}
                 <div className="mt-6">

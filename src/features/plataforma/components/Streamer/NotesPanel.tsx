@@ -25,10 +25,11 @@ function formatTs(seconds: number): string {
 interface NotesPanelProps {
   lessonId: string;
   currentSeconds: number;
+  onSeek?: (seconds: number) => void;
 }
 
 // ── Component ──────────────────────────────────────────────────────────────
-export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps) {
+export default function NotesPanel({ lessonId, currentSeconds, onSeek }: NotesPanelProps) {
   const { email } = useAuth();
   const [notes, setNotes]           = useState<LessonNote[]>([]);
   const [draft, setDraft]           = useState("");
@@ -229,11 +230,12 @@ export default function NotesPanel({ lessonId, currentSeconds }: NotesPanelProps
               key={note.id}
               className="flex gap-3 p-3 bg-navy-lighter/60 rounded-lg border border-slate/10 group"
             >
-              {/* Timestamp badge */}
+              {/* Timestamp badge — clica e dá seek no vídeo */}
               <button
+                onClick={() => onSeek?.(note.videoTs)}
                 className="flex-shrink-0 text-xs font-mono text-mint bg-mint/10 px-2 py-0.5 rounded
-                           hover:bg-mint/20 transition-colors cursor-pointer self-start mt-0.5"
-                title="Timestamp no vídeo"
+                           hover:bg-mint/20 active:scale-95 transition-all cursor-pointer self-start mt-0.5"
+                title={onSeek ? `Ir para ${formatTs(note.videoTs)} no vídeo` : "Timestamp no vídeo"}
               >
                 {formatTs(note.videoTs)}
               </button>
