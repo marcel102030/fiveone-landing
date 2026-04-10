@@ -10,15 +10,17 @@ export type ProgressRow = {
   thumbnail: string | null;
 };
 
-export async function fetchUserProgress(userId: string, limit = 20): Promise<ProgressRow[]> {
-  const { data, error } = await supabase
-    .from("platform_user_progress")
-    .select("user_id, lesson_id, last_at, watched_seconds, duration_seconds, title, thumbnail")
-    .eq("user_id", userId)
-    .order("last_at", { ascending: false })
-    .limit(limit);
+/**
+ * Busca progresso via RPC SECURITY DEFINER — funciona para anon e authenticated.
+ * Não depende de sessão Supabase Auth, apenas do user_id (email) customizado.
+ */
+export async function fetchUserProgress(userId: string, limit = 24): Promise<ProgressRow[]> {
+  const { data, error } = await supabase.rpc('fetch_user_progress', {
+    p_user_id: userId,
+    p_limit: limit,
+  });
   if (error) throw error;
-  return data || [];
+  return (data || []) as ProgressRow[];
 }
 
 export async function upsertProgress(row: ProgressRow): Promise<void> {
@@ -37,34 +39,26 @@ export async function upsertProgress(row: ProgressRow): Promise<void> {
 }
 
 export async function deleteAllProgressForUser(userId: string): Promise<void> {
-  const { error } = await supabase
-    .from('platform_user_progress')
-    .delete()
-    .eq('user_id', userId);
+  const { error } = await supabase.rpc('delete_user_progress_except', {
+    p_user_id: userId,
+    p_keep_lesson_ids: null,
+  });
   if (error) throw error;
 }
 
 export async function deleteProgressExceptForUser(userId: string, keepVideoIds: string[]): Promise<void> {
-  let query = supabase
-    .from('platform_user_progress')
-    .delete()
-    .eq('user_id', userId);
-
-  if (keepVideoIds.length) {
-    const formatted = `(${keepVideoIds.map((id) => `"${id.replace(/"/g, '\\"')}"`).join(',')})`;
-    query = query.not('lesson_id', 'in', formatted);
-  }
-
-  const { error } = await query;
+  const { error } = await supabase.rpc('delete_user_progress_except', {
+    p_user_id: userId,
+    p_keep_lesson_ids: keepVideoIds.length ? keepVideoIds : null,
+  });
   if (error) throw error;
 }
 
 export async function deleteProgressForUserVideo(userId: string, videoId: string): Promise<void> {
-  const { error } = await supabase
-    .from('platform_user_progress')
-    .delete()
-    .eq('user_id', userId)
-    .eq('lesson_id', videoId);
+  const { error } = await supabase.rpc('delete_progress_for_video', {
+    p_user_id: userId,
+    p_lesson_id: videoId,
+  });
   if (error) throw error;
 }
 
