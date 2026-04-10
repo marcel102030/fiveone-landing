@@ -685,7 +685,7 @@ const PaginaInicial = () => {
               {visibleLastWatched.length > 0 && (
                 <button
                   onClick={handleResumeLesson}
-                  className="flex items-center gap-2 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                  className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
                   <PlayIcon />
                   Retomar aula
@@ -693,7 +693,7 @@ const PaginaInicial = () => {
               )}
               <Link
                 to="/modulos-mestre"
-                className="flex items-center gap-2 px-5 py-2.5 bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
+                className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
               >
                 Explorar módulos
               </Link>
@@ -712,7 +712,7 @@ const PaginaInicial = () => {
                 </div>
                 <button
                   onClick={() => setShowClearConfirm(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs text-slate hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
+                  className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] text-xs text-slate hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors border border-transparent hover:border-red-500/20"
                 >
                   <TrashIcon />
                   Limpar histórico
@@ -796,8 +796,8 @@ const PaginaInicial = () => {
           </section>
         )}
 
-        {/* ── CTA "Comece agora" (sem histórico, com conteúdo) ─────────────── */}
-        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && (
+        {/* ── CTA "Comece agora" — nunca assistiu nenhuma aula ─────────────── */}
+        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && totalCompleted === 0 && (
           <section className="py-8 sm:py-10 border-b border-slate/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
@@ -817,6 +817,33 @@ const PaginaInicial = () => {
                   className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
                   Acessar Módulo 1 →
+                </button>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* ── CTA "Sem histórico" — tem aulas concluídas mas histórico foi limpo ── */}
+        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && totalCompleted > 0 && (
+          <section className="py-8 sm:py-10 border-b border-slate/10">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-slate/10 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
+                <div className="w-14 h-14 rounded-2xl bg-slate/10 border border-slate/20 flex items-center justify-center flex-shrink-0">
+                  <div className="text-slate">
+                    <BookOpenIcon />
+                  </div>
+                </div>
+                <div className="flex-1 text-center sm:text-left">
+                  <h3 className="text-lg font-bold text-slate-white">Nenhuma aula em andamento</h3>
+                  <p className="text-sm text-slate mt-1">
+                    Seu histórico de reprodução está vazio. Continue sua formação acessando os módulos disponíveis.
+                  </p>
+                </div>
+                <button
+                  onClick={() => navigate('/modulos-mestre')}
+                  className="flex-shrink-0 px-5 py-2.5 bg-transparent border border-slate/30 text-slate-white font-medium text-sm rounded-xl hover:bg-slate/10 hover:border-slate/50 active:scale-95 transition-all"
+                >
+                  Explorar módulos →
                 </button>
               </div>
             </div>
