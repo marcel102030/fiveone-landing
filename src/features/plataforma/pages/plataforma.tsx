@@ -149,7 +149,8 @@ const PaginaInicial = () => {
   const { profile } = usePlatformUserProfile()
   // useAuth lê a sessão Supabase via cookie — persiste mesmo quando
   // sessionStorage é limpo (browser fechado). É o identificador confiável.
-  const { email: authEmail } = useAuth()
+  // loading = true enquanto o Supabase ainda não verificou a sessão (async).
+  const { email: authEmail, loading: authLoading } = useAuth()
   // Ref sempre atualizado — evita closure stale em handlers registrados via addEventListener.
   const authEmailRef = useRef<string | null>(null)
   authEmailRef.current = authEmail
@@ -281,7 +282,14 @@ const PaginaInicial = () => {
     ;(async () => {
       // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado
       const uid = effectiveUid
-      if (!uid) { setProgressLoaded(true); return }
+      if (!uid) {
+        // Se o auth ainda está resolvendo (loading), não marcamos como carregado:
+        // o efeito vai re-rodar quando authEmail chegar (effectiveUid muda).
+        // Só marcamos loaded se o auth JÁ terminou e realmente não há uid
+        // (situação que não deveria ocorrer nesta página protegida).
+        if (!authLoading) setProgressLoaded(true)
+        return
+      }
       try {
         const rows = await fetchUserProgress(uid, 24)
         if (!active) return
@@ -350,8 +358,10 @@ const PaginaInicial = () => {
     })()
 
     return () => { active = false }
+  // authLoading: re-roda quando Supabase termina de verificar sessão.
+  // Se uid era null durante loading, agora pode ter virado o email real.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonByVideoId, effectiveUid])
+  }, [lessonByVideoId, effectiveUid, authLoading])
 
   // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
   // O localStorage é por dispositivo. Para sincronizar entre celular e PC
