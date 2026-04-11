@@ -7,7 +7,6 @@ import { listLessons, LessonRef, subscribePlatformContent } from '../services/pl
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
-  mergeCompletedLessons,
   readCompletedLessons,
   clearCompletedLessons,
 } from '../../../shared/utils/completedLessons'
@@ -285,14 +284,40 @@ const PaginaInicial = () => {
 
     ;(async () => {
       // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado.
-      // Quando é null, o auth ainda está resolvendo: NÃO marcamos progressLoaded aqui.
-      // O efeito vai re-rodar automaticamente quando authEmail chegar (effectiveUid
-      // muda de null → email, pois effectiveUid está nas dependências do efeito).
+      // Quando é null, o auth ainda está resolvendo. O efeito re-roda automaticamente
+      // quando effectiveUid muda de null → email (pois está nas dependências).
       const uid = effectiveUid
       if (!uid) return
       try {
-        const rows = await fetchUserProgress(uid, 24)
+        // ── Busca progresso E completions em paralelo ─────────────────────────
+        // CRÍTICO: buscar juntos e processar completions ANTES de setar
+        // lastWatchedArray garante que visibleLastWatched (que filtra por completedIds)
+        // já tem o estado correto do usuário atual quando o carousel é renderizado.
+        // Fetches sequenciais causavam race condition: completedIds desatualizado
+        // filtrava aulas válidas como "concluídas" durante a janela entre os dois awaits.
+        const [rows, completions] = await Promise.all([
+          fetchUserProgress(uid, 24),
+          fetchCompletionsForUser(uid),
+        ])
         if (!active) return
+
+        // 1. Seta completions PRIMEIRO — antes de tocar em lastWatchedArray.
+        //    Assim visibleLastWatched já nasce com o filtro correto.
+        //    Seta diretamente sem clearCompletedLessons() para evitar que
+        //    o evento COMPLETED_EVENT dispare um re-render intermediário desnecessário.
+        const newCompletedMap = new Map<string, CompletedLessonInfo>()
+        if (completions && completions.length) {
+          completions.forEach(id => {
+            newCompletedMap.set(id, { completedAt: Date.now(), previousWatched: null, previousDuration: null })
+          })
+        }
+        try {
+          localStorage.setItem('fiveone_completed_lessons_v1',
+            JSON.stringify(Object.fromEntries(Array.from(newCompletedMap.entries()))))
+        } catch {}
+        setCompletedMap(newCompletedMap)
+
+        // 2. Agora processa e seta o progresso
         if (rows && rows.length) {
           const remote = rows.map(r => {
             const localKey = `fiveone_progress::${r.lesson_id}`
@@ -330,28 +355,17 @@ const PaginaInicial = () => {
             }
           })
 
-          // Atualiza fiveone_last_lesson com o ID mais recente do servidor
           const sortedRemote = [...remote].sort((a, b) => Number(b.lastAt) - Number(a.lastAt))
           if (sortedRemote[0]?.id) {
             try { localStorage.setItem('fiveone_last_lesson', sortedRemote[0].id) } catch {}
           }
 
           const finalMerged = mergeByRecency([...localEnriched, ...remote])
-          // Persiste lista mesclada no localStorage para carregamento instantâneo
-          // na próxima visita neste dispositivo (sem precisar esperar o Supabase)
           try { localStorage.setItem('videos_assistidos', JSON.stringify(finalMerged.slice(0, 12))) } catch {}
           setLastWatchedArray(finalMerged)
         }
-        setProgressLoaded(true)
 
-        const completions = await fetchCompletionsForUser(uid)
-        if (!active) return
-        clearCompletedLessons()
-        if (completions && completions.length) {
-          setCompletedMap(mergeCompletedLessons(completions))
-        } else {
-          setCompletedMap(new Map<string, CompletedLessonInfo>())
-        }
+        setProgressLoaded(true)
       } catch {
         if (active) setProgressLoaded(true)
       }
