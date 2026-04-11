@@ -169,9 +169,14 @@ const PaginaInicial = () => {
       const wasLoggedOut = storedUser === '__logged_out__'
       const isDifferentUser = storedUser && !wasLoggedOut && storedUser !== effectiveUid
       if (wasLoggedOut || isDifferentUser) {
-        // Troca real de usuário — apaga dados do anterior
+        // Troca real de usuário — apaga todos os dados do anterior
         try { localStorage.removeItem('videos_assistidos') } catch {}
         try { localStorage.removeItem('fiveone_last_lesson') } catch {}
+        // CRÍTICO: limpa completions do localStorage E reseta o estado React.
+        // Sem isso, o completedMap inicializa com completions antigas do usuário
+        // anterior e filtra as aulas em andamento do novo usuário como "concluídas".
+        clearCompletedLessons()
+        setCompletedMap(new Map<string, CompletedLessonInfo>())
         const progressKeys: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i)
