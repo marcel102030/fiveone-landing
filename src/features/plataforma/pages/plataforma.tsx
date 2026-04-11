@@ -149,8 +149,7 @@ const PaginaInicial = () => {
   const { profile } = usePlatformUserProfile()
   // useAuth lê a sessão Supabase via cookie — persiste mesmo quando
   // sessionStorage é limpo (browser fechado). É o identificador confiável.
-  // loading = true enquanto o Supabase ainda não verificou a sessão (async).
-  const { email: authEmail, loading: authLoading } = useAuth()
+  const { email: authEmail } = useAuth()
   // Ref sempre atualizado — evita closure stale em handlers registrados via addEventListener.
   const authEmailRef = useRef<string | null>(null)
   authEmailRef.current = authEmail
@@ -280,16 +279,12 @@ const PaginaInicial = () => {
     } catch {}
 
     ;(async () => {
-      // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado
+      // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado.
+      // Quando é null, o auth ainda está resolvendo: NÃO marcamos progressLoaded aqui.
+      // O efeito vai re-rodar automaticamente quando authEmail chegar (effectiveUid
+      // muda de null → email, pois effectiveUid está nas dependências do efeito).
       const uid = effectiveUid
-      if (!uid) {
-        // Se o auth ainda está resolvendo (loading), não marcamos como carregado:
-        // o efeito vai re-rodar quando authEmail chegar (effectiveUid muda).
-        // Só marcamos loaded se o auth JÁ terminou e realmente não há uid
-        // (situação que não deveria ocorrer nesta página protegida).
-        if (!authLoading) setProgressLoaded(true)
-        return
-      }
+      if (!uid) return
       try {
         const rows = await fetchUserProgress(uid, 24)
         if (!active) return
@@ -358,10 +353,10 @@ const PaginaInicial = () => {
     })()
 
     return () => { active = false }
-  // authLoading: re-roda quando Supabase termina de verificar sessão.
-  // Se uid era null durante loading, agora pode ter virado o email real.
+  // effectiveUid muda de null → email quando o auth do Supabase resolve,
+  // garantindo que o efeito re-rode com o usuário correto sem precisar de authLoading.
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonByVideoId, effectiveUid, authLoading])
+  }, [lessonByVideoId, effectiveUid])
 
   // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
   // O localStorage é por dispositivo. Para sincronizar entre celular e PC
