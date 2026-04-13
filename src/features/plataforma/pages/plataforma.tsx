@@ -8,9 +8,7 @@ import { listLessons, LessonRef, subscribePlatformContent } from "../services/pl
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
-  mergeCompletedLessons,
   readCompletedLessons,
-  clearCompletedLessons,
 } from "../../../shared/utils/completedLessons";
 import { fetchCompletionsForUser } from "../services/completions";
 
@@ -28,15 +26,18 @@ const PaginaInicial = () => {
   const carouselRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Garante isolamento entre usuários: limpa localStorage de progresso se o usuário mudou
+  // Garante isolamento entre usuários: limpa localStorage de progresso se o usuário mudou ou saiu
   useEffect(() => {
     const uid = getCurrentUserId();
     try {
       const storedUser = localStorage.getItem('fiveone_active_user');
-      if (storedUser !== (uid || '')) {
-        // Usuário diferente (ou primeiro acesso) — apaga dados do usuário anterior
+      const wasLoggedOut = storedUser === '__logged_out__';
+      const isDifferentUser = storedUser && !wasLoggedOut && uid && storedUser !== uid;
+      if (wasLoggedOut || isDifferentUser) {
+        // Usuário diferente ou saiu — apaga dados do usuário anterior (segurança extra)
         try { localStorage.removeItem('videos_assistidos'); } catch {}
         try { localStorage.removeItem('fiveone_last_lesson'); } catch {}
+        try { localStorage.removeItem('fiveone_completed_lessons_v1'); } catch {}
         const progressKeys: string[] = [];
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i);
@@ -51,7 +52,11 @@ const PaginaInicial = () => {
           }
           syncKeys.forEach(k => { try { sessionStorage.removeItem(k); } catch {} });
         } catch {}
-        try { localStorage.setItem('fiveone_active_user', uid || ''); } catch {}
+        setCompletedMap(new Map());
+        setLastWatchedArray([]);
+      }
+      if (uid) {
+        try { localStorage.setItem('fiveone_active_user', uid); } catch {}
       }
     } catch {}
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -59,7 +64,16 @@ const PaginaInicial = () => {
   const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() => listLessons({ ministryId: "MESTRE", onlyPublished: true, onlyActive: true }));
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([]);
   const [progressLoaded, setProgressLoaded] = useState(false);
-  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => readCompletedLessons());
+  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => {
+    // Não lê localStorage se o usuário saiu — evita dados stale do usuário anterior
+    try {
+      const activeUser = localStorage.getItem('fiveone_active_user');
+      if (!activeUser || activeUser === '__logged_out__') return new Map();
+      const currentId = getCurrentUserId();
+      if (currentId && currentId === activeUser) return readCompletedLessons();
+    } catch {}
+    return new Map();
+  });
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
   useEffect(() => {
     const mq = window.matchMedia('(max-width: 640px)');
@@ -77,8 +91,9 @@ const PaginaInicial = () => {
   }, []);
 
   useEffect(() => {
+    // Atualiza completedMap quando outro componente marca uma aula como concluída
+    // NÃO faz sync() no mount — o dado correto vem da busca remota no efeito principal
     const sync = () => setCompletedMap(readCompletedLessons());
-    sync();
     const handler = () => sync();
     window.addEventListener(COMPLETED_EVENT, handler);
     const storageHandler = (event: StorageEvent) => {
@@ -161,13 +176,31 @@ const PaginaInicial = () => {
       }
     } catch {}
 
-    // 2) busca remota em background e atualiza caso tenha dados
+    // 2) busca remota em paralelo (progresso + conclusões) para evitar race condition
     (async () => {
       const uid = getCurrentUserId();
       if (!uid) { setProgressLoaded(true); return; }
       try {
-        const rows = await fetchUserProgress(uid, 24);
+        const [rows, completions] = await Promise.all([
+          fetchUserProgress(uid, 24),
+          fetchCompletionsForUser(uid),
+        ]);
         if (!active) return;
+
+        // Define conclusões PRIMEIRO para que o filtro visibleLastWatched esteja correto
+        // quando setLastWatchedArray for chamado logo abaixo
+        const newCompletedMap = new Map<string, CompletedLessonInfo>();
+        if (completions && completions.length) {
+          completions.forEach(id => {
+            newCompletedMap.set(id, { completedAt: Date.now(), previousWatched: null, previousDuration: null });
+          });
+        }
+        try {
+          localStorage.setItem('fiveone_completed_lessons_v1',
+            JSON.stringify(Object.fromEntries(Array.from(newCompletedMap.entries()))));
+        } catch {}
+        setCompletedMap(newCompletedMap);
+
         if (rows && rows.length) {
           // Escreve cada linha de volta ao localStorage para sincronizar entre dispositivos
           rows.forEach(r => {
@@ -185,13 +218,9 @@ const PaginaInicial = () => {
               } catch {}
             }
           });
-          // Salva a aula mais recente como last_lesson
           try { localStorage.setItem('fiveone_last_lesson', rows[0].lesson_id); } catch {}
 
           const remote = rows.map(r => {
-            // Para cada linha remota, verificar se localStorage tem progresso maior.
-            // O DB pode ter watched_seconds: 0 (salvo no onReady antes de assistir),
-            // enquanto localStorage já tem a posição real assistida.
             const localWatched = (() => {
               try {
                 const raw = localStorage.getItem(`fiveone_progress::${r.lesson_id}`);
@@ -221,21 +250,11 @@ const PaginaInicial = () => {
                 null,
             };
           });
-          setLastWatchedArray(mergeByRecency([...localEnriched, ...remote]));
+          const finalMerged = mergeByRecency([...localEnriched, ...remote]);
+          try { localStorage.setItem('videos_assistidos', JSON.stringify(finalMerged.slice(0, 12))); } catch {}
+          setLastWatchedArray(finalMerged);
         }
-        // Se o banco não retornou linhas, mantém dados do localStorage (step 1).
-        // Nunca sobrescrever com [] — banco pode estar vazio por sessão expirada.
         setProgressLoaded(true);
-
-        const completions = await fetchCompletionsForUser(uid);
-        if (!active) return;
-        clearCompletedLessons();
-        if (completions && completions.length) {
-          const merged = mergeCompletedLessons(completions);
-          setCompletedMap(merged);
-        } else {
-          setCompletedMap(new Map<string, CompletedLessonInfo>());
-        }
       } catch {
         if (active) setProgressLoaded(true);
       }
@@ -569,7 +588,7 @@ const PaginaInicial = () => {
             </button>
           </div>
         </section>
-      ) : progressLoaded && mestreLessons.length > 0 ? (
+      ) : progressLoaded && mestreLessons.length > 0 && completedMap.size === 0 ? (
         <section id="sec-comecar" className="comecar-jornada">
           <div className="comecar-card">
             <div className="comecar-icon" aria-hidden>▶</div>
@@ -584,6 +603,24 @@ const PaginaInicial = () => {
               onClick={() => navigate('/modulos-mestre')}
             >
               Acessar Módulo 1 →
+            </button>
+          </div>
+        </section>
+      ) : progressLoaded && mestreLessons.length > 0 && completedMap.size > 0 ? (
+        <section id="sec-comecar" className="comecar-jornada">
+          <div className="comecar-card">
+            <div className="comecar-icon" aria-hidden>✓</div>
+            <div className="comecar-text">
+              <h3 className="comecar-title">Nenhuma aula em andamento</h3>
+              <p className="comecar-sub">
+                Você já concluiu {completedMap.size} {completedMap.size === 1 ? 'aula' : 'aulas'}. Continue explorando os módulos para avançar na sua formação.
+              </p>
+            </div>
+            <button
+              className="comecar-btn"
+              onClick={() => navigate('/modulos-mestre')}
+            >
+              Explorar módulos →
             </button>
           </div>
         </section>
