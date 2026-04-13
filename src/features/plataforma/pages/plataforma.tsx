@@ -203,9 +203,16 @@ const PaginaInicial = () => {
   )
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([])
   const [progressLoaded, setProgressLoaded] = useState(false)
-  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() =>
-    readCompletedLessons()
-  )
+  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => {
+    // Não lê localStorage se o usuário acabou de sair — evita dados stale do usuário anterior
+    try {
+      const activeUser = localStorage.getItem('fiveone_active_user')
+      if (!activeUser || activeUser === '__logged_out__') return new Map()
+      const currentId = getCurrentUserId()
+      if (currentId && currentId === activeUser) return readCompletedLessons()
+    } catch {}
+    return new Map()
+  })
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches)
 
   // ── Modal "em breve" ──────────────────────────────────────────────────────
@@ -233,9 +240,10 @@ const PaginaInicial = () => {
   }, [])
 
   // ── Sync de completions ───────────────────────────────────────────────────
+  // NÃO chama sync() no mount — o estado correto vem da busca remota no efeito de progresso.
+  // sync() no mount causaria sobrescrever completions corretas do servidor com cache stale.
   useEffect(() => {
     const sync = () => setCompletedMap(readCompletedLessons())
-    sync()
     const handler = () => sync()
     window.addEventListener(COMPLETED_EVENT, handler)
     const storageHandler = (event: StorageEvent) => {

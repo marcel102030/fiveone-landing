@@ -64,13 +64,29 @@ export function setCurrentUser(email: string, remember = false): void {
 }
 
 export function clearCurrentUser(): void {
-  try { getStorage('local')?.removeItem(LOCAL_STORAGE_KEY); } catch {}
-  try { getStorage('session')?.removeItem(SESSION_STORAGE_KEY); } catch {}
-  try { getStorage('local')?.removeItem(PROFILE_STORAGE_KEY); } catch {}
-  try { getStorage('local')?.removeItem(FORMATION_STORAGE_KEY); } catch {}
-  // Marca como "deslogado" (não remove) — permite distinguir troca de usuário
-  // na próxima sessão, sem apagar dados de quem reabriu o browser sem trocar de conta
-  try { getStorage('local')?.setItem('fiveone_active_user', '__logged_out__'); } catch {}
+  const local = getStorage('local');
+  const session = getStorage('session');
+  try { local?.removeItem(LOCAL_STORAGE_KEY); } catch {}
+  try { session?.removeItem(SESSION_STORAGE_KEY); } catch {}
+  try { local?.removeItem(PROFILE_STORAGE_KEY); } catch {}
+  try { local?.removeItem(FORMATION_STORAGE_KEY); } catch {}
+  // Marca como "deslogado" — permite distinguir logout de simples reload
+  try { local?.setItem('fiveone_active_user', '__logged_out__'); } catch {}
+  // Limpa todos os dados de progresso do usuário — evita que o próximo login
+  // (ou outro usuário no mesmo dispositivo) veja cache stale
+  try { local?.removeItem('videos_assistidos'); } catch {}
+  try { local?.removeItem('fiveone_last_lesson'); } catch {}
+  try { local?.removeItem('fiveone_completed_lessons_v1'); } catch {}
+  try {
+    if (local) {
+      const keys: string[] = [];
+      for (let i = 0; i < local.length; i++) {
+        const k = local.key(i);
+        if (k?.startsWith('fiveone_progress::')) keys.push(k);
+      }
+      keys.forEach(k => { try { local.removeItem(k); } catch {} });
+    }
+  } catch {}
 }
 
 export default {
