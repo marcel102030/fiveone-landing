@@ -48,6 +48,7 @@ import AdminBlogSite from "./features/plataforma/pages/admin/BlogSite";
 import ModeracaoComentarios from "./features/plataforma/pages/admin/ModeracaoComentarios";
 import EmitirCertificados from "./features/plataforma/pages/admin/EmitirCertificados";
 import GerenciarAdmins from "./features/plataforma/pages/admin/GerenciarAdmins";
+import CalendarioConteudo from "./features/plataforma/pages/admin/CalendarioConteudo";
 import ChurchReport from "./features/rede/pages/ChurchReport";
 import ChurchCreateInvite from "./features/rede/pages/ChurchCreateInvite";
 import CopyLink from "./features/rede/pages/CopyLink";
@@ -221,6 +222,14 @@ function AppContent() {
               element={
                 <AdminGuard>
                   <GerenciarAdmins />
+                </AdminGuard>
+              }
+            />
+            <Route
+              path="/admin/calendario"
+              element={
+                <AdminGuard>
+                  <CalendarioConteudo />
                 </AdminGuard>
               }
             />
