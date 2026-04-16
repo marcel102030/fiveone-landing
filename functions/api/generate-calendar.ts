@@ -54,22 +54,19 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     return json({ ok: false, error: 'Nenhuma data de postagem fornecida.' }, 400);
   }
 
-  // Prompt ultra-compacto: força saída mínima (~80-100 tokens/post) para
-  // completar em <25s com claude-sonnet-4-6 (único modelo disponível neste plano).
-  // O roteiro completo é gerado por demanda via /api/generate-script.
-  const prompt = `Canal Five One — 5 Ministérios de Ef 4:11-12 para jovens cristãos brasileiros.
+  // Prompt ultra-compacto (lote de até 4 posts, ~80 tokens/post de saída).
+  // O frontend envia lotes paralelos para respeitar o limite de 30s do Cloudflare.
+  const themes = ['Apologética','Cultura x Bíblia','Os 5 Ministérios','Saúde Mental + Fé','Teologia Acessível'];
+  const prompt = `Canal Five One (5 Ministérios Ef 4:11-12, jovens cristãos brasileiros, tom apologético).
 
-Crie ${postingDates.length} posts para ${monthName}/${year}. Datas:
+Gere ${postingDates.length} post(s) para ${monthName}/${year}:
 ${postingDates.map((d, i) => `${i + 1}. ${d.date} (${d.dow})`).join('\n')}
 
-Formato fixo: segunda=reel, quarta=carrossel, sexta=reel/youtube/live(alternando).
-Temas: 3×Apologética, 3×CulturaxBíblia, 2×5Ministérios, 2×SaúdeMental+Fé, 2×TeologiaAcessível.
-Funil: segunda=topo, quarta=meio, sexta=alterna topo/fundo.
+Regras: segunda=reel/topo, quarta=carrossel/meio, sexta=reel|youtube|live alternando / topo|fundo alternando.
+Temas disponíveis: ${themes.join(', ')}.
 
-Para cada post, retorne EXATAMENTE:
-{"scheduled_date":"YYYY-MM-DD","format":"reel"|"carrossel"|"youtube"|"live","category":"nome","funnel_stage":"topo"|"meio"|"fundo","title":"título curto provocativo","hook":"1 frase gancho","script":"[ABERTURA] • [DESENVOLVIMENTO] ponto1; ponto2; ponto3 • [CTA] ação","notes":"#tag1 #tag2 #tag3","platform":"instagram"|"youtube"|"instagram,youtube"}
-
-Retorne APENAS o array JSON. Zero texto fora do JSON.`;
+Retorne SOMENTE array JSON, sem texto extra:
+[{"scheduled_date":"YYYY-MM-DD","format":"reel|carrossel|youtube|live","category":"tema","funnel_stage":"topo|meio|fundo","title":"título provocativo","hook":"gancho de 1 frase","script":"[ABERTURA] ideia • [DEV] pt1; pt2; pt3 • [CTA] ação","notes":"#tag1 #tag2","platform":"instagram|youtube|instagram,youtube"}]`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -81,7 +78,7 @@ Retorne APENAS o array JSON. Zero texto fora do JSON.`;
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 2048,
+        max_tokens: 1024,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
