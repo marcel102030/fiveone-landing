@@ -138,6 +138,7 @@ export default function CalendarioConteudo() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [generateElapsed, setGenerateElapsed] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpandingScript, setIsExpandingScript] = useState(false);
   const [confirmGenerate, setConfirmGenerate] = useState(false);
 
   // ── Load posts ─────────────────────────────────────────────────────────────
@@ -275,6 +276,36 @@ export default function CalendarioConteudo() {
     if (!selectedPost) return;
     const ok = await updatePost(selectedPost.id, editForm);
     if (ok) { setIsEditing(false); toast.success('Post atualizado!'); }
+  };
+
+  // ── Expand full script via /api/generate-script ────────────────────────────
+  const handleExpandScript = async () => {
+    if (!selectedPost) return;
+    setIsExpandingScript(true);
+    try {
+      const res = await fetch('/api/generate-script', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: selectedPost.title,
+          category: selectedPost.category,
+          format: selectedPost.format,
+          funnel_stage: selectedPost.funnel_stage,
+          hook: selectedPost.hook,
+          scheduled_date: selectedPost.scheduled_date,
+        }),
+      });
+      const data = await res.json() as { ok: boolean; script?: string; error?: string };
+      if (!data.ok) throw new Error(data.error ?? 'Erro na geração');
+      const script = data.script ?? '';
+      await updatePost(selectedPost.id, { script });
+      setEditForm(f => ({ ...f, script }));
+      toast.success('Roteiro completo gerado!', 'O roteiro foi expandido e salvo.');
+    } catch (err: any) {
+      toast.error('Erro ao expandir roteiro', err.message ?? String(err));
+    } finally {
+      setIsExpandingScript(false);
+    }
   };
 
   const openPost = (post: ContentPost) => {
@@ -502,7 +533,21 @@ export default function CalendarioConteudo() {
               </div>
 
               <div className="cc-modal-section">
-                <div className="cc-modal-section-label">Roteiro completo</div>
+                <div className="cc-modal-section-label" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Roteiro</span>
+                  {!isEditing && (
+                    <button
+                      className="cc-btn-generate"
+                      style={{ fontSize: 12, padding: '5px 12px', gap: 6 }}
+                      onClick={handleExpandScript}
+                      disabled={isExpandingScript}
+                    >
+                      {isExpandingScript
+                        ? <><span className="cc-spinner" /> Gerando roteiro...</>
+                        : '✦ Expandir Roteiro'}
+                    </button>
+                  )}
+                </div>
                 {isEditing ? (
                   <textarea
                     className="cc-textarea cc-textarea-lg"
