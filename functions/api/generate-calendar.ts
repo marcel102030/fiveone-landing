@@ -103,7 +103,7 @@ Retorne SOMENTE o array JSON com ${postingDates.length} objetos. Sem texto, sem 
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-haiku-20241022',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 4096,
         messages: [{ role: 'user', content: prompt }],
       }),
@@ -111,9 +111,13 @@ Retorne SOMENTE o array JSON com ${postingDates.length} objetos. Sem texto, sem 
 
     if (!res.ok) {
       const errBody = await res.text();
-      let errMsg = `HTTP ${res.status}`;
-      try { errMsg = (JSON.parse(errBody) as any).error?.message ?? errMsg; } catch {}
-      return json({ ok: false, error: errMsg }, 502);
+      let errMsg = `Anthropic HTTP ${res.status}`;
+      try {
+        const parsed = JSON.parse(errBody) as any;
+        errMsg = parsed.error?.message ?? parsed.error?.type ?? errMsg;
+      } catch {}
+      // Sempre retorna JSON 200 para o browser conseguir ler a mensagem
+      return json({ ok: false, error: errMsg });
     }
 
     const anthropicJson = await res.json() as any;
