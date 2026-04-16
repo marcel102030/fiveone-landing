@@ -54,45 +54,22 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     return json({ ok: false, error: 'Nenhuma data de postagem fornecida.' }, 400);
   }
 
-  // Prompt compacto: gera só a estrutura do calendário (sem roteiro longo).
-  // O roteiro completo é expandido por demanda via /api/generate-script.
-  const prompt = `Você é o assistente de criação de conteúdo do canal Five One — Escola dos 5 Ministérios.
-O canal ensina os 5 Ministérios de Efésios 4:11-12 para cristãos brasileiros jovens.
-Tom: apologético, teológico, acessível e provocativo.
+  // Prompt ultra-compacto: força saída mínima (~80-100 tokens/post) para
+  // completar em <25s com claude-sonnet-4-6 (único modelo disponível neste plano).
+  // O roteiro completo é gerado por demanda via /api/generate-script.
+  const prompt = `Canal Five One — 5 Ministérios de Ef 4:11-12 para jovens cristãos brasileiros.
 
-Gere o plano de conteúdo para ${monthName} de ${year}.
-
-Datas de postagem:
+Crie ${postingDates.length} posts para ${monthName}/${year}. Datas:
 ${postingDates.map((d, i) => `${i + 1}. ${d.date} (${d.dow})`).join('\n')}
 
-Regras de formato:
-- Segunda → "reel"
-- Quarta → "carrossel"
-- Sexta → alterna "reel" / "youtube" / "live"
+Formato fixo: segunda=reel, quarta=carrossel, sexta=reel/youtube/live(alternando).
+Temas: 3×Apologética, 3×CulturaxBíblia, 2×5Ministérios, 2×SaúdeMental+Fé, 2×TeologiaAcessível.
+Funil: segunda=topo, quarta=meio, sexta=alterna topo/fundo.
 
-Distribuição de temas (${postingDates.length} posts total):
-- 3× Apologética
-- 3× Cultura x Bíblia
-- 2× Os 5 Ministérios
-- 2× Saúde Mental + Fé
-- 2× Teologia Acessível
+Para cada post, retorne EXATAMENTE:
+{"scheduled_date":"YYYY-MM-DD","format":"reel"|"carrossel"|"youtube"|"live","category":"nome","funnel_stage":"topo"|"meio"|"fundo","title":"título curto provocativo","hook":"1 frase gancho","script":"[ABERTURA] • [DESENVOLVIMENTO] ponto1; ponto2; ponto3 • [CTA] ação","notes":"#tag1 #tag2 #tag3","platform":"instagram"|"youtube"|"instagram,youtube"}
 
-Para cada post retorne um objeto JSON com EXATAMENTE estas chaves:
-{
-  "scheduled_date": "YYYY-MM-DD",
-  "format": "reel"|"carrossel"|"youtube"|"live",
-  "category": "categoria",
-  "funnel_stage": "topo"|"meio"|"fundo",
-  "title": "título provocativo (máx 12 palavras)",
-  "hook": "gancho de abertura — 2 frases impactantes",
-  "script": "Esqueleto do roteiro:\\n[ABERTURA] ideia central\\n[DESENVOLVIMENTO] 3 pontos-chave\\n[CTA] chamada à ação",
-  "notes": "#hashtag1 #hashtag2 #hashtag3 — dica visual rápida",
-  "platform": "instagram"|"youtube"|"instagram,youtube"
-}
-
-funnel_stage: Segundas=topo, Quartas=meio, Sextas alternam fundo/topo.
-
-Retorne SOMENTE o array JSON com ${postingDates.length} objetos. Sem texto, sem markdown.`;
+Retorne APENAS o array JSON. Zero texto fora do JSON.`;
 
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -103,8 +80,8 @@ Retorne SOMENTE o array JSON com ${postingDates.length} objetos. Sem texto, sem 
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-haiku-20240307',
-        max_tokens: 4096,
+        model: 'claude-sonnet-4-6',
+        max_tokens: 2048,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
