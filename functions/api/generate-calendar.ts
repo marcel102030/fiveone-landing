@@ -105,7 +105,7 @@ Retorne SOMENTE um array JSON válido com ${postingDates.length} objetos. Nenhum
         'anthropic-version': '2023-06-01',
       },
       body: JSON.stringify({
-        model: 'claude-3-5-sonnet-20241022',
+        model: 'claude-3-haiku-20240307',
         max_tokens: 8000,
         messages: [{ role: 'user', content: prompt }],
       }),
