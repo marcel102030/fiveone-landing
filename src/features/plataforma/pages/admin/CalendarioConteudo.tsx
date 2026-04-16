@@ -206,34 +206,25 @@ export default function CalendarioConteudo() {
       dow: d.getDay() === 1 ? 'segunda' : d.getDay() === 3 ? 'quarta' : 'sexta',
     }));
 
+    // Supabase Edge Function — sem limite de 30s, ao contrário do Cloudflare.
+    const EDGE_FN_URL = 'https://rdzrwclljydbyfipukwx.supabase.co/functions/v1/generate-calendar';
+
     try {
-      // Divide em lotes de 4 posts para respeitar o limite de 30s do Cloudflare.
-      // Cada lote roda em paralelo → tempo total ≈ tempo do lote mais lento (~10s).
-      const BATCH_SIZE = 4;
-      const batches: typeof postingDates[] = [];
-      for (let i = 0; i < postingDates.length; i += BATCH_SIZE) {
-        batches.push(postingDates.slice(i, i + BATCH_SIZE));
+      const res = await fetch(EDGE_FN_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year, month, monthName, postingDates }),
+      });
+
+      let data: { ok: boolean; posts?: any[]; error?: string };
+      try {
+        data = await res.json() as typeof data;
+      } catch {
+        throw new Error(`Erro de servidor (HTTP ${res.status}). Tente novamente.`);
       }
+      if (!data.ok) throw new Error(data.error ?? 'Erro desconhecido na geração');
 
-      const fetchBatch = async (batch: typeof postingDates) => {
-        const res = await fetch('/api/generate-calendar', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ year, month, monthName, postingDates: batch }),
-        });
-        let data: { ok: boolean; posts?: any[]; error?: string };
-        try {
-          data = await res.json() as typeof data;
-        } catch {
-          throw new Error(`Erro de servidor (HTTP ${res.status}). Tente novamente.`);
-        }
-        if (!data.ok) throw new Error(data.error ?? 'Erro desconhecido');
-        return data.posts ?? [];
-      };
-
-      // Executa todos os lotes em paralelo
-      const batchResults = await Promise.all(batches.map(fetchBatch));
-      const toInsert = batchResults.flat().map((p: any) => ({
+      const toInsert = (data.posts ?? []).map((p: any) => ({
         ...p,
         status: 'pendente',
         generated_by_ai: true,
