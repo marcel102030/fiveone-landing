@@ -83,15 +83,15 @@ Para cada post, gere um objeto com EXATAMENTE estas chaves:
   "category": "nome da categoria",
   "funnel_stage": "topo" | "meio" | "fundo",
   "title": "título provocativo em português",
-  "hook": "gancho de abertura (2-3 frases, máx 80 palavras)",
-  "script": "roteiro completo em português (mínimo 500 palavras). Estrutura obrigatória:\\n\\n[ABERTURA]\\n...\\n\\n[DESENVOLVIMENTO]\\n...\\n\\n[CONCLUSÃO E CTA]\\n...",
-  "notes": "notas de produção: dicas de edição, sugestões visuais, hashtags (#apologetica #5ministerios etc)",
+  "hook": "gancho de abertura (2-3 frases, máx 60 palavras)",
+  "script": "roteiro em português (mínimo 200 palavras). Estrutura:\\n\\n[ABERTURA]\\n...\\n\\n[DESENVOLVIMENTO]\\n...\\n\\n[CONCLUSÃO E CTA]\\n...",
+  "notes": "notas de produção: dicas de edição, sugestões visuais, hashtags",
   "platform": "instagram" | "youtube" | "instagram,youtube"
 }
 
 Regras para funnel_stage:
-- Segundas (reel): sempre "topo" — máximo alcance
-- Quartas (carrossel): "meio" — engajamento e salvamentos
+- Segundas (reel): sempre "topo"
+- Quartas (carrossel): "meio"
 - Sextas: "fundo" a cada 2 semanas, "topo" nas demais
 
 Retorne SOMENTE um array JSON válido com ${postingDates.length} objetos. Nenhum texto antes ou depois. Nenhum markdown.`;
@@ -106,19 +106,43 @@ Retorne SOMENTE um array JSON válido com ${postingDates.length} objetos. Nenhum
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-6',
-        max_tokens: 8000,
+        max_tokens: 16000,
         messages: [{ role: 'user', content: prompt }],
       }),
     });
 
-    const anthropicJson = await res.json() as any;
     if (!res.ok) {
-      throw new Error(anthropicJson.error?.message ?? `HTTP ${res.status}`);
+      const errBody = await res.text();
+      let errMsg = `HTTP ${res.status}`;
+      try { errMsg = (JSON.parse(errBody) as any).error?.message ?? errMsg; } catch {}
+      return json({ ok: false, error: errMsg }, 502);
     }
 
+    const anthropicJson = await res.json() as any;
     const raw: string = anthropicJson.content?.[0]?.text ?? '';
-    const clean = raw.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-    const posts = JSON.parse(clean);
+
+    if (!raw) {
+      return json({ ok: false, error: 'Resposta vazia da IA. Tente novamente.' }, 502);
+    }
+
+    // Remove possíveis blocos markdown ```json ... ```
+    const clean = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```\s*$/i, '').trim();
+
+    let posts: any[];
+    try {
+      posts = JSON.parse(clean);
+    } catch (parseErr: any) {
+      // Retorna os primeiros 500 chars do raw para depuração
+      return json({
+        ok: false,
+        error: `Resposta da IA não é JSON válido: ${parseErr.message}`,
+        raw_preview: raw.slice(0, 500),
+      }, 502);
+    }
+
+    if (!Array.isArray(posts)) {
+      return json({ ok: false, error: 'A IA não retornou um array de posts.' }, 502);
+    }
 
     return json({ ok: true, posts });
   } catch (err: any) {

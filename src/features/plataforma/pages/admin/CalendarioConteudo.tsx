@@ -136,6 +136,7 @@ export default function CalendarioConteudo() {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<Partial<ContentPost>>({});
   const [isGenerating, setIsGenerating] = useState(false);
+  const [generateElapsed, setGenerateElapsed] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [confirmGenerate, setConfirmGenerate] = useState(false);
 
@@ -188,7 +189,15 @@ export default function CalendarioConteudo() {
   // ── Generate month via Cloudflare Function (evita CORS e expõe chave) ──────
   const generateMonth = async () => {
     setIsGenerating(true);
+    setGenerateElapsed(0);
     setConfirmGenerate(false);
+
+    // Contador de segundos enquanto aguarda a IA
+    const timerRef = { id: 0 };
+    timerRef.id = window.setInterval(() => {
+      setGenerateElapsed(s => s + 1);
+    }, 1000);
+
     const { year, month } = currentMonth;
     const monthName = MONTH_NAMES_BR[month];
     const postingDates = getPostingDatesOfMonth(year, month).map(d => ({
@@ -203,27 +212,41 @@ export default function CalendarioConteudo() {
         body: JSON.stringify({ year, month, monthName, postingDates }),
       });
 
-      const json = await res.json() as { ok: boolean; posts?: any[]; error?: string };
-      if (!json.ok) throw new Error(json.error ?? 'Erro na geração');
+      let jsonData: { ok: boolean; posts?: any[]; error?: string; raw_preview?: string };
+      try {
+        jsonData = await res.json() as typeof jsonData;
+      } catch {
+        throw new Error(`Resposta inválida do servidor (HTTP ${res.status}). Verifique os logs do Cloudflare.`);
+      }
 
-      const toInsert = (json.posts ?? []).map((p: any) => ({
+      if (!jsonData.ok) {
+        throw new Error(jsonData.error ?? 'Erro desconhecido na geração');
+      }
+
+      const toInsert = (jsonData.posts ?? []).map((p: any) => ({
         ...p,
         status: 'pendente',
         generated_by_ai: true,
       }));
 
+      if (toInsert.length === 0) {
+        throw new Error('A IA retornou uma lista vazia. Tente novamente.');
+      }
+
       const { error: insertError } = await supabase
         .from('content_calendar_post')
         .upsert(toInsert, { onConflict: 'scheduled_date', ignoreDuplicates: false });
 
-      if (insertError) throw new Error(insertError.message);
+      if (insertError) throw new Error(`Erro ao salvar posts: ${insertError.message}`);
 
       toast.success(`${toInsert.length} posts gerados!`, `Calendário de ${monthName} ${year} criado com sucesso.`);
       await loadPosts();
     } catch (err: any) {
       toast.error('Erro ao gerar calendário', err.message ?? String(err));
     } finally {
+      clearInterval(timerRef.id);
       setIsGenerating(false);
+      setGenerateElapsed(0);
     }
   };
 
@@ -302,7 +325,7 @@ export default function CalendarioConteudo() {
           disabled={isGenerating}
         >
           {isGenerating ? (
-            <><span className="cc-spinner" /> Gerando...</>
+            <><span className="cc-spinner" /> Gerando... {generateElapsed > 0 && `(${generateElapsed}s)`}</>
           ) : (
             '✦ Gerar com IA'
           )}
