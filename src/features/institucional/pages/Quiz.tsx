@@ -792,7 +792,6 @@ const Quiz = () => {
   // ===== FORM SCREEN =====
   if (showResults && !userInfo.submitted) {
     // Determine leading dom for anticipation phrase
-    const totalForAnticipation = Object.values(categoryScores).reduce((s, v) => s + v, 0);
     const leadingEntry = Object.entries(categoryScores).sort((a, b) => b[1] - a[1])[0];
     const leadingDom = leadingEntry ? (leadingEntry[0] as CategoryEnum) : null;
     const anticipationPhrase = leadingDom
@@ -1116,7 +1115,7 @@ const Quiz = () => {
             </div>
 
             <div className={`distribution-section${revealFull ? ' reveal-full' : ''}`}>
-              {sortedScores.map(({ categoryEnum: cat, score }) => (
+              {sortedScores.map(({ categoryEnum: cat }) => (
                 <div className="dist-row" key={cat}>
                   <div className="dist-label">
                     <img src={categoryIcons[cat]} alt={DOM_NAMES[cat]} />
