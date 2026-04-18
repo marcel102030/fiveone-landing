@@ -837,7 +837,7 @@ const Quiz = () => {
               {formErrors.email && <span className="error-msg">Digite um email válido</span>}
             </div>
 
-            <div className="floating-field form-field-2">
+            <div className={`floating-field form-field-2${userInfo.phone.replace(/\D/g, '').length > 0 ? ' has-value' : ''}`}>
               <InputMask
                 mask="(99) 99999-9999"
                 value={userInfo.phone}
@@ -850,18 +850,15 @@ const Quiz = () => {
                 }
               >
                 {(inputProps) => (
-                  <>
-                    <input
-                      {...inputProps}
-                      id="f-phone"
-                      type="tel"
-                      placeholder=" "
-                      className={`floating-input${formErrors.phone ? ' input-error' : ''}`}
-                    />
-                    <label htmlFor="f-phone" className="floating-label">Telefone</label>
-                  </>
+                  <input
+                    {...inputProps}
+                    id="f-phone"
+                    type="tel"
+                    className={`floating-input${formErrors.phone ? ' input-error' : ''}`}
+                  />
                 )}
               </InputMask>
+              <label htmlFor="f-phone" className="floating-label">Telefone</label>
               {formErrors.phone && <span className="error-msg">Digite um telefone válido</span>}
             </div>
 

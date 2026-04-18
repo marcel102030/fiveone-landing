@@ -2782,7 +2782,8 @@
   background: transparent;
 }
 .floating-input:focus ~ .floating-label,
-.floating-input:not(:placeholder-shown) ~ .floating-label {
+.floating-input:not(:placeholder-shown) ~ .floating-label,
+.floating-field.has-value .floating-label {
   top: 0.22rem;
   font-size: 0.7rem;
   color: var(--mint);
