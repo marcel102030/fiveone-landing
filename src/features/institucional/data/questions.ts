@@ -6,7 +6,7 @@ export const categoryMetadata: CategoryMetadata[] = [
     name: "Apóstolo",
     icon: "/assets/icons/praying.png",
     description:
-      "O dom de Apóstolo está ligado à paixão por compartilhar o evangelho e trazer as pessoas para Cristo. Apóstolos têm um forte desejo de ver vidas transformadas pela salvação e são movidos por um profundo amor pelas almas. Eles frequentemente têm facilidade em comunicar a mensagem do evangelho de forma clara e convincente.",
+      "O dom de Apóstolo está ligado à visão estratégica para estabelecer e expandir a obra de Deus em novos territórios. Apóstolos têm uma forte capacidade de lançar fundamentos, mobilizar líderes e criar estruturas que multiplicam o Reino. Eles são movidos pelo desejo de avançar além do que já existe, abrir novos caminhos e enviar outros para cumprir sua missão.",
   },
   {
     id: CategoryEnum.PROFETA,
@@ -93,22 +93,22 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 11,
       category: CategoryEnum.APOSTOLO,
-      text: "Tenho dificuldade em concluir projetos, pois estou sempre querendo começar algo novo.",
+      text: "Sinto satisfação em superar resistências e barreiras ao estabelecer algo novo em um território ainda não explorado.",
     },
     {
       id: 12,
       category: CategoryEnum.APOSTOLO,
-      text: "Tenho tendência a assumir mais projetos do que posso executar bem, me sobrecarregando.",
+      text: "Tenho facilidade em delegar responsabilidades estratégicas e confiar que outros executarão com excelência.",
     },
     {
       id: 13,
       category: CategoryEnum.APOSTOLO,
-      text: "Às vezes fico tão focado em metas e resultados que esqueço de considerar o impacto nas pessoas envolvidas.",
+      text: "Me alegra construir pontes entre lideranças de diferentes contextos para unir esforços em um objetivo comum.",
     },
     {
       id: 14,
       category: CategoryEnum.APOSTOLO,
-      text: "Tenho dificuldade em trabalhar em equipe, preferindo manter autonomia mesmo quando o coletivo seria mais eficaz.",
+      text: "Sinto que fui feito para navegar em situações de alta pressão e ambiguidade, tomando decisões que impulsionam o avanço coletivo.",
     },
     {
       id: 15,
@@ -155,7 +155,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 23,
       category: CategoryEnum.PROFETA,
-      text: "Em momentos de oração ou culto, desejo intensamente ver manifestações espirituais como línguas, visões ou sinais.",
+      text: "Sinto uma inquietude interior quando uma comunidade de fé está acomodada e perdendo sua chama espiritual.",
     },
     {
       id: 24,
@@ -220,27 +220,27 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 36,
       category: CategoryEnum.PROFETA,
-      text: "Já fui impulsivo ao compartilhar minhas percepções espirituais, sem considerar o momento ou a forma mais sábia de falar.",
+      text: "Tenho facilidade em articular com clareza o que percebo espiritualmente em uma situação, mesmo quando os outros ainda não viram.",
     },
     {
       id: 37,
       category: CategoryEnum.PROFETA,
-      text: "Às vezes, interpreto minhas emoções como se fossem uma direção direta de Deus, sem filtrar ou refletir.",
+      text: "Sinto uma profunda carga pela autenticidade espiritual, desejando que as palavras e ações das pessoas estejam alinhadas.",
     },
     {
       id: 38,
       category: CategoryEnum.PROFETA,
-      text: "Sinto dificuldade em aceitar que outras pessoas podem não ter a mesma intensidade espiritual que eu tenho.",
+      text: "Me sinto chamado a falar palavras de encorajamento que constroem, fortalecem e confirmam o chamado das pessoas.",
     },
     {
       id: 39,
       category: CategoryEnum.PROFETA,
-      text: "Já me senti isolado espiritualmente, achando que só eu estava vendo os problemas que existiam ao redor.",
+      text: "Costumo perceber temas espirituais recorrentes nas situações que vivencio e sinto necessidade de comunicá-los.",
     },
     {
       id: 40,
       category: CategoryEnum.PROFETA,
-      text: "Em alguns momentos, foquei tanto nas falhas e erros espirituais dos outros que deixei de enxergar as áreas onde eu mesmo precisava crescer.",
+      text: "Tenho facilidade em inspirar outros à oração e à busca de Deus de forma mais intencional e profunda.",
     },
   ],
   [CategoryEnum.EVANGELISTA]: [
@@ -322,27 +322,27 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 56,
       category: CategoryEnum.EVANGELISTA,
-      text: "Já me peguei diminuindo ou simplificando demais a mensagem, apenas para tornar mais fácil para os outros ouvirem.",
+      text: "Tenho facilidade em mobilizar grupos inteiros para saírem de suas zonas de conforto e se envolverem na missão.",
     },
     {
       id: 57,
       category: CategoryEnum.EVANGELISTA,
-      text: "Em alguns momentos, priorizei quantidade de conversões ou respostas emocionais, sem me preocupar com o discipulado contínuo.",
+      text: "Me alegra criar pontos de contato e eventos que aproximem pessoas ainda não engajadas com uma comunidade de fé.",
     },
     {
       id: 58,
       category: CategoryEnum.EVANGELISTA,
-      text: "Tenho dificuldade em respeitar o tempo e o processo de cada pessoa, ficando impaciente quando não há respostas imediatas.",
+      text: "Costumo lembrar das histórias das pessoas que alcancei e acompanho seu crescimento com interesse genuíno.",
     },
     {
       id: 59,
       category: CategoryEnum.EVANGELISTA,
-      text: "Já busquei ser aceito por todos, mesmo que isso significasse omitir partes importantes da mensagem de transformação.",
+      text: "Sinto energia especial ao participar de projetos de ação social que combinam cuidado prático com esperança espiritual.",
     },
     {
       id: 60,
       category: CategoryEnum.EVANGELISTA,
-      text: "Em minha empolgação para ver resultados, já forcei conversas espirituais sem sensibilidade ao momento da pessoa.",
+      text: "Tenho facilidade em identificar as perguntas que alguém ainda não expressou sobre fé e abrir espaço para que as faça.",
     },
   ],
   [CategoryEnum.PASTOR]: [
@@ -424,27 +424,27 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 76,
       category: CategoryEnum.PASTOR,
-      text: "Já tive dificuldade em dizer “não” e acabei assumindo mais responsabilidades do que conseguia lidar.",
+      text: “Me alegra criar tradições e rituais de cuidado em grupos — como visitas, celebrações e acompanhamentos periódicos.”,
     },
     {
       id: 77,
       category: CategoryEnum.PASTOR,
-      text: "Tenho tendência a proteger demais as pessoas, evitando que enfrentem processos difíceis que poderiam ajudá-las a crescer.",
+      text: “Tenho facilidade em restaurar vínculos quebrados entre pessoas, ajudando-as a reconstruírem a confiança mútua.”,
     },
     {
       id: 78,
       category: CategoryEnum.PASTOR,
-      text: "Às vezes evito confrontar atitudes erradas por medo de causar desconforto ou perder o vínculo com alguém.",
+      text: “Sinto que uma das minhas maiores forças é estar presente nas crises e tristezas das pessoas sem precisar resolver tudo imediatamente.”,
     },
     {
       id: 79,
       category: CategoryEnum.PASTOR,
-      text: "Em alguns momentos, me envolvi emocionalmente de forma exagerada nas dores das pessoas, deixando isso afetar meu equilíbrio pessoal.",
+      text: “Me importo em celebrar cada pequena vitória das pessoas que acompanho, reconhecendo sua trajetória de crescimento.”,
     },
     {
       id: 80,
       category: CategoryEnum.PASTOR,
-      text: "Já me peguei controlando decisões de pessoas próximas, com medo de que elas tomassem caminhos que eu julgava inadequados.",
+      text: “Costumo perceber quando alguém precisa de acolhimento antes de receber qualquer ensinamento ou orientação.”,
     },
   ],
   [CategoryEnum.MESTRE]: [
@@ -526,27 +526,27 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 96,
       category: CategoryEnum.MESTRE,
-      text: "Já priorizei tanto o conteúdo que acabei esquecendo de considerar as emoções e o contexto das pessoas ao ensinar.",
+      text: "Tenho prazer em adaptar conteúdos bíblicos para diferentes faixas etárias, culturas ou níveis de maturidade espiritual.",
     },
     {
       id: 97,
       category: CategoryEnum.MESTRE,
-      text: "Em alguns momentos, fui excessivamente crítico com líderes ou irmãos que apresentavam interpretações diferentes das minhas.",
+      text: "Me alegra ver pessoas aplicando princípios bíblicos em suas decisões práticas do dia a dia.",
     },
     {
       id: 98,
       category: CategoryEnum.MESTRE,
-      text: "Tenho dificuldade em lidar com ambientes muito emocionais, preferindo sempre debates racionais e controlados.",
+      text: "Sinto um entusiasmo especial ao descobrir conexões entre o texto bíblico e situações contemporâneas relevantes.",
     },
     {
       id: 99,
       category: CategoryEnum.MESTRE,
-      text: "Já fui tentado a valorizar mais o conhecimento bíblico do que a prática do amor e da graça.",
+      text: "Costumo investir tempo em preparar materiais de ensino que facilitem o aprendizado e a memorização das verdades bíblicas.",
     },
     {
       id: 100,
       category: CategoryEnum.MESTRE,
-      text: "Às vezes me sinto frustrado por achar que as pessoas não estudam ou não têm o mesmo interesse profundo que eu nas Escrituras.",
+      text: "Me sinto realizado ao formar outros ensinadores, capacitando-os a comunicar a Palavra com clareza e profundidade.",
     },
   ],
 };
