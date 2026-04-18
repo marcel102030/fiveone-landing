@@ -62,6 +62,7 @@ import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
 import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
 import Favoritos from "./features/plataforma/pages/Favoritos";
 import CertificadoPublico from "./features/plataforma/pages/CertificadoPublico";
+import QuizResult from "./features/institucional/pages/QuizResult";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 
 import "./App.css";
@@ -111,7 +112,8 @@ function AppContent() {
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/membro") ||
     location.pathname.startsWith("/relatorio") ||
-    location.pathname.startsWith("/r") ||
+    location.pathname.startsWith("/relatorio") ||
+    (location.pathname.startsWith("/r/")) ||
     location.pathname === "/cadastrar-igreja" ||
     location.pathname === "/copiar" ||
     location.pathname.startsWith("/rede/cadastro") ||
@@ -235,6 +237,7 @@ function AppContent() {
             />
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
+            <Route path="/resultado/:token" element={<QuizResult />} />
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
             <Route path="/copiar" element={<CopyLink />} />
             <Route path="/quem-somos" element={<About />} />

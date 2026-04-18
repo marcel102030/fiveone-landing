@@ -336,6 +336,7 @@ const Quiz = () => {
 
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [resultToken, setResultToken] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const quizStartedAtRef = useRef<number>(0);
   const questionStartedAtRef = useRef<number>(0);
   const answersRef = useRef<QuizAnswerPayload[]>([]);
@@ -615,6 +616,7 @@ const Quiz = () => {
     questionStartedAtRef.current = 0;
     setOpenAccordion(0);
     setRevealFull(false);
+    setIsSubmitting(false);
     setAnimatedScores({
       [CategoryEnum.APOSTOLO]: 0,
       [CategoryEnum.PROFETA]: 0,
@@ -699,6 +701,105 @@ const Quiz = () => {
     } finally {
       setIsGeneratingPDF(false);
     }
+  };
+
+  const handleShareImage = async () => {
+    const totalScore = Object.values(categoryScores).reduce((s, v) => s + v, 0);
+    const sorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+    const topCatKey = sorted[0]?.[0] as CategoryEnum | undefined;
+    if (!topCatKey) return;
+
+    const pct = totalScore > 0 ? Math.round((sorted[0][1] / totalScore) * 100) : 0;
+    const color = DOM_COLORS[topCatKey];
+    const name = DOM_NAMES[topCatKey];
+    const phrase = DOM_PHRASES[topCatKey];
+
+    const SIZE = 1080;
+    const canvas = document.createElement('canvas');
+    canvas.width = SIZE; canvas.height = SIZE;
+    const ctx = canvas.getContext('2d')!;
+
+    // Background
+    const bg = ctx.createLinearGradient(0, 0, 0, SIZE);
+    bg.addColorStop(0, '#0d1b2a');
+    bg.addColorStop(1, '#0a1520');
+    ctx.fillStyle = bg;
+    ctx.fillRect(0, 0, SIZE, SIZE);
+
+    // Top color bar
+    ctx.fillStyle = color;
+    ctx.fillRect(0, 0, SIZE, 10);
+
+    // Dom icon
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = categoryIcons[topCatKey];
+      img.onload = () => {
+        ctx.save();
+        ctx.filter = 'brightness(0) invert(1)';
+        ctx.globalAlpha = 0.85;
+        ctx.drawImage(img, SIZE / 2 - 70, 160, 140, 140);
+        ctx.restore();
+        resolve();
+      };
+      img.onerror = () => resolve();
+    });
+
+    // Percentage
+    ctx.fillStyle = color;
+    ctx.font = 'bold 180px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${pct}%`, SIZE / 2, 460);
+
+    // Dom name
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 90px system-ui, sans-serif';
+    ctx.fillText(name, SIZE / 2, 580);
+
+    // Phrase (word wrap)
+    ctx.fillStyle = '#9ab0bc';
+    ctx.font = '38px system-ui, sans-serif';
+    const words = phrase.split(' ');
+    let line = '';
+    let y = 670;
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word;
+      if (ctx.measureText(test).width > SIZE - 160) {
+        ctx.fillText(line, SIZE / 2, y);
+        line = word;
+        y += 52;
+      } else { line = test; }
+    }
+    if (line) ctx.fillText(line, SIZE / 2, y);
+
+    // Divider
+    ctx.strokeStyle = 'rgba(100,255,218,0.2)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(120, 860); ctx.lineTo(SIZE - 120, 860);
+    ctx.stroke();
+
+    // Branding
+    ctx.fillStyle = '#64ffda';
+    ctx.font = 'bold 32px system-ui, sans-serif';
+    ctx.fillText('fiveonemovement.com/teste-dons', SIZE / 2, 940);
+    ctx.fillStyle = '#4a6572';
+    ctx.font = '26px system-ui, sans-serif';
+    ctx.fillText('Quiz dos 5 Ministérios — Five One', SIZE / 2, 990);
+
+    // Download or native share
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], `resultado-${name.toLowerCase()}.png`, { type: 'image/png' });
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share({ files: [file], title: `Meu Dom: ${name}` }); return; } catch { /* fallback */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = file.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }, 'image/png');
   };
 
   // ===== INTRO SCREEN =====
@@ -854,6 +955,7 @@ const Quiz = () => {
                     {...inputProps}
                     id="f-phone"
                     type="tel"
+                    inputMode="numeric"
                     className={`floating-input${formErrors.phone ? ' input-error' : ''}`}
                   />
                 )}
@@ -864,6 +966,8 @@ const Quiz = () => {
 
             <div className="form-field-3">
               <button
+                disabled={isSubmitting}
+                className={`start-button${isSubmitting ? ' loading' : ''}`}
                 onClick={() => {
                   const hasErrors = {
                     name: !userInfo.name.trim(),
@@ -873,6 +977,7 @@ const Quiz = () => {
                   setFormErrors(hasErrors);
 
                   if (!Object.values(hasErrors).some(Boolean)) {
+                    setIsSubmitting(true);
                     setShowEmailInfo(true);
                     setUserInfo((prev) => ({ ...prev, submitted: true }));
 
@@ -999,9 +1104,8 @@ const Quiz = () => {
                     }
                   }
                 }}
-                className="start-button"
               >
-                Ver resultado
+                {isSubmitting ? 'Processando...' : 'Ver resultado'}
               </button>
             </div>
           </div>
@@ -1161,7 +1265,7 @@ const Quiz = () => {
               A seguir, você encontrará uma explicação teológica de cada um desses dons, com base bíblica e doutrinária.
             </p>
             <div className="don-profile-cards">
-              <div className="don-card apostolo-card">
+              <div className={`don-card apostolo-card${topCat === CategoryEnum.APOSTOLO ? ' highlight-card' : ''}`}>
                 <div className="don-card-header">
                   <img src={apostoloIcon} alt="Ícone do Apóstolo" className="don-icon" />
                   <h3>Apóstolo</h3>
@@ -1173,7 +1277,7 @@ const Quiz = () => {
                   Os apóstolos são desbravadores espirituais, frequentemente responsáveis por abrir novos caminhos, plantar igrejas e estabelecer fundamentos doutrinários. Sua liderança é marcada por coragem, visão estratégica e um profundo senso de missão.
                 </p>
               </div>
-              <div className="don-card profeta-card">
+              <div className={`don-card profeta-card${topCat === CategoryEnum.PROFETA ? ' highlight-card' : ''}`}>
                 <div className="don-card-header">
                   <img src={profetaIcon} alt="Ícone do Profeta" className="don-icon" />
                   <h3>Profeta</h3>
@@ -1185,7 +1289,7 @@ const Quiz = () => {
                   Profetas são sensíveis à voz de Deus e muitas vezes têm discernimento aguçado sobre tempos, estações e situações espirituais. São chamados a proclamar a verdade com ousadia e a alinhar a igreja com os valores do Reino.
                 </p>
               </div>
-              <div className="don-card evangelista-card">
+              <div className={`don-card evangelista-card${topCat === CategoryEnum.EVANGELISTA ? ' highlight-card' : ''}`}>
                 <div className="don-card-header">
                   <img src={evangelistaIcon} alt="Ícone do Evangelista" className="don-icon" />
                   <h3>Evangelista</h3>
@@ -1197,7 +1301,7 @@ const Quiz = () => {
                   Evangelistas movem a igreja para fora das quatro paredes, inspirando-a a viver de forma missionária. Têm a capacidade de conectar o evangelho com a vida real das pessoas e convidá-las a uma transformação genuína em Cristo.
                 </p>
               </div>
-              <div className="don-card pastor-card">
+              <div className={`don-card pastor-card${topCat === CategoryEnum.PASTOR ? ' highlight-card' : ''}`}>
                 <div className="don-card-header">
                   <img src={pastorIcon} alt="Ícone do Pastor" className="don-icon" />
                   <h3>Pastor</h3>
@@ -1209,7 +1313,7 @@ const Quiz = () => {
                   Pastores promovem ambientes de cuidado e pertencimento dentro da igreja. Sua presença é marcada por serviço, escuta ativa e disposição para ajudar os outros a amadurecerem na fé.
                 </p>
               </div>
-              <div className="don-card mestre-card">
+              <div className={`don-card mestre-card${topCat === CategoryEnum.MESTRE ? ' highlight-card' : ''}`}>
                 <div className="don-card-header">
                   <img src={mestreIcon} alt="Ícone do Mestre" className="don-icon" />
                   <h3>Mestre</h3>
@@ -1296,6 +1400,9 @@ const Quiz = () => {
                   }}
                 >
                   🔗 Copiar link do resultado
+                </button>
+                <button className="share-result-btn" onClick={handleShareImage}>
+                  🖼️ Salvar como imagem
                 </button>
               </div>
             </div>
