@@ -1,26 +1,47 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Tipagens do payload recebido
 interface Person {
   name?: string;
   email?: string;
   phone?: string;
 }
 
-interface QuizStoreBody {
-  churchId?: string;        // Preferencial: enviar o id direto
-  churchSlug?: string;      // Alternativa: enviar o slug (resolveremos para id)
-  person?: Person;          // dados do participante (opcional)
-  scores: Record<string, number>; // percentuais por dom (ex.: apostolico, profeta, ...)
-  topDom: string;           // "Apostólico", "Profeta", etc.
-  ties?: string[];          // quando houver empate
+interface QuizAnswer {
+  step: number;
+  statementAId: number;
+  statementBId: number;
+  choice: 'a' | 'b' | 'both' | 'none';
+  timeMs?: number;
 }
 
-// Util: hash simples de IP (opcional) — se IP_HASH_SALT estiver definido
+interface QuizStoreBody {
+  churchId?: string;
+  churchSlug?: string;
+  person?: Person;
+  scores: Record<string, number>;       // percentuais por dom
+  rawScores?: Record<string, number>;   // pontuação bruta (antes de dividir pelo total)
+  totalPoints?: number;                 // soma de todos os pontos brutos
+  topDom: string;
+  ties?: string[];
+  startedAt?: string;                   // ISO timestamp de quando o quiz começou
+  completionSeconds?: number;           // duração total em segundos
+  source?: 'direct' | 'church_invite' | 'qr_code' | 'organic';
+  deviceType?: 'mobile' | 'tablet' | 'desktop';
+  answers?: QuizAnswer[];               // respostas individuais (50 itens)
+  sessionId?: string;                   // ID da quiz_session para marcar como concluída
+}
+
 async function sha256Hex(text: string) {
   const enc = new TextEncoder();
   const hash = await crypto.subtle.digest('SHA-256', enc.encode(text));
   return Array.from(new Uint8Array(hash)).map((b) => b.toString(16).padStart(2, '0')).join('');
+}
+
+function detectDeviceType(userAgent: string): 'mobile' | 'tablet' | 'desktop' {
+  const ua = userAgent.toLowerCase();
+  if (/ipad|tablet|kindle|playbook|(android(?!.*mobile))/.test(ua)) return 'tablet';
+  if (/mobile|iphone|ipod|android|blackberry|opera mini|windows phone|iemobile/.test(ua)) return 'mobile';
+  return 'desktop';
 }
 
 export const onRequestPost = async (ctx: any) => {
@@ -28,10 +49,12 @@ export const onRequestPost = async (ctx: any) => {
     const body = (await ctx.request.json().catch(() => ({}))) as Partial<QuizStoreBody>;
 
     if (!body || !body.scores || typeof body.topDom !== 'string') {
-      return new Response(JSON.stringify({ error: 'payload inválido: scores e topDom são obrigatórios' }), { status: 400 });
+      return new Response(
+        JSON.stringify({ error: 'payload inválido: scores e topDom são obrigatórios' }),
+        { status: 400 }
+      );
     }
 
-    // Admin client (server-side)
     const admin = createClient(
       ctx.env.SUPABASE_URL as string,
       ctx.env.SUPABASE_SERVICE_ROLE_KEY as string,
@@ -51,29 +74,37 @@ export const onRequestPost = async (ctx: any) => {
       if (!found) return new Response(JSON.stringify({ error: 'igreja não encontrada (slug)' }), { status: 404 });
       churchId = found.id;
     }
+    // church_id é opcional: respostas standalone (sem igreja) são permitidas
 
-    if (!churchId) {
-      return new Response(JSON.stringify({ error: 'informe churchId ou churchSlug' }), { status: 400 });
-    }
-
-    // Metadados úteis
     const user_agent = ctx.request.headers.get('user-agent') ?? null;
     const ip = ctx.request.headers.get('cf-connecting-ip') ?? '';
     const salt = ctx.env.IP_HASH_SALT as string | undefined;
     const ip_hash = salt && ip ? await sha256Hex(`${salt}|${ip}`) : null;
 
-    // Monta objeto de inserção
+    // Detecta device no servidor se não foi enviado pelo cliente
+    const deviceType = body.deviceType ?? (user_agent ? detectDeviceType(user_agent) : undefined);
+
+    // Gera token único para URL pública do resultado
+    const result_token = crypto.randomUUID();
+
     const insertPayload = {
-      church_id: churchId,
-      person_name: body.person?.name ?? null,
-      person_email: body.person?.email ?? null,
-      person_phone: body.person?.phone ?? null,
-      scores_json: body.scores as Record<string, number>,
-      top_dom: body.topDom,
-      ties: body.ties ?? [],
+      church_id:          churchId ?? null,
+      person_name:        body.person?.name ?? null,
+      person_email:       body.person?.email ?? null,
+      person_phone:       body.person?.phone ?? null,
+      scores_json:        body.scores as Record<string, number>,
+      raw_scores_json:    body.rawScores ?? null,
+      total_points:       body.totalPoints ?? null,
+      top_dom:            body.topDom,
+      ties:               body.ties ?? [],
+      started_at:         body.startedAt ?? null,
+      completion_seconds: body.completionSeconds ?? null,
+      source:             body.source ?? null,
+      device_type:        deviceType ?? null,
       user_agent,
       ip_hash,
-    } as const;
+      result_token,
+    };
 
     const { data, error } = await admin
       .from('quiz_response')
@@ -85,9 +116,50 @@ export const onRequestPost = async (ctx: any) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500 });
     }
 
-    return new Response(JSON.stringify({ ok: true, id: data.id }), {
-      headers: { 'content-type': 'application/json' },
-    });
+    const responseId = data.id as string;
+
+    // Insere respostas individuais (quiz_answer) em lote
+    if (body.answers && body.answers.length > 0) {
+      const answerRows = body.answers.map((a) => ({
+        quiz_response_id: responseId,
+        step:             a.step,
+        statement_a_id:   a.statementAId,
+        statement_b_id:   a.statementBId,
+        choice:           a.choice,
+        time_ms:          a.timeMs ?? null,
+      }));
+
+      const { error: answersError } = await admin
+        .from('quiz_answer')
+        .insert(answerRows);
+
+      if (answersError) {
+        // Não bloqueia o fluxo principal; apenas loga
+        console.error('quiz_answer insert error:', answersError.message);
+      }
+    }
+
+    // Vincula e finaliza a sessão, se fornecida
+    if (body.sessionId) {
+      const { error: sessionError } = await admin
+        .from('quiz_session')
+        .update({
+          quiz_response_id: responseId,
+          completed:        true,
+          last_step:        50,
+          last_seen_at:     new Date().toISOString(),
+        })
+        .eq('id', body.sessionId);
+
+      if (sessionError) {
+        console.error('quiz_session update error:', sessionError.message);
+      }
+    }
+
+    return new Response(
+      JSON.stringify({ ok: true, id: responseId, result_token }),
+      { headers: { 'content-type': 'application/json' } }
+    );
   } catch (e) {
     return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
   }

@@ -84,6 +84,17 @@ function computeScoresForEmail(categoryScores: Record<CategoryEnum, number>): Em
     .sort((a, b) => b.score - a.score);
 }
 
+// === Helpers de tracking ===
+function detectSource(churchCtx: { churchSlug?: string; churchId?: string }): 'direct' | 'church_invite' | 'qr_code' | 'organic' {
+  if (churchCtx.churchSlug || churchCtx.churchId) return 'church_invite';
+  const hashQuery = window.location.hash.includes('?')
+    ? new URLSearchParams(window.location.hash.split('?')[1])
+    : null;
+  const src = new URL(window.location.href).searchParams.get('source') ?? hashQuery?.get('source');
+  if (src === 'qr') return 'qr_code';
+  return 'direct';
+}
+
 // === Helpers para igreja (URL) e envio backend ===
 function getChurchFromURL() {
   if (typeof window === 'undefined') return { churchId: undefined, churchSlug: undefined };
@@ -123,14 +134,29 @@ function getChurchFromURL() {
   };
 }
 
+interface QuizAnswerPayload {
+  step: number;
+  statementAId: number;
+  statementBId: number;
+  choice: 'a' | 'b' | 'both' | 'none';
+  timeMs?: number;
+}
+
 async function saveQuizResponseToServer(payload: {
   churchId?: string;
   churchSlug?: string;
   person?: { name?: string; email?: string; phone?: string };
   scores: Record<string, number>;
+  rawScores?: Record<string, number>;
+  totalPoints?: number;
   topDom: string;
   ties?: string[];
-}) {
+  startedAt?: string;
+  completionSeconds?: number;
+  source?: string;
+  answers?: QuizAnswerPayload[];
+  sessionId?: string;
+}): Promise<{ ok: boolean; result_token?: string }> {
   try {
     const res = await fetch('/api/quiz-store', {
       method: 'POST',
@@ -140,11 +166,12 @@ async function saveQuizResponseToServer(payload: {
     const data = await res.json();
     if (!res.ok) {
       console.error('quiz-store error:', data);
-    } else {
-      console.log('quiz-store ok:', data);
+      return { ok: false };
     }
+    return { ok: true, result_token: data.result_token };
   } catch (err) {
     console.error('quiz-store exception:', err);
+    return { ok: false };
   }
 }
 
@@ -199,6 +226,12 @@ const Quiz = () => {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showEmailInfo, setShowEmailInfo] = useState(false);
   const [emailInfoLeaving, setEmailInfoLeaving] = useState(false);
+
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [resultToken, setResultToken] = useState<string | null>(null);
+  const quizStartedAtRef = useRef<number>(0);
+  const questionStartedAtRef = useRef<number>(0);
+  const answersRef = useRef<QuizAnswerPayload[]>([]);
 
   const quizTopRef = useRef<HTMLDivElement | null>(null);
   const nextStepButtonRef = useRef<HTMLButtonElement>(null);
@@ -336,22 +369,51 @@ const Quiz = () => {
 
   const onHandleChoice = (chosenCategory: ChoiceCategory) => {
     setTransitioning(true);
+    // Captura o par atual e o tempo antes do setTimeout para evitar closure stale
+    const pair = currentPair!;
+    const timeMs = Date.now() - questionStartedAtRef.current;
+    const step = currentQuestion + 1;
+
     setTimeout(() => {
+      // Determina o choice para o banco
+      let choice: 'a' | 'b' | 'both' | 'none';
+      if (chosenCategory === 'ambas') choice = 'both';
+      else if (chosenCategory === 'nenhuma') choice = 'none';
+      else if (chosenCategory === pair.statement1.category) choice = 'a';
+      else choice = 'b';
+
+      answersRef.current.push({
+        step,
+        statementAId: pair.statement1.id,
+        statementBId: pair.statement2.id,
+        choice,
+        timeMs,
+      });
+
+      // Atualiza progresso da sessão a cada 10 questões (fire and forget)
+      if (step % 10 === 0 && sessionId) {
+        fetch('/api/quiz-session', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId, lastStep: step }),
+        }).catch(() => {});
+      }
+
+      // Reset timer para a próxima questão
+      questionStartedAtRef.current = Date.now();
+
       setCategoryScores((prevScores) => {
         const updatedScores = { ...prevScores };
 
         if (chosenCategory === "ambas") {
-          updatedScores[currentPair!.statement1.category] += 1;
-          updatedScores[currentPair!.statement2.category] += 1;
+          updatedScores[pair.statement1.category] += 1;
+          updatedScores[pair.statement2.category] += 1;
         } else if (
           chosenCategory !== "nenhuma" &&
           chosenCategory in updatedScores
         ) {
           updatedScores[chosenCategory] += 1;
         }
-
-        console.log("Categoria escolhida:", chosenCategory);
-        console.log("Pontuações atualizadas:", updatedScores);
 
         return updatedScores;
       });
@@ -394,6 +456,11 @@ const Quiz = () => {
     setCurrentQuestion(0);
     setCurrentPair(null);
     setUsedStatements(new Set());
+    setSessionId(null);
+    setResultToken(null);
+    answersRef.current = [];
+    quizStartedAtRef.current = 0;
+    questionStartedAtRef.current = 0;
     setCategoryScores(
       Object.values(CategoryEnum).reduce(
         (acc, category) => ({ ...acc, [category]: 0 }),
@@ -491,6 +558,18 @@ const Quiz = () => {
             <button
               onClick={() => {
                 setQuizStarted(true);
+                quizStartedAtRef.current = Date.now();
+                questionStartedAtRef.current = Date.now();
+                answersRef.current = [];
+                const ctx = getChurchFromURL();
+                const source = detectSource(ctx);
+                fetch('/api/quiz-session', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...ctx, source }),
+                }).then((r) => r.json()).then((d) => {
+                  if (d.sessionId) setSessionId(d.sessionId);
+                }).catch(() => {});
                 if (typeof gtag === "function") {
                   gtag("event", "quiz_start", {
                     event_category: "quiz",
@@ -554,6 +633,18 @@ const Quiz = () => {
             <button
               onClick={() => {
                 setQuizStarted(true);
+                quizStartedAtRef.current = Date.now();
+                questionStartedAtRef.current = Date.now();
+                answersRef.current = [];
+                const ctx = getChurchFromURL();
+                const source = detectSource(ctx);
+                fetch('/api/quiz-session', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ ...ctx, source }),
+                }).then((r) => r.json()).then((d) => {
+                  if (d.sessionId) setSessionId(d.sessionId);
+                }).catch(() => {});
                 if (typeof gtag === "function") {
                   gtag("event", "quiz_start", {
                     event_category: "quiz",
@@ -728,10 +819,9 @@ const Quiz = () => {
                     }
                   })();
 
-                  // Salva a resposta agregada por igreja (não bloqueia UI)
-                  (() => {
+                  // Salva a resposta completa no banco (não bloqueia UI)
+                  (async () => {
                     try {
-                      // 1) Calcula percentuais com base no total de pontos somados (não por TOTAL_QUESTIONS)
                       const totalScore = Object.values(categoryScores).reduce((s, v) => s + v, 0);
                       const scoresPercent: Record<string, number> = {};
                       Object.entries(categoryScores).forEach(([key, value]) => {
@@ -739,7 +829,6 @@ const Quiz = () => {
                         scoresPercent[key] = isNaN(pct) ? 0 : pct;
                       });
 
-                      // 2) Top e empates usando contagem bruta (inteiro, sem problema de float)
                       const sortedRaw = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
                       const topRawValue = sortedRaw[0]?.[1] ?? 0;
                       const ties = topRawValue > 0
@@ -747,22 +836,36 @@ const Quiz = () => {
                         : [];
                       const topDom = sortedRaw[0]?.[0] ?? '';
 
-                      // 3) Igreja via URL e dados da pessoa
                       const churchCtx = getChurchFromURL();
+                      const source = detectSource(churchCtx);
+                      const completionSeconds = quizStartedAtRef.current
+                        ? Math.round((Date.now() - quizStartedAtRef.current) / 1000)
+                        : undefined;
 
-                      void saveQuizResponseToServer({
-                        ...churchCtx, // { churchId?, churchSlug? }
-                        person: {
-                          name: userInfo.name,
-                          email: userInfo.email,
-                          phone: userInfo.phone,
-                        },
+                      const result = await saveQuizResponseToServer({
+                        ...churchCtx,
+                        person: { name: userInfo.name, email: userInfo.email, phone: userInfo.phone },
                         scores: scoresPercent,
+                        rawScores: Object.fromEntries(
+                          Object.entries(categoryScores).map(([k, v]) => [k, v])
+                        ),
+                        totalPoints: totalScore,
                         topDom,
                         ties,
+                        startedAt: quizStartedAtRef.current
+                          ? new Date(quizStartedAtRef.current).toISOString()
+                          : undefined,
+                        completionSeconds,
+                        source,
+                        answers: answersRef.current,
+                        sessionId: sessionId ?? undefined,
                       });
+
+                      if (result.ok && result.result_token) {
+                        setResultToken(result.result_token);
+                      }
                     } catch (e) {
-                      console.error('Falha ao enviar resposta agregada:', e);
+                      console.error('Falha ao enviar resposta ao banco:', e);
                     }
                   })();
 
@@ -1045,6 +1148,33 @@ const Quiz = () => {
             </a>
           </div>
         </div>
+        {resultToken && (
+          <div style={{ textAlign: "center", margin: "2rem 0 0.5rem" }}>
+            <p style={{ color: "#cfd8dc", marginBottom: "0.5rem", fontSize: "0.95rem" }}>
+              Salve o link abaixo para revisitar seu resultado a qualquer momento:
+            </p>
+            <a
+              href={`${window.location.origin}${window.location.pathname}#/resultado/${resultToken}`}
+              style={{
+                color: "#32f2cf",
+                fontWeight: "bold",
+                wordBreak: "break-all",
+                fontSize: "0.9rem",
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                const url = `${window.location.origin}${window.location.pathname}#/resultado/${resultToken}`;
+                navigator.clipboard?.writeText(url).then(() => {
+                  alert("Link copiado para a área de transferência!");
+                }).catch(() => {
+                  window.prompt("Copie o link:", url);
+                });
+              }}
+            >
+              Copiar link do resultado
+            </a>
+          </div>
+        )}
         <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>
           Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
         </p>
