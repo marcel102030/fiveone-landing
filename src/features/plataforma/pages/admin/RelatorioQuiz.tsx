@@ -300,7 +300,7 @@ export default function RelatorioQuiz() {
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 16, marginBottom: 32 }}>
           <SummaryCard label="Total de respostas" value={summary.totalAll} icon="&#128203;" accent />
-          <SummaryCard label="Este m\u00eas"      value={summary.thisMonth} icon="&#128197;" />
+          <SummaryCard label="Este mês"           value={summary.thisMonth} icon="&#128197;" />
           <SummaryCard
             label="Dom mais comum"
             value={topDomEntry ? (DOM_LABELS[topDomEntry[0]] ?? topDomEntry[0]) : '\u2014'}
@@ -308,7 +308,7 @@ export default function RelatorioQuiz() {
             icon="&#127942;"
             color={topDomEntry ? DOM_COLORS[topDomEntry[0]] : undefined}
           />
-          <SummaryCard label="Tempo m\u00e9dio" value={fmtTime(summary.avgSeconds)} icon="&#9201;" />
+          <SummaryCard label="Tempo médio"    value={fmtTime(summary.avgSeconds)} icon="&#9201;" />
         </div>
       )}
 
@@ -370,7 +370,7 @@ export default function RelatorioQuiz() {
           ))}
         </select>
         <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="admin-filter-select" title="De" />
-        <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   className="admin-filter-select" title="At\u00e9" />
+        <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   className="admin-filter-select" title="Até" />
         {hasFilter && (
           <button
             className="admin-btn admin-btn--ghost"
@@ -486,7 +486,7 @@ export default function RelatorioQuiz() {
                         )}
                       </span>
                     ) : (
-                      <span style={{ color: '#475569' }}>\u2014</span>
+                      <span style={{ color: '#475569' }}>&mdash;</span>
                     )}
                   </td>
 
