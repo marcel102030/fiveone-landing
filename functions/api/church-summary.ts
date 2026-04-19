@@ -49,10 +49,13 @@ export const onRequestGet = async (ctx: any) => {
     let churchName: string | undefined;
     let slug: string | undefined = q.churchSlug;
     let expected_members: number | null | undefined;
+    let leader_name: string | null | undefined;
+    let city: string | null | undefined;
+    let service_type: string | null | undefined;
     if (!churchId && q.churchSlug) {
       const { data: found, error: findErr } = await admin
         .from('church')
-        .select('id, name, expected_members, slug')
+        .select('id, name, expected_members, slug, leader_name, city, service_type')
         .eq('slug', q.churchSlug)
         .maybeSingle();
 
@@ -62,12 +65,15 @@ export const onRequestGet = async (ctx: any) => {
       churchName = found.name;
       expected_members = found.expected_members;
       slug = found.slug;
+      leader_name = found.leader_name;
+      city = found.city;
+      service_type = found.service_type;
     }
 
     if (!churchName || expected_members === undefined) {
       const { data: info, error: infoErr } = await admin
         .from('church')
-        .select('id, name, expected_members, slug')
+        .select('id, name, expected_members, slug, leader_name, city, service_type')
         .eq('id', churchId!)
         .maybeSingle();
       if (infoErr) return new Response(JSON.stringify({ error: infoErr.message }), { status: 500 });
@@ -75,6 +81,9 @@ export const onRequestGet = async (ctx: any) => {
         churchName = churchName || info.name;
         expected_members = expected_members ?? info.expected_members;
         slug = slug || info.slug;
+        leader_name = leader_name ?? info.leader_name;
+        city = city ?? info.city;
+        service_type = service_type ?? info.service_type;
       }
     }
 
@@ -279,6 +288,9 @@ export const onRequestGet = async (ctx: any) => {
         churchId,
         churchName,
         slug,
+        leader_name: leader_name ?? null,
+        city: city ?? null,
+        service_type: service_type ?? null,
         expected_members: members,
         period: { from: q.from || null, to: q.to || null, tz },
         summary,

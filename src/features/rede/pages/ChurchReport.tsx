@@ -21,6 +21,9 @@ type ApiResponse = {
   churchId: string;
   churchName?: string;
   slug?: string;
+  leader_name?: string | null;
+  city?: string | null;
+  service_type?: string | null;
   expected_members?: number;
   period?: { from: string | null; to: string | null; tz: string };
   summary: Summary & { ties?: number };
@@ -98,9 +101,28 @@ const LOW_PCT_THRESHOLD = 5;
 const BALANCE_DOMINANCE_PCT = 70;
 const BALANCE_EVEN_PCT = 45;
 const BALANCE_ABSENT_COUNT = 2;
-// Texto pastoral curto para orientar a leitura do relatório (diagnóstico inicial, não maturidade/ativação)
-const REPORT_WHAT_THIS_SHOWS_TEXT =
-  "Este relatório apresenta um retrato do período a partir das respostas ao teste dos 5 ministérios. Ele indica percepções e inclinações ministeriais entre os participantes e serve como um diagnóstico inicial para orientar cuidado, formação e cooperação no corpo — sem afirmar maturidade espiritual ou ativação prática dos dons. O crescimento acontece no processo, com discernimento, formação, prática comunitária e acompanhamento; a partir disso, o próximo bloco ajuda a reconhecer as ênfases percebidas da comunidade.";
+
+const DOM_KEY_COLORS: Record<string, string> = {
+  apostolo: '#22c55e', profeta: '#f472b6', evangelista: '#06b6d4', pastor: '#f59e0b', mestre: '#60a5fa',
+};
+
+const DOM_KEY_MAP: Record<string, ProfileDomKey> = {
+  'Apostólico': 'apostolo', 'Profeta': 'profeta', 'Evangelista': 'evangelista', 'Pastor': 'pastor', 'Mestre': 'mestre',
+};
+
+const SERVICE_LABELS: Record<string, string> = {
+  mentoria: 'Mentoria Individual',
+  palestra: 'Palestra Introdutória',
+  treinamento: 'Treinamento para Liderança',
+  imersao: 'Imersão Ministerial',
+};
+
+const SERVICE_CONNECT: Record<string, string> = {
+  mentoria: 'Durante a Mentoria Individual, vamos aprofundar este diagnóstico e construir juntos um plano de ativação personalizado para os dons da sua comunidade.',
+  palestra: 'Na Palestra Introdutória que vamos realizar com vocês, abordaremos especialmente os dons ausentes e o risco do desequilíbrio identificados aqui — de forma bíblica e prática para toda a sua igreja.',
+  treinamento: 'No Treinamento para Liderança, sua equipe vai compreender este diagnóstico a fundo e sair com um plano concreto de implementação por dom, função e pessoa.',
+  imersao: 'Na Imersão Ministerial, todo este diagnóstico será trabalhado de ponta a ponta — formação por dom, prática supervisionada e indicadores de progresso para cada expressão identificada aqui.',
+};
 
 const PROFILE_DOMS: ProfileItemBase[] = [
   {
@@ -539,26 +561,6 @@ function ChurchReportInner() {
     return buildRecommendations(items);
   }, [summary]);
 
-  const recommendationsEmptyMessage = useMemo(() => {
-    if (!summary) return "Nenhuma orientação disponível para este período.";
-    const items = buildProfileItems(summary);
-    if (items.length === 0) return "Nenhuma orientação disponível para este período.";
-    const statusKey = computeStatusKey(items);
-    const maxValue = Math.max(...items.map((item) => item.value));
-    const topItems = items.filter((item) => item.value === maxValue);
-    const absentItems = items.filter((item) => item.value === 0 || item.pct === 0);
-    const lowItems = items.filter((item) => item.pct > 0 && item.pct <= LOW_PCT_THRESHOLD);
-    const sortedDesc = [...items].sort((a, b) => b.pct - a.pct);
-    const secondItem = sortedDesc[1] ?? null;
-    const scenario = buildScenarioNarrative({
-      statusKey,
-      topItems,
-      absentItems,
-      lowItems,
-      secondItem,
-    });
-    return scenario.recommendationsEmptyText;
-  }, [summary]);
 
   const nextStep = useMemo(() => {
     if (!summary) return null;
@@ -567,36 +569,54 @@ function ChurchReportInner() {
     return buildNextStep(items, summary.total);
   }, [summary]);
 
-  const executive = useMemo(() => {
-    if (!summary) return null;
-    const items = buildProfileItems(summary);
-    if (items.length === 0) return null;
-    return buildExecutiveSummary(items, summary.total);
-  }, [summary]);
 
   return (
     <div className="report-wrap">
+
+      {/* ── CABEÇALHO ─────────────────────────────────────────────────────── */}
       <header className="report-hero">
         <div className="report-hero-main">
           <div className="report-hero-top">
             {!isPublic && (
               <Link className="report-hero-back" to="/admin/igrejas">← Voltar</Link>
             )}
-            <span className="report-pill">Relatórios</span>
+            <span className="report-pill">Diagnóstico Ministerial</span>
           </div>
-          <h1 className="report-title">Relatório por Igreja</h1>
+          <h1 className="report-title">{data?.churchName || '(Igreja)'}</h1>
           <p className="report-sub">
-            Acompanhe respostas, distribuição de dons e engajamento durante o período selecionado.
+            {[data?.leader_name, data?.city].filter(Boolean).join(' · ') || 'Relatório dos 5 Ministérios'}
           </p>
+          {data?.service_type && (
+            <span className="report-service-badge">
+              {SERVICE_LABELS[data.service_type] ?? data.service_type}
+            </span>
+          )}
           <div className="report-meta">
             <div className="report-meta-item">
-              <span className="report-meta-label">Igreja</span>
-              <span className="report-meta-value">{data?.churchName || "(não informado)"}</span>
+              <span className="report-meta-label">Respostas totais</span>
+              <span className="report-meta-value">{typeof totalResponses === 'number' ? totalResponses.toLocaleString('pt-BR') : '—'}</span>
             </div>
+            {expectedMembers !== null && (
+              <div className="report-meta-item">
+                <span className="report-meta-label">Membros previstos</span>
+                <span className="report-meta-value">{expectedMembers.toLocaleString('pt-BR')}</span>
+              </div>
+            )}
+            {totalParticipation !== null && (
+              <div className="report-meta-item">
+                <span className="report-meta-label">Participação</span>
+                <span className="report-meta-value" style={{ color: totalParticipation >= 50 ? '#22c55e' : totalParticipation >= 20 ? '#fbbf24' : '#f87171' }}>
+                  {totalParticipation}%
+                </span>
+              </div>
+            )}
             <div className="report-meta-item">
-              <span className="report-meta-label">Slug</span>
-              <span className="report-meta-value">{data?.slug || slug || "(n/d)"}</span>
+              <span className="report-meta-label">Período</span>
+              <span className="report-meta-value">{periodLabel}</span>
             </div>
+          </div>
+          {/* dummy-meta-item abaixo apenas para alinhar layout legado */}
+          <div style={{ display: 'none' }}>
             <div className="report-meta-item">
               <span className="report-meta-label">Membros previstos</span>
               <span className="report-meta-value">{expectedMembers !== null ? expectedMembers.toLocaleString("pt-BR") : "—"}</span>
@@ -679,303 +699,217 @@ function ChurchReportInner() {
         </div>
       )}
 
-      {/* O que este relatório mostra */}
       {summary && summary.total > 0 && (
-        <section className="report-profile" aria-label="O que este relatório mostra">
-          <div className="report-profile-header">
-            <div>
-              <span className="report-kicker">Guia de leitura</span>
-              <h2 className="report-profile-title">O que este relatório mostra</h2>
-            </div>
-            <div className="report-profile-note">Diagnóstico inicial do período, baseado nas respostas do teste, que prepara a leitura das ênfases percebidas</div>
-          </div>
-          <div className="report-profile-grid">
-            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
-              <span className="profile-insight-label">Orientação</span>
-              <p>{REPORT_WHAT_THIS_SHOWS_TEXT}</p>
-              <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.7.</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {executive && summary && summary.total > 0 && (
-        <section className="report-profile" aria-label="Resumo executivo">
-          <div className="report-profile-header">
-            <div>
-              <span className="report-kicker">Para líderes</span>
-              <h2 className="report-profile-title">{executive.title}</h2>
-            </div>
-            <div className="report-profile-note">Síntese pastoral do período para orientar decisões</div>
-          </div>
-          <div className="report-profile-grid">
-            <div className="report-profile-insight" style={{ gridColumn: "1 / -1" }}>
-              <span className="profile-insight-label">Leitura em 6–8 linhas</span>
-              {executive.lines.map((line, index) => (
-                <p key={`exec-${index}`}>{line}</p>
-              ))}
-              <span className="profile-insight-base">{executive.base}</span>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {summary && (
         <>
-          {/* Cards de totais */}
-          <div className="cards-wrap" ref={containerRef}>
-            {/* Grupo 1: Dons */}
-            <h3 className="group-title sticky">Dons</h3>
-            <div className="cards-doms" ref={pageRef}>
-              {bars.length > 0 && (
-                <div className="cards cards-doms-top">
-                  <HighlightCard
-                    title="Maior dom"
-                    label={bars[0].label}
-                    percent={bars[0].pct}
-                    color={domColors[bars[0].label] || "#22c55e"}
-                    hint={bars[1] ? `+${bars[0].pct - bars[1].pct}% vs 2º (${bars[1].label})` : undefined}
-                  />
-                </div>
-              )}
-              <div className="cards-row-5">
-                <CardClickable title="Apóstolo" value={summary.apostolo} color={domColors['Apostólico']} onClick={() => { setModalDom('Apostólico'); setModalOpen(true); }} />
-                <CardClickable title="Profeta" value={summary.profeta} color={domColors['Profeta']} onClick={() => { setModalDom('Profeta'); setModalOpen(true); }} />
-                <CardClickable title="Evangelista" value={summary.evangelista} color={domColors['Evangelista']} onClick={() => { setModalDom('Evangelista'); setModalOpen(true); }} />
-                <CardClickable title="Pastor" value={summary.pastor} color={domColors['Pastor']} onClick={() => { setModalDom('Pastor'); setModalOpen(true); }} />
-                <CardClickable title="Mestre" value={summary.mestre} color={domColors['Mestre']} onClick={() => { setModalDom('Mestre'); setModalOpen(true); }} />
-              </div>
-            </div>
-
-            {/* Separador visual entre grupos */}
-            <div className="cards-separator" role="separator" aria-label="Separador de seções" />
-
-            {/* Grupo 2: Métricas gerais */}
-            <h3 className="group-title sticky">Resultados</h3>
-            <div className="cards cards-metrics">
-              <Card title="Respostas (período)" value={summary.total} delta={(summary.total - (data?.previous?.summary.total || 0))} />
-              <Card title="Participação (período)" value={(data?.participation?.periodPct ?? 0)} suffix="%" delta={((data?.participation?.periodPct ?? 0) - (data?.previous?.participationPct ?? 0))} deltaIsPercent />
-              <Card title="Empates" value={summary.ties ?? 0} delta={((summary.ties ?? 0) - (data?.previous?.summary.ties ?? 0))} />
-              {data?.extra?.lastTimestamp && (
-                <Card title="Última resposta" valueLabel={formatRelTime(data.extra.lastTimestamp)} />
-              )}
-              {typeof data?.extra?.activeDays === 'number' && (
-                <Card title="Dias ativos" value={data.extra.activeDays} />
-              )}
-              {data?.extra?.peak && (
-                <Card title="Pico de respostas" value={data.extra.peak.total} />
-              )}
-            </div>
-          </div>
-
-          <section className="report-profile">
-            <div className="report-profile-header">
-              <div>
-                <span className="report-kicker">Quem somos como comunidade?</span>
-                <h2 className="report-profile-title">Perfil Ministerial da Comunidade</h2>
-              </div>
-              <div className="report-profile-note">Leitura do período com base na distribuição percebida, preparando o índice de equilíbrio</div>
-            </div>
-            {profile ? (
-              <div className="report-profile-grid">
-                <div className="report-profile-list">
-                  <div className="profile-line">
-                    <span className="profile-label">Perfil predominante</span>
-                    <span className="profile-value">{profile.primaryLabel}</span>
-                  </div>
-                  <div className="profile-line">
-                    <span className="profile-label">Perfil secundário</span>
-                    <span className="profile-value">{profile.secondaryLabel}</span>
-                  </div>
-                  <div className="profile-line">
-                    <span className="profile-label">Dons ausentes ou sub-representados</span>
-                    <span className="profile-value">{profile.lowLabel}</span>
-                  </div>
-                </div>
-                <div className="report-profile-insight">
-                  <span className="profile-insight-label">Insight Ministerial</span>
-                  {profile.insight.map((line, index) => (
-                    <p key={`${line.slice(0, 16)}-${index}`}>{line}</p>
+          {/* ── 1. PANORAMA ──────────────────────────────────────────────── */}
+          <section className="rpt-section" ref={containerRef}>
+            <div className="rpt-kicker">Visão Geral</div>
+            <h2 className="rpt-h2">Panorama Ministerial</h2>
+            <p className="muted" style={{ marginBottom: 20 }}>Distribuição percebida dos 5 ministérios com base nas respostas do período.</p>
+            <div className="panorama-layout">
+              <PentagonChart summary={summary} />
+              <div className="panorama-right">
+                <div className="cards-row-5" ref={pageRef}>
+                  {([
+                    { key: 'Apostólico' as const, val: summary.apostolo },
+                    { key: 'Profeta' as const, val: summary.profeta },
+                    { key: 'Evangelista' as const, val: summary.evangelista },
+                    { key: 'Pastor' as const, val: summary.pastor },
+                    { key: 'Mestre' as const, val: summary.mestre },
+                  ]).map(({ key, val }) => (
+                    <CardClickable key={key} title={key} value={val} color={domColors[key]} onClick={() => { setModalDom(key); setModalOpen(true); }} />
                   ))}
-                  <span className="profile-insight-base">Efésios 4.11–13; 1 Coríntios 12.14–26.</span>
+                </div>
+                <div className="cards cards-metrics" style={{ marginTop: 14 }}>
+                  <Card title="Respostas (período)" value={summary.total} delta={summary.total - (data?.previous?.summary.total || 0)} />
+                  <Card title="Participação (período)" value={data?.participation?.periodPct ?? 0} suffix="%" delta={(data?.participation?.periodPct ?? 0) - (data?.previous?.participationPct ?? 0)} deltaIsPercent />
+                  {typeof data?.extra?.activeDays === 'number' && <Card title="Dias ativos" value={data.extra.activeDays} />}
+                  {data?.extra?.lastTimestamp && <Card title="Última resposta" valueLabel={formatRelTime(data.extra.lastTimestamp)} />}
                 </div>
               </div>
-            ) : (
-              <div className="report-profile-empty">Dados insuficientes para compor o perfil ministerial deste período.</div>
-            )}
+            </div>
           </section>
 
-          <section className="report-balance">
-            <div className="report-balance-header">
-              <div>
-                <span className="report-kicker">Índice de equilíbrio</span>
-                <h2 className="report-balance-title">Índice de Equilíbrio Ministerial</h2>
-                <p className="report-profile-note">Leitura do corpo como um todo no período, não da caminhada individual, preparando ações acompanhadas.</p>
-              </div>
-              {balance && (
-                <div className={`balance-pill ${balance.statusKey}`}>
-                  <span className="balance-indicator" aria-hidden="true">{balance.indicator}</span>
-                  <strong>{balance.label}</strong>
+          {/* ── 2. DIAGNÓSTICO ───────────────────────────────────────────── */}
+          {(profile || balance) && (
+            <section className="rpt-section">
+              <div className="rpt-kicker">Diagnóstico</div>
+              <h2 className="rpt-h2">Saúde Ministerial da Comunidade</h2>
+              <div className="diag-grid">
+                {bars[0] && (
+                  <div className="diag-card diag-strength">
+                    <div className="diag-tag">Dom predominante</div>
+                    <div className="diag-dom-name" style={{ color: domColors[bars[0].label] }}>{bars[0].label}</div>
+                    <div className="diag-pct">{bars[0].pct}% das respostas</div>
+                    {(() => {
+                      const k = DOM_KEY_MAP[bars[0].label];
+                      const expr = k ? EXPRESSIONS_MAP[k] : null;
+                      return expr ? <p className="muted" style={{ marginTop: 6, fontSize: '0.82rem' }}>{expr.expressionShort}</p> : null;
+                    })()}
+                    {balance && (
+                      <div className={`balance-pill ${balance.statusKey}`} style={{ marginTop: 14 }}>
+                        <span aria-hidden="true">{balance.indicator}</span>
+                        <strong>{balance.label}</strong>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <div className="diag-card diag-gaps">
+                  <div className="diag-tag">Pontos de atenção</div>
+                  {recommendations.length === 0 ? (
+                    <p className="muted" style={{ marginTop: 8, fontSize: '0.82rem' }}>Boa distribuição neste período — nenhuma ausência crítica identificada.</p>
+                  ) : (
+                    <div className="diag-gaps-list">
+                      {recommendations.map(rec => (
+                        <div key={rec.key} className="diag-gap-item">
+                          <span className="diag-gap-dom" style={{ color: DOM_KEY_COLORS[rec.key] }}>{rec.label}</span>
+                          <span className="diag-gap-status">{rec.status}</span>
+                          <span className="diag-gap-risk muted">Tende a gerar: {EXPRESSIONS_MAP[rec.key].expressionRiskIfAbsent}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
-            {balance ? (
-              <div className="report-balance-grid">
-                <div className="balance-card">
-                  <span className="profile-label">Leitura pastoral do cenário</span>
+                {profile && (
+                  <div className="diag-card diag-insight">
+                    <div className="diag-tag">Leitura pastoral</div>
+                    {profile.insight.map((line, i) => (
+                      <p key={i} className="muted" style={{ fontSize: '0.82rem', margin: '4px 0' }}>{line}</p>
+                    ))}
+                    <span style={{ fontSize: '0.7rem', color: '#475569', marginTop: 8, display: 'block' }}>Efésios 4.11–13 · 1 Coríntios 12.14–26</span>
+                  </div>
+                )}
+              </div>
+            </section>
+          )}
+
+          {/* ── 3. EQUILÍBRIO ────────────────────────────────────────────── */}
+          {balance && (
+            <section className="rpt-section">
+              <div className="rpt-kicker">Índice de Equilíbrio</div>
+              <h2 className="rpt-h2">Como o Corpo Está Funcionando</h2>
+              <div className="balance-cards-layout">
+                <div className="balance-card-v2">
+                  <span className="balance-card-label">Leitura geral</span>
                   <p>{balance.reading}</p>
                 </div>
-                <div className="balance-card">
-                  <span className="profile-label">Onde há sinais percebidos?</span>
+                <div className="balance-card-v2">
+                  <span className="balance-card-label">Sinais positivos percebidos</span>
                   <p>{balance.mature}</p>
                 </div>
-                <div className="balance-card">
-                  <span className="profile-label">Onde há riscos percebidos?</span>
+                <div className="balance-card-v2">
+                  <span className="balance-card-label">Riscos percebidos</span>
                   <p>{balance.imbalance}</p>
                 </div>
               </div>
-            ) : (
-              <div className="report-profile-empty">Dados insuficientes para compor o índice de equilíbrio ministerial deste período.</div>
-            )}
-          </section>
+            </section>
+          )}
 
-          <section className="report-growth">
-            <div className="report-growth-header">
-              <div>
-                <span className="report-kicker">Como crescer juntos rumo à plenitude de Cristo?</span>
-                <h2 className="report-growth-title">Recomendações Práticas por Dom Ausente</h2>
-              </div>
-              <div className="report-profile-note">Sugestões pastorais para fortalecer expressões com baixa percepção e preparar o próximo passo.</div>
-            </div>
-            {recommendations.length > 0 ? (
+          {/* ── 4. CAMINHOS DE CRESCIMENTO ───────────────────────────────── */}
+          {recommendations.length > 0 && (
+            <section className="rpt-section">
+              <div className="rpt-kicker">Caminhos de Crescimento</div>
+              <h2 className="rpt-h2">Como Fortalecer o que Está Ausente</h2>
+              <p className="muted" style={{ marginBottom: 20 }}>Sugestões pastorais para cada dom com baixa expressão neste período.</p>
               <div className="report-growth-grid">
-                {recommendations.map((rec) => (
-                  <article key={rec.key} className="growth-card">
-                    <div className="growth-alert">⚠️ Oportunidade: Dom {rec.label} {rec.status} neste período</div>
-                    <div className="growth-expression">
-                      <span className="profile-label">Expressão a fortalecer</span>
-                      <p>{rec.expressionTitle} — {rec.expressionShort}</p>
-                      <p className="muted">{rec.expressionWhy}</p>
+                {recommendations.map(rec => (
+                  <article key={rec.key} className="growth-card-v2" style={{ borderLeftColor: DOM_KEY_COLORS[rec.key] ?? '#555' }}>
+                    <div className="growth-v2-head">
+                      <span className="growth-v2-domname" style={{ color: DOM_KEY_COLORS[rec.key] }}>{rec.label}</span>
+                      <span className="growth-v2-status">{rec.status}</span>
                     </div>
-                    <div className="growth-suggestions">
-                      <span className="profile-label">Sugestões</span>
-                      <ul>
-                        {rec.suggestions.map((suggestion, index) => (
-                          <li key={`${rec.key}-${index}`}>{suggestion}</li>
-                        ))}
-                      </ul>
+                    <div className="growth-v2-expr">
+                      <strong>{rec.expressionTitle}</strong>
+                      <span className="muted"> — {rec.expressionShort}</span>
                     </div>
-                    <div className="growth-verse">
-                      <span className="profile-label">📖 Texto bíblico</span>
-                      <p>“{rec.verse}” <span className="growth-verse-ref">{rec.verseRef}</span></p>
-                    </div>
+                    <p className="muted" style={{ fontSize: '0.8rem', margin: '4px 0 10px' }}>{rec.expressionWhy}</p>
+                    <ul className="growth-v2-list">
+                      {rec.suggestions.map((s, i) => <li key={i}>{s}</li>)}
+                    </ul>
+                    <div className="growth-v2-verse">"{rec.verse}" <span className="growth-verse-ref">{rec.verseRef}</span></div>
                   </article>
                 ))}
               </div>
-            ) : (
-              <div className="report-profile-empty">{recommendationsEmptyMessage}</div>
-            )}
-          </section>
-
-          <section className="report-next-step">
-            <div className="report-growth-header">
-              <div>
-                <span className="report-kicker">Próximo passo sugerido</span>
-                <h2 className="report-growth-title">Um caminho simples e pastoral para este período</h2>
-              </div>
-            </div>
-            {nextStep ? (
-              <div className="next-step-card">
-                <span className="profile-label">Próximo passo sugerido</span>
-                <strong>{nextStep.title}</strong>
-                <span className="muted">{nextStep.subtitle}</span>
-                <div>
-                  <span className="profile-label">30 dias</span>
-                  <ul>
-                    {nextStep.bullets30.map((item, index) => (
-                      <li key={`next30-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <span className="profile-label">60 dias</span>
-                  <ul>
-                    {nextStep.bullets60.map((item, index) => (
-                      <li key={`next60-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <span className="profile-label">90 dias</span>
-                  <ul>
-                    {nextStep.bullets90.map((item, index) => (
-                      <li key={`next90-${index}`}>{item}</li>
-                    ))}
-                  </ul>
-                </div>
-                <p>{nextStep.note}</p>
-                <p>{nextStep.optionalSupport}</p>
-              </div>
-            ) : (
-              <div className="report-profile-empty">Nenhum passo sugerido para este período.</div>
-            )}
-          </section>
-
-          {/* Barras */}
-          <h2 className="section-title">Distribuição por dom</h2>
-          <div className="legend">
-            {Object.entries(domColors).map(([name, color]) => {
-              const active = visibleDoms[name] !== false;
-              return (
-                <button key={name}
-                        className={`legend-item ${active ? 'active' : 'muted'}`}
-                        onClick={() => setVisibleDoms(v => ({ ...v, [name]: !active }))}
-                        title={active ? `Ocultar ${name}` : `Mostrar ${name}`}>
-                  <span className="legend-dot" style={{ background: color, opacity: active ? 1 : .35 }} />
-                  <span>{name}</span>
-                </button>
-              );
-            })}
-            <div style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6 }}>
-              <button className={`btn pill ${metricMode === 'pct' ? '' : 'ghost'}`} onClick={() => setMetricMode('pct')}>% Percentual</button>
-              <button className={`btn pill ${metricMode === 'count' ? '' : 'ghost'}`} onClick={() => setMetricMode('count')}># Contagem</button>
-            </div>
-          </div>
-          {bars.length === 0 ? (
-            <p>Nenhum dado suficiente para mostrar gráfico.</p>
-          ) : (
-            <div style={{ display: "grid", gap: 12 }} ref={distRef}>
-              {(() => {
-                const filtered = bars.filter(b => visibleDoms[b.label] !== false);
-                const maxCount = Math.max(...filtered.map(b => b.value), 1);
-                return filtered.map((b) => (
-                  <BarRow key={b.label} label={b.label} value={b.value} pct={b.pct} mode={metricMode} maxCount={maxCount} color={domColors[b.label] || '#22c55e'} />
-                ));
-              })()}
-            </div>
+            </section>
           )}
 
-          {/* Série temporal simples */}
-          <h2 className="section-title">Respostas por dia</h2>
-          {data?.series && data.series.length > 0 ? (
-            <div style={{ display: 'grid', gap: 8 }}>
-              <SparkBar series={data.series} />
-            </div>
-          ) : (
-            <p>Nenhum dado para o período selecionado.</p>
+          {/* ── 5. PRÓXIMO PASSO ─────────────────────────────────────────── */}
+          {nextStep && (
+            <section className="rpt-section rpt-next">
+              <div className="rpt-kicker">Próximo Passo</div>
+              <h2 className="rpt-h2">O Que Vem a Seguir</h2>
+              {data?.service_type && SERVICE_CONNECT[data.service_type] && (
+                <div className="service-connect-card">
+                  <div className="service-connect-badge">{SERVICE_LABELS[data.service_type]}</div>
+                  <p>{SERVICE_CONNECT[data.service_type]}</p>
+                </div>
+              )}
+              <p className="muted" style={{ marginBottom: 16 }}>{nextStep.subtitle}</p>
+              <div className="next-step-grid">
+                <div className="next-step-col">
+                  <div className="next-step-col-label">30 dias</div>
+                  <ul>{nextStep.bullets30.map((b, i) => <li key={i}>{b}</li>)}</ul>
+                </div>
+                <div className="next-step-col">
+                  <div className="next-step-col-label">60 dias</div>
+                  <ul>{nextStep.bullets60.map((b, i) => <li key={i}>{b}</li>)}</ul>
+                </div>
+                <div className="next-step-col">
+                  <div className="next-step-col-label">90 dias</div>
+                  <ul>{nextStep.bullets90.map((b, i) => <li key={i}>{b}</li>)}</ul>
+                </div>
+              </div>
+              <p className="muted" style={{ fontSize: '0.78rem', marginTop: 14, fontStyle: 'italic' }}>{nextStep.note}</p>
+            </section>
           )}
 
-          {/* Exportações */}
+          {/* ── 6. DADOS DETALHADOS ──────────────────────────────────────── */}
+          <section className="rpt-section">
+            <div className="rpt-kicker">Dados Detalhados</div>
+            <h2 className="rpt-h2">Distribuição por Dom</h2>
+            <div className="legend">
+              {Object.entries(domColors).map(([name, color]) => {
+                const active = visibleDoms[name] !== false;
+                return (
+                  <button key={name} className={`legend-item ${active ? 'active' : 'muted'}`}
+                    onClick={() => setVisibleDoms(v => ({ ...v, [name]: !active }))}>
+                    <span className="legend-dot" style={{ background: color, opacity: active ? 1 : .35 }} />
+                    <span>{name}</span>
+                  </button>
+                );
+              })}
+              <div style={{ marginLeft: 'auto', display: 'inline-flex', gap: 6 }}>
+                <button className={`btn pill ${metricMode === 'pct' ? '' : 'ghost'}`} onClick={() => setMetricMode('pct')}>% Percentual</button>
+                <button className={`btn pill ${metricMode === 'count' ? '' : 'ghost'}`} onClick={() => setMetricMode('count')}># Contagem</button>
+              </div>
+            </div>
+            {bars.length === 0 ? (
+              <p className="muted">Nenhum dado suficiente para mostrar gráfico.</p>
+            ) : (
+              <div style={{ display: 'grid', gap: 12 }} ref={distRef}>
+                {(() => {
+                  const filtered = bars.filter(b => visibleDoms[b.label] !== false);
+                  const maxCount = Math.max(...filtered.map(b => b.value), 1);
+                  return filtered.map(b => (
+                    <BarRow key={b.label} label={b.label} value={b.value} pct={b.pct} mode={metricMode} maxCount={maxCount} color={domColors[b.label] || '#22c55e'} />
+                  ));
+                })()}
+              </div>
+            )}
+            <h3 style={{ color: '#64748b', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', margin: '24px 0 8px' }}>Respostas por dia</h3>
+            {data?.series && data.series.length > 0 ? <SparkBar series={data.series} /> : <p className="muted">Nenhum dado para o período selecionado.</p>}
+          </section>
+
+          {/* ── EXPORTAR ─────────────────────────────────────────────────── */}
           <div className="export-row">
             <button className="btn" onClick={() => downloadCSV(slug, data)}>Exportar CSV</button>
             <button className="btn" onClick={() => exportExecutivePDF(slug, data, pageRef.current, distRef.current)}>PDF Executivo</button>
-            <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF (cartões)</button>
-            {!isPublic && (
-              <button className="btn ghost" onClick={() => copyPublicLink(slug, from, to, toast)}>Copiar link público</button>
-            )}
-            <button className="btn ghost" onClick={() => downloadPNG(containerRef.current)}>Baixar imagem dos cartões</button>
+            <button className="btn" onClick={() => exportPDF(pageRef.current)}>Exportar PDF</button>
+            {!isPublic && <button className="btn ghost" onClick={() => copyPublicLink(slug, from, to, toast)}>Copiar link público</button>}
+            <button className="btn ghost" onClick={() => downloadPNG(containerRef.current)}>Baixar imagem</button>
           </div>
-          {/* Modal de participantes por dom */}
+
+          {/* ── MODAL ────────────────────────────────────────────────────── */}
           {modalOpen && modalDom && (
             <div className="modal-backdrop" role="dialog" aria-modal="true" onClick={() => setModalOpen(false)}>
               <div className="modal-card" onClick={(e) => e.stopPropagation()}>
@@ -995,8 +929,8 @@ function ChurchReportInner() {
                       <span>Mostrar contatos</span>
                     </label>
                     <div style={{ marginLeft:'auto', display:'inline-flex', gap:6 }}>
-                      <button className={`btn pill ${sortKey==='name'?'':'ghost'}`} onClick={()=>setSortKey('name')}>Ordenar por nome</button>
-                      <button className={`btn pill ${sortKey==='date'?'':'ghost'}`} onClick={()=>setSortKey('date')}>Ordenar por data</button>
+                      <button className={`btn pill ${sortKey==='name'?'':'ghost'}`} onClick={()=>setSortKey('name')}>Por nome</button>
+                      <button className={`btn pill ${sortKey==='date'?'':'ghost'}`} onClick={()=>setSortKey('date')}>Por data</button>
                       <button className={`btn pill ${sortDir==='asc'?'':'ghost'}`} onClick={()=>setSortDir(sortDir==='asc'?'desc':'asc')}>{sortDir==='asc'?'↑':'↓'}</button>
                     </div>
                   </div>
@@ -1010,16 +944,12 @@ function ChurchReportInner() {
                             const isSelected = Boolean(p.id && p.id === selectedParticipantId);
                             return (
                               <li key={`${p.id || p.name}-${p.date}-${i}`}>
-                                <button
-                                  type="button"
-                                  className={`people-row ${isSelected ? 'selected' : ''}`}
-                                  onClick={() => handleSelectParticipant(p)}
-                                >
+                                <button type="button" className={`people-row ${isSelected ? 'selected' : ''}`} onClick={() => handleSelectParticipant(p)}>
                                   <div>
                                     <span className="person-name">{p.name}</span>
                                     {showContacts && (
                                       <div className="muted" style={{ fontSize:12 }}>
-                                        {(p.email && p.email !== 'null') ? p.email : '—'} • {(p.phone && p.phone !== 'null') ? p.phone : '—'}
+                                        {(p.email && p.email !== 'null') ? p.email : '—'} · {(p.phone && p.phone !== 'null') ? p.phone : '—'}
                                       </div>
                                     )}
                                   </div>
@@ -1072,10 +1002,7 @@ function ChurchReportInner() {
                                         <strong>{score.value.toFixed(1)}%</strong>
                                       </div>
                                       <div className="score-bar-track">
-                                        <div
-                                          className="score-bar-fill"
-                                          style={{ width: `${Math.max(0, Math.min(100, score.value))}%`, background: score.color }}
-                                        />
+                                        <div className="score-bar-fill" style={{ width: `${Math.max(0, Math.min(100, score.value))}%`, background: score.color }} />
                                       </div>
                                     </li>
                                   ))}
@@ -1085,12 +1012,8 @@ function ChurchReportInner() {
                               )}
                               {(participantDetail.email || participantDetail.phone) && (
                                 <div style={{ display: 'grid', gap: 4 }}>
-                                  {participantDetail.email && (
-                                    <div className="person-detail-meta">E-mail: {participantDetail.email}</div>
-                                  )}
-                                  {participantDetail.phone && (
-                                    <div className="person-detail-meta">Telefone: {participantDetail.phone}</div>
-                                  )}
+                                  {participantDetail.email && <div className="person-detail-meta">E-mail: {participantDetail.email}</div>}
+                                  {participantDetail.phone && <div className="person-detail-meta">Telefone: {participantDetail.phone}</div>}
                                 </div>
                               )}
                             </>
@@ -1118,6 +1041,7 @@ function ChurchReportInner() {
           )}
         </>
       )}
+
 
       {!loading && !summary && !error && (
         <p>Nenhum dado encontrado para este slug.</p>
@@ -1189,6 +1113,66 @@ const cardNumber: React.CSSProperties = {
   marginTop: 4,
   color: '#e5f3ff',
 };
+
+function PentagonChart({ summary }: { summary: Summary }) {
+  const keys: { key: keyof Summary; label: string; color: string }[] = [
+    { key: 'apostolo', label: 'Apostólico', color: '#22c55e' },
+    { key: 'profeta', label: 'Profeta', color: '#f472b6' },
+    { key: 'evangelista', label: 'Evangelista', color: '#06b6d4' },
+    { key: 'pastor', label: 'Pastor', color: '#f59e0b' },
+    { key: 'mestre', label: 'Mestre', color: '#60a5fa' },
+  ];
+  const total = Math.max(summary.total, 1);
+  const cx = 110, cy = 110, R = 90;
+  const angle = (i: number) => (Math.PI * 2 * i) / 5 - Math.PI / 2;
+  const pt = (r: number, i: number) => ({
+    x: cx + r * Math.cos(angle(i)),
+    y: cy + r * Math.sin(angle(i)),
+  });
+  const gridLevels = [0.25, 0.5, 0.75, 1];
+  const polygonPoints = keys
+    .map((k, i) => {
+      const val = (summary[k.key] as number) / total;
+      const p = pt(val * R, i);
+      return `${p.x},${p.y}`;
+    })
+    .join(' ');
+  const outerPoints = keys.map((_, i) => { const p = pt(R, i); return `${p.x},${p.y}`; }).join(' ');
+  return (
+    <div className="pentagon-wrap">
+      <svg viewBox="0 0 220 220" width={220} height={220} aria-hidden="true">
+        {gridLevels.map(lvl => (
+          <polygon key={lvl} points={keys.map((_, i) => { const p = pt(R * lvl, i); return `${p.x},${p.y}`; }).join(' ')}
+            fill="none" stroke="#1e3a4a" strokeWidth={1} />
+        ))}
+        {keys.map((_, i) => {
+          const outer = pt(R, i);
+          return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#1e3a4a" strokeWidth={1} />;
+        })}
+        <polygon points={polygonPoints} fill="rgba(34,197,94,0.18)" stroke="#22c55e" strokeWidth={2} />
+        <polygon points={outerPoints} fill="none" stroke="#1e3a4a" strokeWidth={1} />
+        {keys.map((k, i) => {
+          const val = (summary[k.key] as number) / total;
+          const p = pt(val * R, i);
+          return <circle key={k.key} cx={p.x} cy={p.y} r={5} fill={k.color} />;
+        })}
+      </svg>
+      <div className="pentagon-legend">
+        {keys.map(k => {
+          const count = summary[k.key] as number;
+          const pct = Math.round((count / total) * 100);
+          return (
+            <div key={k.key} className="pentagon-legend-row">
+              <span className="pentagon-dot" style={{ background: k.color }} />
+              <span className="pentagon-label">{k.label}</span>
+              <span className="pentagon-count">{count} <span className="muted">({pct}%)</span></span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 // Mini gráfico de barras por dia
 function SparkBar({ series }: { series: { date: string; total: number }[] }) {
@@ -1871,52 +1855,6 @@ function buildNextStep(items: ProfileItem[], total: number) {
   };
 }
 
-function buildExecutiveSummary(items: ProfileItem[], total: number) {
-  const sortedDesc = [...items].sort((a, b) => b.pct - a.pct);
-  const sortedAsc = [...items].sort((a, b) => a.pct - b.pct);
-  const maxValue = sortedDesc.length > 0 ? sortedDesc[0].value : 0;
-  const topItems = sortedDesc.filter((item) => item.value === maxValue);
-  const topExprs = joinList(topItems.map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
-  const lowExprs = joinList(sortedAsc.slice(0, 2).map((item) => EXPRESSIONS_MAP[item.key].expressionTitle));
-
-  const zeroItems = items.filter((item) => item.value === 0 || item.pct === 0);
-  const maxPct = Math.max(...items.map((item) => item.pct));
-  const statusKey: "green" | "yellow" | "red" =
-    maxPct >= BALANCE_DOMINANCE_PCT || zeroItems.length >= BALANCE_ABSENT_COUNT
-      ? "red"
-      : maxPct <= BALANCE_EVEN_PCT && zeroItems.length === 0
-        ? "green"
-        : "yellow";
-  const statusLabel = statusKey === "green" ? "equilibrado" : statusKey === "yellow" ? "parcialmente equilibrado" : "concentrado";
-
-  if (total < 10) {
-    return {
-      title: "Resumo Executivo (para líderes)",
-      lines: [
-        "Há poucos dados neste período; o retrato ainda é inicial.",
-        "O teste ajuda a mapear percepções e inclinações ministeriais do corpo.",
-        "Prioridade pastoral: ampliar a participação com convites simples e cuidado.",
-        "Explique que o relatório orienta discernimento, não conclui maturidade.",
-        "Use este momento para formar líderes e preparar práticas acompanhadas.",
-        "Próximo passo (30 dias): mobilizar respostas e ouvir a comunidade.",
-      ],
-      base: "Ef 4.11–16; 1Co 12",
-    };
-  }
-
-  return {
-    title: "Resumo Executivo (para líderes)",
-    lines: [
-      `Ênfase percebida no período: ${topExprs}.`,
-      `Leitura do equilíbrio: cenário ${statusLabel}, com foco em cooperação.`,
-      `Expressões a fortalecer: ${lowExprs}.`,
-      "Este retrato é baseado em respostas e não confirma ativação ou maturidade.",
-      "Resultado equilibrado ou concentrado pede discernimento e acompanhamento pastoral.",
-      "Próximo passo (30 dias): escolher 1 expressão para fortalecer e iniciar uma prática simples acompanhada.",
-    ],
-    base: "Ef 4.11–16; 1Co 12",
-  };
-}
 
 function buildPastoralInsight(primary: ProfileItem[], secondary: ProfileItem | null, lowItems: ProfileItem[], statusKey?: "green" | "yellow" | "red") {
   const sentences: string[] = [];
@@ -1952,25 +1890,3 @@ function buildPastoralInsight(primary: ProfileItem[], secondary: ProfileItem | n
   return sentences;
 }
 
-// Card de destaque para o maior dom
-function HighlightCard({ title, label, percent, color, hint, className }: { title: string; label: string; percent: number; color: string; hint?: string; className?: string }) {
-  return (
-    <div className={className}
-         style={{
-      borderRadius: 12,
-      padding: 16,
-      background: `linear-gradient(135deg, ${color}22 0%, ${color}11 100%)`,
-      border: `1px solid ${color}66`,
-      boxShadow: `0 8px 24px ${color}22`,
-      display: 'grid',
-      gap: 6,
-    }} title={`${title}: ${label} (${percent}%)`}>
-      <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: .5, color: '#cfe5ff' }}>{title}</div>
-      <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
-        <span style={{ fontSize: 22, fontWeight: 800, color: '#eaf6ff' }}>{label}</span>
-        <span style={{ fontSize: 18, fontWeight: 700, color: color }}>{percent}%</span>
-      </div>
-      {hint && <div style={{ fontSize: 12, color: '#9fb2c5' }}>{hint}</div>}
-    </div>
-  );
-}

@@ -1,6 +1,17 @@
 {
-  "name": "Five One",
+  "name": "Five One — Plataforma Ministerial",
   "short_name": "Five One",
+  "description": "Plataforma de formação ministerial Five One. Acesse as formações, módulos e aulas.",
+  "start_url": "/#/plataforma",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "theme_color": "#0a192f",
+  "background_color": "#0a192f",
+  "lang": "pt-BR",
+  "dir": "ltr",
+  "categories": ["education", "lifestyle"],
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",
@@ -13,9 +24,35 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any"
     }
   ],
-  "theme_color": "#ffffff",
-  "background_color": "#ffffff",
-  "display": "standalone"
+  "shortcuts": [
+    {
+      "name": "Plataforma",
+      "short_name": "Plataforma",
+      "description": "Acessar a plataforma de formação",
+      "url": "/#/plataforma",
+      "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Módulos",
+      "short_name": "Módulos",
+      "description": "Ver os módulos disponíveis",
+      "url": "/#/modulos-mestre",
+      "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Login",
+      "short_name": "Login",
+      "description": "Entrar na conta",
+      "url": "/#/login-aluno",
+      "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
+    }
+  ]
 }
