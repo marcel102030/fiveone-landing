@@ -71,70 +71,38 @@ export const onRequestGet = async (ctx: any) => {
       });
     }
 
-    // Buscar distribuição de doms (para os cards de sumário)
-    const { data: domDist } = await admin
-      .from('quiz_response')
-      .select('top_dom')
-      .not('top_dom', 'is', null);
-
-    const domCount: Record<string, number> = {};
-    (domDist || []).forEach((r: any) => {
-      domCount[r.top_dom] = (domCount[r.top_dom] || 0) + 1;
-    });
-
-    // Respostas este mês
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
-    const { count: thisMonth } = await admin
-      .from('quiz_response')
-      .select('id', { count: 'exact', head: true })
-      .gte('created_at', startOfMonth.toISOString());
-
-    // Média de tempo
-    const { data: avgData } = await admin
-      .from('quiz_response')
-      .select('completion_seconds')
-      .not('completion_seconds', 'is', null);
-    const avgSeconds = avgData && avgData.length > 0
-      ? Math.round(avgData.reduce((s: number, r: any) => s + r.completion_seconds, 0) / avgData.length)
-      : null;
-
-    // Lista de igrejas para o filtro
-    const { data: churches } = await admin
-      .from('church')
-      .select('id, name, city')
-      .order('name');
-
-    // Breakdown por fonte
-    const { data: sourceData } = await admin
-      .from('quiz_response')
-      .select('source');
-
-    const sourceBreakdown: Record<string, number> = {};
-    (sourceData || []).forEach((r: any) => {
-      const s = r.source || 'direct';
-      sourceBreakdown[s] = (sourceBreakdown[s] || 0) + 1;
-    });
-
-    // Tendência mensal (últimos 12 meses)
+    // Query única para todos os agregados (domDist, source, emails, trend, avgSeconds)
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
-    const { data: trendData } = await admin
-      .from('quiz_response')
-      .select('created_at')
-      .gte('created_at', twelveMonthsAgo.toISOString());
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1); startOfMonth.setHours(0, 0, 0, 0);
 
-    // E-mails duplicados
-    const { data: emailData } = await admin
-      .from('quiz_response')
-      .select('person_email')
-      .not('person_email', 'is', null);
+    const [{ data: aggData }, { count: thisMonth }, { data: churches }] = await Promise.all([
+      admin.from('quiz_response')
+        .select('top_dom, source, person_email, created_at, completion_seconds')
+        .gte('created_at', twelveMonthsAgo.toISOString()),
+      admin.from('quiz_response')
+        .select('id', { count: 'exact', head: true })
+        .gte('created_at', startOfMonth.toISOString()),
+      admin.from('church').select('id, name, city').order('name'),
+    ]);
 
+    const domCount: Record<string, number> = {};
+    const sourceBreakdown: Record<string, number> = {};
     const emailCounts: Record<string, number> = {};
-    (emailData || []).forEach((r: any) => {
+    const recentDates: string[] = [];
+    let completionSum = 0, completionCount = 0;
+
+    for (const r of (aggData || []) as any[]) {
+      if (r.top_dom) domCount[r.top_dom] = (domCount[r.top_dom] || 0) + 1;
+      const s = r.source || 'direct';
+      sourceBreakdown[s] = (sourceBreakdown[s] || 0) + 1;
       if (r.person_email) emailCounts[r.person_email] = (emailCounts[r.person_email] || 0) + 1;
-    });
+      if (r.created_at) recentDates.push(r.created_at);
+      if (typeof r.completion_seconds === 'number') { completionSum += r.completion_seconds; completionCount++; }
+    }
+
+    const avgSeconds = completionCount > 0 ? Math.round(completionSum / completionCount) : null;
     const duplicateEmails = Object.entries(emailCounts)
       .filter(([, c]) => c > 1)
       .map(([email, c]) => ({ email, count: c }));
@@ -150,10 +118,10 @@ export const onRequestGet = async (ctx: any) => {
           domDistribution: domCount,
           thisMonth: thisMonth ?? 0,
           avgSeconds,
-          totalAll: domDist?.length ?? 0,
+          totalAll: aggData?.length ?? 0,
           churches: (churches ?? []).map((c: any) => ({ id: c.id, name: c.name, city: c.city })),
           sourceBreakdown,
-          recentDates: (trendData || []).map((r: any) => r.created_at),
+          recentDates,
           duplicateEmails,
         },
       }),

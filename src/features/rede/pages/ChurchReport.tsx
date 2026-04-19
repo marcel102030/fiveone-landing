@@ -282,7 +282,7 @@ function ChurchReportInner() {
       setError(null);
       try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-        const qsObj = { churchSlug: slug, from, to, tz, includePeople: 'true' } as Record<string,string>;
+        const qsObj = { churchSlug: slug, from, to, tz } as Record<string,string>;
         if (tokenParam) (qsObj as any).token = tokenParam;
         const qs = new URLSearchParams(qsObj).toString();
         const res = await fetch(`/api/church-summary?${qs}`);
@@ -322,21 +322,9 @@ function ChurchReportInner() {
   // Modal de participantes
   const [modalOpen, setModalOpen] = useState(false);
   const [modalDom, setModalDom] = useState<"Apostólico" | "Profeta" | "Evangelista" | "Pastor" | "Mestre" | null>(null);
-  const participants = useMemo((): ParticipantListItem[] => {
-    if (!data?.peopleByDom || !modalDom) return [];
-    const mapKeys: Record<'Apostólico' | 'Profeta' | 'Evangelista' | 'Pastor' | 'Mestre', 'apostolo' | 'profeta' | 'evangelista' | 'pastor' | 'mestre'> = {
-      Apostólico: 'apostolo',
-      Profeta: 'profeta',
-      Evangelista: 'evangelista',
-      Pastor: 'pastor',
-      Mestre: 'mestre',
-    };
-    const key = mapKeys[modalDom];
-    const dict = data.peopleByDom as Record<string, { name: string; date: string }[]>;
-    return dict[key] ?? [];
-  }, [data?.peopleByDom, modalDom]);
 
   // Controles e dados do modal
+  const [modalListLoading, setModalListLoading] = useState(false);
   const [includeTies, setIncludeTies] = useState(false);
   const [showContacts, setShowContacts] = useState(false);
   const [search, setSearch] = useState('');
@@ -350,50 +338,57 @@ function ChurchReportInner() {
   const [participantDetailError, setParticipantDetailError] = useState<string | null>(null);
   const [participantDetailLoading, setParticipantDetailLoading] = useState(false);
 
-  useEffect(() => {
-    if (modalOpen) {
-      // inicia com o snapshot do summary
-      setList(participants as any);
+  const DOM_KEY_LOOKUP: Record<string, string> = { 'Apostólico': 'apostolo', 'Profeta': 'profeta', 'Evangelista': 'evangelista', 'Pastor': 'pastor', 'Mestre': 'mestre' };
+
+  async function fetchModalPeople(dom: typeof modalDom, ties: boolean, contacts: boolean) {
+    if (!dom) return;
+    setModalListLoading(true);
+    try {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
+      const params: Record<string, string> = {
+        churchSlug: slug, from: from || '', to: to || '', tz,
+        includePeople: 'true',
+        includeTies: ties ? 'true' : 'false',
+        includeContacts: contacts ? 'true' : 'false',
+      };
+      if (tokenParam) params.token = tokenParam;
+      const res = await fetch(`/api/church-summary?${new URLSearchParams(params)}`);
+      const j = await res.json();
+      if (!res.ok || !j.ok) return;
+      const arr = j.peopleByDom?.[DOM_KEY_LOOKUP[dom]] ?? [];
+      setList(arr);
       setPage(0);
-      setHasMore((participants?.length || 0) >= 200);
+      setHasMore((arr.length || 0) >= 200);
+    } finally {
+      setModalListLoading(false);
+    }
+  }
+
+  // Abre o modal e carrega participantes lazy
+  useEffect(() => {
+    if (modalOpen && modalDom) {
+      setList([]);
+      setPage(0);
+      setHasMore(false);
       setSearch('');
+      setIncludeTies(false);
+      setShowContacts(false);
       setSelectedParticipantId(null);
       setParticipantDetail(null);
       setParticipantDetailError(null);
       setParticipantDetailLoading(false);
-    } else {
+      fetchModalPeople(modalDom, false, false);
+    } else if (!modalOpen) {
       setSearch('');
+      setList([]);
       setSelectedParticipantId(null);
       setParticipantDetail(null);
       setParticipantDetailError(null);
       setParticipantDetailLoading(false);
     }
-  }, [modalOpen, participants]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modalOpen, modalDom]);
 
-  async function refetchPeopleFromSummary() {
-    if (!modalDom) return;
-    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-    const params: Record<string, string> = {
-      churchSlug: slug,
-      from: from || '',
-      to: to || '',
-      tz,
-      includePeople: 'true',
-      includeTies: includeTies ? 'true' : 'false',
-      includeContacts: showContacts ? 'true' : 'false',
-    };
-    if (tokenParam) params.token = tokenParam;
-    const qs = new URLSearchParams(params).toString();
-    const res = await fetch(`/api/church-summary?${qs}`);
-    const j = await res.json();
-    if (!res.ok || !j.ok) return;
-    const map: any = { 'Apostólico':'apostolo','Profeta':'profeta','Evangelista':'evangelista','Pastor':'pastor','Mestre':'mestre' };
-    const key = map[modalDom];
-    const arr = (j.peopleByDom && j.peopleByDom[key]) ? j.peopleByDom[key] : [];
-    setList(arr);
-    setPage(0);
-    setHasMore((arr?.length || 0) >= 200);
-  }
 
   async function loadMorePeople() {
     if (!modalDom) return;
@@ -884,6 +879,11 @@ function ChurchReportInner() {
             {data?.series && data.series.length > 0 ? <SparkBar series={data.series} /> : <p className="muted">Nenhum dado para o período selecionado.</p>}
           </section>
 
+          {/* ── RODAPÉ ───────────────────────────────────────────────────── */}
+          <div className="report-footer-generated">
+            Relatório gerado em {new Date().toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+          </div>
+
           {/* ── EXPORTAR ─────────────────────────────────────────────────── */}
           <div className="export-row">
             <button className="btn" onClick={() => downloadCSV(slug, data)}>Exportar CSV</button>
@@ -905,11 +905,11 @@ function ChurchReportInner() {
                   <div style={{ display:'flex', gap:8, flexWrap:'wrap', marginBottom:10 }}>
                     <label className="field"><span>Buscar</span><input className="input-date" type="text" value={search} onChange={(e)=>setSearch(e.target.value)} placeholder="Nome"/></label>
                     <label className="field" style={{ alignItems:'center', flexDirection:'row', gap:6 }}>
-                      <input type="checkbox" checked={includeTies} onChange={(e)=>{setIncludeTies(e.target.checked); refetchPeopleFromSummary();}}/>
+                      <input type="checkbox" checked={includeTies} onChange={(e)=>{ const v=e.target.checked; setIncludeTies(v); fetchModalPeople(modalDom, v, showContacts); }}/>
                       <span>Incluir empatados</span>
                     </label>
                     <label className="field" style={{ alignItems:'center', flexDirection:'row', gap:6 }}>
-                      <input type="checkbox" checked={showContacts} onChange={(e)=>{setShowContacts(e.target.checked); refetchPeopleFromSummary();}}/>
+                      <input type="checkbox" checked={showContacts} onChange={(e)=>{ const v=e.target.checked; setShowContacts(v); fetchModalPeople(modalDom, includeTies, v); }}/>
                       <span>Mostrar contatos</span>
                     </label>
                     <div style={{ marginLeft:'auto', display:'inline-flex', gap:6 }}>
@@ -918,7 +918,9 @@ function ChurchReportInner() {
                       <button className={`btn pill ${sortDir==='asc'?'':'ghost'}`} onClick={()=>setSortDir(sortDir==='asc'?'desc':'asc')}>{sortDir==='asc'?'↑':'↓'}</button>
                     </div>
                   </div>
-                  {filteredSorted.length === 0 ? (
+                  {modalListLoading ? (
+                    <p className="muted" style={{ textAlign: 'center', padding: '24px 0' }}>Carregando participantes…</p>
+                  ) : filteredSorted.length === 0 ? (
                     <p className="muted">Nenhum participante neste período.</p>
                   ) : (
                     <div className="people-layout">
@@ -1126,7 +1128,7 @@ function PentagonChart({ summary }: { summary: Summary }) {
   const outerPoints = keys.map((_, i) => { const p = pt(R, i); return `${p.x},${p.y}`; }).join(' ');
   return (
     <div className="pentagon-wrap">
-      <svg viewBox="0 0 220 220" width={220} height={220} aria-hidden="true">
+      <svg viewBox="-10 -10 260 260" width={240} height={240} aria-hidden="true">
         {gridLevels.map(lvl => (
           <polygon key={lvl} points={keys.map((_, i) => { const p = pt(R * lvl, i); return `${p.x},${p.y}`; }).join(' ')}
             fill="none" stroke="#1e3a4a" strokeWidth={1} />
@@ -1141,6 +1143,16 @@ function PentagonChart({ summary }: { summary: Summary }) {
           const val = (summary[k.key] as number) / total;
           const p = pt(val * R, i);
           return <circle key={k.key} cx={p.x} cy={p.y} r={5} fill={k.color} />;
+        })}
+        {keys.map((k, i) => {
+          const lp = pt(R + 16, i);
+          const anchor = lp.x < cx - 4 ? 'end' : lp.x > cx + 4 ? 'start' : 'middle';
+          return (
+            <text key={`lbl-${k.key}`} x={lp.x} y={lp.y + 4} textAnchor={anchor}
+              fontSize={9} fill="#7fa8c9" fontFamily="sans-serif">
+              {k.label}
+            </text>
+          );
         })}
       </svg>
       <div className="pentagon-legend">
@@ -1269,7 +1281,10 @@ async function exportExecutivePDF(slug: string, data: ApiResponse | null, cardsE
   const church = data?.churchName || slug || '(não informado)';
   const period = data?.period ? `${data.period.from || '—'} a ${data.period.to || '—'}` : '—';
   pdf.text(`Igreja: ${church}`, pageWidth/2, y, { align:'center' }); y+=6;
-  pdf.text(`Período: ${period}`, pageWidth/2, y, { align:'center' }); y+=10;
+  pdf.text(`Período: ${period}`, pageWidth/2, y, { align:'center' }); y+=6;
+  pdf.setFontSize(9); pdf.setTextColor(120, 140, 160);
+  pdf.text(`Gerado em: ${new Date().toLocaleString('pt-BR')}`, pageWidth/2, y, { align:'center' });
+  pdf.setTextColor(0, 0, 0); pdf.setFontSize(12); y+=8;
   pdf.setDrawColor(30,41,59); pdf.line(20,y, pageWidth-20,y); y+=8;
   // KPIs
   const kpis = [
@@ -1737,8 +1752,6 @@ function buildNextStep(items: ProfileItem[], total: number) {
         "Registrem aprendizados e preparem o próximo ciclo de participação.",
       ],
       note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
-      optionalSupport:
-        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
     };
   }
 
@@ -1771,8 +1784,6 @@ function buildNextStep(items: ProfileItem[], total: number) {
         `Reequilibrem o corpo, evitando centralizar tudo em ${dominantExpr}.`,
       ],
       note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
-      optionalSupport:
-        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
     };
   }
 
@@ -1796,8 +1807,6 @@ function buildNextStep(items: ProfileItem[], total: number) {
         "Registrem aprendizados e planejem o próximo ciclo de cooperação.",
       ],
       note: "Lembrete: o teste mostra percepções; a ativação acontece com discipulado e prática comunitária.",
-      optionalSupport:
-        "Se a liderança desejar transformar esse retrato em ativação prática, um acompanhamento (online ou presencial) ajuda a traduzir as expressões em rotinas, treinar líderes por dom e acompanhar sinais simples de progresso.",
     };
   }
 

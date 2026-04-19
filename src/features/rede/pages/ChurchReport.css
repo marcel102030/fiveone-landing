@@ -1363,6 +1363,15 @@
   margin-bottom: 5px;
 }
 
+.report-footer-generated {
+  font-size: 0.72rem;
+  color: #4a6278;
+  text-align: right;
+  padding: 12px 0 4px;
+  border-top: 1px solid #1e3a4a;
+  margin-top: 8px;
+}
+
 .next-step-col-label {
   font-size: 0.7rem;
   font-weight: 700;
