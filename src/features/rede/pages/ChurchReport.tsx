@@ -258,11 +258,10 @@ function ChurchReportInner() {
   const [data, setData] = useState<ApiResponse | null>(null);
   // filtros simples de período (ISO yyyy-mm-dd)
   // Datas padrão usando fuso local para evitar descompasso com UTC
-  const todayIso = new Date().toLocaleDateString('en-CA'); // yyyy-mm-dd no fuso local
-  const d = new Date(); d.setDate(d.getDate() - 29);
-  const thirtyDaysAgoIso = d.toLocaleDateString('en-CA');
-  const [from, setFrom] = useState<string>(query.get("from") || thirtyDaysAgoIso);
-  const [to, setTo] = useState<string>(query.get("to") || todayIso);
+  function getTodayIso() { return new Date().toLocaleDateString('en-CA'); }
+  function getThirtyDaysAgoIso() { const d = new Date(); d.setDate(d.getDate() - 29); return d.toLocaleDateString('en-CA'); }
+  const [from, setFrom] = useState<string>(query.get("from") || getThirtyDaysAgoIso());
+  const [to, setTo] = useState<string>(query.get("to") || getTodayIso());
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const distRef = useRef<HTMLDivElement>(null);
@@ -357,11 +356,13 @@ function ChurchReportInner() {
       setList(participants as any);
       setPage(0);
       setHasMore((participants?.length || 0) >= 200);
+      setSearch('');
       setSelectedParticipantId(null);
       setParticipantDetail(null);
       setParticipantDetailError(null);
       setParticipantDetailLoading(false);
     } else {
+      setSearch('');
       setSelectedParticipantId(null);
       setParticipantDetail(null);
       setParticipantDetailError(null);
@@ -372,15 +373,17 @@ function ChurchReportInner() {
   async function refetchPeopleFromSummary() {
     if (!modalDom) return;
     const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || 'America/Sao_Paulo';
-    const qs = new URLSearchParams({
+    const params: Record<string, string> = {
       churchSlug: slug,
       from: from || '',
       to: to || '',
       tz,
       includePeople: 'true',
       includeTies: includeTies ? 'true' : 'false',
-      includeContacts: showContacts ? 'true' : 'false'
-    }).toString();
+      includeContacts: showContacts ? 'true' : 'false',
+    };
+    if (tokenParam) params.token = tokenParam;
+    const qs = new URLSearchParams(params).toString();
     const res = await fetch(`/api/church-summary?${qs}`);
     const j = await res.json();
     if (!res.ok || !j.ok) return;
@@ -571,7 +574,7 @@ function ChurchReportInner() {
 
 
   return (
-    <div className="report-wrap">
+    <div className="report-wrap" ref={containerRef}>
 
       {/* ── CABEÇALHO ─────────────────────────────────────────────────────── */}
       <header className="report-hero">
@@ -615,25 +618,6 @@ function ChurchReportInner() {
               <span className="report-meta-value">{periodLabel}</span>
             </div>
           </div>
-          {/* dummy-meta-item abaixo apenas para alinhar layout legado */}
-          <div style={{ display: 'none' }}>
-            <div className="report-meta-item">
-              <span className="report-meta-label">Membros previstos</span>
-              <span className="report-meta-value">{expectedMembers !== null ? expectedMembers.toLocaleString("pt-BR") : "—"}</span>
-            </div>
-            <div className="report-meta-item">
-              <span className="report-meta-label">Respostas totais</span>
-              <span className="report-meta-value">{typeof totalResponses === "number" ? totalResponses.toLocaleString("pt-BR") : "—"}</span>
-            </div>
-            <div className="report-meta-item">
-              <span className="report-meta-label">Participação</span>
-              <span className="report-meta-value">{totalParticipation !== null ? `${totalParticipation}%` : "—"}</span>
-            </div>
-            <div className="report-meta-item">
-              <span className="report-meta-label">Período</span>
-              <span className="report-meta-value">{periodLabel}</span>
-            </div>
-          </div>
         </div>
         <div className="report-hero-actions">
           <button className="btn" onClick={() => shareReportLink(data?.slug || slug, from, to, toast)}>
@@ -665,8 +649,8 @@ function ChurchReportInner() {
           </label>
         </div>
         <div className="report-toolbar-right">
-          <button className="btn pill" onClick={() => { setFrom(thirtyDaysAgoIso); setTo(todayIso); }}>Últimos 30 dias</button>
-          <button className="btn pill ghost" onClick={() => { setFrom("" as any); setTo("" as any); }}>Tudo</button>
+          <button className="btn pill" onClick={() => { setFrom(getThirtyDaysAgoIso()); setTo(getTodayIso()); }}>Últimos 30 dias</button>
+          <button className="btn pill ghost" onClick={() => { setFrom(''); setTo(''); }}>Tudo</button>
         </div>
       </section>
 
@@ -693,23 +677,23 @@ function ChurchReportInner() {
               Há {data.participation.overallTotal} resposta{data.participation.overallTotal !== 1 ? 's' : ''} no total — clique em "Tudo" para visualizar a análise completa.
             </span>
           </div>
-          <button className="btn pill" onClick={() => { setFrom("" as any); setTo("" as any); }}>
+          <button className="btn pill" onClick={() => { setFrom(''); setTo(''); }}>
             Ver tudo
           </button>
         </div>
       )}
 
       {summary && summary.total > 0 && (
-        <>
+        <div ref={pageRef}>
           {/* ── 1. PANORAMA ──────────────────────────────────────────────── */}
-          <section className="rpt-section" ref={containerRef}>
+          <section className="rpt-section">
             <div className="rpt-kicker">Visão Geral</div>
             <h2 className="rpt-h2">Panorama Ministerial</h2>
             <p className="muted" style={{ marginBottom: 20 }}>Distribuição percebida dos 5 ministérios com base nas respostas do período.</p>
             <div className="panorama-layout">
               <PentagonChart summary={summary} />
               <div className="panorama-right">
-                <div className="cards-row-5" ref={pageRef}>
+                <div className="cards-row-5">
                   {([
                     { key: 'Apostólico' as const, val: summary.apostolo },
                     { key: 'Profeta' as const, val: summary.profeta },
@@ -1039,9 +1023,8 @@ function ChurchReportInner() {
               </div>
             </div>
           )}
-        </>
+        </div>
       )}
-
 
       {!loading && !summary && !error && (
         <p>Nenhum dado encontrado para este slug.</p>
@@ -1123,6 +1106,9 @@ function PentagonChart({ summary }: { summary: Summary }) {
     { key: 'mestre', label: 'Mestre', color: '#60a5fa' },
   ];
   const total = Math.max(summary.total, 1);
+  const dominantKey = keys.reduce((best, k) =>
+    (summary[k.key] as number) > (summary[best.key] as number) ? k : best, keys[0]);
+  const dominantColor = dominantKey.color;
   const cx = 110, cy = 110, R = 90;
   const angle = (i: number) => (Math.PI * 2 * i) / 5 - Math.PI / 2;
   const pt = (r: number, i: number) => ({
@@ -1149,7 +1135,7 @@ function PentagonChart({ summary }: { summary: Summary }) {
           const outer = pt(R, i);
           return <line key={i} x1={cx} y1={cy} x2={outer.x} y2={outer.y} stroke="#1e3a4a" strokeWidth={1} />;
         })}
-        <polygon points={polygonPoints} fill="rgba(34,197,94,0.18)" stroke="#22c55e" strokeWidth={2} />
+        <polygon points={polygonPoints} fill={`${dominantColor}22`} stroke={dominantColor} strokeWidth={2} />
         <polygon points={outerPoints} fill="none" stroke="#1e3a4a" strokeWidth={1} />
         {keys.map((k, i) => {
           const val = (summary[k.key] as number) / total;
@@ -1393,22 +1379,6 @@ function shareReportLink(slug: string, from: string, to: string, toast: AdminToa
     document.body.removeChild(ta);
   }
 }
-/* function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: string }[]) {
-  const lines = ['nome,data,dom'];
-  for (const p of list) {
-    const nome = p.name.replace(/"/g, """");
-    lines.push(`"${nome}",${p.date},${dom}`);
-  }
-  const csv = lines.join('\n');
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `participantes_${slug}_${dom}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-} */
-
 function exportPeopleCSV(slug: string, dom: string, list: { name: string; date: string }[]) {
   const lines: string[] = ['nome,data,dom'];
   for (const p of list) {
