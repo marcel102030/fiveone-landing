@@ -644,8 +644,8 @@ function ChurchReportInner() {
           </label>
         </div>
         <div className="report-toolbar-right">
-          <button className="btn pill" onClick={() => { setFrom(getThirtyDaysAgoIso()); setTo(getTodayIso()); }}>Últimos 30 dias</button>
-          <button className="btn pill ghost" onClick={() => { setFrom(''); setTo(''); }}>Tudo</button>
+          <button className={`btn pill ${from || to ? '' : 'ghost'}`} onClick={() => { setFrom(getThirtyDaysAgoIso()); setTo(getTodayIso()); }}>Últimos 30 dias</button>
+          <button className={`btn pill ${from || to ? 'ghost' : ''}`} onClick={() => { setFrom(''); setTo(''); }}>Tudo</button>
         </div>
       </section>
 
