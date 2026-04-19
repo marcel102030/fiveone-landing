@@ -424,7 +424,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 76,
       category: CategoryEnum.PASTOR,
-      text: “Me alegra criar tradições e rituais de cuidado em grupos — como visitas, celebrações e acompanhamentos periódicos.”,
+      text: “Me alegra criar tradições e rituais de cuidado em grupos, como visitas, celebrações e acompanhamentos periódicos.”,
     },
     {
       id: 77,
