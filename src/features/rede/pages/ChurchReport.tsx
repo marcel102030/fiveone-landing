@@ -260,8 +260,8 @@ function ChurchReportInner() {
   // Datas padrão usando fuso local para evitar descompasso com UTC
   function getTodayIso() { return new Date().toLocaleDateString('en-CA'); }
   function getThirtyDaysAgoIso() { const d = new Date(); d.setDate(d.getDate() - 29); return d.toLocaleDateString('en-CA'); }
-  const [from, setFrom] = useState<string>(query.get("from") || getThirtyDaysAgoIso());
-  const [to, setTo] = useState<string>(query.get("to") || getTodayIso());
+  const [from, setFrom] = useState<string>(query.get("from") || '');
+  const [to, setTo] = useState<string>(query.get("to") || '');
   const containerRef = useRef<HTMLDivElement>(null);
   const pageRef = useRef<HTMLDivElement>(null);
   const distRef = useRef<HTMLDivElement>(null);
