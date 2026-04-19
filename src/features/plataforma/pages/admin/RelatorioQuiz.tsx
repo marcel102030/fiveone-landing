@@ -1,11 +1,12 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "./AdministracaoFiveOne.css";
 import "./AdminChurches.css";
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
-interface ChurchRef { name: string; city: string; slug: string; }
+interface ChurchRef  { name: string; city: string; slug: string; }
+interface ChurchItem { id: string; name: string; city: string; }
 
 interface QuizRow {
   id: string;
@@ -29,6 +30,7 @@ interface Summary {
   thisMonth: number;
   avgSeconds: number | null;
   totalAll: number;
+  churches: ChurchItem[];
 }
 
 interface ApiResult {
@@ -40,10 +42,10 @@ interface ApiResult {
   summary: Summary;
 }
 
-// ─── Constantes de dom ────────────────────────────────────────────────────────
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
 const DOM_LABELS: Record<string, string> = {
-  apostolo: 'Apóstolo', profeta: 'Profeta',
+  apostolo: 'Ap\u00f3stolo', profeta: 'Profeta',
   evangelista: 'Evangelista', pastor: 'Pastor', mestre: 'Mestre',
 };
 const DOM_COLORS: Record<string, string> = {
@@ -53,23 +55,34 @@ const DOM_COLORS: Record<string, string> = {
 const DOM_ORDER = ['apostolo', 'profeta', 'evangelista', 'pastor', 'mestre'];
 
 const SOURCE_LABELS: Record<string, string> = {
-  direct: 'Direto', church_invite: 'Igreja', organic: 'Orgânico', qr_code: 'QR Code',
+  direct: 'Direto', church_invite: 'Igreja', organic: 'Org\u00e2nico', qr_code: 'QR Code',
 };
 const DEVICE_ICONS: Record<string, string> = {
-  mobile: '📱', tablet: '⬜', desktop: '💻',
+  mobile: '\ud83d\udcf1', tablet: '\u2b1c', desktop: '\ud83d\udcbb',
 };
 
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
 function fmtTime(s: number | null) {
-  if (!s) return '—';
+  if (!s) return '\u2014';
   const m = Math.floor(s / 60);
   const sec = s % 60;
   return m > 0 ? `${m}m ${sec}s` : `${sec}s`;
 }
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('pt-BR', {
-    day: '2-digit', month: '2-digit', year: '2-digit',
-  });
+function fmtDateShort(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: '2-digit' });
+}
+
+function fmtDatetime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+function fmtHour(iso: string) {
+  return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
 // ─── Componentes auxiliares ───────────────────────────────────────────────────
@@ -95,14 +108,8 @@ function ScoreBars({ scores }: { scores: Record<string, number> }) {
         const pct = Math.round((scores[dom] ?? 0) / total * 100);
         return (
           <div key={dom} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            <div style={{
-              width: 56, height: 5, borderRadius: 3,
-              background: 'rgba(148,163,184,0.12)', overflow: 'hidden',
-            }}>
-              <div style={{
-                width: `${pct}%`, height: '100%',
-                background: DOM_COLORS[dom] ?? '#555', borderRadius: 3,
-              }} />
+            <div style={{ width: 56, height: 5, borderRadius: 3, background: 'rgba(148,163,184,0.12)', overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: DOM_COLORS[dom] ?? '#555', borderRadius: 3 }} />
             </div>
             <span style={{ fontSize: '0.6rem', color: '#8fa5ba', width: 24 }}>{pct}%</span>
           </div>
@@ -113,7 +120,7 @@ function ScoreBars({ scores }: { scores: Record<string, number> }) {
 }
 
 function SourceChip({ source }: { source: string | null }) {
-  const label = source ? (SOURCE_LABELS[source] ?? source) : '—';
+  const label = source ? (SOURCE_LABELS[source] ?? source) : '\u2014';
   const colors: Record<string, string> = {
     direct: '#38bdf8', church_invite: '#a78bfa', organic: '#6ee7b7', qr_code: '#fbbf24',
   };
@@ -137,12 +144,8 @@ function SummaryCard({ label, value, sub, icon, accent, color }: {
   return (
     <div style={{ background: bg, border, borderRadius: 16, padding: '20px 22px' }}>
       <div style={{ fontSize: '1.2rem', marginBottom: 6 }}>{icon}</div>
-      <div style={{ fontSize: '0.72rem', color: '#8fa5ba', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>
-        {label}
-      </div>
-      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: valCol, lineHeight: 1 }}>
-        {value}
-      </div>
+      <div style={{ fontSize: '0.72rem', color: '#8fa5ba', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: '1.8rem', fontWeight: 800, color: valCol, lineHeight: 1 }}>{value}</div>
       {sub && <div style={{ fontSize: '0.72rem', color: '#8fa5ba', marginTop: 4 }}>{sub}</div>}
     </div>
   );
@@ -153,7 +156,7 @@ function SummaryCard({ label, value, sub, icon, accent, color }: {
 const LIMIT = 50;
 
 export default function RelatorioQuiz() {
-  document.title = "Administração | Five One — Relatório Quiz";
+  document.title = 'Administra\u00e7\u00e3o | Five One \u2014 Relat\u00f3rio Quiz';
 
   const [rows, setRows]       = useState<QuizRow[]>([]);
   const [total, setTotal]     = useState(0);
@@ -169,25 +172,33 @@ export default function RelatorioQuiz() {
   const [dateFrom, setDateFrom] = useState('');
   const [dateTo,   setDateTo]   = useState('');
   const [sort,     setSort]     = useState('created_at');
-  const [order,    setOrder]    = useState<'asc'|'desc'>('desc');
+  const [order,    setOrder]    = useState<'asc' | 'desc'>('desc');
 
+  // Debounced search
+  const [searchQ, setSearchQ] = useState('');
   const searchTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => {
+    clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setSearchQ(search), 350);
+    return () => clearTimeout(searchTimer.current);
+  }, [search]);
 
-  const buildUrl = useCallback((p: number) => {
+  // ── Core load ────────────────────────────────────────────────────────────────
+  function buildUrl(p: number) {
     const params = new URLSearchParams({ page: String(p), limit: String(LIMIT), sort, order });
-    if (search)   params.set('search', search);
-    if (topDom)   params.set('topDom', topDom);
-    if (source)   params.set('source', source);
+    if (searchQ)  params.set('search',   searchQ);
+    if (topDom)   params.set('topDom',   topDom);
+    if (source)   params.set('source',   source);
     if (churchId) params.set('churchId', churchId);
     if (dateFrom) params.set('dateFrom', dateFrom);
-    if (dateTo)   params.set('dateTo', dateTo);
+    if (dateTo)   params.set('dateTo',   dateTo);
     return `/api/quiz-admin-list?${params}`;
-  }, [search, topDom, source, churchId, dateFrom, dateTo, sort, order]);
+  }
 
-  const load = useCallback(async (p: number) => {
+  async function load(p: number) {
     setLoading(true);
     try {
-      const res = await fetch(buildUrl(p));
+      const res  = await fetch(buildUrl(p));
       const data: ApiResult = await res.json();
       if (data.ok) {
         setRows(data.results);
@@ -198,106 +209,114 @@ export default function RelatorioQuiz() {
         }
       }
     } finally { setLoading(false); }
-  }, [buildUrl]);
+  }
 
-  useEffect(() => { load(1); setPage(1); }, [topDom, source, churchId, dateFrom, dateTo, sort, order]);
-
+  // Reset page + fetch when any filter changes (except pagination)
   useEffect(() => {
-    clearTimeout(searchTimer.current);
-    searchTimer.current = setTimeout(() => { load(1); setPage(1); }, 350);
-    return () => clearTimeout(searchTimer.current);
-  }, [search]);
+    setPage(1);
+    load(1);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchQ, topDom, source, churchId, dateFrom, dateTo, sort, order]);
 
-  useEffect(() => { load(page); }, [page]);
+  // Fetch when page changes (pagination clicks)
+  const isFirstRender = useRef(true);
+  useEffect(() => {
+    if (isFirstRender.current) { isFirstRender.current = false; return; }
+    load(page);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page]);
 
   const totalPages = Math.max(1, Math.ceil(total / LIMIT));
 
+  // ── CSV Export ────────────────────────────────────────────────────────────────
   async function exportCsv() {
     const params = new URLSearchParams({ page: '1', limit: '10000', sort, order });
-    if (search)   params.set('search', search);
-    if (topDom)   params.set('topDom', topDom);
-    if (source)   params.set('source', source);
+    if (searchQ)  params.set('search',   searchQ);
+    if (topDom)   params.set('topDom',   topDom);
+    if (source)   params.set('source',   source);
     if (churchId) params.set('churchId', churchId);
     if (dateFrom) params.set('dateFrom', dateFrom);
-    if (dateTo)   params.set('dateTo', dateTo);
+    if (dateTo)   params.set('dateTo',   dateTo);
     const res  = await fetch(`/api/quiz-admin-list?${params}`);
     const data: ApiResult = await res.json();
     if (!data.ok) return;
     const headers = ['Nome','Email','Telefone','Dom Principal','Apostolo%','Profeta%','Evangelista%','Pastor%','Mestre%','Fonte','Igreja','Cidade','Dispositivo','Tempo(s)','Data','Token'];
     const csvRows = data.results.map(r => {
       const sc = r.scores_json ?? {};
-      const t  = Object.values(sc).reduce((a,b)=>a+b,0)||1;
+      const t  = Object.values(sc).reduce((a, b) => a + b, 0) || 1;
       return [
         r.person_name ?? '', r.person_email ?? '', r.person_phone ?? '',
         DOM_LABELS[r.top_dom] ?? r.top_dom,
-        Math.round((sc.apostolo??0)/t*100),
-        Math.round((sc.profeta??0)/t*100),
-        Math.round((sc.evangelista??0)/t*100),
-        Math.round((sc.pastor??0)/t*100),
-        Math.round((sc.mestre??0)/t*100),
+        Math.round((sc.apostolo ?? 0) / t * 100),
+        Math.round((sc.profeta  ?? 0) / t * 100),
+        Math.round((sc.evangelista ?? 0) / t * 100),
+        Math.round((sc.pastor   ?? 0) / t * 100),
+        Math.round((sc.mestre   ?? 0) / t * 100),
         r.source ?? '', r.church?.name ?? '', r.church?.city ?? '',
         r.device_type ?? '', r.completion_seconds ?? '',
-        fmtDate(r.created_at), r.result_token ?? '',
-      ].map(v => `"${String(v).replace(/"/g,'""')}"`).join(',');
+        fmtDatetime(r.created_at), r.result_token ?? '',
+      ].map(v => `"${String(v).replace(/"/g, '""')}"`).join(',');
     });
     const blob = new Blob([[headers.join(','), ...csvRows].join('\n')], { type: 'text/csv;charset=utf-8;' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download = `quiz-resultados-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `quiz-resultados-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
   }
 
+  // ── Ordenação ─────────────────────────────────────────────────────────────────
   function toggleSort(col: string) {
     if (sort === col) setOrder(o => o === 'asc' ? 'desc' : 'asc');
     else { setSort(col); setOrder('desc'); }
   }
-  const sortIcon = (col: string) => sort === col ? (order === 'asc' ? ' ▲' : ' ▼') : '';
+  const sortIcon = (col: string) => sort === col ? (order === 'asc' ? ' \u25b2' : ' \u25bc') : '';
 
   const topDomEntry = summary
-    ? Object.entries(summary.domDistribution).sort((a,b)=>b[1]-a[1])[0]
+    ? Object.entries(summary.domDistribution).sort((a, b) => b[1] - a[1])[0]
     : null;
 
+  const hasFilter = !!(search || topDom || source || churchId || dateFrom || dateTo);
+
+  // ── Render ────────────────────────────────────────────────────────────────────
   return (
     <div className="admin-wrap">
+
       {/* Header */}
       <div className="admin-header" style={{ marginBottom: 32 }}>
         <div className="admin-header-text">
-          <span className="admin-pill">📊 Relatório</span>
+          <span className="admin-pill">&#128202; Relat&oacute;rio</span>
           <h1 className="admin-title">Quiz dos 5 Dons</h1>
           <p className="admin-subtitle">
-            Todos os resultados do teste ministerial — convite de igreja ou link direto.
+            Todos os resultados do teste ministerial &mdash; convite de igreja ou link direto.
           </p>
         </div>
         <div className="admin-header-actions">
-          <Link to="/admin/administracao" className="admin-btn admin-btn--ghost">← Voltar</Link>
-          <button className="admin-btn" onClick={exportCsv}>⬇ Exportar CSV</button>
+          <Link to="/admin/administracao" className="admin-btn admin-btn--ghost">&larr; Voltar</Link>
+          <button className="admin-btn" onClick={exportCsv}>&#11015; Exportar CSV</button>
         </div>
       </div>
 
       {/* Cards de resumo */}
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 16, marginBottom: 32 }}>
-          <SummaryCard label="Total de respostas" value={summary.totalAll} icon="📋" accent />
-          <SummaryCard label="Este mês" value={summary.thisMonth} icon="📅" />
+          <SummaryCard label="Total de respostas" value={summary.totalAll} icon="&#128203;" accent />
+          <SummaryCard label="Este m\u00eas"      value={summary.thisMonth} icon="&#128197;" />
           <SummaryCard
             label="Dom mais comum"
-            value={topDomEntry ? DOM_LABELS[topDomEntry[0]] ?? topDomEntry[0] : '—'}
+            value={topDomEntry ? (DOM_LABELS[topDomEntry[0]] ?? topDomEntry[0]) : '\u2014'}
             sub={topDomEntry ? `${topDomEntry[1]} pessoas` : undefined}
-            icon="🏆"
+            icon="&#127942;"
             color={topDomEntry ? DOM_COLORS[topDomEntry[0]] : undefined}
           />
-          <SummaryCard label="Tempo médio" value={fmtTime(summary.avgSeconds)} icon="⏱" />
+          <SummaryCard label="Tempo m\u00e9dio" value={fmtTime(summary.avgSeconds)} icon="&#9201;" />
         </div>
       )}
 
       {/* Distribuição dos 5 dons */}
       {summary && (
-        <div style={{
-          background: 'var(--admin-surface)', border: '1px solid var(--admin-border)',
-          borderRadius: 20, padding: '24px 28px', marginBottom: 32,
-        }}>
+        <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 20, padding: '24px 28px', marginBottom: 32 }}>
           <p style={{ margin: '0 0 16px', fontWeight: 700, color: '#f1fbff', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Distribuição dos Dons Principais
+            Distribui&ccedil;&atilde;o dos Dons Principais
           </p>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {DOM_ORDER.map(dom => {
@@ -310,10 +329,7 @@ export default function RelatorioQuiz() {
                     {DOM_LABELS[dom]}
                   </span>
                   <div style={{ flex: 1, height: 12, borderRadius: 6, background: 'rgba(148,163,184,0.1)', overflow: 'hidden' }}>
-                    <div style={{
-                      width: `${pct}%`, height: '100%', borderRadius: 6, background: color,
-                      transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)', minWidth: pct > 0 ? 6 : 0,
-                    }} />
+                    <div style={{ width: `${pct}%`, height: '100%', borderRadius: 6, background: color, transition: 'width 0.6s cubic-bezier(0.4,0,0.2,1)', minWidth: pct > 0 ? 6 : 0 }} />
                   </div>
                   <span style={{ fontSize: '0.78rem', color, fontWeight: 700, width: 60, whiteSpace: 'nowrap' }}>
                     {count} <span style={{ color: '#8fa5ba', fontWeight: 400 }}>({Math.round(pct)}%)</span>
@@ -328,8 +344,10 @@ export default function RelatorioQuiz() {
       {/* Filtros */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 20 }}>
         <input
-          type="text" placeholder="🔍 Nome ou e-mail…"
-          value={search} onChange={e => setSearch(e.target.value)}
+          type="text"
+          placeholder="&#128269; Nome ou e-mail&hellip;"
+          value={search}
+          onChange={e => setSearch(e.target.value)}
           className="admin-search-input"
           style={{ flex: '1 1 200px', minWidth: 180 }}
         />
@@ -340,50 +358,59 @@ export default function RelatorioQuiz() {
         <select value={source} onChange={e => setSource(e.target.value)} className="admin-filter-select">
           <option value="">Todas as fontes</option>
           <option value="direct">Direto</option>
-          <option value="organic">Orgânico</option>
+          <option value="organic">Org&acirc;nico</option>
           <option value="church_invite">Convite Igreja</option>
           <option value="qr_code">QR Code</option>
         </select>
-        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="admin-filter-select" />
-        <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   className="admin-filter-select" />
-        {(search||topDom||source||churchId||dateFrom||dateTo) && (
-          <button className="admin-btn admin-btn--ghost" style={{ padding: '6px 12px', fontSize: '0.78rem' }}
-            onClick={() => { setSearch(''); setTopDom(''); setSource(''); setChurchId(''); setDateFrom(''); setDateTo(''); }}>
-            ✕ Limpar
+        <select value={churchId} onChange={e => setChurchId(e.target.value)} className="admin-filter-select">
+          <option value="">Todas as igrejas</option>
+          <option value="__none__">Sem igreja</option>
+          {(summary?.churches ?? []).map(c => (
+            <option key={c.id} value={c.id}>{c.name}{c.city ? ` (${c.city})` : ''}</option>
+          ))}
+        </select>
+        <input type="date" value={dateFrom} onChange={e => setDateFrom(e.target.value)} className="admin-filter-select" title="De" />
+        <input type="date" value={dateTo}   onChange={e => setDateTo(e.target.value)}   className="admin-filter-select" title="At\u00e9" />
+        {hasFilter && (
+          <button
+            className="admin-btn admin-btn--ghost"
+            style={{ padding: '6px 12px', fontSize: '0.78rem' }}
+            onClick={() => { setSearch(''); setTopDom(''); setSource(''); setChurchId(''); setDateFrom(''); setDateTo(''); }}
+          >
+            &#10005; Limpar
           </button>
         )}
         <span style={{ marginLeft: 'auto', color: '#8fa5ba', fontSize: '0.82rem' }}>
-          {loading ? 'Carregando…' : `${total} resultado${total !== 1 ? 's' : ''}`}
+          {loading ? 'Carregando\u2026' : `${total} resultado${total !== 1 ? 's' : ''}`}
         </span>
       </div>
 
       {/* Tabela */}
-      <div style={{
-        background: 'var(--admin-surface)', border: '1px solid var(--admin-border)',
-        borderRadius: 20, overflow: 'hidden',
-      }}>
+      <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 20, overflow: 'hidden' }}>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--admin-border)', background: 'rgba(15,23,42,0.6)' }}>
-                {[
-                  { label: 'Nome / E-mail', col: 'person_name' },
-                  { label: 'Dom Principal', col: 'top_dom' },
-                  { label: 'Distribuição',  col: '' },
-                  { label: 'Fonte',         col: '' },
-                  { label: 'Igreja',        col: '' },
-                  { label: 'Data',          col: 'created_at' },
-                  { label: 'Tempo',         col: 'completion_seconds' },
-                  { label: '',              col: '' },
-                ].map(({ label, col }) => (
-                  <th key={label + col}
+                {([
+                  { label: 'Nome / E-mail',  col: 'person_name' },
+                  { label: 'Dom Principal',  col: 'top_dom' },
+                  { label: 'Distribui\u00e7\u00e3o', col: '' },
+                  { label: 'Fonte',          col: '' },
+                  { label: 'Igreja',         col: '' },
+                  { label: 'Data',           col: 'created_at' },
+                  { label: 'Tempo',          col: 'completion_seconds' },
+                  { label: '',               col: '' },
+                ] as { label: string; col: string }[]).map(({ label, col }) => (
+                  <th
+                    key={label + col}
                     onClick={() => col && toggleSort(col)}
                     style={{
                       padding: '12px 14px', textAlign: 'left', fontWeight: 700,
                       color: '#8fa5ba', textTransform: 'uppercase', fontSize: '0.7rem',
                       letterSpacing: '0.08em', cursor: col ? 'pointer' : 'default',
                       userSelect: 'none', whiteSpace: 'nowrap',
-                    }}>
+                    }}
+                  >
                     {label}{col && sortIcon(col)}
                   </th>
                 ))}
@@ -397,24 +424,49 @@ export default function RelatorioQuiz() {
                   </td>
                 </tr>
               )}
+              {loading && rows.length === 0 && (
+                <tr>
+                  <td colSpan={8} style={{ textAlign: 'center', padding: '48px', color: '#8fa5ba' }}>
+                    Carregando&hellip;
+                  </td>
+                </tr>
+              )}
               {rows.map((row, i) => (
-                <tr key={row.id}
+                <tr
+                  key={row.id}
                   style={{ borderBottom: i < rows.length - 1 ? '1px solid rgba(148,163,184,0.08)' : 'none' }}
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(56,189,248,0.04)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
+                  {/* Nome / Email */}
                   <td style={{ padding: '10px 14px', maxWidth: 200 }}>
                     <div style={{ fontWeight: 600, color: '#f1fbff', fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                      {row.person_name || <span style={{ color: '#8fa5ba', fontStyle: 'italic' }}>Anônimo</span>}
+                      {row.person_name || <span style={{ color: '#8fa5ba', fontStyle: 'italic' }}>An&ocirc;nimo</span>}
                     </div>
                     {row.person_email && (
                       <div style={{ color: '#8fa5ba', fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {row.person_email}
                       </div>
                     )}
+                    {row.person_phone && (
+                      <div style={{ color: '#64748b', fontSize: '0.68rem' }}>{row.person_phone}</div>
+                    )}
                   </td>
-                  <td style={{ padding: '10px 14px' }}><DomBadge dom={row.top_dom} /></td>
-                  <td style={{ padding: '10px 14px' }}><ScoreBars scores={row.scores_json ?? {}} /></td>
+
+                  {/* Dom principal */}
+                  <td style={{ padding: '10px 14px' }}>
+                    <DomBadge dom={row.top_dom} />
+                    {row.ties && row.ties.length > 1 && (
+                      <div style={{ fontSize: '0.62rem', color: '#64748b', marginTop: 3 }}>empate</div>
+                    )}
+                  </td>
+
+                  {/* Distribuição */}
+                  <td style={{ padding: '10px 14px' }}>
+                    <ScoreBars scores={row.scores_json ?? {}} />
+                  </td>
+
+                  {/* Fonte */}
                   <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }}>
                     <SourceChip source={row.source} />
                     {row.device_type && (
@@ -423,37 +475,53 @@ export default function RelatorioQuiz() {
                       </span>
                     )}
                   </td>
+
+                  {/* Igreja */}
                   <td style={{ padding: '10px 14px' }}>
                     {row.church ? (
                       <span style={{ color: '#a78bfa', fontSize: '0.78rem', fontWeight: 600 }}>
                         {row.church.name}
-                        {row.church.city && <><br /><span style={{ color: '#8fa5ba', fontWeight: 400 }}>{row.church.city}</span></>}
+                        {row.church.city && (
+                          <><br /><span style={{ color: '#8fa5ba', fontWeight: 400 }}>{row.church.city}</span></>
+                        )}
                       </span>
                     ) : (
-                      <span style={{ color: '#8fa5ba' }}>—</span>
+                      <span style={{ color: '#475569' }}>\u2014</span>
                     )}
                   </td>
-                  <td style={{ padding: '10px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
-                    {fmtDate(row.created_at)}
+
+                  {/* Data */}
+                  <td style={{ padding: '10px 14px', whiteSpace: 'nowrap' }} title={fmtDatetime(row.created_at)}>
+                    <span style={{ color: '#94a3b8' }}>{fmtDateShort(row.created_at)}</span>
+                    <br />
+                    <span style={{ color: '#475569', fontSize: '0.7rem' }}>{fmtHour(row.created_at)}</span>
                   </td>
+
+                  {/* Tempo */}
                   <td style={{ padding: '10px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
                     {fmtTime(row.completion_seconds)}
                   </td>
+
+                  {/* Link */}
                   <td style={{ padding: '10px 14px' }}>
                     {row.result_token && (
                       <a
                         href={`/#/resultado/${row.result_token}`}
-                        target="_blank" rel="noopener noreferrer"
+                        target="_blank"
+                        rel="noopener noreferrer"
                         title="Ver resultado"
                         style={{
                           display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                           width: 30, height: 30, borderRadius: 8,
                           background: 'rgba(56,189,248,0.1)', border: '1px solid rgba(56,189,248,0.25)',
                           color: '#38bdf8', fontSize: '0.85rem', textDecoration: 'none',
+                          transition: 'background 0.15s',
                         }}
                         onMouseEnter={e => (e.currentTarget.style.background = 'rgba(56,189,248,0.22)')}
                         onMouseLeave={e => (e.currentTarget.style.background = 'rgba(56,189,248,0.1)')}
-                      >↗</a>
+                      >
+                        &#8599;
+                      </a>
                     )}
                   </td>
                 </tr>
@@ -466,16 +534,24 @@ export default function RelatorioQuiz() {
       {/* Paginação */}
       {totalPages > 1 && (
         <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: 8, marginTop: 24 }}>
-          <button className="admin-btn admin-btn--ghost" disabled={page <= 1}
-            onClick={() => setPage(p => p - 1)} style={{ padding: '6px 14px' }}>
-            ← Anterior
+          <button
+            className="admin-btn admin-btn--ghost"
+            disabled={page <= 1}
+            onClick={() => setPage(p => p - 1)}
+            style={{ padding: '6px 14px' }}
+          >
+            &larr; Anterior
           </button>
           <span style={{ color: '#8fa5ba', fontSize: '0.82rem' }}>
-            Página {page} de {totalPages} &nbsp;·&nbsp; {total} resultados
+            P&aacute;gina {page} de {totalPages} &nbsp;&middot;&nbsp; {total} resultados
           </span>
-          <button className="admin-btn admin-btn--ghost" disabled={page >= totalPages}
-            onClick={() => setPage(p => p + 1)} style={{ padding: '6px 14px' }}>
-            Próxima →
+          <button
+            className="admin-btn admin-btn--ghost"
+            disabled={page >= totalPages}
+            onClick={() => setPage(p => p + 1)}
+            style={{ padding: '6px 14px' }}
+          >
+            Pr&oacute;xima &rarr;
           </button>
         </div>
       )}

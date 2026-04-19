@@ -100,6 +100,12 @@ export const onRequestGet = async (ctx: any) => {
       ? Math.round(avgData.reduce((s: number, r: any) => s + r.completion_seconds, 0) / avgData.length)
       : null;
 
+    // Lista de igrejas para o filtro
+    const { data: churches } = await admin
+      .from('church')
+      .select('id, name, city')
+      .order('name');
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -112,6 +118,7 @@ export const onRequestGet = async (ctx: any) => {
           thisMonth: thisMonth ?? 0,
           avgSeconds,
           totalAll: domDist?.length ?? 0,
+          churches: (churches ?? []).map((c: any) => ({ id: c.id, name: c.name, city: c.city })),
         },
       }),
       { headers: { 'content-type': 'application/json' } }
