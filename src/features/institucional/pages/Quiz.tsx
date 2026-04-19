@@ -1452,20 +1452,17 @@ const Quiz = () => {
             <div className="milestone-track">
               <div
                 className="milestone-line-fill"
-                style={{ width: `${((currentQuestion) / (TOTAL_QUESTIONS - 1)) * 100}%` }}
+                style={{ width: `${((currentQuestion + 1) / TOTAL_QUESTIONS) * 100}%` }}
               />
-              <div className="milestone-line-bg" />
               {MILESTONES.map((m) => {
-                const passed = currentQuestion + 1 > m;
+                const passed = currentQuestion + 1 >= m;
                 const current = currentQuestion + 1 === m;
                 return (
                   <div
                     key={m}
                     className={`milestone-dot${passed ? ' passed' : ''}${current ? ' current' : ''}`}
-                    style={{ left: `${((m - 1) / (TOTAL_QUESTIONS - 1)) * 100}%` }}
-                  >
-                    {m}
-                  </div>
+                    style={{ left: `${(m / TOTAL_QUESTIONS) * 100}%` }}
+                  />
                 );
               })}
             </div>

@@ -2632,59 +2632,48 @@
 .milestone-wrapper {
   width: 100%;
   max-width: 500px;
-  margin: 0 auto 1.25rem;
+  margin: 0 auto 0.5rem;
 }
 .milestone-track {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
   position: relative;
-  padding: 0 6px;
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(100,255,218,0.1);
 }
 .milestone-line-bg {
-  position: absolute;
-  top: 50%;
-  left: 6px;
-  right: 6px;
-  height: 2px;
-  background: rgba(100,255,218,0.12);
-  transform: translateY(-50%);
-  border-radius: 2px;
-  z-index: 0;
+  display: none;
 }
 .milestone-line-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
   height: 100%;
-  background: var(--mint);
-  border-radius: 2px;
+  background: linear-gradient(90deg, rgba(100,255,218,0.5), var(--mint));
+  border-radius: 4px;
   transition: width 0.5s ease;
 }
 .milestone-dot {
-  width: 30px;
-  height: 30px;
+  position: absolute;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  border: 2px solid rgba(100,255,218,0.18);
+  border: 2px solid rgba(100,255,218,0.2);
   background: var(--navy);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.62rem;
-  color: var(--text-slate);
-  font-weight: 700;
-  position: relative;
   z-index: 1;
   transition: all 0.3s ease;
 }
 .milestone-dot.passed {
   border-color: var(--mint);
-  background: rgba(100,255,218,0.12);
-  color: var(--mint);
+  background: var(--mint);
 }
 .milestone-dot.current {
   border-color: var(--mint);
   background: var(--mint);
-  color: var(--navy);
-  box-shadow: 0 0 14px rgba(100,255,218,0.5);
-  transform: scale(1.2);
+  box-shadow: 0 0 10px rgba(100,255,218,0.7);
+  width: 12px;
+  height: 12px;
 }
 .milestone-info {
   display: flex;
@@ -3069,5 +3058,5 @@
   .hero-dom-card .hero-name { font-size: 2rem; }
   .radar-section { max-width: 300px; }
   .dist-label { width: 76px; font-size: 0.76rem; }
-  .milestone-dot { width: 26px; height: 26px; font-size: 0.58rem; }
+  .milestone-dot { width: 8px; height: 8px; }
 }
