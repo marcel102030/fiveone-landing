@@ -151,22 +151,58 @@ export const onRequest = async (
       ? env.RESEND_REPLY_TO
       : "escolafiveone@gmail.com";
 
-    // 9) Envio via Resend
-    const resendResp = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: fromAddress,
-        to: email,
-        subject: "Seu Resultado – Teste dos 5 Ministérios | Five One",
-        html,
-        reply_to: replyTo,
-        attachments: items.map((it) => ({ filename: it.filename, content: it.base64 })),
+    // 9) Monta notificação interna para a Five One
+    const topScore = (scores ?? []).reduce(
+      (best, s) => (s.score > best.score ? s : best),
+      { category: "—", score: 0 }
+    );
+    const scoresTable = (scores ?? [])
+      .sort((a, b) => b.score - a.score)
+      .map((s) => `<tr><td style="padding:4px 10px 4px 0">${escapeHtml(s.category)}</td><td style="padding:4px 0"><strong>${s.score}%</strong></td></tr>`)
+      .join("");
+
+    const notifyHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333; line-height: 1.6;">
+        <h2 style="color:#4A148C; margin:0 0 16px;">🔔 Nova resposta — Teste dos 5 Ministérios</h2>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+          <tr><td style="padding:6px 12px 6px 0; color:#777; width:120px">Nome</td><td><strong>${escapeHtml(name)}</strong></td></tr>
+          <tr><td style="padding:6px 12px 6px 0; color:#777">E-mail</td><td>${escapeHtml(email)}</td></tr>
+          <tr><td style="padding:6px 12px 6px 0; color:#777">Telefone</td><td>${escapeHtml(phone)}</td></tr>
+          <tr><td style="padding:6px 12px 6px 0; color:#777">Dom principal</td><td><strong style="color:#4A148C">${escapeHtml(topScore.category)} (${topScore.score}%)</strong></td></tr>
+        </table>
+        <h3 style="color:#4A148C; margin:0 0 8px;">Pontuações completas</h3>
+        <table style="border-collapse:collapse">${scoresTable}</table>
+        <hr style="margin:20px 0; border:none; border-top:1px solid #ddd;" />
+        <p style="font-size:12px; color:#999;">Notificação automática — Five One</p>
+      </div>
+    `;
+
+    // 10) Dispara os dois emails em paralelo
+    const NOTIFY_TO = "escolafiveone@gmail.com";
+    const [resendResp] = await Promise.all([
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: email,
+          subject: "Seu Resultado – Teste dos 5 Ministérios | Five One",
+          html,
+          reply_to: replyTo,
+          attachments: items.map((it) => ({ filename: it.filename, content: it.base64 })),
+        }),
       }),
-    });
+      fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          from: fromAddress,
+          to: NOTIFY_TO,
+          subject: `[Five One] Nova resposta: ${name} — ${topScore.category}`,
+          html: notifyHtml,
+        }),
+      }),
+    ]);
 
     const data = await resendResp.json();
 
