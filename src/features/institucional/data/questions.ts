@@ -424,27 +424,27 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 76,
       category: CategoryEnum.PASTOR,
-      text: “Me alegra criar tradições e rituais de cuidado em grupos, como visitas, celebrações e acompanhamentos periódicos.”,
+      text: "Me alegra criar tradições e rituais de cuidado em grupos, como visitas, celebrações e acompanhamentos periódicos.",
     },
     {
       id: 77,
       category: CategoryEnum.PASTOR,
-      text: “Tenho facilidade em restaurar vínculos quebrados entre pessoas, ajudando-as a reconstruírem a confiança mútua.”,
+      text: "Tenho facilidade em restaurar vínculos quebrados entre pessoas, ajudando-as a reconstruírem a confiança mútua.",
     },
     {
       id: 78,
       category: CategoryEnum.PASTOR,
-      text: “Sinto que uma das minhas maiores forças é estar presente nas crises e tristezas das pessoas sem precisar resolver tudo imediatamente.”,
+      text: "Sinto que uma das minhas maiores forças é estar presente nas crises e tristezas das pessoas sem precisar resolver tudo imediatamente.",
     },
     {
       id: 79,
       category: CategoryEnum.PASTOR,
-      text: “Me importo em celebrar cada pequena vitória das pessoas que acompanho, reconhecendo sua trajetória de crescimento.”,
+      text: "Me importo em celebrar cada pequena vitória das pessoas que acompanho, reconhecendo sua trajetória de crescimento.",
     },
     {
       id: 80,
       category: CategoryEnum.PASTOR,
-      text: “Costumo perceber quando alguém precisa de acolhimento antes de receber qualquer ensinamento ou orientação.”,
+      text: "Costumo perceber quando alguém precisa de acolhimento antes de receber qualquer ensinamento ou orientação.",
     },
   ],
   [CategoryEnum.MESTRE]: [
