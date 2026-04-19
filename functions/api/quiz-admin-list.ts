@@ -106,6 +106,39 @@ export const onRequestGet = async (ctx: any) => {
       .select('id, name, city')
       .order('name');
 
+    // Breakdown por fonte
+    const { data: sourceData } = await admin
+      .from('quiz_response')
+      .select('source');
+
+    const sourceBreakdown: Record<string, number> = {};
+    (sourceData || []).forEach((r: any) => {
+      const s = r.source || 'direct';
+      sourceBreakdown[s] = (sourceBreakdown[s] || 0) + 1;
+    });
+
+    // Tendência mensal (últimos 12 meses)
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setFullYear(twelveMonthsAgo.getFullYear() - 1);
+    const { data: trendData } = await admin
+      .from('quiz_response')
+      .select('created_at')
+      .gte('created_at', twelveMonthsAgo.toISOString());
+
+    // E-mails duplicados
+    const { data: emailData } = await admin
+      .from('quiz_response')
+      .select('person_email')
+      .not('person_email', 'is', null);
+
+    const emailCounts: Record<string, number> = {};
+    (emailData || []).forEach((r: any) => {
+      if (r.person_email) emailCounts[r.person_email] = (emailCounts[r.person_email] || 0) + 1;
+    });
+    const duplicateEmails = Object.entries(emailCounts)
+      .filter(([, c]) => c > 1)
+      .map(([email, c]) => ({ email, count: c }));
+
     return new Response(
       JSON.stringify({
         ok: true,
@@ -119,6 +152,9 @@ export const onRequestGet = async (ctx: any) => {
           avgSeconds,
           totalAll: domDist?.length ?? 0,
           churches: (churches ?? []).map((c: any) => ({ id: c.id, name: c.name, city: c.city })),
+          sourceBreakdown,
+          recentDates: (trendData || []).map((r: any) => r.created_at),
+          duplicateEmails,
         },
       }),
       { headers: { 'content-type': 'application/json' } }

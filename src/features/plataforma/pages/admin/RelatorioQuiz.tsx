@@ -25,12 +25,17 @@ interface QuizRow {
   church: ChurchRef | null;
 }
 
+interface DuplicateEmail { email: string; count: number; }
+
 interface Summary {
   domDistribution: Record<string, number>;
   thisMonth: number;
   avgSeconds: number | null;
   totalAll: number;
   churches: ChurchItem[];
+  sourceBreakdown: Record<string, number>;
+  recentDates: string[];
+  duplicateEmails: DuplicateEmail[];
 }
 
 interface ApiResult {
@@ -83,6 +88,69 @@ function fmtDatetime(iso: string) {
 
 function fmtHour(iso: string) {
   return new Date(iso).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// ─── Componentes de análise ───────────────────────────────────────────────────
+
+function TrendChart({ dates }: { dates: string[] }) {
+  const now = new Date();
+  const months = Array.from({ length: 12 }, (_, i) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const label = d.toLocaleDateString('pt-BR', { month: 'short' }).replace('.', '');
+    return { key, label, count: 0 };
+  });
+  dates.forEach(iso => {
+    const d = new Date(iso);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const m = months.find(x => x.key === key);
+    if (m) m.count++;
+  });
+  const max = Math.max(...months.map(m => m.count), 1);
+  return (
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 72 }}>
+      {months.map(({ key, label, count }, i) => {
+        const pct = (count / max) * 100;
+        const isCurrent = i === 11;
+        return (
+          <div key={key} title={`${label}: ${count}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', height: '100%', justifyContent: 'flex-end' }}>
+            {count > 0 && <span style={{ fontSize: '0.55rem', color: '#8fa5ba', marginBottom: 2, lineHeight: 1 }}>{count}</span>}
+            <div style={{ width: '100%', borderRadius: '3px 3px 0 0', minHeight: 3, height: `${Math.max(4, pct)}%`, background: isCurrent ? '#38bdf8' : 'rgba(56,189,248,0.3)' }} />
+            <span style={{ fontSize: '0.52rem', color: '#475569', marginTop: 4, whiteSpace: 'nowrap' }}>{label}</span>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+const SOURCE_COLORS: Record<string, string> = {
+  direct: '#38bdf8', church_invite: '#a78bfa', organic: '#6ee7b7', qr_code: '#fbbf24',
+};
+
+function SourceBreakdown({ breakdown, total }: { breakdown: Record<string, number>; total: number }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      {(['direct', 'church_invite', 'organic', 'qr_code'] as const).map(s => {
+        const count = breakdown[s] ?? 0;
+        const pct = total > 0 ? Math.round(count / total * 100) : 0;
+        const color = SOURCE_COLORS[s];
+        return (
+          <div key={s} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <span style={{ width: 72, fontSize: '0.72rem', color: '#cbd5e1', textAlign: 'right', flexShrink: 0 }}>
+              {SOURCE_LABELS[s]}
+            </span>
+            <div style={{ flex: 1, height: 8, borderRadius: 4, background: 'rgba(148,163,184,0.1)', overflow: 'hidden' }}>
+              <div style={{ width: `${pct}%`, height: '100%', background: color, borderRadius: 4 }} />
+            </div>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color, width: 58, textAlign: 'right', whiteSpace: 'nowrap' }}>
+              {count} <span style={{ fontWeight: 400, color: '#8fa5ba' }}>({pct}%)</span>
+            </span>
+          </div>
+        );
+      })}
+    </div>
+  );
 }
 
 // ─── Componentes auxiliares ───────────────────────────────────────────────────
@@ -341,6 +409,24 @@ export default function RelatorioQuiz() {
         </div>
       )}
 
+      {/* Tendência + Fontes */}
+      {summary && (
+        <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 16, marginBottom: 32 }}>
+          <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 20, padding: '20px 24px' }}>
+            <p style={{ margin: '0 0 14px', fontWeight: 700, color: '#f1fbff', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Respostas por m&ecirc;s
+            </p>
+            <TrendChart dates={summary.recentDates ?? []} />
+          </div>
+          <div style={{ background: 'var(--admin-surface)', border: '1px solid var(--admin-border)', borderRadius: 20, padding: '20px 24px' }}>
+            <p style={{ margin: '0 0 14px', fontWeight: 700, color: '#f1fbff', fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+              Por canal
+            </p>
+            <SourceBreakdown breakdown={summary.sourceBreakdown ?? {}} total={summary.totalAll} />
+          </div>
+        </div>
+      )}
+
       {/* Filtros */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, alignItems: 'center', marginBottom: 20 }}>
         <input
@@ -431,7 +517,9 @@ export default function RelatorioQuiz() {
                   </td>
                 </tr>
               )}
-              {rows.map((row, i) => (
+              {rows.map((row, i) => {
+                const dupEntry = summary?.duplicateEmails?.find(d => d.email === row.person_email);
+                return (
                 <tr
                   key={row.id}
                   style={{ borderBottom: i < rows.length - 1 ? '1px solid rgba(148,163,184,0.08)' : 'none' }}
@@ -440,8 +528,13 @@ export default function RelatorioQuiz() {
                 >
                   {/* Nome / Email */}
                   <td style={{ padding: '10px 14px', maxWidth: 200 }}>
-                    <div style={{ fontWeight: 600, color: '#f1fbff', fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <div style={{ fontWeight: 600, color: '#f1fbff', fontSize: '0.82rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: 6 }}>
                       {row.person_name || <span style={{ color: '#8fa5ba', fontStyle: 'italic' }}>An&ocirc;nimo</span>}
+                      {dupEntry && (
+                        <span title={`${dupEntry.count} respostas com este e-mail`} style={{ fontSize: '0.58rem', fontWeight: 700, color: '#fbbf24', background: 'rgba(251,191,36,0.12)', border: '1px solid rgba(251,191,36,0.3)', borderRadius: 4, padding: '1px 5px', flexShrink: 0 }}>
+                          {dupEntry.count}x
+                        </span>
+                      )}
                     </div>
                     {row.person_email && (
                       <div style={{ color: '#8fa5ba', fontSize: '0.72rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -525,7 +618,7 @@ export default function RelatorioQuiz() {
                     )}
                   </td>
                 </tr>
-              ))}
+              );})}
             </tbody>
           </table>
         </div>
