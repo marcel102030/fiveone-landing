@@ -29,6 +29,7 @@ const fields: ServiceFormField[] = [
     type: "text",
     placeholder: "Nome da igreja que você faz parte",
     required: true,
+    helperText: "Mentoria individual — registrada como 1 participante no relatório da sua comunidade.",
   },
   {
     name: "city",

@@ -146,6 +146,7 @@ export const onRequest = async ({ request, env }: { request: Request; env: Env }
       expected_members: expectedMembersFinal,
       notes: noteParts.join(' | ') || null,
       slug,
+      service_type: serviceType,
     };
 
     const { data: insertedChurch, error: insertError } = await admin
