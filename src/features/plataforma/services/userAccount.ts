@@ -113,7 +113,7 @@ export async function createUser(u: PlatformUserCreateInput): Promise<void> {
       email: u.email.toLowerCase(),
       password: u.password,
       name: u.name || null,
-      formation: u.formation || 'MESTRE',
+      formation: u.formation || null,
     }),
   });
   const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };

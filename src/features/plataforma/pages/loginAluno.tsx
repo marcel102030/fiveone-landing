@@ -97,8 +97,8 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
           }
         }
 
-        const formation = (row?.formation as FormationKey | null) || 'MESTRE';
-        localStorage.setItem('platform_user_formation', String(formation));
+        const formation = (row?.formation as FormationKey | null) || null;
+        if (formation) localStorage.setItem('platform_user_formation', formation);
         storePlatformProfile({
           email:       normalizedEmail,
           name:        (details?.display_name || [details?.first_name, details?.last_name].filter(Boolean).join(' ') || row?.name || null),

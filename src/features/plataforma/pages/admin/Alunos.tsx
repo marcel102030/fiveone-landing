@@ -114,7 +114,7 @@ export default function AdminAlunos() {
       return;
     }
     try {
-      const firstCourse = newCourseIds[0] || (form.formation as FormationKey) || 'MESTRE';
+      const firstCourse = newCourseIds[0] || (form.formation as FormationKey) || null;
       await createUser({ email: form.email, password: form.password, name: form.name, formation: firstCourse as FormationKey });
       if (newCourseIds.length) await setEnrollments(form.email, newCourseIds);
     } catch (err: any) {
@@ -146,7 +146,7 @@ export default function AdminAlunos() {
       for (const line of lines) {
         const [email, name, password, formation] = line.split(',').map(s => s.trim().replace(/^\"|\"$/g, ''));
         if (!email || !password) continue;
-        await createUser({ email, password, name: name || null, formation: (formation as any) || 'MESTRE' });
+        await createUser({ email, password, name: name || null, formation: (formation as any) || null });
       }
       await load();
       toast.success('Importação concluída', 'Os alunos do arquivo foram cadastrados.');

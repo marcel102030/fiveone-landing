@@ -191,8 +191,8 @@ const PaginaInicial = () => {
   useEffect(() => {
     if (!effectiveUid) return
     getEnrollments(effectiveUid)
-      .then(ids => setEnrolledCourseIds(ids.length ? ids : ['MESTRE']))
-      .catch(() => setEnrolledCourseIds(['MESTRE']))
+      .then(ids => setEnrolledCourseIds(ids))
+      .catch(() => setEnrolledCourseIds([]))
   }, [effectiveUid])
 
   // ── Agrega aulas de todos os cursos matriculados ───────────────────────
@@ -498,13 +498,14 @@ const PaginaInicial = () => {
   const totalLessons = allLessons.length
   const progressPercent = totalLessons > 0 ? Math.min(100, Math.round((totalCompleted / totalLessons) * 100)) : 0
 
-  // Curso padrão para navegação (primeiro matriculado ou MESTRE)
-  const primaryCourseId = enrolledCourseIds[0] || 'MESTRE'
+  // Curso padrão para navegação (primeiro matriculado)
+  const primaryCourseId = enrolledCourseIds[0] || null
 
   // ── Navegar para aula ─────────────────────────────────────────────────────
   const goToLesson = useCallback((video: any) => {
     const lessonId = video.id || video.videoId || video.video_id
     const courseId = (lessonId && lessonByVideoId.get(lessonId)?.ministryId) || primaryCourseId
+    if (!courseId) return
     if (video.id) navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(video.id)}`)
     else if (typeof video.index === 'number') navigate(`/curso/${courseId}/aula?i=${video.index}`)
     else navigate(`/curso/${courseId}/aula?v=${encodeURIComponent(video.url)}`)
@@ -516,12 +517,11 @@ const PaginaInicial = () => {
       const lastId = localStorage.getItem('fiveone_last_lesson')
       if (lastId) {
         const courseId = lessonByVideoId.get(lastId)?.ministryId || primaryCourseId
-        navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lastId)}`)
-        return
+        if (courseId) { navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lastId)}`); return }
       }
     } catch {}
     if (visibleLastWatched.length > 0) goToLesson(visibleLastWatched[0])
-    else navigate(`/curso/${primaryCourseId}/aula`)
+    else if (primaryCourseId) navigate(`/curso/${primaryCourseId}/aula`)
   }, [navigate, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId])
 
   // ── Limpar histórico ──────────────────────────────────────────────────────
@@ -676,12 +676,14 @@ const PaginaInicial = () => {
                   Retomar aula
                 </button>
               )}
-              <Link
-                to={`/curso/${primaryCourseId}/modulos`}
-                className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
-              >
-                Explorar módulos
-              </Link>
+              {primaryCourseId && (
+                <Link
+                  to={`/curso/${primaryCourseId}/modulos`}
+                  className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
+                >
+                  Explorar módulos
+                </Link>
+              )}
             </div>
           </div>
         </section>
@@ -798,7 +800,7 @@ const PaginaInicial = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/curso/${primaryCourseId}/modulos`)}
+                  onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
                   className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
                   Acessar Módulo 1 →
@@ -825,7 +827,7 @@ const PaginaInicial = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate(`/curso/${primaryCourseId}/modulos`)}
+                  onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
                   className="flex-shrink-0 px-5 py-2.5 bg-transparent border border-slate/30 text-slate-white font-medium text-sm rounded-xl hover:bg-slate/10 hover:border-slate/50 active:scale-95 transition-all"
                 >
                   Explorar módulos →

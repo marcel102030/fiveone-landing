@@ -150,7 +150,8 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
       const found = listLessons({ onlyPublished: true, onlyActive: true }).find(
         l => l.videoId === lesson.id || (l as any).id === lesson.id,
       )
-      const courseId = found?.ministryId || 'MESTRE'
+      const courseId = found?.ministryId
+      if (!courseId) return
       navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lesson.id)}`)
     },
     [navigate, onClose],
