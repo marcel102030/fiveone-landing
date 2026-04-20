@@ -280,7 +280,7 @@ export default function AdminAlunos() {
               <th className="admin-th">Usuário</th>
               <th className="admin-th">Data de cadastro</th>
               <th className="admin-th">Último acesso</th>
-              <th className="admin-th">Formação Ministerial</th>
+              <th className="admin-th">Cursos matriculados</th>
               <th className="admin-th">Status</th>
             </tr>
           </thead>

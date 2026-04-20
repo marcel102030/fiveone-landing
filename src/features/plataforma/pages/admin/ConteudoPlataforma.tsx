@@ -3,6 +3,8 @@ import "./AdministracaoFiveOne.css";
 import "./ConteudoPlataforma.css";
 import {
   createLesson,
+  createMinistry,
+  createModule,
   deleteLesson,
   getModule,
   listLessons,
@@ -46,8 +48,11 @@ const teacherOptions = [
 ] as const;
 
 const categoryOptions = [
-  'Formação Teológica',
-  'Formação Ministerial',
+  'Teologia',
+  'Bíblia',
+  'Escatologia',
+  'Apologética',
+  'Ministerial',
 ] as const;
 
 const slugify = (value: string): string => {
@@ -155,6 +160,56 @@ export default function AdminConteudoPlataforma() {
     }
   }, [selectedMinistry?.id]);
 
+  // ── Novo Curso ────────────────────────────────────────────────────────────
+  const [showNewCourseModal, setShowNewCourseModal] = useState(false);
+  const [newCourseForm, setNewCourseForm] = useState({ title: '', id: '', tagline: '', color: '#38bdf8' });
+  const [newCourseSubmitting, setNewCourseSubmitting] = useState(false);
+
+  const handleCreateCourse = async () => {
+    if (!newCourseForm.title.trim()) { toast.warning('Nome obrigatório', 'Informe o nome do curso.'); return; }
+    setNewCourseSubmitting(true);
+    try {
+      const autoId = newCourseForm.id.trim() ||
+        newCourseForm.title.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+      await createMinistry({
+        id: autoId,
+        title: newCourseForm.title.trim(),
+        tagline: newCourseForm.tagline.trim(),
+        focusColor: newCourseForm.color,
+        gradient: `linear-gradient(135deg, #0f172a, ${newCourseForm.color}44)`,
+      });
+      toast.success('Curso criado', `"${newCourseForm.title}" foi adicionado à plataforma.`);
+      setNewCourseForm({ title: '', id: '', tagline: '', color: '#38bdf8' });
+      setShowNewCourseModal(false);
+    } catch (err: any) {
+      const isDuplicate = err?.message?.includes('duplicate') || err?.code === '23505';
+      toast.error('Erro ao criar curso', isDuplicate ? 'Já existe um curso com esse ID.' : 'Verifique os dados e tente novamente.');
+    } finally {
+      setNewCourseSubmitting(false);
+    }
+  };
+
+  // ── Criar Módulo ──────────────────────────────────────────────────────────
+  const [showNewModuleModal, setShowNewModuleModal] = useState(false);
+  const [newModuleTitle, setNewModuleTitle] = useState('');
+  const [newModuleSubmitting, setNewModuleSubmitting] = useState(false);
+
+  const handleCreateModule = async () => {
+    if (!selectedMinistry) return;
+    setNewModuleSubmitting(true);
+    try {
+      await createModule(selectedMinistry.id, newModuleTitle.trim() || 'Módulo');
+      toast.success('Módulo criado', 'O módulo foi adicionado ao curso.');
+      setNewModuleTitle('');
+      setShowNewModuleModal(false);
+    } catch {
+      toast.error('Erro ao criar módulo', 'Tente novamente em instantes.');
+    } finally {
+      setNewModuleSubmitting(false);
+    }
+  };
+
+  // ── Aulas ─────────────────────────────────────────────────────────────────
   const [showLessonModal, setShowLessonModal] = useState(false);
   const [lessonModuleId, setLessonModuleId] = useState<string | null>(null);
   const [lessonForm, setLessonForm] = useState<LessonFormState>(() => defaultLessonForm());
@@ -625,7 +680,7 @@ export default function AdminConteudoPlataforma() {
           ← Voltar ao hub
         </button>
       </div>
-      <p className="adm5-sub">Gerencie formações, módulos e aulas que serão exibidas na plataforma dos alunos.</p>
+      <p className="adm5-sub">Gerencie cursos, módulos e aulas que serão exibidas na plataforma dos alunos.</p>
       <div className="content-help-bar">
         Aqui você encontra todas as opções para customizar sua plataforma:
         <button className="content-help-link">Como criar uma aula?</button>
@@ -635,10 +690,10 @@ export default function AdminConteudoPlataforma() {
       </div>
 
       <div className="content-ministry-grid">
-        <div className="course-card add-card">
+        <button className="course-card add-card" onClick={() => setShowNewCourseModal(true)}>
           <div style={{ fontSize: 24 }}>+</div>
           Novo curso
-        </div>
+        </button>
         {content.ministries.map((ministry) => (
           <button
             key={ministry.id}
@@ -668,7 +723,7 @@ export default function AdminConteudoPlataforma() {
             <div className="ministry-actions">
               <button
                 className="adm5-pill"
-                onClick={() => toast.info('Em breve', 'A criação de módulos será liberada nas próximas atualizações.')}
+                onClick={() => { setNewModuleTitle(''); setShowNewModuleModal(true); }}
               >
                 Criar módulo
               </button>
@@ -1189,6 +1244,96 @@ export default function AdminConteudoPlataforma() {
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 18 }}>
               <button className="admin-btn" onClick={()=> { setPendingLessonRemoval(null); setLessonActionId(null); }}>Cancelar</button>
               <button className="admin-btn primary" onClick={confirmDeleteLesson}>Remover</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Novo Curso ──────────────────────────────────────────────── */}
+      {showNewCourseModal && (
+        <div className="lesson-modal-overlay" onClick={() => setShowNewCourseModal(false)}>
+          <div className="lesson-modal" style={{ maxWidth: 480 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Novo Curso</h3>
+            <p style={{ color: '#94a3b8', marginTop: 4, marginBottom: 16, fontSize: 13 }}>
+              Preencha os dados do novo curso. Ele aparecerá imediatamente na plataforma dos alunos matriculados.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label className="lesson-label">Nome do curso *</label>
+                <input
+                  className="lesson-input"
+                  placeholder="Ex: Introdução à Apologética"
+                  value={newCourseForm.title}
+                  onChange={(e) => setNewCourseForm((f) => ({ ...f, title: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="lesson-label">ID do curso (gerado automaticamente se vazio)</label>
+                <input
+                  className="lesson-input"
+                  placeholder="Ex: APOLOGETICA"
+                  value={newCourseForm.id}
+                  onChange={(e) => setNewCourseForm((f) => ({ ...f, id: e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '') }))}
+                />
+                <span style={{ fontSize: 11, color: '#64748b' }}>Apenas letras maiúsculas, números e _</span>
+              </div>
+              <div>
+                <label className="lesson-label">Descrição curta (opcional)</label>
+                <input
+                  className="lesson-input"
+                  placeholder="Ex: Defesa racional da fé cristã."
+                  value={newCourseForm.tagline}
+                  onChange={(e) => setNewCourseForm((f) => ({ ...f, tagline: e.target.value }))}
+                />
+              </div>
+              <div>
+                <label className="lesson-label">Cor do curso</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    type="color"
+                    value={newCourseForm.color}
+                    onChange={(e) => setNewCourseForm((f) => ({ ...f, color: e.target.value }))}
+                    style={{ width: 40, height: 36, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                  />
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{newCourseForm.color}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="admin-btn" onClick={() => setShowNewCourseModal(false)} disabled={newCourseSubmitting}>Cancelar</button>
+              <button className="admin-btn primary" onClick={handleCreateCourse} disabled={newCourseSubmitting || !newCourseForm.title.trim()}>
+                {newCourseSubmitting ? 'Criando…' : 'Criar curso'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Criar Módulo ────────────────────────────────────────────── */}
+      {showNewModuleModal && (
+        <div className="lesson-modal-overlay" onClick={() => setShowNewModuleModal(false)}>
+          <div className="lesson-modal" style={{ maxWidth: 400 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Criar Módulo</h3>
+            <p style={{ color: '#94a3b8', marginTop: 4, marginBottom: 16, fontSize: 13 }}>
+              Adicionando módulo ao curso <strong style={{ color: '#e2e8f0' }}>{selectedMinistry?.name}</strong>.
+            </p>
+            <div>
+              <label className="lesson-label">Nome do módulo</label>
+              <input
+                className="lesson-input"
+                placeholder="Ex: Módulo 1 — Introdução"
+                value={newModuleTitle}
+                onChange={(e) => setNewModuleTitle(e.target.value)}
+                autoFocus
+                onKeyDown={(e) => { if (e.key === 'Enter') handleCreateModule(); }}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="admin-btn" onClick={() => setShowNewModuleModal(false)} disabled={newModuleSubmitting}>Cancelar</button>
+              <button className="admin-btn primary" onClick={handleCreateModule} disabled={newModuleSubmitting}>
+                {newModuleSubmitting ? 'Criando…' : 'Criar módulo'}
+              </button>
             </div>
           </div>
         </div>

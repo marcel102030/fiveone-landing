@@ -860,6 +860,41 @@ export async function moveLesson(
   await refreshContent();
 }
 
+export async function createMinistry(input: {
+  id: string;
+  title: string;
+  tagline?: string;
+  focusColor?: string;
+  gradient?: string;
+}): Promise<void> {
+  const safeId = input.id.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+  if (!safeId) throw new Error('ID do curso inválido');
+  const { error } = await supabase.from('platform_ministry').insert({
+    id: safeId,
+    title: input.title.trim(),
+    tagline: input.tagline?.trim() || '',
+    icon: '/assets/icons/default.svg',
+    focus_color: input.focusColor || '#38bdf8',
+    gradient: input.gradient || 'linear-gradient(135deg, #0f172a, #0369a1)',
+  });
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function createModule(ministryId: MinistryKey, title: string): Promise<void> {
+  const ministry = getMinistry(ministryId);
+  if (!ministry) throw new Error('Curso não encontrado');
+  const nextOrder = ministry.modules.length;
+  const { error } = await supabase.from('platform_module').insert({
+    ministry_id: ministryId,
+    title: title.trim() || 'Módulo',
+    order_index: nextOrder,
+    status: 'draft',
+  });
+  if (error) throw error;
+  await refreshContent();
+}
+
 export function usePlatformContent(): PlatformContent {
   const [content, setContent] = useState<PlatformContent>(() => getPlatformContent());
 

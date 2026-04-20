@@ -14,7 +14,7 @@ import { fetchCompletionsForUser } from '../services/completions'
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
 import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
-import { getEnrollments, FORMATION_KEYS } from '../services/userAccount'
+import { getEnrollments } from '../services/userAccount'
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -100,20 +100,6 @@ function mergeByRecency(items: any[]): any[] {
     })
   })
   return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
-}
-
-// ── Helpers de curso ──────────────────────────────────────────────────────────
-
-const FORMATION_IMG: Record<string, string> = {
-  APOSTOLO: '/assets/images/apostolo.png',
-  PROFETA: '/assets/images/profeta.png',
-  EVANGELISTA: '/assets/images/evangelista.png',
-  PASTOR: '/assets/images/pastor.png',
-  MESTRE: '/assets/images/mestre.png',
-}
-
-function getCourseImg(courseId: string): string | null {
-  return FORMATION_IMG[courseId.toUpperCase()] || null
 }
 
 // ── Componente principal ──────────────────────────────────────────────────────
@@ -612,7 +598,6 @@ const PaginaInicial = () => {
 
   // ── Saudação ──────────────────────────────────────────────────────────────
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
-  const formationLabel = profile?.formationLabel || null
 
   // Cursos matriculados com metadados do ministry
   const enrolledCourses = useMemo(() =>
@@ -640,11 +625,6 @@ const PaginaInicial = () => {
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-white mb-1">
                 Olá, {firstName} 👋
               </h1>
-              {formationLabel && (
-                <p className="text-sm text-slate">
-                  Formação: <span className="text-mint font-medium">{formationLabel}</span>
-                </p>
-              )}
             </div>
 
             {/* Stats */}
@@ -814,7 +794,7 @@ const PaginaInicial = () => {
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-lg font-bold text-slate-white">Sua jornada começa agora</h3>
                   <p className="text-sm text-slate mt-1">
-                    Você ainda não assistiu nenhuma aula. Acesse o primeiro módulo e comece sua formação ministerial.
+                    Você ainda não assistiu nenhuma aula. Acesse o primeiro módulo e comece agora.
                   </p>
                 </div>
                 <button
@@ -841,7 +821,7 @@ const PaginaInicial = () => {
                 <div className="flex-1 text-center sm:text-left">
                   <h3 className="text-lg font-bold text-slate-white">Nenhuma aula em andamento</h3>
                   <p className="text-sm text-slate mt-1">
-                    Seu histórico de reprodução está vazio. Continue sua formação acessando os módulos disponíveis.
+                    Seu histórico de reprodução está vazio. Continue aprendendo acessando os módulos disponíveis.
                   </p>
                 </div>
                 <button
@@ -863,10 +843,10 @@ const PaginaInicial = () => {
                 Five One
               </span>
               <h2 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white leading-tight">
-                Sua Formação Ministerial
+                Seus Cursos
               </h2>
               <p className="text-sm sm:text-base text-slate mt-3 leading-relaxed">
-                Acompanhe sua jornada de formação na plataforma.
+                Acesse seus cursos e continue aprendendo.
               </p>
             </div>
 
@@ -879,10 +859,8 @@ const PaginaInicial = () => {
                   : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
               }`}>
                 {enrolledCourses.map(({ id, ministry }) => {
-                  const img = getCourseImg(id)
                   const label = ministry?.name || id
-                  const gradient = ministry?.gradient || 'from-navy-lighter to-navy-light'
-                  const isFormation = FORMATION_KEYS.includes(id as any)
+                  const gradient = ministry?.gradient || 'linear-gradient(135deg, #0f172a, #0369a1)'
                   return (
                     <Link
                       key={id}
@@ -890,24 +868,18 @@ const PaginaInicial = () => {
                       className="group relative min-h-[280px] sm:min-h-[340px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
                       aria-label={`Acessar ${label}`}
                     >
-                      {img ? (
-                        <img src={img} alt={label} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
-                      ) : (
-                        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-60`} />
-                      )}
+                      <div className="absolute inset-0" style={{ background: gradient, opacity: 0.7 }} />
                       <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
 
                       <div className="absolute top-4 left-4 z-10">
                         <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
-                          {isFormation ? 'Sua trilha disponível' : 'Seu curso'}
+                          Seu curso
                         </span>
                       </div>
 
-                      {!img && (
-                        <div className="absolute inset-0 flex items-center justify-center px-6">
-                          <p className="text-slate-white font-bold text-xl text-center leading-tight drop-shadow-lg">{label}</p>
-                        </div>
-                      )}
+                      <div className="absolute inset-0 flex items-center justify-center px-6">
+                        <p className="text-slate-white font-bold text-xl text-center leading-tight drop-shadow-lg">{label}</p>
+                      </div>
 
                       <div className="absolute right-3 bottom-3 z-10">
                         <div className="inline-flex items-center gap-2 rounded-full border border-mint/20 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-mint backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/40 group-hover:bg-navy/72">

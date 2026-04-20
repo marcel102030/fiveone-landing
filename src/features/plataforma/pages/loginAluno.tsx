@@ -258,7 +258,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
             <ul className="space-y-2">
               {[
                 "Aulas, trilhas e materiais atualizados continuamente",
-                "Suporte dedicado para cada formação ministerial",
+                "Suporte dedicado em cada curso",
                 "Acompanhe seu progresso em cada módulo",
               ].map(item => (
                 <li key={item} className="flex items-start gap-2 text-sm text-slate-light/90">
