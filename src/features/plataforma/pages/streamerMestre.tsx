@@ -1298,7 +1298,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
     const currentVid = params.get('vid');
     const hasLegacy = params.has('i') || params.has('v');
     if (!hasLegacy && currentVid === lesson.videoId) return;
-    navigate(`/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}`, { replace: true });
+    navigate(`/curso/${ministryId}/aula?vid=${encodeURIComponent(lesson.videoId)}`, { replace: true });
   }, [videoList, currentIndex, searchKey, navigate]);
 
   // Subjects for filter
@@ -1580,7 +1580,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
           {!videoList.length && (
             <div className="max-w-2xl">
               <button
-                onClick={() => navigate('/modulos-mestre')}
+                onClick={() => navigate(`/curso/${ministryId}/modulos`)}
                 className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors"
               >
                 ← Voltar aos Módulos
@@ -1599,7 +1599,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
               <div className="flex-1 min-w-0">
                 {/* Back button */}
                 <button
-                  onClick={() => navigate('/modulos-mestre')}
+                  onClick={() => navigate(`/curso/${ministryId}/modulos`)}
                   className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors"
                 >
                   ← Voltar aos Módulos

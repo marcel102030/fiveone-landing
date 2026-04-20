@@ -8,6 +8,7 @@ import { useEffect, useRef, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { createPortal } from 'react-dom'
 import { supabase } from '../../../shared/lib/supabaseClient'
+import { listLessons } from '../services/platformContent'
 
 // ── Tipos ─────────────────────────────────────────────────────────────────────
 
@@ -146,7 +147,11 @@ const SearchModal = ({ onClose }: SearchModalProps) => {
   const handleSelect = useCallback(
     (lesson: SearchResult) => {
       onClose()
-      navigate(`/streamer-mestre?vid=${encodeURIComponent(lesson.id)}`)
+      const found = listLessons({ onlyPublished: true, onlyActive: true }).find(
+        l => l.videoId === lesson.id || (l as any).id === lesson.id,
+      )
+      const courseId = found?.ministryId || 'MESTRE'
+      navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lesson.id)}`)
     },
     [navigate, onClose],
   )

@@ -3,7 +3,7 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 export type PlatformUser = {
   email: string;
   name?: string | null;
-  formation?: FormationKey; // APOSTOLO | PROFETA | EVANGELISTA | PASTOR | MESTRE
+  formation?: FormationKey; // mantido para compatibilidade
   role?: PlatformUserRole;
   member_id?: string | null;
   created_at?: string;
@@ -11,8 +11,71 @@ export type PlatformUser = {
 
 export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
 
+/** ID genérico de curso — pode ser FormationKey ou qualquer string de curso novo */
+export type CourseId = string;
+
 /** Ordered list of all formation keys — use this constant instead of repeating the array inline. */
 export const FORMATION_KEYS: FormationKey[] = ['APOSTOLO', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MESTRE'];
+
+// ── Matrículas ──────────────────────────────────────────────────────────────
+
+/** Retorna os IDs dos cursos em que o aluno está matriculado. */
+export async function getEnrollments(email: string): Promise<CourseId[]> {
+  const { data, error } = await supabase
+    .from('platform_enrollment')
+    .select('course_id')
+    .eq('user_email', email.toLowerCase());
+  if (error) throw error;
+  return (data || []).map((r: any) => r.course_id as CourseId);
+}
+
+/** Matricula um aluno em um curso. Idempotente (ON CONFLICT DO NOTHING via upsert). */
+export async function enrollUser(email: string, courseId: CourseId): Promise<void> {
+  const { error } = await supabase
+    .from('platform_enrollment')
+    .upsert({ user_email: email.toLowerCase(), course_id: courseId }, { onConflict: 'user_email,course_id' });
+  if (error) throw error;
+}
+
+/** Remove a matrícula de um aluno em um curso. */
+export async function unenrollUser(email: string, courseId: CourseId): Promise<void> {
+  const { error } = await supabase
+    .from('platform_enrollment')
+    .delete()
+    .eq('user_email', email.toLowerCase())
+    .eq('course_id', courseId);
+  if (error) throw error;
+}
+
+/** Substitui todas as matrículas de um aluno pela lista fornecida. */
+export async function setEnrollments(email: string, courseIds: CourseId[]): Promise<void> {
+  const lEmail = email.toLowerCase();
+  const { error: delError } = await supabase
+    .from('platform_enrollment')
+    .delete()
+    .eq('user_email', lEmail);
+  if (delError) throw delError;
+  if (!courseIds.length) return;
+  const rows = courseIds.map(course_id => ({ user_email: lEmail, course_id }));
+  const { error } = await supabase.from('platform_enrollment').insert(rows);
+  if (error) throw error;
+}
+
+/** Retorna mapa email → courseIds[] para uma lista de emails (batch). */
+export async function getEnrollmentsBatch(emails: string[]): Promise<Record<string, CourseId[]>> {
+  if (!emails.length) return {};
+  const { data, error } = await supabase
+    .from('platform_enrollment')
+    .select('user_email,course_id')
+    .in('user_email', emails.map(e => e.toLowerCase()));
+  if (error) throw error;
+  const out: Record<string, CourseId[]> = {};
+  for (const r of (data || []) as any[]) {
+    if (!out[r.user_email]) out[r.user_email] = [];
+    out[r.user_email].push(r.course_id);
+  }
+  return out;
+}
 
 /** Returns a human-readable Portuguese label for a FormationKey. */
 export function toFormationLabel(key: FormationKey | string | null | undefined): string {

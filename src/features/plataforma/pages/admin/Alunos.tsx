@@ -18,7 +18,10 @@ import {
   updateUsersFormation,
   deleteUsers,
   createInvite,
+  getEnrollments,
+  setEnrollments,
 } from "../../services/userAccount";
+import { getPlatformContent, subscribePlatformContent } from "../../services/platformContent";
 import "./AdministracaoFiveOne.css";
 import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
@@ -31,6 +34,12 @@ export default function AdminAlunos() {
   const [loading, setLoading] = useState(false);
   const [showNew, setShowNew] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", password: "", formation: '' as '' | FormationKey });
+  const [newCourseIds, setNewCourseIds] = useState<string[]>([]);
+  const [availableCourses, setAvailableCourses] = useState<{ id: string; name: string }[]>(() =>
+    getPlatformContent().ministries.map(m => ({ id: m.id, name: m.name }))
+  );
+  const [editEnrollments, setEditEnrollments] = useState<string[]>([]);
+  const [editEnrollmentsLoading, setEditEnrollmentsLoading] = useState(false);
   const [sendEmail, setSendEmail] = useState(true);
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(10);
@@ -53,6 +62,13 @@ export default function AdminAlunos() {
   const [bulkPassword, setBulkPassword] = useState<null | { emails: string[] }>(null);
   const [bulkRemove, setBulkRemove] = useState<null | { emails: string[] }>(null);
   const toast = useAdminToast();
+
+  useEffect(() => {
+    const unsubscribe = subscribePlatformContent((content) => {
+      setAvailableCourses(content.ministries.map(m => ({ id: m.id, name: m.name })));
+    });
+    return () => unsubscribe();
+  }, []);
 
   async function load() {
     setLoading(true);
@@ -98,7 +114,9 @@ export default function AdminAlunos() {
       return;
     }
     try {
-      await createUser({ email: form.email, password: form.password, name: form.name, formation: form.formation as FormationKey });
+      const firstCourse = newCourseIds[0] || (form.formation as FormationKey) || 'MESTRE';
+      await createUser({ email: form.email, password: form.password, name: form.name, formation: firstCourse as FormationKey });
+      if (newCourseIds.length) await setEnrollments(form.email, newCourseIds);
     } catch (err: any) {
       toast.error('Erro ao criar aluno', err?.message || 'Tente novamente em instantes.');
       return;
@@ -116,6 +134,7 @@ export default function AdminAlunos() {
     }
     setShowNew(false);
     setForm({ name: "", email: "", password: "", formation: '' });
+    setNewCourseIds([]);
     setSendEmail(true);
     await load();
     toast.success('Aluno cadastrado', 'O aluno já pode acessar a plataforma.');
@@ -338,23 +357,30 @@ export default function AdminAlunos() {
               <div style={{fontSize:12, color: validPassword(form.password) ? '#22c55e' : '#f59e0b'}}>
                 Força da senha: {form.password.length>=12? 'Alta': form.password.length>=8? 'Média':'Fraca'} — use letras e números (mín. 8)
               </div>
-              <label className="admin-field">Formação Ministerial
-                <select className="admin-input" value={form.formation} onChange={(e)=> setForm({...form, formation: e.target.value as any})}>
-                  <option value="">Selecione a Formação Ministerial</option>
-                  <option value="APOSTOLO">Apóstolo</option>
-                  <option value="PROFETA">Profeta</option>
-                  <option value="EVANGELISTA">Evangelista</option>
-                  <option value="PASTOR">Pastor</option>
-                  <option value="MESTRE">Mestre</option>
-                </select>
-              </label>
+              <div className="admin-field">
+                <span style={{fontSize:13, fontWeight:600, color:'#9fb2c5'}}>Cursos matriculados</span>
+                <div style={{display:'flex', flexDirection:'column', gap:6, marginTop:6}}>
+                  {availableCourses.map(c => (
+                    <label key={c.id} style={{display:'flex', alignItems:'center', gap:8, fontSize:13, cursor:'pointer'}}>
+                      <input
+                        type="checkbox"
+                        checked={newCourseIds.includes(c.id)}
+                        onChange={(e) => setNewCourseIds(prev =>
+                          e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                        )}
+                      />
+                      {c.name}
+                    </label>
+                  ))}
+                </div>
+              </div>
               <label style={{display:'inline-flex', alignItems:'center', gap:8, marginTop:4}}>
                 <input type="checkbox" checked={sendEmail} onChange={(e)=> setSendEmail(e.target.checked)} />
                 Enviar e-mail de boas-vindas com usuário e senha
               </label>
               <div style={{display:'flex', justifyContent:'flex-end', gap:8, marginTop:6}}>
                 <button type="button" className="admin-btn" onClick={()=> setShowNew(false)}>Cancelar</button>
-                <button type="submit" className="admin-btn primary" disabled={!form.name || !form.email || !form.password || !form.formation || !validPassword(form.password)}>Criar</button>
+                <button type="submit" className="admin-btn primary" disabled={!form.name || !form.email || !form.password || !newCourseIds.length || !validPassword(form.password)}>Criar</button>
               </div>
             </form>
           </div>
@@ -402,13 +428,13 @@ export default function AdminAlunos() {
         <div className="custom-modal-overlay" onClick={()=> setEdit(null)}>
           <div className="custom-modal" onClick={(e)=> e.stopPropagation()}>
             <h3>Editar aluno</h3>
+            <EnrollmentLoader email={edit.email} onLoad={(ids) => { setEditEnrollments(ids); setEditEnrollmentsLoading(false); }} onLoadStart={() => setEditEnrollmentsLoading(true)} />
             <form onSubmit={async (e)=>{
               e.preventDefault();
               const newName = (document.getElementById('editName') as HTMLInputElement).value;
               const newEmail = (document.getElementById('editEmail') as HTMLInputElement).value;
-              const newFormation = (document.getElementById('editFormation') as HTMLSelectElement).value as any;
-              if (!newName || !newEmail || !newFormation) {
-                toast.warning('Campos obrigatórios', 'Informe nome, e-mail e formação para salvar.');
+              if (!newName || !newEmail) {
+                toast.warning('Campos obrigatórios', 'Informe nome e e-mail para salvar.');
                 return;
               }
               if (newEmail !== edit.email && await emailExists(newEmail)) {
@@ -417,22 +443,37 @@ export default function AdminAlunos() {
               }
               if (newEmail !== edit.email) await updateUserEmail(edit.email, newEmail);
               await updateUserName(newEmail, newName || null);
-              await updateUserFormation(newEmail, newFormation);
+              if (editEnrollments.length) {
+                await setEnrollments(newEmail, editEnrollments);
+                await updateUserFormation(newEmail, editEnrollments[0] as FormationKey);
+              }
               setEdit(null);
               await load();
               toast.success('Cadastro atualizado', 'Dados do aluno salvos com sucesso.');
             }} style={{display:'grid', gap:10}}>
               <input id="editName" className="admin-input" defaultValue={edit.name || ''} placeholder="Nome" />
               <input id="editEmail" className="admin-input" defaultValue={edit.email} placeholder="E-mail" />
-              <label className="admin-field">Formação Ministerial
-                <select id="editFormation" className="admin-input" defaultValue={(rows.find(r=>r.email===edit.email) as any)?.formation || 'MESTRE'}>
-                  <option value="APOSTOLO">Apóstolo</option>
-                  <option value="PROFETA">Profeta</option>
-                  <option value="EVANGELISTA">Evangelista</option>
-                  <option value="PASTOR">Pastor</option>
-                  <option value="MESTRE">Mestre</option>
-                </select>
-              </label>
+              <div className="admin-field">
+                <span style={{fontSize:13, fontWeight:600, color:'#9fb2c5'}}>Cursos matriculados</span>
+                {editEnrollmentsLoading ? (
+                  <p style={{fontSize:12, color:'#9fb2c5', marginTop:6}}>Carregando matrículas…</p>
+                ) : (
+                  <div style={{display:'flex', flexDirection:'column', gap:6, marginTop:6}}>
+                    {availableCourses.map(c => (
+                      <label key={c.id} style={{display:'flex', alignItems:'center', gap:8, fontSize:13, cursor:'pointer'}}>
+                        <input
+                          type="checkbox"
+                          checked={editEnrollments.includes(c.id)}
+                          onChange={(e) => setEditEnrollments(prev =>
+                            e.target.checked ? [...prev, c.id] : prev.filter(id => id !== c.id)
+                          )}
+                        />
+                        {c.name}
+                      </label>
+                    ))}
+                  </div>
+                )}
+              </div>
               <label style={{display:'inline-flex', alignItems:'center', gap:8}}>
                 <input type="checkbox" defaultChecked onChange={async (e)=>{ try{ await setUserActive(edit.email, e.target.checked);} catch{} }} /> Ativo
               </label>
@@ -702,6 +743,15 @@ function formatDetailLink(value: string | null | undefined): ReactNode {
       {trimmed}
     </a>
   );
+}
+
+function EnrollmentLoader({ email, onLoad, onLoadStart }: { email: string; onLoad: (ids: string[]) => void; onLoadStart: () => void }) {
+  useEffect(() => {
+    onLoadStart();
+    getEnrollments(email).then(onLoad).catch(() => onLoad([]));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
+  return null;
 }
 
 function pageNumbers(current: number, totalPages: number): number[] {

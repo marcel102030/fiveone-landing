@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import type { FormationKey } from "./userAccount";
-
-export type MinistryKey = FormationKey;
+/** ID de um curso/ministério — FormationKey ou qualquer string de novo curso */
+export type MinistryKey = string;
 
 export type LessonContentType = "VIDEO" | "TEXT" | "ASSESSMENT" | "EXTERNAL";
 export type LessonSourceType = "YOUTUBE" | "VIMEO";

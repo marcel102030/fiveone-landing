@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCurrentUserId } from '../../../shared/utils/user'
 import { fetchUserProgress, deleteProgressExceptForUser } from '../services/progress'
-import { listLessons, LessonRef, subscribePlatformContent } from '../services/platformContent'
+import { listLessons, LessonRef, subscribePlatformContent, getMinistry } from '../services/platformContent'
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
@@ -12,8 +12,9 @@ import {
 } from '../../../shared/utils/completedLessons'
 import { fetchCompletionsForUser } from '../services/completions'
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
-import { ConfirmModal, Modal } from '../../../shared/components/ui'
+import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
+import { getEnrollments, FORMATION_KEYS } from '../services/userAccount'
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -101,45 +102,19 @@ function mergeByRecency(items: any[]): any[] {
   return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
 }
 
-// ── Dados estáticos das formações ─────────────────────────────────────────────
+// ── Helpers de curso ──────────────────────────────────────────────────────────
 
-const FORMACOES = [
-  {
-    id: 'APOSTOLO',
-    label: 'Apóstolo',
-    img: '/assets/images/apostolo.png',
-    active: false,
-    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
-  },
-  {
-    id: 'PROFETA',
-    label: 'Profeta',
-    img: '/assets/images/profeta.png',
-    active: false,
-    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
-  },
-  {
-    id: 'EVANGELISTA',
-    label: 'Evangelista',
-    img: '/assets/images/evangelista.png',
-    active: false,
-    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
-  },
-  {
-    id: 'PASTOR',
-    label: 'Pastor',
-    img: '/assets/images/pastor.png',
-    active: false,
-    message: 'Esta é outra formação ministerial da plataforma. Você pode conhecer essa trilha e, em breve, também poderá acessar a opção para adquiri-la.',
-  },
-  {
-    id: 'MESTRE',
-    label: 'Mestre',
-    img: '/assets/images/mestre.png',
-    active: true,
-    route: '/modulos-mestre',
-  },
-]
+const FORMATION_IMG: Record<string, string> = {
+  APOSTOLO: '/assets/images/apostolo.png',
+  PROFETA: '/assets/images/profeta.png',
+  EVANGELISTA: '/assets/images/evangelista.png',
+  PASTOR: '/assets/images/pastor.png',
+  MESTRE: '/assets/images/mestre.png',
+}
+
+function getCourseImg(courseId: string): string | null {
+  return FORMATION_IMG[courseId.toUpperCase()] || null
+}
 
 // ── Componente principal ──────────────────────────────────────────────────────
 
@@ -198,9 +173,8 @@ const PaginaInicial = () => {
   }, [effectiveUid])
 
   // ── Estado de conteúdo ────────────────────────────────────────────────────
-  const [mestreLessons, setMestreLessons] = useState<LessonRef[]>(() =>
-    listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true })
-  )
+  const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
+  const [allLessons, setAllLessons] = useState<LessonRef[]>([])
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([])
   const [progressLoaded, setProgressLoaded] = useState(false)
   const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => {
@@ -215,9 +189,6 @@ const PaginaInicial = () => {
   })
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches)
 
-  // ── Modal "em breve" ──────────────────────────────────────────────────────
-  const [emBreveMessage, setEmBreveMessage] = useState<string | null>(null)
-
   // ── Modal limpar histórico ────────────────────────────────────────────────
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
@@ -230,14 +201,27 @@ const PaginaInicial = () => {
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  // ── Subscribe a mudanças de conteúdo ─────────────────────────────────────
+  // ── Carrega matrículas quando o usuário é identificado ───────────────────
   useEffect(() => {
-    setMestreLessons(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }))
-    const unsubscribe = subscribePlatformContent(() => {
-      setMestreLessons(listLessons({ ministryId: 'MESTRE', onlyPublished: true, onlyActive: true }))
-    })
+    if (!effectiveUid) return
+    getEnrollments(effectiveUid)
+      .then(ids => setEnrolledCourseIds(ids.length ? ids : ['MESTRE']))
+      .catch(() => setEnrolledCourseIds(['MESTRE']))
+  }, [effectiveUid])
+
+  // ── Agrega aulas de todos os cursos matriculados ───────────────────────
+  useEffect(() => {
+    const sync = () => {
+      if (!enrolledCourseIds.length) return
+      const lessons = enrolledCourseIds.flatMap(id =>
+        listLessons({ ministryId: id, onlyPublished: true, onlyActive: true })
+      )
+      setAllLessons(lessons)
+    }
+    sync()
+    const unsubscribe = subscribePlatformContent(() => sync())
     return () => unsubscribe()
-  }, [])
+  }, [enrolledCourseIds])
 
   // ── Sync de completions ───────────────────────────────────────────────────
   // NÃO chama sync() no mount — o estado correto vem da busca remota no efeito de progresso.
@@ -259,9 +243,9 @@ const PaginaInicial = () => {
   // ── Map de lessonId → LessonRef ───────────────────────────────────────────
   const lessonByVideoId = useMemo(() => {
     const map = new Map<string, LessonRef>()
-    mestreLessons.forEach((lesson) => map.set(lesson.videoId, lesson))
+    allLessons.forEach((lesson) => map.set(lesson.videoId, lesson))
     return map
-  }, [mestreLessons])
+  }, [allLessons])
 
   // ── Carregar progresso (localStorage + remoto) ────────────────────────────
   // Depende de effectiveUid para re-disparar quando o Supabase auth resolve
@@ -525,29 +509,34 @@ const PaginaInicial = () => {
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const totalCompleted = completedIds.size
-  const totalLessons = mestreLessons.length
+  const totalLessons = allLessons.length
   const progressPercent = totalLessons > 0 ? Math.min(100, Math.round((totalCompleted / totalLessons) * 100)) : 0
+
+  // Curso padrão para navegação (primeiro matriculado ou MESTRE)
+  const primaryCourseId = enrolledCourseIds[0] || 'MESTRE'
 
   // ── Navegar para aula ─────────────────────────────────────────────────────
   const goToLesson = useCallback((video: any) => {
-    if (video.id) navigate(`/streamer-mestre?vid=${encodeURIComponent(video.id)}`)
-    else if (typeof video.index === 'number') navigate(`/streamer-mestre?i=${video.index}`)
-    else navigate(`/streamer-mestre?v=${encodeURIComponent(video.url)}`)
-  }, [navigate])
+    const lessonId = video.id || video.videoId || video.video_id
+    const courseId = (lessonId && lessonByVideoId.get(lessonId)?.ministryId) || primaryCourseId
+    if (video.id) navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(video.id)}`)
+    else if (typeof video.index === 'number') navigate(`/curso/${courseId}/aula?i=${video.index}`)
+    else navigate(`/curso/${courseId}/aula?v=${encodeURIComponent(video.url)}`)
+  }, [navigate, lessonByVideoId, primaryCourseId])
 
   // "Retomar aula" — usa fiveone_last_lesson como fonte da verdade quando disponível
   const handleResumeLesson = useCallback(() => {
     try {
       const lastId = localStorage.getItem('fiveone_last_lesson')
       if (lastId) {
-        navigate(`/streamer-mestre?vid=${encodeURIComponent(lastId)}`)
+        const courseId = lessonByVideoId.get(lastId)?.ministryId || primaryCourseId
+        navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lastId)}`)
         return
       }
     } catch {}
-    // fallback: usa o primeiro item do carousel
     if (visibleLastWatched.length > 0) goToLesson(visibleLastWatched[0])
-    else navigate('/streamer-mestre')
-  }, [navigate, visibleLastWatched, goToLesson])
+    else navigate(`/curso/${primaryCourseId}/aula`)
+  }, [navigate, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId])
 
   // ── Limpar histórico ──────────────────────────────────────────────────────
   const performClearHistory = useCallback(async () => {
@@ -563,7 +552,7 @@ const PaginaInicial = () => {
     } catch {}
 
     if (completedIdList.length) {
-      mestreLessons.forEach((lesson) => {
+      allLessons.forEach((lesson) => {
         if (!lesson.videoId || !completedIds.has(lesson.videoId)) return
         keepBases.add(lesson.videoId)
         if (lesson.videoUrl) keepBases.add(lesson.videoUrl)
@@ -602,7 +591,7 @@ const PaginaInicial = () => {
     const uid = effectiveUid
     if (uid) await deleteProgressExceptForUser(uid, completedIdList)
     setLastWatchedArray([])
-  }, [completedIds, mestreLessons, effectiveUid])
+  }, [completedIds, allLessons, effectiveUid])
 
   const handleClearHistory = useCallback(async () => {
     setClearing(true)
@@ -625,26 +614,10 @@ const PaginaInicial = () => {
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
   const formationLabel = profile?.formationLabel || null
 
-  const orderedFormacoes = useMemo(() => {
-    if (!formationLabel) return FORMACOES
-
-    const normalize = (value: string) =>
-      value
-        .normalize('NFD')
-        .replace(/[\u0300-\u036f]/g, '')
-        .trim()
-        .toLowerCase()
-
-    const normalizedFormation = normalize(formationLabel)
-    const currentFormation = FORMACOES.find((formacao) => normalize(formacao.label) === normalizedFormation)
-
-    if (!currentFormation) return FORMACOES
-
-    return [
-      currentFormation,
-      ...FORMACOES.filter((formacao) => formacao.id !== currentFormation.id),
-    ]
-  }, [formationLabel])
+  // Cursos matriculados com metadados do ministry
+  const enrolledCourses = useMemo(() =>
+    enrolledCourseIds.map(id => ({ id, ministry: getMinistry(id) })),
+  [enrolledCourseIds])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -724,7 +697,7 @@ const PaginaInicial = () => {
                 </button>
               )}
               <Link
-                to="/modulos-mestre"
+                to={`/curso/${primaryCourseId}/modulos`}
                 className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
               >
                 Explorar módulos
@@ -829,7 +802,7 @@ const PaginaInicial = () => {
         )}
 
         {/* ── CTA "Comece agora" — nunca assistiu nenhuma aula ─────────────── */}
-        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && totalCompleted === 0 && (
+        {!visibleLastWatched.length && progressLoaded && allLessons.length > 0 && totalCompleted === 0 && (
           <section className="py-8 sm:py-10 border-b border-slate/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
@@ -845,7 +818,7 @@ const PaginaInicial = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate('/modulos-mestre')}
+                  onClick={() => navigate(`/curso/${primaryCourseId}/modulos`)}
                   className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
                   Acessar Módulo 1 →
@@ -856,7 +829,7 @@ const PaginaInicial = () => {
         )}
 
         {/* ── CTA "Sem histórico" — tem aulas concluídas mas histórico foi limpo ── */}
-        {!visibleLastWatched.length && progressLoaded && mestreLessons.length > 0 && totalCompleted > 0 && (
+        {!visibleLastWatched.length && progressLoaded && allLessons.length > 0 && totalCompleted > 0 && (
           <section className="py-8 sm:py-10 border-b border-slate/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-slate/10 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
@@ -872,7 +845,7 @@ const PaginaInicial = () => {
                   </p>
                 </div>
                 <button
-                  onClick={() => navigate('/modulos-mestre')}
+                  onClick={() => navigate(`/curso/${primaryCourseId}/modulos`)}
                   className="flex-shrink-0 px-5 py-2.5 bg-transparent border border-slate/30 text-slate-white font-medium text-sm rounded-xl hover:bg-slate/10 hover:border-slate/50 active:scale-95 transition-all"
                 >
                   Explorar módulos →
@@ -882,7 +855,7 @@ const PaginaInicial = () => {
           </section>
         )}
 
-        {/* ── FORMAÇÃO MINISTERIAL ─────────────────────────────────────────── */}
+        {/* ── SEUS CURSOS ──────────────────────────────────────────────────── */}
         <section className="py-10 sm:py-14">
           <div className="max-w-7xl mx-auto px-4 sm:px-6">
             <div className="mb-8 sm:mb-10 text-center max-w-3xl mx-auto">
@@ -897,67 +870,56 @@ const PaginaInicial = () => {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5 lg:gap-6 items-stretch">
-              {orderedFormacoes.map((formacao) =>
-                formacao.active ? (
-                  <Link
-                    key={formacao.id}
-                    to={formacao.route!}
-                    className="group relative min-h-[280px] sm:min-h-[340px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
-                    aria-label={`Acessar formação ${formacao.label}`}
-                  >
-                    <img
-                      src={formacao.img}
-                      alt={formacao.label}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
+            {enrolledCourses.length === 0 ? (
+              <p className="text-center text-slate text-sm py-8">Carregando seus cursos…</p>
+            ) : (
+              <div className={`grid gap-5 lg:gap-6 items-stretch ${
+                enrolledCourses.length === 1
+                  ? 'grid-cols-1 max-w-sm mx-auto'
+                  : 'grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4'
+              }`}>
+                {enrolledCourses.map(({ id, ministry }) => {
+                  const img = getCourseImg(id)
+                  const label = ministry?.name || id
+                  const gradient = ministry?.gradient || 'from-navy-lighter to-navy-light'
+                  const isFormation = FORMATION_KEYS.includes(id as any)
+                  return (
+                    <Link
+                      key={id}
+                      to={`/curso/${id}/modulos`}
+                      className="group relative min-h-[280px] sm:min-h-[340px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
+                      aria-label={`Acessar ${label}`}
+                    >
+                      {img ? (
+                        <img src={img} alt={label} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-60`} />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
 
-                    <div className="absolute top-4 left-4 z-10 flex items-start">
-                      <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
-                        Sua trilha disponível
-                      </span>
-                    </div>
-
-                    <div className="absolute right-3 bottom-3 z-10">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-mint/20 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-mint backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/40 group-hover:bg-navy/72">
-                        <span>Entrar</span>
-                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                      <div className="absolute top-4 left-4 z-10">
+                        <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
+                          {isFormation ? 'Sua trilha disponível' : 'Seu curso'}
+                        </span>
                       </div>
-                    </div>
-                  </Link>
-                ) : (
-                  <button
-                    key={formacao.id}
-                    onClick={() => setEmBreveMessage(formacao.message ?? null)}
-                    className="group relative min-h-[320px] sm:min-h-[360px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-slate/15 bg-navy-lighter text-left hover:border-slate/35 hover:-translate-y-1 hover:shadow-[0_18px_40px_rgba(2,8,23,0.42)] transition-all duration-300"
-                    aria-label={`${formacao.label} — em breve`}
-                  >
-                    <img
-                      src={formacao.img}
-                      alt={`${formacao.label} - em breve`}
-                      loading="lazy"
-                      className="absolute inset-0 w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-[1.02] transition-all duration-500"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-b from-navy/5 via-navy/35 to-navy/95" />
 
-                    <div className="absolute top-4 left-4 z-10 flex items-start">
-                      <span className="inline-flex items-center rounded-full border border-slate/20 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-light backdrop-blur-md">
-                        Outras trilhas
-                      </span>
-                    </div>
+                      {!img && (
+                        <div className="absolute inset-0 flex items-center justify-center px-6">
+                          <p className="text-slate-white font-bold text-xl text-center leading-tight drop-shadow-lg">{label}</p>
+                        </div>
+                      )}
 
-                    <div className="absolute right-3 bottom-3 z-10">
-                      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-slate-light backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/25 group-hover:bg-navy/72 group-hover:text-mint">
-                        <span>Detalhes</span>
-                        <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                      <div className="absolute right-3 bottom-3 z-10">
+                        <div className="inline-flex items-center gap-2 rounded-full border border-mint/20 bg-navy/55 px-3 py-2 text-[12px] font-semibold text-mint backdrop-blur-sm shadow-[0_8px_20px_rgba(2,8,23,0.18)] transition-all group-hover:border-mint/40 group-hover:bg-navy/72">
+                          <span>Entrar</span>
+                          <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">→</span>
+                        </div>
                       </div>
-                    </div>
-                  </button>
-                )
-              )}
-            </div>
+                    </Link>
+                  )
+                })}
+              </div>
+            )}
           </div>
         </section>
 
@@ -966,24 +928,6 @@ const PaginaInicial = () => {
           <div className="sr-only" aria-live="polite" aria-label="Carregando progresso..." />
         )}
       </main>
-
-      {/* ── MODAL "EM BREVE" ────────────────────────────────────────────────── */}
-      <Modal
-        open={!!emBreveMessage}
-        onClose={() => setEmBreveMessage(null)}
-        title="Outras formações ministeriais"
-        size="sm"
-      >
-        <p className="text-sm text-slate-light leading-relaxed">{emBreveMessage}</p>
-        <div className="mt-6 flex justify-end">
-          <button
-            onClick={() => setEmBreveMessage(null)}
-            className="px-4 py-2 bg-mint text-navy text-sm font-semibold rounded-xl hover:bg-mint/90 transition-colors"
-          >
-            Entendido
-          </button>
-        </div>
-      </Modal>
 
       {/* ── MODAL LIMPAR HISTÓRICO ───────────────────────────────────────────── */}
       <ConfirmModal

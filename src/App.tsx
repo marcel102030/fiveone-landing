@@ -23,8 +23,8 @@ import OQueEFiveOne from "./features/rede/pages/redeIgrejas/OQueEFiveOne";
 import Plataforma from "./features/plataforma/pages/plataforma";
 import LoginAluno from "./features/plataforma/pages/loginAluno";
 import StreamerApostolo from "./features/plataforma/pages/streamerApostolo";
-import StreamerMestre from "./features/plataforma/pages/streamerMestre";
-import ModulosMestre from "./features/plataforma/pages/modulosMestre";
+import CursoModulos from "./features/plataforma/pages/CursoModulos";
+import CursoStreamer from "./features/plataforma/pages/CursoStreamer";
 import PerfilAluno from "./features/plataforma/pages/PerfilAluno";
 import AdminChurches from "./features/plataforma/pages/admin/AdminChurches";
 import AdminRedeIgrejas from "./features/rede/pages/admin/AdminRedeIgrejas";
@@ -266,6 +266,24 @@ function AppContent() {
                 </StudentGuard>
               }
             />
+            {/* Rotas genéricas de curso — use estas para novos cursos */}
+            <Route
+              path="/curso/:courseId/modulos"
+              element={
+                <StudentGuard>
+                  <CursoModulos />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/curso/:courseId/aula"
+              element={
+                <StudentGuard>
+                  <CursoStreamer />
+                </StudentGuard>
+              }
+            />
+            {/* Rotas legadas — mantidas para compatibilidade com bookmarks */}
             <Route
               path="/streamer-apostolo"
               element={
@@ -278,7 +296,7 @@ function AppContent() {
               path="/streamer-mestre"
               element={
                 <StudentGuard>
-                  <StreamerMestre />
+                  <CursoStreamer courseId="MESTRE" />
                 </StudentGuard>
               }
             />
@@ -286,7 +304,7 @@ function AppContent() {
               path="/modulos-mestre"
               element={
                 <StudentGuard>
-                  <ModulosMestre />
+                  <CursoModulos courseId="MESTRE" />
                 </StudentGuard>
               }
             />
