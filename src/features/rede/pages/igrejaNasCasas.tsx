@@ -15,7 +15,6 @@ import principal7 from '../assets/image/principal/img_0469.jpg';
 import principal8 from '../assets/image/principal/img_9291.jpg';
 import principal9 from '../assets/image/principal/img_9375.jpg';
 import './igrejaNasCasas.css';
-import { destaqueCards as destaqueCardsData } from '../data/igrejaNasCasasHighlights';
 import redeLogo from '../assets/image/logoRedeIgrejas/Post para Instagram Parabéns Aniversário Azul e Branco Divertido Moderno.png?url';
 
 type IgrejaInfo = {
@@ -61,38 +60,42 @@ const heroImageAlts: Record<string, string> = {
   [principal9]: 'Rede Five One — discipulado e alegria na rede',
 };
 
-const destaqueCards = destaqueCardsData;
-
 const valores = [
   {
     icon: '📖',
     titulo: 'Estudo Bíblico e Partilha',
     descricao: 'Mesa aberta para mergulhar na Palavra, ouvir testemunhos e orar uns pelos outros.',
+    image: principal1,
   },
   {
     icon: '🎵',
     titulo: 'Louvor e Comunhão',
     descricao: 'Adoração simples, família reunida e dons em movimento em cada casa.',
+    image: principal4,
   },
   {
     icon: '✝️',
     titulo: 'Palavra e Testemunho',
     descricao: 'Compartilhamos experiências reais, aplicamos o Evangelho e celebramos milagres.',
+    image: principal7,
   },
   {
     icon: '🏠',
     titulo: 'Discipulado em Família',
     descricao: 'Casas acolhedoras onde cada geração encontra lugar e propósito no Reino.',
+    image: principal3,
   },
   {
     icon: '🌍',
     titulo: 'Missão na Cidade',
     descricao: 'Vemos a cidade como campo missionário e as casas como base de envio.',
+    image: principal5,
   },
   {
     icon: '👑',
     titulo: 'Sacerdócio de Todos',
     descricao: 'Cristo como cabeça. Todos participam, todos servem, todos crescem.',
+    image: principal2,
   },
 ];
 
@@ -552,46 +555,21 @@ const IgrejaNasCasas: React.FC = () => {
               Encontrar uma casa perto de mim
             </button>
           </div>
-          <div className="hero-stats" ref={statsRef}>
-            <div>
-              <strong>
-                <CountUp end={dynamicStats.casasAtivas} started={statsVisible} />
-              </strong>
-              <span>Casas ativas</span>
-            </div>
-            <div>
-              <strong>
-                <CountUp end={dynamicStats.bairros} started={statsVisible} />
-              </strong>
-              <span>Bairros</span>
-            </div>
-            <div>
-              <strong>
-                <CountUp end={dynamicStats.cidades} started={statsVisible} />
-              </strong>
-              <span>Cidades</span>
-            </div>
+        </div>
+        <div className="hero-stats-bar" ref={statsRef}>
+          <div>
+            <strong><CountUp end={dynamicStats.casasAtivas} started={statsVisible} /></strong>
+            <span>Casas ativas</span>
+          </div>
+          <div>
+            <strong><CountUp end={dynamicStats.bairros} started={statsVisible} /></strong>
+            <span>Bairros</span>
+          </div>
+          <div>
+            <strong><CountUp end={dynamicStats.cidades} started={statsVisible} /></strong>
+            <span>Cidades</span>
           </div>
         </div>
-      </section>
-
-      {/* ── Spotlight ──────────────────────────────────────── */}
-      <section className="spotlight" aria-label="Principais caminhos">
-        {destaqueCards.map((card) => (
-          <article
-            key={card.id}
-            className="spotlight-card"
-            style={{ backgroundImage: `url(${card.imagem})` }}
-          >
-            <div className="spotlight-card-overlay">
-              <h3>{card.titulo}</h3>
-              <p>{card.descricao}</p>
-              <Link to={card.path} className="spotlight-link">
-                {card.acao} →
-              </Link>
-            </div>
-          </article>
-        ))}
       </section>
 
       {/* ── Valores ────────────────────────────────────────── */}
@@ -607,10 +585,13 @@ const IgrejaNasCasas: React.FC = () => {
               <div
                 key={v.titulo}
                 className={`valor-card reveal reveal-d${Math.min(i + 1, 6)}`}
+                style={{ backgroundImage: `url(${v.image})` }}
               >
-                <div className="valor-card__icon" aria-hidden>{v.icon}</div>
-                <h3>{v.titulo}</h3>
-                <p>{v.descricao}</p>
+                <div className="valor-card__inner">
+                  <div className="valor-card__icon" aria-hidden>{v.icon}</div>
+                  <h3>{v.titulo}</h3>
+                  <p>{v.descricao}</p>
+                </div>
               </div>
             ))}
           </div>
