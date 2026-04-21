@@ -566,6 +566,45 @@
   background: rgba(239, 68, 68, 0.2);
 }
 
+/* Danger variant for pill and admin-btn */
+.adm5-pill.danger {
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fda4af;
+}
+.adm5-pill.danger:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.7);
+}
+
+.admin-btn.danger {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1px solid rgba(239, 68, 68, 0.5);
+  color: #fda4af;
+  border-radius: 8px;
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.admin-btn.danger:hover:not(:disabled) {
+  background: rgba(239, 68, 68, 0.3);
+}
+.admin-btn.danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Lesson count badge in module header */
+.module-lesson-count {
+  font-size: 12px;
+  color: #64748b;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid #1e293b;
+  border-radius: 999px;
+  padding: 2px 10px;
+  white-space: nowrap;
+}
+
 
 .lesson-hint {
   font-size: 12px;

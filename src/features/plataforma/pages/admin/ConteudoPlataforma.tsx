@@ -6,6 +6,8 @@ import {
   createMinistry,
   createModule,
   deleteLesson,
+  deleteMinistry,
+  deleteModule,
   getModule,
   listLessons,
   LessonInput,
@@ -22,6 +24,7 @@ import {
   StoredFile,
   toggleModuleStatus,
   updateLesson,
+  updateMinistry,
   usePlatformContent,
 } from "../../services/platformContent";
 import { openStoredFile } from "../../../../shared/utils/storedFile";
@@ -87,6 +90,7 @@ type LessonFormState = {
   sourceType: LessonSourceType;
   videoUrl: string;
   embedCode: string;
+  durationMinutes: string;
   status: LessonStatus;
   releaseAt: string;
   materialFile: StoredFile | null;
@@ -108,6 +112,7 @@ const defaultLessonForm = (): LessonFormState => ({
   sourceType: "YOUTUBE",
   videoUrl: "",
   embedCode: "",
+  durationMinutes: "",
   status: "published",
   releaseAt: "",
   materialFile: null,
@@ -166,6 +171,74 @@ export default function AdminConteudoPlataforma() {
   const [showNewCourseModal, setShowNewCourseModal] = useState(false);
   const [newCourseForm, setNewCourseForm] = useState<{ title: string; id: string; tagline: string; color: string; banner: StoredFile | null }>({ title: '', id: '', tagline: '', color: '#38bdf8', banner: null });
   const [newCourseSubmitting, setNewCourseSubmitting] = useState(false);
+
+  // ── Excluir Curso ─────────────────────────────────────────────────────
+  const [showDeleteCourseModal, setShowDeleteCourseModal] = useState(false);
+  const [deleteCourseSubmitting, setDeleteCourseSubmitting] = useState(false);
+  const [deleteCourseConfirmText, setDeleteCourseConfirmText] = useState('');
+
+  const handleDeleteCourse = async () => {
+    if (!selectedMinistry) return;
+    setDeleteCourseSubmitting(true);
+    try {
+      await deleteMinistry(selectedMinistry.id);
+      toast.success('Curso excluído', 'O curso e todo seu conteúdo foram removidos.');
+      setShowDeleteCourseModal(false);
+      setDeleteCourseConfirmText('');
+    } catch {
+      toast.error('Erro ao excluir curso', 'Tente novamente em instantes.');
+    } finally {
+      setDeleteCourseSubmitting(false);
+    }
+  };
+
+  // ── Editar Curso ──────────────────────────────────────────────────────
+  const [showEditCourseModal, setShowEditCourseModal] = useState(false);
+  const [editCourseForm, setEditCourseForm] = useState({ title: '', tagline: '', color: '#38bdf8' });
+  const [editCourseSubmitting, setEditCourseSubmitting] = useState(false);
+
+  const openEditCourseModal = () => {
+    if (!selectedMinistry) return;
+    setEditCourseForm({ title: selectedMinistry.name, tagline: selectedMinistry.tagline, color: selectedMinistry.focusColor });
+    setShowEditCourseModal(true);
+  };
+
+  const handleEditCourse = async () => {
+    if (!selectedMinistry || !editCourseForm.title.trim()) return;
+    setEditCourseSubmitting(true);
+    try {
+      await updateMinistry(selectedMinistry.id, {
+        title: editCourseForm.title,
+        tagline: editCourseForm.tagline,
+        focusColor: editCourseForm.color,
+        gradient: `linear-gradient(135deg, #0f172a, ${editCourseForm.color}44)`,
+      });
+      toast.success('Curso atualizado', 'As informações foram salvas.');
+      setShowEditCourseModal(false);
+    } catch {
+      toast.error('Erro ao salvar', 'Tente novamente em instantes.');
+    } finally {
+      setEditCourseSubmitting(false);
+    }
+  };
+
+  // ── Excluir Módulo ────────────────────────────────────────────────────
+  const [pendingModuleRemoval, setPendingModuleRemoval] = useState<{ moduleId: string; title: string } | null>(null);
+  const [deleteModuleSubmitting, setDeleteModuleSubmitting] = useState(false);
+
+  const handleDeleteModule = async () => {
+    if (!selectedMinistry || !pendingModuleRemoval) return;
+    setDeleteModuleSubmitting(true);
+    try {
+      await deleteModule(selectedMinistry.id, pendingModuleRemoval.moduleId);
+      toast.info('Módulo excluído', 'O módulo e suas aulas foram removidos.');
+      setPendingModuleRemoval(null);
+    } catch {
+      toast.error('Erro ao excluir módulo', 'Tente novamente em instantes.');
+    } finally {
+      setDeleteModuleSubmitting(false);
+    }
+  };
 
   // ── Banner do Curso (editar curso existente) ───────────────────────────
   const [showMinistryBannerModal, setShowMinistryBannerModal] = useState(false);
@@ -310,6 +383,7 @@ export default function AdminConteudoPlataforma() {
         sourceType: lesson.sourceType || "YOUTUBE",
         videoUrl: lesson.videoUrl || "",
         embedCode: lesson.embedCode || "",
+        durationMinutes: lesson.durationMinutes ? String(lesson.durationMinutes) : "",
         status: lesson.status,
         releaseAt: lesson.releaseAt ? lesson.releaseAt.slice(0, 10) : "",
         materialFile: lesson.materialFile || null,
@@ -690,6 +764,7 @@ export default function AdminConteudoPlataforma() {
       bannerContinue: lessonForm.bannerContinue,
       bannerPlayer: lessonForm.bannerPlayer,
       bannerMobile: lessonForm.bannerMobile,
+      durationMinutes: lessonForm.durationMinutes ? Number(lessonForm.durationMinutes) : undefined,
       status: lessonForm.status,
       releaseAt: lessonForm.releaseAt ? new Date(lessonForm.releaseAt).toISOString() : null,
       isActive: lessonForm.isActive,
@@ -786,6 +861,18 @@ export default function AdminConteudoPlataforma() {
               </button>
               <button
                 className="adm5-pill"
+                onClick={openEditCourseModal}
+              >
+                Editar curso
+              </button>
+              <button
+                className="adm5-pill danger"
+                onClick={() => { setDeleteCourseConfirmText(''); setShowDeleteCourseModal(true); }}
+              >
+                Excluir curso
+              </button>
+              <button
+                className="adm5-pill"
                 onClick={() => { setNewModuleTitle(''); setShowNewModuleModal(true); }}
               >
                 Criar módulo
@@ -857,6 +944,9 @@ export default function AdminConteudoPlataforma() {
                         />
                       </div>
                       <div className="module-actions">
+                        <span className="module-lesson-count">
+                          {lessons.length} aula{lessons.length !== 1 ? 's' : ''}
+                        </span>
                         <button className="module-new-lesson" type="button" onClick={() => openLessonModal(module.id)}>
                           Nova aula
                         </button>
@@ -882,6 +972,14 @@ export default function AdminConteudoPlataforma() {
                             : module.status === "published"
                             ? "Despublicar"
                             : "Publicar"}
+                        </button>
+                        <button
+                          className="adm5-pill danger"
+                          type="button"
+                          onClick={() => setPendingModuleRemoval({ moduleId: module.id, title: module.title })}
+                          disabled={moduleActionId === module.id}
+                        >
+                          Excluir
                         </button>
                       </div>
                     </div>
@@ -952,7 +1050,7 @@ export default function AdminConteudoPlataforma() {
                                         type="button"
                                         role="menuitem"
                                         onClick={() => {
-                                          const courseId = selectedMinistryId || 'ESCATOLOGIA';
+                                          const courseId = selectedMinistryId;
                                           const url = lesson.videoId
                                             ? `/curso/${courseId}/aula?vid=${encodeURIComponent(lesson.videoId)}`
                                             : `/curso/${courseId}/modulos`;
@@ -1180,6 +1278,20 @@ export default function AdminConteudoPlataforma() {
                   onChange={(event) => handleLessonFormChange("description", event.target.value)}
                   placeholder="Resuma os principais tópicos abordados nesta aula."
                 />
+              </div>
+
+              <div className="lesson-field" style={{ maxWidth: 200 }}>
+                <label>Duração (minutos)</label>
+                <input
+                  className="lesson-input"
+                  type="number"
+                  min="1"
+                  max="999"
+                  value={lessonForm.durationMinutes}
+                  onChange={(event) => handleLessonFormChange("durationMinutes", event.target.value)}
+                  placeholder="Ex: 45"
+                />
+                <p className="lesson-hint">Exibida no card da aula para o aluno.</p>
               </div>
 
               <div className="form-two-col">
@@ -1504,6 +1616,113 @@ export default function AdminConteudoPlataforma() {
               <button className="admin-btn" onClick={() => setShowNewModuleModal(false)} disabled={newModuleSubmitting}>Cancelar</button>
               <button className="admin-btn primary" onClick={handleCreateModule} disabled={newModuleSubmitting}>
                 {newModuleSubmitting ? 'Criando…' : 'Criar módulo'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Excluir Curso ───────────────────────────────────────────── */}
+      {showDeleteCourseModal && selectedMinistry && (
+        <div className="lesson-modal-overlay" onClick={() => { setShowDeleteCourseModal(false); setDeleteCourseConfirmText(''); }}>
+          <div className="lesson-modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ color: '#f87171' }}>Excluir curso</h3>
+            <p style={{ color: '#94a3b8', marginTop: 8, marginBottom: 16, fontSize: 13, lineHeight: 1.6 }}>
+              Esta ação é <strong style={{ color: '#f87171' }}>irreversível</strong>. Todos os módulos, aulas e matrículas do curso{' '}
+              <strong style={{ color: '#e2e8f0' }}>{selectedMinistry.name}</strong> serão permanentemente removidos.
+            </p>
+            <div style={{ marginBottom: 16 }}>
+              <label className="lesson-label" style={{ marginBottom: 6, display: 'block' }}>
+                Para confirmar, digite o nome do curso: <strong style={{ color: '#e2e8f0' }}>{selectedMinistry.name}</strong>
+              </label>
+              <input
+                className="lesson-input"
+                placeholder={selectedMinistry.name}
+                value={deleteCourseConfirmText}
+                onChange={(e) => setDeleteCourseConfirmText(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button className="admin-btn" onClick={() => { setShowDeleteCourseModal(false); setDeleteCourseConfirmText(''); }} disabled={deleteCourseSubmitting}>
+                Cancelar
+              </button>
+              <button
+                className="admin-btn danger"
+                onClick={handleDeleteCourse}
+                disabled={deleteCourseSubmitting || deleteCourseConfirmText !== selectedMinistry.name}
+              >
+                {deleteCourseSubmitting ? 'Excluindo…' : 'Excluir definitivamente'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Editar Curso ────────────────────────────────────────────── */}
+      {showEditCourseModal && selectedMinistry && (
+        <div className="lesson-modal-overlay" onClick={() => setShowEditCourseModal(false)}>
+          <div className="lesson-modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Editar curso</h3>
+            <p style={{ color: '#94a3b8', marginTop: 4, marginBottom: 16, fontSize: 13 }}>
+              Atualize as informações do curso <strong style={{ color: '#e2e8f0' }}>{selectedMinistry.name}</strong>.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div>
+                <label className="lesson-label">Nome do curso *</label>
+                <input
+                  className="lesson-input"
+                  value={editCourseForm.title}
+                  onChange={(e) => setEditCourseForm((f) => ({ ...f, title: e.target.value }))}
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="lesson-label">Descrição curta</label>
+                <input
+                  className="lesson-input"
+                  value={editCourseForm.tagline}
+                  onChange={(e) => setEditCourseForm((f) => ({ ...f, tagline: e.target.value }))}
+                  placeholder="Ex: Defesa racional da fé cristã."
+                />
+              </div>
+              <div>
+                <label className="lesson-label">Cor do curso</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <input
+                    type="color"
+                    value={editCourseForm.color}
+                    onChange={(e) => setEditCourseForm((f) => ({ ...f, color: e.target.value }))}
+                    style={{ width: 40, height: 36, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+                  />
+                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{editCourseForm.color}</span>
+                </div>
+              </div>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="admin-btn" onClick={() => setShowEditCourseModal(false)} disabled={editCourseSubmitting}>Cancelar</button>
+              <button className="admin-btn primary" onClick={handleEditCourse} disabled={editCourseSubmitting || !editCourseForm.title.trim()}>
+                {editCourseSubmitting ? 'Salvando…' : 'Salvar alterações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Excluir Módulo ─────────────────────────────────────────── */}
+      {pendingModuleRemoval && (
+        <div className="lesson-modal-overlay" onClick={() => setPendingModuleRemoval(null)}>
+          <div className="lesson-modal" style={{ maxWidth: 420 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ color: '#f87171' }}>Excluir módulo</h3>
+            <p style={{ color: '#94a3b8', marginTop: 8, marginBottom: 20, fontSize: 13, lineHeight: 1.6 }}>
+              Tem certeza de que deseja excluir o módulo{' '}
+              <strong style={{ color: '#e2e8f0' }}>{pendingModuleRemoval.title}</strong>?{' '}
+              Todas as aulas vinculadas serão removidas permanentemente.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button className="admin-btn" onClick={() => setPendingModuleRemoval(null)} disabled={deleteModuleSubmitting}>Cancelar</button>
+              <button className="admin-btn danger" onClick={handleDeleteModule} disabled={deleteModuleSubmitting}>
+                {deleteModuleSubmitting ? 'Excluindo…' : 'Excluir módulo'}
               </button>
             </div>
           </div>
