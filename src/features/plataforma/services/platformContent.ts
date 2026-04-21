@@ -561,6 +561,7 @@ export function listLessons(options?: {
       if (options?.onlyPublished && module.status !== "published") return;
       module.lessons.forEach((lesson) => {
         if (options?.onlyPublished && lesson.status !== "published") return;
+        if (options?.onlyPublished && lesson.releaseAt && new Date(lesson.releaseAt) > new Date()) return;
         if (options?.onlyActive && !lesson.isActive) return;
         result.push({
           ...structuredCloneSafe(lesson),
@@ -928,8 +929,16 @@ export async function updateMinistry(ministryId: MinistryKey, patch: {
 }
 
 export async function deleteModule(ministryId: MinistryKey, moduleId: string): Promise<void> {
-  void ministryId;
-  // Deleta aulas do módulo, depois o módulo
+  const module = getModule(ministryId, moduleId);
+  if (module) {
+    // Limpa arquivos de storage de cada aula antes de deletar do banco
+    for (const lesson of module.lessons) {
+      await deleteStoredFileFromBucket(lesson.materialFile ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerContinue ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerPlayer ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerMobile ?? null);
+    }
+  }
   const { error: le } = await supabase.from('platform_lesson').delete().eq('module_id', moduleId);
   if (le) throw le;
   const { error: me } = await supabase.from('platform_module').delete().eq('id', moduleId);
@@ -940,11 +949,17 @@ export async function deleteModule(ministryId: MinistryKey, moduleId: string): P
 export async function deleteMinistry(ministryId: MinistryKey): Promise<void> {
   const ministry = getMinistry(ministryId);
   if (!ministry) throw new Error('Curso não encontrado');
-  // Deleta aulas de todos os módulos
+  // Limpa storage e deleta aulas de cada módulo
   for (const mod of ministry.modules) {
+    for (const lesson of mod.lessons) {
+      await deleteStoredFileFromBucket(lesson.materialFile ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerContinue ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerPlayer ?? null);
+      await deleteStoredFileFromBucket(lesson.bannerMobile ?? null);
+    }
     await supabase.from('platform_lesson').delete().eq('module_id', mod.id);
   }
-  // Deleta módulos e matrículas
+  // Deleta módulos, matrículas e o próprio curso
   await supabase.from('platform_module').delete().eq('ministry_id', ministryId);
   await supabase.from('platform_enrollment').delete().eq('course_id', ministryId);
   const { error } = await supabase.from('platform_ministry').delete().eq('id', ministryId);

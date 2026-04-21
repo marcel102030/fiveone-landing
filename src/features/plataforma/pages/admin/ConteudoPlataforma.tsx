@@ -16,6 +16,7 @@ import {
   LessonSourceType,
   MinistryKey,
   ModuleStatus,
+  moveLesson,
   setLessonActive,
   setLessonStatus,
   setModuleBanner,
@@ -693,6 +694,18 @@ export default function AdminConteudoPlataforma() {
     }
   };
 
+  const handleMoveLesson = async (moduleId: string, lesson: LessonRef, direction: -1 | 1) => {
+    if (!selectedMinistry) return;
+    try {
+      setLessonActionId(lesson.id);
+      await moveLesson(selectedMinistry.id, moduleId, lesson.id, direction);
+    } catch {
+      toast.error('Não foi possível reordenar', 'Tente novamente em instantes.');
+    } finally {
+      setLessonActionId(null);
+    }
+  };
+
   useEffect(() => {
     const onClickAway = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
@@ -701,7 +714,16 @@ export default function AdminConteudoPlataforma() {
       }
     };
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpenMenu(null);
+      if (event.key === 'Escape') {
+        setOpenMenu(null);
+        setShowDeleteCourseModal(false);
+        setShowEditCourseModal(false);
+        setPendingModuleRemoval(null);
+        setShowMinistryBannerModal(false);
+        setModuleBannerModal(null);
+        setShowNewModuleModal(false);
+        setShowNewCourseModal(false);
+      }
     };
     document.addEventListener('click', onClickAway);
     document.addEventListener('keydown', onKey);
@@ -832,7 +854,17 @@ export default function AdminConteudoPlataforma() {
               setActiveTab("modules");
             }}
           >
-            <div className="card-thumb" style={{ background: ministry.gradient }} />
+            <div
+              className="card-thumb"
+              style={{
+                background: ministry.gradient,
+                backgroundImage: ministry.banner?.url || ministry.banner?.dataUrl
+                  ? `url(${ministry.banner.url || ministry.banner.dataUrl})`
+                  : undefined,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+              }}
+            />
             <div className="card-icon">
               <img src={ministry.icon} alt={ministry.name} />
             </div>
@@ -945,7 +977,12 @@ export default function AdminConteudoPlataforma() {
                       </div>
                       <div className="module-actions">
                         <span className="module-lesson-count">
-                          {lessons.length} aula{lessons.length !== 1 ? 's' : ''}
+                          {(() => {
+                            const pub = lessons.filter(l => l.status === 'published').length;
+                            const total = lessons.length;
+                            if (total === 0) return '0 aulas';
+                            return `${total} aula${total !== 1 ? 's' : ''} · ${pub} pub.`;
+                          })()}
                         </span>
                         <button className="module-new-lesson" type="button" onClick={() => openLessonModal(module.id)}>
                           Nova aula
@@ -986,7 +1023,7 @@ export default function AdminConteudoPlataforma() {
                     <div className="module-body">
                       {lessons.length ? (
                         <div className="lessons-list">
-                          {lessons.map((lesson) => {
+                          {lessons.map((lesson, lessonIdx) => {
                             const thumb =
                               lesson.bannerContinue?.url ||
                               lesson.bannerContinue?.dataUrl ||
@@ -1018,9 +1055,28 @@ export default function AdminConteudoPlataforma() {
                                     {lesson.subjectName && <span className="lesson-tag">{lesson.subjectName}</span>}
                                     {sourceLabel && <span className="lesson-tag">{sourceLabel}</span>}
                                     {lesson.instructor && <span className="lesson-tag">{lesson.instructor}</span>}
+                                    {lesson.durationMinutes && (
+                                      <span className="lesson-tag lesson-tag--duration">⏱ {lesson.durationMinutes} min</span>
+                                    )}
                                   </div>
                                 </div>
                                 <div className="lesson-actions">
+                                  <div className="lesson-reorder">
+                                    <button
+                                      type="button"
+                                      className="lesson-reorder-btn"
+                                      title="Mover para cima"
+                                      disabled={lessonIdx === 0 || lessonActionId === lesson.id}
+                                      onClick={() => handleMoveLesson(module.id, lesson, -1)}
+                                    >▲</button>
+                                    <button
+                                      type="button"
+                                      className="lesson-reorder-btn"
+                                      title="Mover para baixo"
+                                      disabled={lessonIdx === lessons.length - 1 || lessonActionId === lesson.id}
+                                      onClick={() => handleMoveLesson(module.id, lesson, 1)}
+                                    >▼</button>
+                                  </div>
                                   <div className="lesson-status-group">
                                     <span className={`status-pill ${lesson.status}`}>{lessonStatusLabel[lesson.status]}</span>
                                     {!lesson.isActive && <span className="status-pill inactive">Inativa</span>}
@@ -1358,9 +1414,30 @@ export default function AdminConteudoPlataforma() {
                   </div>
                 </div>
 
+                <div className="lesson-field">
+                  <label>Banner do player (16:9) — tela da aula</label>
+                  <div className="upload-group">
+                    <label className="upload-box">
+                      <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerPlayer", event.target.files)} />
+                      <span>Selecionar imagem</span>
+                    </label>
+                    {lessonForm.bannerPlayer && (
+                      <div className="file-preview">
+                        <img src={lessonForm.bannerPlayer.dataUrl || lessonForm.bannerPlayer.url || ''} alt="Pré-visualização banner player" />
+                        <div className="file-info">
+                          <strong>{lessonForm.bannerPlayer.name}</strong>
+                          <span>{lessonForm.bannerPlayer.width && lessonForm.bannerPlayer.height ? `${lessonForm.bannerPlayer.width}x${lessonForm.bannerPlayer.height}px` : null}</span>
+                          <button type="button" className="linklike" onClick={() => handleRemoveFile("bannerPlayer")}>Remover</button>
+                        </div>
+                      </div>
+                    )}
+                    <p className="lesson-hint">Recomendado 1280×720 px. Exibido na tela do player e como fallback no card do módulo.</p>
+                  </div>
+                </div>
+
                 <div className="form-two-col">
                   <div className="lesson-field">
-                    <label>Banner "Continuar assistindo" (300x580px)</label>
+                    <label>Banner "Continuar assistindo" (3:5)</label>
                     <div className="upload-group">
                       <label className="upload-box">
                         <input type="file" accept="image/png,image/jpeg,image/webp" onChange={(event) => handleFileSelection("bannerContinue", event.target.files)} />
@@ -1376,7 +1453,7 @@ export default function AdminConteudoPlataforma() {
                         </div>
                         </div>
                       )}
-                      <p className="lesson-hint">Recomendado 300x580 px, proporção vertical.</p>
+                      <p className="lesson-hint">Recomendado 300×580 px, proporção vertical. Aparece no carrossel da plataforma.</p>
                     </div>
                   </div>
                   <div className="lesson-field">
