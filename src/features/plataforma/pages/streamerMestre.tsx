@@ -263,6 +263,17 @@ const formatClock = (rawSeconds: number): string => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
+const formatReleaseDate = (dateStr: string): string => {
+  try {
+    return new Intl.DateTimeFormat('pt-BR', {
+      day: '2-digit', month: 'long', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    }).format(new Date(dateStr));
+  } catch {
+    return dateStr;
+  }
+};
+
 const resolveExternalVideoUrl = (lesson: LessonRef | null | undefined, embedSrc: string): string | null => {
   const fallback = (lesson?.videoUrl && /^https?:\/\//i.test(lesson.videoUrl) ? lesson.videoUrl : null) || embedSrc;
   if (!fallback) return null;
@@ -592,6 +603,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toastState, setToastState] = useState<ToastState | null>(null);
+  const [showCourseComplete, setShowCourseComplete] = useState(false);
 
   const syncCompletedIds = useCallback(() => {
     setCompletedIds(new Set(listCompletedLessonIds()));
@@ -696,6 +708,14 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [currentVideo?.videoId, currentVideo?.videoUrl, embedSrc]
   );
+
+  // Aula agendada com data de liberação ainda no futuro → bloqueia o player
+  const isLocked = useMemo(() => {
+    if (!currentVideo) return false;
+    if (currentVideo.status !== 'scheduled') return false;
+    if (!currentVideo.releaseAt) return false;
+    return new Date(currentVideo.releaseAt) > new Date();
+  }, [currentVideo?.status, currentVideo?.releaseAt]);
 
   // Load stored progress when video changes.
   // Se não há progresso local (dispositivo nunca assistiu), busca do Supabase
@@ -985,6 +1005,11 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
             autoPlayTriggeredRef.current = true;
             setAutoPlayPending(true);
           }
+          // Curso 100% concluído?
+          const allLessonIds = videoList.map(v => v.videoId).filter(Boolean);
+          if (allLessonIds.length > 0 && allLessonIds.every(id => next.has(id))) {
+            setShowCourseComplete(true);
+          }
         }
       }
     },
@@ -1039,6 +1064,30 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   // email muda quando Supabase auth resolve — re-registra com valor atualizado
   }, [email]);
+
+  // ── Background periodic progress sync (30s) ───────────────────────────────
+  // Garante que o progresso chega ao Supabase mesmo se o player parar de emitir
+  // eventos (ex: usuário pausou e saiu sem assistir mais). Usa refs para
+  // nunca ter closure stale.
+  useEffect(() => {
+    const id = window.setInterval(() => {
+      const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
+      if (!lessonId || watchedSeconds <= 0) return;
+      const uid = getCurrentUserId() || emailRef.current;
+      if (!uid) return;
+      upsertProgress({
+        user_id: uid,
+        lesson_id: lessonId,
+        last_at: new Date().toISOString(),
+        watched_seconds: watchedSeconds,
+        duration_seconds: durationSeconds || null,
+        title: lessonTitle,
+        thumbnail,
+      }).catch(() => {});
+    }, 30_000);
+    return () => window.clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const showToast = useCallback((message: string, tone: 'success' | 'error' | 'info' = 'info') => {
     setToastState({ message, tone });
@@ -1278,6 +1327,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     if (uid) { try { await upsertCompletion(uid, lessonId); } catch {} }
     syncCompletedIds();
     showToast('Aula marcada como concluída.', 'success');
+    // Curso 100% concluído?
+    const nextCompletedCheck = new Set(completedIds);
+    nextCompletedCheck.add(lessonId);
+    const allIdsCheck = videoList.map(v => v.videoId).filter(Boolean);
+    if (allIdsCheck.length > 0 && allIdsCheck.every(id => nextCompletedCheck.has(id))) {
+      setShowCourseComplete(true);
+    }
   };
 
   // Load completions from server — re-roda quando email resolve (cenário: auth async)
@@ -1371,6 +1427,10 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     if (!lesson || lesson.sourceType !== 'VIMEO' || !vimeoSrc || !/vimeo\.com/i.test(vimeoSrc)) {
       cleanupVimeoPlayer(); return;
     }
+    // Não inicializa player para aulas ainda bloqueadas
+    if (lesson.status === 'scheduled' && !!lesson.releaseAt && new Date(lesson.releaseAt) > new Date()) {
+      cleanupVimeoPlayer(); return;
+    }
     let cancelled = false;
     lastProgressFlushRef.current = 0;
     (async () => {
@@ -1458,6 +1518,10 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     const lesson = currentVideo;
     const youtubeSrc = embedSrc;
     if (!lesson || lesson.sourceType !== 'YOUTUBE' || !youtubeSrc || !isYouTubeUrl(youtubeSrc)) {
+      cleanupYouTubePlayer(false); return;
+    }
+    // Não inicializa player para aulas ainda bloqueadas
+    if (lesson.status === 'scheduled' && !!lesson.releaseAt && new Date(lesson.releaseAt) > new Date()) {
       cleanupYouTubePlayer(false); return;
     }
     let cancelled = false;
@@ -1697,6 +1761,17 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                       </button>
                     </div>
                   )}
+
+                  {/* Locked lesson overlay — aula agendada com data ainda no futuro */}
+                  {isLocked && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-navy-lighter z-30 gap-4 p-6">
+                      <span className="text-5xl" role="img" aria-label="bloqueado">🔒</span>
+                      <p className="text-slate-white font-bold text-lg text-center">Aula ainda não liberada</p>
+                      <p className="text-slate text-sm text-center max-w-xs leading-relaxed">
+                        Disponível em {formatReleaseDate(currentVideo.releaseAt!)}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {/* Progress bar */}
@@ -1912,6 +1987,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                             if (!itemKey) return null;
                             const isActive = globalIndex === currentIndex;
                             const isCompleted = completedIds.has(itemKey);
+                            const isItemLocked = video.status === 'scheduled' && !!video.releaseAt && new Date(video.releaseAt) > new Date();
                             const stored = getStoredProgress(video);
                             const durationSeconds =
                               (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
@@ -1938,13 +2014,18 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                                   <img
                                     src={thumbnail}
                                     alt={`Miniatura ${video.title}`}
-                                    className="w-16 h-10 object-cover rounded"
+                                    className={`w-16 h-10 object-cover rounded ${isItemLocked ? 'opacity-40' : ''}`}
                                   />
-                                  {isCompleted && (
+                                  {isCompleted && !isItemLocked && (
                                     <div className="absolute inset-0 bg-navy/50 rounded flex items-center justify-center">
                                       <svg className="w-4 h-4 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                                         <polyline points="20 6 9 17 4 12"/>
                                       </svg>
+                                    </div>
+                                  )}
+                                  {isItemLocked && (
+                                    <div className="absolute inset-0 bg-navy/60 rounded flex items-center justify-center">
+                                      <span className="text-sm" role="img" aria-label="bloqueada">🔒</span>
                                     </div>
                                   )}
                                 </div>
@@ -1997,6 +2078,35 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           )}
         </div>
       </div>
+
+      {/* Course completion celebration */}
+      {showCourseComplete && (
+        <div
+          className="fixed inset-0 bg-navy/90 backdrop-blur-md z-[60] flex items-center justify-center p-6"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="course-complete-title"
+        >
+          <div className="bg-navy-lighter border border-mint/30 rounded-2xl p-8 max-w-md w-full text-center shadow-2xl">
+            <div className="text-6xl mb-4" role="img" aria-label="celebração">🎉</div>
+            <h2 id="course-complete-title" className="text-2xl font-bold text-slate-white mb-2">
+              Parabéns!
+            </h2>
+            <p className="text-slate mb-2 leading-relaxed">
+              Você concluiu todas as aulas deste curso!
+            </p>
+            <p className="text-slate/70 text-sm mb-8 leading-relaxed">
+              Continue crescendo e aprofundando seu chamado.
+            </p>
+            <button
+              onClick={() => setShowCourseComplete(false)}
+              className="px-8 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
+            >
+              Continuar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Confirm Modal */}
       <ConfirmModal
