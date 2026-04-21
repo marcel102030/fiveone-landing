@@ -22,7 +22,7 @@ interface Props {
 
 const CursoModulos = ({ courseId: propCourseId }: Props) => {
   const { courseId: paramId } = useParams<{ courseId: string }>();
-  const courseId = propCourseId || paramId || 'MESTRE';
+  const courseId = propCourseId || paramId || '';
   const navigate = useNavigate();
 
   const [lessons, setLessons] = useState<LessonRef[]>(() =>

@@ -7,7 +7,7 @@ interface Props {
 
 const CursoStreamer = ({ courseId }: Props) => {
   const { courseId: paramId } = useParams<{ courseId: string }>();
-  const id = courseId || paramId || 'MESTRE';
+  const id = courseId || paramId || '';
   return <StreamerMestre ministryId={id} />;
 };
 

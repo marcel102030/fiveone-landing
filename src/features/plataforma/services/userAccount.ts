@@ -9,13 +9,14 @@ export type PlatformUser = {
   created_at?: string;
 };
 
-export type FormationKey = 'APOSTOLO' | 'PROFETA' | 'EVANGELISTA' | 'PASTOR' | 'MESTRE';
+/** Qualquer ID de curso/ministério (string genérica). Mantido por compatibilidade de importações. */
+export type FormationKey = string;
 
-/** ID genérico de curso — pode ser FormationKey ou qualquer string de curso novo */
+/** ID genérico de curso */
 export type CourseId = string;
 
-/** Ordered list of all formation keys — use this constant instead of repeating the array inline. */
-export const FORMATION_KEYS: FormationKey[] = ['APOSTOLO', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MESTRE'];
+/** @deprecated Use ministries from usePlatformContent() instead. Kept for legacy imports. */
+export const FORMATION_KEYS: FormationKey[] = [];
 
 // ── Matrículas ──────────────────────────────────────────────────────────────
 
@@ -77,26 +78,20 @@ export async function getEnrollmentsBatch(emails: string[]): Promise<Record<stri
   return out;
 }
 
-/** Returns a human-readable Portuguese label for a FormationKey. */
+/**
+ * @deprecated Use ministries from usePlatformContent() to get course labels.
+ * Returns the raw key as-is (falls back to empty string).
+ */
 export function toFormationLabel(key: FormationKey | string | null | undefined): string {
-  switch (String(key || 'MESTRE').toUpperCase()) {
-    case 'APOSTOLO':    return 'Apóstolo';
-    case 'PROFETA':     return 'Profeta';
-    case 'EVANGELISTA': return 'Evangelista';
-    case 'PASTOR':      return 'Pastor';
-    case 'MESTRE':      return 'Mestre';
-    default:            return String(key || 'Mestre');
-  }
+  return String(key || '');
 }
 
 /**
- * Normalises any ministry string to a FormationKey (uppercase).
- * Use this when bridging between platform_user.formation (UPPERCASE)
- * and the fivefold_ministry DB enum used in rede tables (lowercase).
+ * Normalises any course string to uppercase.
+ * Returns empty string if null/undefined.
  */
-export function toFormationKey(s: string | null | undefined): FormationKey {
-  const upper = String(s || 'MESTRE').toUpperCase() as FormationKey;
-  return FORMATION_KEYS.includes(upper) ? upper : 'MESTRE';
+export function toFormationKey(s: string | null | undefined): string {
+  return String(s || '').toUpperCase();
 }
 
 export type PlatformUserRole = 'ADMIN' | 'MEMBER' | 'STUDENT';
@@ -161,13 +156,25 @@ export async function listUsersPage(params: { q?: string; page: number; pageSize
   const { q, page, pageSize, formation } = params;
   const from = page * pageSize;
   const to = from + pageSize - 1;
+
+  // When filtering by course, resolve via platform_enrollment first
+  let allowedEmails: string[] | null = null;
+  if (formation && formation !== 'ALL') {
+    const { data: enrollData } = await supabase
+      .from('platform_enrollment')
+      .select('user_email')
+      .eq('course_id', formation);
+    allowedEmails = (enrollData || []).map((r: any) => r.user_email as string);
+    if (!allowedEmails.length) return { rows: [], total: 0 };
+  }
+
   let query = supabase
     .from('platform_user')
     .select('email,name,created_at,formation,role,member_id,is_active', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
   if (q && q.trim()) query = query.ilike('email', `%${q.trim()}%`);
-  if (formation && formation !== 'ALL') query = query.eq('formation', formation);
+  if (allowedEmails !== null) query = query.in('email', allowedEmails);
   const { data, error, count } = await query;
   if (error) throw error;
   return { rows: (data || []) as PlatformUserListItem[], total: count || 0 };
@@ -353,21 +360,29 @@ export async function deleteUserComment(id: string): Promise<void> {
   if (error) throw error;
 }
 
-export async function setUserCommentStatus(id: string, status: 'pendente'|'aprovado'): Promise<void> {
+export async function setUserCommentStatus(id: string, status: 'pendente'|'aprovado'|'rejeitado'): Promise<void> {
   const { error } = await supabase.from('platform_lesson_comment').update({ status }).eq('id', id);
   if (error) throw error;
 }
 
-export type FormationCounts = { APOSTOLO: number; PROFETA: number; EVANGELISTA: number; PASTOR: number; MESTRE: number };
+/** Counts of active enrollments per course_id. */
+export type CourseCounts = Record<string, number>;
 
-/** Single-query formation count via DB aggregation — replaces 5 parallel COUNT requests. */
-export async function getFormationCounts(): Promise<FormationCounts> {
-  const { data, error } = await supabase.rpc('get_formation_counts');
+/** Returns enrollment counts grouped by course_id from platform_enrollment. */
+export async function getCourseCounts(): Promise<CourseCounts> {
+  const { data, error } = await supabase
+    .from('platform_enrollment')
+    .select('course_id');
   if (error) throw error;
-  const out = Object.fromEntries(FORMATION_KEYS.map(k => [k, 0])) as FormationCounts;
-  for (const row of (data || [])) {
-    const key = (row.formation as string | null)?.toUpperCase() as FormationKey | undefined;
-    if (key && key in out) out[key] = Number(row.cnt);
+  const out: CourseCounts = {};
+  for (const row of (data || []) as any[]) {
+    const key = String(row.course_id || '');
+    if (key) out[key] = (out[key] || 0) + 1;
   }
   return out;
+}
+
+/** @deprecated Use getCourseCounts() instead. */
+export async function getFormationCounts(): Promise<CourseCounts> {
+  return getCourseCounts();
 }

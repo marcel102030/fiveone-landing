@@ -10,15 +10,8 @@ interface CertData {
   issued_at: string;
   verify_code: string;
   userName?: string | null;
+  courseName?: string | null;
 }
-
-const FORMATION_LABEL: Record<string, string> = {
-  APOSTOLO: "Apóstolo",
-  PROFETA: "Profeta",
-  EVANGELISTA: "Evangelista",
-  PASTOR: "Pastor",
-  MESTRE: "Mestre",
-};
 
 export default function CertificadoPublico() {
   const { verifyCode } = useParams<{ verifyCode: string }>();
@@ -28,7 +21,7 @@ export default function CertificadoPublico() {
   const printRef = useRef<HTMLDivElement>(null);
 
   document.title = cert
-    ? `Certificado de ${FORMATION_LABEL[cert.ministry_id] ?? cert.ministry_id} | Five One`
+    ? `Certificado — ${cert.courseName || cert.ministry_id} | Five One`
     : "Verificar Certificado | Five One";
 
   useEffect(() => {
@@ -42,14 +35,17 @@ export default function CertificadoPublico() {
       .then(async ({ data }) => {
         if (!data) { setNotFound(true); return; }
 
-        // Tentar buscar nome do aluno
-        const { data: user } = await supabase
-          .from("platform_user")
-          .select("name")
-          .eq("email", data.user_id)
-          .maybeSingle();
+        // Buscar nome do aluno e nome do curso em paralelo
+        const [userRes, courseRes] = await Promise.all([
+          supabase.from("platform_user").select("name").eq("email", data.user_id).maybeSingle(),
+          supabase.from("platform_ministry").select("title").eq("id", data.ministry_id).maybeSingle(),
+        ]);
 
-        setCert({ ...data, userName: user?.name ?? null });
+        setCert({
+          ...data,
+          userName: userRes.data?.name ?? null,
+          courseName: courseRes.data?.title ?? null,
+        });
       })
       .then(() => setLoading(false), () => setLoading(false));
   }, [verifyCode]);
@@ -81,7 +77,7 @@ export default function CertificadoPublico() {
     );
   }
 
-  const formation = FORMATION_LABEL[cert.ministry_id] ?? cert.ministry_id;
+  const formation = cert.courseName || cert.ministry_id;
   const displayName = cert.userName || cert.user_id;
   const issuedDate = new Date(cert.issued_at).toLocaleDateString("pt-BR", {
     day: "2-digit",
@@ -144,7 +140,7 @@ export default function CertificadoPublico() {
               {displayName}
             </h1>
             <p className="text-slate text-sm mb-1">
-              concluiu com êxito o processo de formação ministerial em
+              concluiu com êxito o curso de
             </p>
             <h2 className="text-2xl font-bold text-mint mb-6">{formation}</h2>
 
@@ -185,7 +181,7 @@ export default function CertificadoPublico() {
               <p className="text-slate-white font-medium">{displayName}</p>
             </div>
             <div>
-              <p className="text-slate text-xs mb-1">Formação</p>
+              <p className="text-slate text-xs mb-1">Curso</p>
               <p className="text-slate-white font-medium">{formation}</p>
             </div>
             <div>

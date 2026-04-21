@@ -390,7 +390,7 @@ function formatBytes(bytes: number): string {
 }
 
 // ── Component ───────────────────────────────────────────────────────────────
-const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey }) => {
+const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const { email } = useAuth();
 
   const [videoList, setVideoList] = useState<LessonRef[]>(() =>

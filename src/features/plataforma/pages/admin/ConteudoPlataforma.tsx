@@ -119,7 +119,7 @@ export default function AdminConteudoPlataforma() {
   document.title = "Administração | Five One — Conteúdo";
   const content = usePlatformContent();
   const [activeTab, setActiveTab] = useState<"modules" | "info" | "certificate">("modules");
-  const [selectedMinistryId, setSelectedMinistryId] = useState<MinistryKey>(() => content.ministries[0]?.id || "MESTRE");
+  const [selectedMinistryId, setSelectedMinistryId] = useState<MinistryKey>(() => content.ministries[0]?.id || "");
   const [isHydrating, setIsHydrating] = useState(!content.ministries.length);
   useEffect(() => {
     if (!content.ministries.some((m) => m.id === selectedMinistryId) && content.ministries[0]) {
@@ -878,7 +878,10 @@ export default function AdminConteudoPlataforma() {
                                         type="button"
                                         role="menuitem"
                                         onClick={() => {
-                                          const url = lesson.videoId ? `/streamer-mestre?vid=${encodeURIComponent(lesson.videoId)}` : '/streamer-mestre';
+                                          const courseId = selectedMinistryId || 'ESCATOLOGIA';
+                                          const url = lesson.videoId
+                                            ? `/curso/${courseId}/aula?vid=${encodeURIComponent(lesson.videoId)}`
+                                            : `/curso/${courseId}/modulos`;
                                           const base = `${window.location.origin}${window.location.pathname}`;
                                           const cleaned = url.startsWith('#') ? url.slice(1) : url;
                                           window.open(`${base}#${cleaned}`, '_blank', 'noopener');

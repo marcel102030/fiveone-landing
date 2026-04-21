@@ -346,7 +346,7 @@ function mapMinistry(row: any): Ministry {
     id: row.id,
     name: row.title || preset?.name || row.id,
     tagline: row.tagline || preset?.tagline || "",
-    icon: row.icon || preset?.icon || "/assets/icons/apostolo.svg",
+    icon: row.icon || preset?.icon || "/assets/icons/default.svg",
     focusColor: row.focus_color || preset?.focusColor || "#38bdf8",
     gradient: row.gradient || preset?.gradient || "linear-gradient(135deg, #0f172a, #0369a1)",
     modules,

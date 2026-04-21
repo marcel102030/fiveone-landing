@@ -105,7 +105,7 @@ const Favoritos = () => {
   // ── Navegar para aula ─────────────────────────────────────────────────────
   const goToLesson = useCallback(
     (lesson: LessonRef) => {
-      navigate(`/streamer-mestre?vid=${encodeURIComponent(lesson.id)}`)
+      navigate(`/curso/${lesson.ministryId}/aula?vid=${encodeURIComponent(lesson.id)}`)
     },
     [navigate],
   )
@@ -170,10 +170,10 @@ const Favoritos = () => {
                 Favorite aulas durante o player para acessá-las rapidamente aqui.
               </p>
               <button
-                onClick={() => navigate('/modulos-mestre')}
+                onClick={() => navigate('/plataforma')}
                 className="px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
               >
-                Explorar módulos
+                Ir para a plataforma
               </button>
             </div>
           )}

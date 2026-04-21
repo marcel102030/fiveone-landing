@@ -45,7 +45,7 @@ export async function fetchDashboardStats(): Promise<AdminDashboardStats> {
     supabase.from('platform_user').select('*', { count: 'exact', head: true }).eq('is_active', true).gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()),
     supabase.from('platform_lesson').select('*', { count: 'exact', head: true }).eq('status', 'published'),
     supabase.from('platform_lesson_completion').select('*', { count: 'exact', head: true }),
-    supabase.from('platform_lesson_comment').select('*', { count: 'exact', head: true }).eq('status', 'pending'),
+    supabase.from('platform_lesson_comment').select('*', { count: 'exact', head: true }).eq('status', 'pendente'),
     supabase.from('platform_certificate').select('*', { count: 'exact', head: true }),
   ]);
 
@@ -83,17 +83,17 @@ export async function fetchPendingComments(): Promise<PendingComment[]> {
   const { data } = await supabase
     .from('platform_lesson_comment')
     .select('id, user_id, lesson_id, text, created_at, parent_id')
-    .eq('status', 'pending')
+    .eq('status', 'pendente')
     .order('created_at', { ascending: true });
   return (data ?? []) as PendingComment[];
 }
 
 export async function approveComment(id: string): Promise<void> {
-  await supabase.from('platform_lesson_comment').update({ status: 'approved' }).eq('id', id);
+  await supabase.from('platform_lesson_comment').update({ status: 'aprovado' }).eq('id', id);
 }
 
 export async function rejectComment(id: string): Promise<void> {
-  await supabase.from('platform_lesson_comment').update({ status: 'rejected' }).eq('id', id);
+  await supabase.from('platform_lesson_comment').update({ status: 'rejeitado' }).eq('id', id);
 }
 
 export async function issueCertificate(userId: string, ministryId: string): Promise<string> {

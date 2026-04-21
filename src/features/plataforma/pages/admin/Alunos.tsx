@@ -48,10 +48,10 @@ export default function AdminAlunos() {
   const [edit, setEdit] = useState<null | { email: string; name: string | null }>(null);
   const [reset, setReset] = useState<null | { email: string }>(null);
   const [confirmDel, setConfirmDel] = useState<null | { email: string }>(null);
-  const [formationFilter, setFormationFilter] = useState<'ALL' | FormationKey>('ALL');
+  const [formationFilter, setFormationFilter] = useState<'ALL' | string>('ALL');
   const [userComments, setUserCommentsState] = useState<any[]>([]);
   const [commentTab, setCommentTab] = useState<'pendente'|'aprovado'|'todos'>('pendente');
-  const [counts, setCounts] = useState<{[k in FormationKey]: number} | null>(null);
+  const [counts, setCounts] = useState<Record<string, number> | null>(null);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const selectedEmails = Object.keys(selected).filter(k=>selected[k]);
   const allChecked = rows.length>0 && rows.every(r=> selected[r.email]);
@@ -70,12 +70,20 @@ export default function AdminAlunos() {
     return () => unsubscribe();
   }, []);
 
+  const [enrollmentMap, setEnrollmentMap] = useState<Record<string, string[]>>({});
+
   async function load() {
     setLoading(true);
     try {
-      const res = await listUsersPage({ q, page, pageSize, formation: formationFilter });
+      const res = await listUsersPage({ q, page, pageSize, formation: formationFilter !== 'ALL' ? formationFilter : 'ALL' });
       setRows(res.rows);
       setTotal(res.total);
+      // Carregar matrículas de todos os alunos visíveis em uma única query batch
+      if (res.rows.length) {
+        const { getEnrollmentsBatch } = await import('../../services/userAccount');
+        const map = await getEnrollmentsBatch(res.rows.map(r => r.email));
+        setEnrollmentMap(map);
+      }
     } finally { setLoading(false); }
   }
   useEffect(() => { load(); }, []);
@@ -89,8 +97,8 @@ export default function AdminAlunos() {
   useEffect(() => {
     (async () => {
       try {
-        const { getFormationCounts } = await import('../../services/userAccount');
-        setCounts(await getFormationCounts());
+        const { getCourseCounts } = await import('../../services/userAccount');
+        setCounts(await getCourseCounts());
       } catch {}
     })();
   }, [formationFilter, page, pageSize, q]);
@@ -163,26 +171,24 @@ export default function AdminAlunos() {
       <div className="admin-toolbar" style={{marginTop:8}}>
         <div className="admin-toolbar-left">
           <label className="admin-field">Curso
-            <select className="admin-input" value={formationFilter} onChange={(e)=>{ setFormationFilter(e.target.value as any); setPage(0); }}>
-              <option value="ALL">Todas</option>
-              <option value="APOSTOLO">Apóstolo</option>
-              <option value="PROFETA">Profeta</option>
-              <option value="EVANGELISTA">Evangelista</option>
-              <option value="PASTOR">Pastor</option>
-              <option value="MESTRE">Mestre</option>
+            <select className="admin-input" value={formationFilter} onChange={(e)=>{ setFormationFilter(e.target.value); setPage(0); }}>
+              <option value="ALL">Todos os cursos</option>
+              {availableCourses.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
             </select>
           </label>
           <div style={{alignSelf:'end', color:'#9fb2c5'}}>Total: {total}</div>
-          {counts && (
+          {counts && availableCourses.length > 0 && (
             <div style={{display:'flex', gap:6, flexWrap:'wrap', alignItems:'flex-end'}}>
-              {FORMATION_KEYS.map(k => (
+              {availableCourses.map(c => (
                 <button
-                  key={k}
+                  key={c.id}
                   className="adm5-pill"
-                  style={{padding:'4px 10px', fontSize:12, background: formationFilter===k ? '#1e293b' : undefined, borderColor: formationFilter===k ? '#334155' : undefined}}
-                  onClick={()=> setFormationFilter(prev => prev===k ? 'ALL' : k)}
+                  style={{padding:'4px 10px', fontSize:12, background: formationFilter===c.id ? '#1e293b' : undefined, borderColor: formationFilter===c.id ? '#334155' : undefined}}
+                  onClick={()=> setFormationFilter(prev => prev===c.id ? 'ALL' : c.id)}
                 >
-                  {formatFormation(k)}: {counts[k]}
+                  {c.name}: {counts[c.id] ?? 0}
                 </button>
               ))}
               <span style={{marginLeft:6, color:'#9fb2c5'}}>Geral: {Object.values(counts).reduce((a,b)=>a+b,0)} | Filtrado: {total}</span>
@@ -317,7 +323,11 @@ export default function AdminAlunos() {
                   </td>
                   <td className="admin-td">{u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '-'}</td>
                   <td className="admin-td">{mockLastAccess(u.email)}</td>
-                  <td className="admin-td">{formatFormation((u as any).formation || 'MESTRE')}</td>
+                  <td className="admin-td">
+                    {(enrollmentMap[u.email] || []).length > 0
+                      ? (enrollmentMap[u.email] || []).map(id => availableCourses.find(c=>c.id===id)?.name || id).join(', ')
+                      : <span style={{color:'#64748b'}}>—</span>}
+                  </td>
                   <td className="admin-td">
                     {(u as any).is_active !== false
                       ? <span className="badge-high">Ativo</span>

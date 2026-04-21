@@ -26,6 +26,7 @@ export async function fetchComments(videoId: string): Promise<VideoComment[]> {
       .from('platform_lesson_comment')
       .select(fields)
       .eq('lesson_id', videoId)
+      .eq('status', 'aprovado')
       .order('created_at', { ascending: true });
 
   if (supportsCommentProfileJoin === false) {
