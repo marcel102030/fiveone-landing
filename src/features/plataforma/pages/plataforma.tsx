@@ -135,8 +135,8 @@ const PaginaInicial = () => {
       // Determina se é um usuário diferente do que estava antes
       const lastEmail = localStorage.getItem('fiveone_last_active_email')
       const isNewUser = wasLoggedOut
-        ? (lastEmail ? lastEmail !== effectiveUid : false) // logout: só limpa se email diferente
-        : isDifferentActiveUser                            // troca direta sem logout
+        ? (lastEmail !== null ? lastEmail !== effectiveUid : true) // sem lastEmail → limpa por segurança (device antigo)
+        : isDifferentActiveUser                                     // troca direta sem logout
 
       if (isNewUser) {
         // Usuário DIFERENTE — apaga cache do anterior
