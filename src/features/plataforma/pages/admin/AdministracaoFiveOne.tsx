@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { clearAdminAuthenticated, getAdminEmail } from "../../../../shared/utils/adminAuth";
 import { signOut } from "../../services/userAccount";
 import { fetchDashboardStats, fetchTopLessons, fetchRecentUsers, AdminDashboardStats, TopLesson, RecentUser } from "../../services/adminStats";
+import { usePlatformContent } from "../../services/platformContent";
 
 const quickAccessLinks = [
   { label: "Acessar Site", href: "https://fiveonemovement.com/", icon: "🌐" },
@@ -12,7 +13,7 @@ const quickAccessLinks = [
 
 const navCards = [
   { to: "/admin/alunos", title: "Alunos", desc: "Gerencie perfis e matrículas.", icon: "👥" },
-  { to: "/admin/conteudo", title: "Conteúdo", desc: "Formações, módulos e aulas.", icon: "📚" },
+  { to: "/admin/conteudo", title: "Conteúdo", desc: "Cursos, módulos e aulas.", icon: "📚" },
   { to: "/admin/moderacao", title: "Moderação", desc: "Aprovar e rejeitar comentários.", icon: "💬" },
   { to: "/admin/certificados", title: "Certificados", desc: "Emitir e visualizar certificados.", icon: "🏆" },
   { to: "/admin/igrejas", title: "Quiz de Igrejas", desc: "Cadastro e relatórios do quiz.", icon: "⛪" },
@@ -46,6 +47,7 @@ export default function AdministracaoFiveOne() {
     return first ? first[0].toUpperCase() + first.slice(1) : "Admin";
   }, []);
 
+  const { ministries } = usePlatformContent();
   const [stats, setStats] = useState<AdminDashboardStats | null>(null);
   const [topLessons, setTopLessons] = useState<TopLesson[]>([]);
   const [recentUsers, setRecentUsers] = useState<RecentUser[]>([]);
@@ -67,10 +69,10 @@ export default function AdministracaoFiveOne() {
     navigate('/admin', { replace: true });
   }
 
-  const formationLabel: Record<string, string> = {
-    APOSTOLO: 'Apóstolo', PROFETA: 'Profeta', EVANGELISTA: 'Evangelista',
-    PASTOR: 'Pastor', MESTRE: 'Mestre',
-  };
+  function getCourseLabel(id: string | null | undefined) {
+    if (!id) return '—';
+    return ministries.find(m => m.id === id)?.name ?? id;
+  }
 
   return (
     <div className="min-h-screen bg-navy text-slate-white">
@@ -188,7 +190,7 @@ export default function AdministracaoFiveOne() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-slate-white truncate">{u.name || u.email}</p>
-                      <p className="text-xs text-slate">{formationLabel[u.formation ?? ''] ?? u.formation ?? '—'}</p>
+                      <p className="text-xs text-slate">{getCourseLabel(u.formation)}</p>
                     </div>
                     <span className="text-xs text-slate whitespace-nowrap">
                       {new Date(u.created_at).toLocaleDateString('pt-BR')}

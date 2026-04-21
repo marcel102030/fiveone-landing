@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { FormationKey, getUserByEmail, toFormationLabel } from '../services/userAccount';
+import { getMinistry } from '../services/platformContent';
 import { getUserProfileDetails } from '../services/userProfile';
 import { getCurrentUserId } from '../../../shared/utils/user';
 
@@ -181,7 +182,10 @@ export function usePlatformUserProfile() {
       || (profile.name && profile.name.trim())
       || profile.email;
     const initials = computeInitials(profile.displayName || profile.name, profile.email);
-    const formationLabel = profile.formation ? toFormationLabel(profile.formation) : null;
+    // Prefere o nome do curso cadastrado no banco; cai no label legacy como fallback
+    const formationLabel = profile.formation
+      ? (getMinistry(profile.formation)?.name || toFormationLabel(profile.formation))
+      : null;
     return {
       ...profile,
       displayName,

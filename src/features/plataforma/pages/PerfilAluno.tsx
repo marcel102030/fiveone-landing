@@ -351,7 +351,7 @@ const PerfilAluno = () => {
               <p>Essas informações se refletem em toda a plataforma e ajudam nossa equipe a acompanhar sua jornada.</p>
               <div className="profile-badges">
                 {profile?.formationLabel && (
-                  <span className="profile-badge">Formação: {profile.formationLabel}</span>
+                  <span className="profile-badge">Curso: {profile.formationLabel}</span>
                 )}
                 <span className="profile-badge">E-mail: {email}</span>
               </div>
@@ -448,7 +448,7 @@ const PerfilAluno = () => {
                         value={form.bio}
                         onChange={(e) => handleField('bio', e.target.value)}
                         maxLength={300}
-                        placeholder="Compartilhe um pouco sobre sua jornada ministerial. (máx. 300 caracteres)"
+                        placeholder="Compartilhe um pouco sobre sua jornada de fé. (máx. 300 caracteres)"
                       />
                       <small>{form.bio.length}/300</small>
                     </label>

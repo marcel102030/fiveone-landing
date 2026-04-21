@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { issueCertificate, fetchCertificates } from "../../services/adminStats";
-import { listUsersPage, FormationKey, FORMATION_KEYS, toFormationLabel } from "../../services/userAccount";
+import { listUsersPage } from "../../services/userAccount";
+import { usePlatformContent } from "../../services/platformContent";
 
 interface Certificate {
   id: string;
@@ -28,10 +29,11 @@ async function sendCertEmail(opts: {
 export default function EmitirCertificados() {
   document.title = "Certificados | Five One Admin";
 
+  const { ministries } = usePlatformContent();
   const [certs, setCerts] = useState<Certificate[]>([]);
   const [users, setUsers] = useState<{ email: string; name: string | null; formation: string | null }[]>([]);
   const [loading, setLoading] = useState(true);
-  const [form, setForm] = useState<{ userId: string; ministryId: FormationKey | '' }>({ userId: '', ministryId: '' });
+  const [form, setForm] = useState<{ userId: string; ministryId: string }>({ userId: '', ministryId: '' });
   const [issuing, setIssuing] = useState(false);
   const [toast, setToast] = useState<{ msg: string; ok: boolean } | null>(null);
 
@@ -64,7 +66,7 @@ export default function EmitirCertificados() {
       void sendCertEmail({
         to: form.userId,
         name: user?.name ?? null,
-        formation: toFormationLabel(form.ministryId),
+        formation: ministries.find(m => m.id === form.ministryId)?.name ?? form.ministryId,
         verifyCode,
         issuedAt: new Date().toISOString(),
       });
@@ -82,10 +84,9 @@ export default function EmitirCertificados() {
     return new Date(iso).toLocaleDateString('pt-BR', { dateStyle: 'long' });
   }
 
-  const formationLabel: Record<string, string> = {
-    APOSTOLO: 'Apóstolo', PROFETA: 'Profeta', EVANGELISTA: 'Evangelista',
-    PASTOR: 'Pastor', MESTRE: 'Mestre',
-  };
+  function getCourseLabel(id: string) {
+    return ministries.find(m => m.id === id)?.name ?? id;
+  }
 
   return (
     <div className="min-h-screen bg-navy text-slate-white">
@@ -113,18 +114,18 @@ export default function EmitirCertificados() {
               <option value="">Selecionar aluno…</option>
               {users.map(u => (
                 <option key={u.email} value={u.email}>
-                  {u.name || u.email} {u.formation ? `(${formationLabel[u.formation] ?? u.formation})` : ''}
+                  {u.name || u.email} {u.formation ? `(${getCourseLabel(u.formation)})` : ''}
                 </option>
               ))}
             </select>
             <select
               value={form.ministryId}
-              onChange={e => setForm(f => ({ ...f, ministryId: e.target.value as FormationKey }))}
+              onChange={e => setForm(f => ({ ...f, ministryId: e.target.value }))}
               className="sm:w-48 bg-navy-lighter border border-slate/20 rounded-xl px-4 py-2.5 text-sm text-slate-white focus:border-mint outline-none"
               required>
-              <option value="">Formação…</option>
-              {FORMATION_KEYS.map(k => (
-                <option key={k} value={k}>{toFormationLabel(k)}</option>
+              <option value="">Curso…</option>
+              {ministries.map(m => (
+                <option key={m.id} value={m.id}>{m.name}</option>
               ))}
             </select>
             <button
@@ -156,7 +157,7 @@ export default function EmitirCertificados() {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-slate-white truncate">{c.user_id}</p>
-                    <p className="text-xs text-slate">{formationLabel[c.ministry_id] ?? c.ministry_id} · {formatDate(c.issued_at)}</p>
+                    <p className="text-xs text-slate">{getCourseLabel(c.ministry_id)} · {formatDate(c.issued_at)}</p>
                   </div>
                   <div className="flex items-center gap-3">
                     <div className="text-right hidden sm:block">

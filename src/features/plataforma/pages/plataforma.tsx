@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCurrentUserId } from '../../../shared/utils/user'
 import { fetchUserProgress, deleteProgressExceptForUser } from '../services/progress'
-import { listLessons, LessonRef, subscribePlatformContent, getMinistry } from '../services/platformContent'
+import { listLessons, LessonRef, subscribePlatformContent, getMinistry, usePlatformContent } from '../services/platformContent'
 import {
   COMPLETED_EVENT,
   CompletedLessonInfo,
@@ -599,10 +599,14 @@ const PaginaInicial = () => {
   // ── Saudação ──────────────────────────────────────────────────────────────
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
 
-  // Cursos matriculados com metadados do ministry
+  // Cursos matriculados com metadados do ministry — depende do conteúdo carregado
+  const platformContent = usePlatformContent()
   const enrolledCourses = useMemo(() =>
-    enrolledCourseIds.map(id => ({ id, ministry: getMinistry(id) })),
-  [enrolledCourseIds])
+    enrolledCourseIds.map(id => ({
+      id,
+      ministry: platformContent.ministries.find(m => m.id === id) || getMinistry(id),
+    })),
+  [enrolledCourseIds, platformContent.ministries])
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -803,7 +807,7 @@ const PaginaInicial = () => {
                   onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
                   className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
                 >
-                  Acessar Módulo 1 →
+                  Começar o curso →
                 </button>
               </div>
             </div>

@@ -102,7 +102,7 @@ export default function AdminAlunos() {
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
     if (!form.name || !form.email || !form.password || !form.formation) {
-      toast.warning('Campos obrigatórios', 'Informe nome, e-mail, senha e formação para cadastrar o aluno.');
+      toast.warning('Campos obrigatórios', 'Informe nome, e-mail, senha e pelo menos um curso para cadastrar o aluno.');
       return;
     }
     if (!validPassword(form.password)) {
@@ -162,7 +162,7 @@ export default function AdminAlunos() {
 
       <div className="admin-toolbar" style={{marginTop:8}}>
         <div className="admin-toolbar-left">
-          <label className="admin-field">Formação
+          <label className="admin-field">Curso
             <select className="admin-input" value={formationFilter} onChange={(e)=>{ setFormationFilter(e.target.value as any); setPage(0); }}>
               <option value="ALL">Todas</option>
               <option value="APOSTOLO">Apóstolo</option>
@@ -217,7 +217,7 @@ export default function AdminAlunos() {
         <div className="admin-toolbar" style={{marginTop:8}}>
           <div className="admin-toolbar-left" style={{gap:12}}>
             <div className="adm5-pill">Selecionados: {selectedEmails.length}</div>
-            <label className="admin-field">Mudar formação
+            <label className="admin-field">Mover para curso
               <select className="admin-input" onChange={async (e)=>{
                 const v = e.target.value as any;
                 if(!v) return;
@@ -225,17 +225,15 @@ export default function AdminAlunos() {
                   await updateUsersFormation(selectedEmails, v);
                   setSelected({});
                   await load();
-                  toast.success('Formação atualizada', 'Os alunos selecionados foram movidos para a nova formação.');
+                  toast.success('Curso atualizado', 'Os alunos selecionados foram movidos para o novo curso.');
                 } catch {
                   toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
                 }
               }}>
                 <option value="">—</option>
-                <option value="APOSTOLO">Apóstolo</option>
-                <option value="PROFETA">Profeta</option>
-                <option value="EVANGELISTA">Evangelista</option>
-                <option value="PASTOR">Pastor</option>
-                <option value="MESTRE">Mestre</option>
+                {availableCourses.map(c => (
+                  <option key={c.id} value={c.id}>{c.name}</option>
+                ))}
               </select>
             </label>
             <button className="admin-btn" onClick={async ()=>{
@@ -574,7 +572,7 @@ export default function AdminAlunos() {
               <form onSubmit={async (e)=>{
                 e.preventDefault();
                 if (!invite.email || !invite.formation) {
-                  toast.warning('Campos obrigatórios', 'Informe e-mail e formação para gerar o convite.');
+                  toast.warning('Campos obrigatórios', 'Informe o e-mail para gerar o convite.');
                   return;
                 }
                 try {
@@ -587,14 +585,12 @@ export default function AdminAlunos() {
                 }
               }} style={{display:'grid', gap:10}}>
                 <input className="admin-input" placeholder="E-mail do convidado" value={invite.email} onChange={(e)=> setInvite(i=>({...i, email:e.target.value}))} />
-                <label className="admin-field">Formação
+                <label className="admin-field">Curso (opcional)
                   <select className="admin-input" value={invite.formation} onChange={(e)=> setInvite(i=>({...i, formation:e.target.value as any}))}>
-                    <option value="">Selecione</option>
-                    <option value="APOSTOLO">Apóstolo</option>
-                    <option value="PROFETA">Profeta</option>
-                    <option value="EVANGELISTA">Evangelista</option>
-                    <option value="PASTOR">Pastor</option>
-                    <option value="MESTRE">Mestre</option>
+                    <option value="">— Sem curso definido —</option>
+                    {availableCourses.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
                   </select>
                 </label>
                 <label className="admin-field">Validade (dias)

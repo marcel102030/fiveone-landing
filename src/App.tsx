@@ -107,6 +107,7 @@ function AppContent() {
     location.pathname === "/streamer-apostolo" ||
     location.pathname === "/streamer-mestre" ||
     location.pathname === "/modulos-mestre" ||
+    location.pathname.startsWith("/curso/") ||
     location.pathname === "/perfil" ||
     location.pathname === "/favoritos" ||
     location.pathname.startsWith("/admin") ||

@@ -1587,7 +1587,7 @@ const StreamerMestre = ({ ministryId = 'MESTRE' }: { ministryId?: MinistryKey })
               </button>
               <h2 className="text-xl font-bold text-slate-white mt-4">Conteúdo em preparação</h2>
               <p className="text-slate mt-3 text-sm">
-                Nenhuma aula publicada para esta formação ainda. Assim que novas aulas forem disponibilizadas, elas aparecerão aqui automaticamente.
+                Nenhuma aula publicada para este curso ainda. Assim que novas aulas forem disponibilizadas, elas aparecerão aqui automaticamente.
               </p>
             </div>
           )}

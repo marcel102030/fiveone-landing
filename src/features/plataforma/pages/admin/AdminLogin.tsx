@@ -117,7 +117,7 @@ export default function AdminLogin() {
         <aside className="admin-login-left" aria-hidden>
           <div className="admin-login-left-content">
             <div className="brand-mark">FIVE ONE</div>
-            <h2>Transforme formações em jornadas memoráveis</h2>
+            <h2>Transforme cursos em jornadas memoráveis</h2>
             <p>Centralize módulos, acompanhe resultados e conduza seus alunos com rapidez.</p>
           </div>
         </aside>

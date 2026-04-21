@@ -142,7 +142,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
             Entre na sua conta
           </h1>
           <p className="text-slate text-sm leading-relaxed">
-            Acesse as formações, continue seus módulos e acompanhe o seu progresso na jornada Five One.
+            Acesse seus cursos, continue suas aulas e acompanhe o seu progresso na plataforma Five One.
           </p>
         </div>
 

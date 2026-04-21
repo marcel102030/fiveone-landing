@@ -554,7 +554,7 @@ export default function AdminConteudoPlataforma() {
     const { moduleId, lesson } = pendingLessonRemoval;
     try {
       await deleteLesson(selectedMinistry.id, moduleId, lesson.id);
-      toast.info('Aula removida', 'O conteúdo foi excluído da formação.');
+      toast.info('Aula removida', 'O conteúdo foi excluído do curso.');
     } catch (error) {
       console.error("Erro ao excluir aula", error);
       toast.error('Não foi possível remover', 'Tente novamente em instantes.');
@@ -729,7 +729,7 @@ export default function AdminConteudoPlataforma() {
               </button>
               <button
                 className="adm5-pill"
-                onClick={() => toast.info('Exportação disponível em breve', 'Estamos finalizando o relatório completo da formação.')}
+                onClick={() => toast.info('Exportação disponível em breve', 'Estamos finalizando o relatório completo do curso.')}
               >
                 Exportar visão
               </button>
@@ -943,7 +943,7 @@ export default function AdminConteudoPlataforma() {
           {activeTab === "certificate" && (
             <div style={{ color: "#94a3b8", lineHeight: 1.6 }}>
               <p>
-                Configure aqui as regras para emissão de certificados da formação selecionada. Defina carga horária mínima,
+                Configure aqui as regras para emissão de certificados do curso selecionado. Defina carga horária mínima,
                 lições obrigatórias e o modelo do certificado. Este recurso estará disponível nas próximas iterações.
               </p>
             </div>
