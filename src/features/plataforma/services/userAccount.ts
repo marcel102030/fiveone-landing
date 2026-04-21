@@ -173,7 +173,11 @@ export async function listUsersPage(params: { q?: string; page: number; pageSize
     .select('email,name,created_at,formation,role,member_id,is_active', { count: 'exact' })
     .order('created_at', { ascending: false })
     .range(from, to);
-  if (q && q.trim()) query = query.ilike('email', `%${q.trim()}%`);
+  if (q && q.trim()) {
+    const safe = q.trim().replace(/[%_]/g, '\\$&');
+    // Busca por nome OU e-mail (case-insensitive)
+    query = query.or(`email.ilike.%${safe}%,name.ilike.%${safe}%`);
+  }
   if (allowedEmails !== null) query = query.in('email', allowedEmails);
   const { data, error, count } = await query;
   if (error) throw error;
@@ -190,11 +194,14 @@ export async function emailExists(email: string): Promise<boolean> {
 }
 
 export async function updateUserEmail(oldEmail: string, newEmail: string): Promise<void> {
-  const { error } = await supabase
-    .from('platform_user')
-    .update({ email: newEmail.toLowerCase() })
-    .eq('email', oldEmail.toLowerCase());
-  if (error) throw error;
+  // Usa a Admin API via Cloudflare Function para sincronizar Auth + DB + enrollment
+  const res = await fetch('/api/update-student-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ oldEmail: oldEmail.toLowerCase(), newEmail: newEmail.toLowerCase() }),
+  });
+  const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error || 'Erro ao atualizar e-mail');
 }
 
 export async function updateUserRole(email: string, role: PlatformUserRole): Promise<void> {
@@ -269,11 +276,14 @@ export async function signOut(): Promise<void> {
 }
 
 export async function deleteUser(email: string): Promise<void> {
-  const { error } = await supabase
-    .from('platform_user')
-    .delete()
-    .eq('email', email.toLowerCase());
-  if (error) throw error;
+  // Usa a Admin API via Cloudflare Function para remover do Auth + DB + enrollment
+  const res = await fetch('/api/delete-student', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: email.toLowerCase() }),
+  });
+  const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
+  if (!data.ok) throw new Error(data.error || 'Erro ao remover aluno');
 }
 
 export async function setUserActive(email: string, active: boolean): Promise<void> {
@@ -290,10 +300,26 @@ export async function setUsersActive(emails: string[], active: boolean): Promise
   if (error) throw error;
 }
 
+/** @deprecated Prefer addCourseToUsers() which updates platform_enrollment. */
 export async function updateUsersFormation(emails: string[], formation: FormationKey): Promise<void> {
   if (!emails.length) return;
   const { error } = await supabase.from('platform_user').update({ formation }).in('email', emails.map(e=>e.toLowerCase()));
   if (error) throw error;
+}
+
+/**
+ * Matricula um conjunto de alunos em um curso (upsert aditivo — não remove matrículas existentes).
+ * Atualiza também o campo legacy `formation` para o novo curso.
+ */
+export async function addCourseToUsers(emails: string[], courseId: CourseId): Promise<void> {
+  if (!emails.length) return;
+  const rows = emails.map(e => ({ user_email: e.toLowerCase(), course_id: courseId }));
+  const { error } = await supabase
+    .from('platform_enrollment')
+    .upsert(rows, { onConflict: 'user_email,course_id' });
+  if (error) throw error;
+  // Atualiza campo legacy formation para compatibilidade
+  await supabase.from('platform_user').update({ formation: courseId }).in('email', emails.map(e => e.toLowerCase()));
 }
 
 export async function resetUsersPasswords(emails: string[], newPassword: string): Promise<void> {
@@ -304,8 +330,16 @@ export async function resetUsersPasswords(emails: string[], newPassword: string)
 
 export async function deleteUsers(emails: string[]): Promise<void> {
   if (!emails.length) return;
-  const { error } = await supabase.from('platform_user').delete().in('email', emails.map(e=>e.toLowerCase()));
-  if (error) throw error;
+  // Deletar sequencialmente via Admin API para garantir remoção do Auth também
+  const errors: string[] = [];
+  for (const email of emails) {
+    try {
+      await deleteUser(email);
+    } catch (e: any) {
+      errors.push(`${email}: ${e?.message || 'erro desconhecido'}`);
+    }
+  }
+  if (errors.length) throw new Error(`Falha ao remover ${errors.length} aluno(s): ${errors.slice(0, 3).join('; ')}`);
 }
 
 // Invitations

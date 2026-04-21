@@ -56,10 +56,8 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const email = body.email.trim().toLowerCase();
     const password = body.password;
     const name = (body.name || '').trim() || null;
-    const formation = (body.formation || 'MESTRE').toString().toUpperCase();
-
-    const VALID_FORMATIONS = ['APOSTOLO', 'PROFETA', 'EVANGELISTA', 'PASTOR', 'MESTRE'];
-    const safeFormation = VALID_FORMATIONS.includes(formation) ? formation : 'MESTRE';
+    // formation é campo legado — aceita qualquer string de curso ou null
+    const safeFormation = (body.formation || '').toString().trim() || null;
 
     if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
       return new Response(
@@ -117,7 +115,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const { error: dbError } = await admin.from('platform_user').insert({
       email,
       name,
-      formation: safeFormation,
+      ...(safeFormation ? { formation: safeFormation } : {}),
       role: 'STUDENT',
       is_active: true,
       created_at: new Date().toISOString(),

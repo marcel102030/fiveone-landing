@@ -13,8 +13,8 @@ import {
   FormationKey,
   getUserComments,
   setUsersActive,
-  updateUsersFormation,
   deleteUsers,
+  addCourseToUsers,
   createInvite,
   getEnrollments,
   setEnrollments,
@@ -43,7 +43,8 @@ export default function AdminAlunos() {
   const [pageSize, setPageSize] = useState(10);
   const [total, setTotal] = useState(0);
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const [edit, setEdit] = useState<null | { email: string; name: string | null }>(null);
+  const [edit, setEdit] = useState<null | { email: string; name: string | null; is_active: boolean }>(null);
+  const [editActive, setEditActive] = useState(true);
   const [reset, setReset] = useState<null | { email: string }>(null);
   const [confirmDel, setConfirmDel] = useState<null | { email: string }>(null);
   const [formationFilter, setFormationFilter] = useState<'ALL' | string>('ALL');
@@ -84,9 +85,18 @@ export default function AdminAlunos() {
       }
     } finally { setLoading(false); }
   }
-  useEffect(() => { load(); }, []);
-  useEffect(() => { const id = setTimeout(()=>{ setPage(0); }, 300); return () => clearTimeout(id); }, [q]);
-  useEffect(() => { load(); }, [page, pageSize, formationFilter]);
+  // Trigger separado para garantir reload mesmo quando page já é 0
+  const [loadTrigger, setLoadTrigger] = useState(0);
+  useEffect(() => { load(); }, [loadTrigger]);
+  // Debounce na busca — reseta página e dispara reload
+  useEffect(() => {
+    const id = setTimeout(() => {
+      setSelected({});
+      setPage(prev => { if (prev !== 0) return 0; setLoadTrigger(t => t + 1); return 0; });
+    }, 300);
+    return () => clearTimeout(id);
+  }, [q]);
+  useEffect(() => { setSelected({}); load(); }, [page, pageSize, formationFilter]);
 
   async function loadUserComments(email: string){
     try { setUserCommentsState(await getUserComments(email)); } catch { setUserCommentsState([]); }
@@ -148,21 +158,35 @@ export default function AdminAlunos() {
 
   function importCSV(file: File) {
     file.text().then(async (txt) => {
-      const lines = txt.split(/\r?\n/).filter(Boolean);
+      const lines = txt.split(/\r?\n/).filter(Boolean).filter(l => !l.startsWith('email,'));
+      let ok = 0;
+      const erros: string[] = [];
       for (const line of lines) {
-        const [email, name, password, formation] = line.split(',').map(s => s.trim().replace(/^\"|\"$/g, ''));
+        const [email, name, password, formation] = line.split(',').map(s => s.trim().replace(/^["']|["']$/g, ''));
         if (!email || !password) continue;
-        await createUser({ email, password, name: name || null, formation: (formation as any) || null });
+        try {
+          await createUser({ email, password, name: name || null, formation: (formation as any) || null });
+          if (formation) await setEnrollments(email, [formation]);
+          ok++;
+        } catch (e: any) {
+          erros.push(`${email}: ${e?.message || 'erro'}`);
+        }
       }
       await load();
-      toast.success('Importação concluída', 'Os alunos do arquivo foram cadastrados.');
-    });
+      if (erros.length === 0) {
+        toast.success('Importação concluída', `${ok} aluno(s) cadastrado(s) com sucesso.`);
+      } else if (ok > 0) {
+        toast.warning(`${ok} importado(s), ${erros.length} falhou`, erros.slice(0, 3).join(' | '));
+      } else {
+        toast.error('Falha na importação', erros.slice(0, 3).join(' | '));
+      }
+    }).catch(() => toast.error('Erro ao ler arquivo', 'Verifique se o arquivo é um CSV válido.'));
   }
   return (
     <div className="adm5-wrap">
       <div className="adm5-topbar" style={{marginBottom:12}}>
         <h1 className="adm5-title">Alunos</h1>
-        <button className="adm5-pill" onClick={()=> window.history.length ? history.back() : (location.hash = '#/admin/administracao')}>← Voltar ao hub</button>
+        <button className="adm5-pill" onClick={()=> { location.hash = '#/admin/administracao'; }}>← Voltar ao hub</button>
       </div>
       <p className="adm5-sub">Aqui você visualiza e edita o acesso de todos os alunos da plataforma Five One</p>
 
@@ -211,7 +235,7 @@ export default function AdminAlunos() {
       <div className="admin-search">
         <input
           className="admin-search-input"
-          placeholder="Pesquisar aluno na plataforma"
+          placeholder="Pesquisar por nome ou e-mail…"
           value={q}
           onChange={(e)=> setQ(e.target.value)}
         />
@@ -221,15 +245,15 @@ export default function AdminAlunos() {
         <div className="admin-toolbar" style={{marginTop:8}}>
           <div className="admin-toolbar-left" style={{gap:12}}>
             <div className="adm5-pill">Selecionados: {selectedEmails.length}</div>
-            <label className="admin-field">Mover para curso
+            <label className="admin-field">Matricular em curso
               <select className="admin-input" onChange={async (e)=>{
-                const v = e.target.value as any;
+                const v = e.target.value;
                 if(!v) return;
                 try {
-                  await updateUsersFormation(selectedEmails, v);
+                  await addCourseToUsers(selectedEmails, v);
                   setSelected({});
                   await load();
-                  toast.success('Curso atualizado', 'Os alunos selecionados foram movidos para o novo curso.');
+                  toast.success('Matriculado(s)', `${selectedEmails.length} aluno(s) adicionado(s) ao curso.`);
                 } catch {
                   toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
                 }
@@ -296,7 +320,7 @@ export default function AdminAlunos() {
                 <tr key={u.email} className="admin-row">
                   <td className="admin-td" style={{whiteSpace:'nowrap', display:'flex', alignItems:'center', gap:8}}>
                     <input type="checkbox" checked={!!selected[u.email]} onChange={(e)=> setSelected(s=> ({...s, [u.email]: e.target.checked}))} />
-                    <button className="admin-btn" onClick={()=> { setEdit({ email: u.email, name: u.name }); loadUserComments(u.email); }}>Gerenciar</button>
+                    <button className="admin-btn" onClick={()=> { const active = (u as any).is_active !== false; setEdit({ email: u.email, name: u.name, is_active: active }); setEditActive(active); loadUserComments(u.email); }}>Gerenciar</button>
                     <button className="admin-btn" onClick={()=> {
                       const normalized = u.email.toLowerCase();
                       setDetails({ email: normalized, loading: true, data: null });
@@ -320,7 +344,7 @@ export default function AdminAlunos() {
                     </div>
                   </td>
                   <td className="admin-td">{u.created_at ? new Date(u.created_at).toLocaleDateString('pt-BR') : '-'}</td>
-                  <td className="admin-td">{mockLastAccess(u.email)}</td>
+                  <td className="admin-td" style={{color:'#64748b'}}>—</td>
                   <td className="admin-td">
                     {(enrollmentMap[u.email] || []).length > 0
                       ? (enrollmentMap[u.email] || []).map(id => availableCourses.find(c=>c.id===id)?.name || id).join(', ')
@@ -358,7 +382,7 @@ export default function AdminAlunos() {
             <h3>Novo aluno</h3>
             <form onSubmit={onCreate} style={{display:'grid', gap:10}}>
               <input className="admin-input" placeholder="Nome completo" value={form.name} onChange={(e)=> setForm({...form, name:e.target.value})} />
-              <input className="admin-input" placeholder="E-mail" value={form.email} onChange={(e)=> setForm({...form, email:e.target.value})} />
+              <input className="admin-input" type="email" placeholder="E-mail" value={form.email} onChange={(e)=> setForm({...form, email:e.target.value})} />
               <input className="admin-input" placeholder="Senha" type="password" value={form.password} onChange={(e)=> setForm({...form, password:e.target.value})} />
               <div style={{fontSize:12, color: validPassword(form.password) ? '#22c55e' : '#f59e0b'}}>
                 Força da senha: {form.password.length>=12? 'Alta': form.password.length>=8? 'Média':'Fraca'} — use letras e números (mín. 8)
@@ -458,7 +482,7 @@ export default function AdminAlunos() {
               toast.success('Cadastro atualizado', 'Dados do aluno salvos com sucesso.');
             }} style={{display:'grid', gap:10}}>
               <input id="editName" className="admin-input" defaultValue={edit.name || ''} placeholder="Nome" />
-              <input id="editEmail" className="admin-input" defaultValue={edit.email} placeholder="E-mail" />
+              <input id="editEmail" className="admin-input" type="email" defaultValue={edit.email} placeholder="E-mail" />
               <div className="admin-field">
                 <span style={{fontSize:13, fontWeight:600, color:'#9fb2c5'}}>Cursos matriculados</span>
                 {editEnrollmentsLoading ? (
@@ -481,7 +505,10 @@ export default function AdminAlunos() {
                 )}
               </div>
               <label style={{display:'inline-flex', alignItems:'center', gap:8}}>
-                <input type="checkbox" defaultChecked onChange={async (e)=>{ try{ await setUserActive(edit.email, e.target.checked);} catch{} }} /> Ativo
+                <input type="checkbox" checked={editActive} onChange={async (e)=>{
+                  setEditActive(e.target.checked);
+                  try { await setUserActive(edit.email, e.target.checked); } catch { setEditActive(!e.target.checked); }
+                }} /> Ativo
               </label>
               <h4 style={{margin:'10px 0 6px'}}>Comentários</h4>
               <div className="adm5-tabs">
@@ -610,11 +637,25 @@ export default function AdminAlunos() {
                 </div>
               </form>
             ) : (
-              <div style={{display:'grid', gap:10}}>
-                <div className="admin-input" style={{userSelect:'all'}}>{invite.link}</div>
-                <div style={{display:'flex', justifyContent:'flex-end', gap:8}}>
-                  <button className="admin-btn" onClick={()=> { navigator.clipboard.writeText(invite.link); }}>Copiar link</button>
-                  <button className="admin-btn primary" onClick={()=> setShowInvite(false)}>Concluir</button>
+              <div style={{display:'grid', gap:12}}>
+                <p style={{fontSize:12, color:'#9fb2c5', margin:0}}>
+                  Link gerado com sucesso! Copie abaixo ou envie por e-mail diretamente para{' '}
+                  <strong style={{color:'#e2e8f0'}}>{invite.email}</strong>.
+                </p>
+                <div className="admin-input" style={{userSelect:'all', wordBreak:'break-all', fontSize:12}}>{invite.link}</div>
+                <div style={{display:'flex', justifyContent:'flex-end', gap:8, flexWrap:'wrap'}}>
+                  <button className="admin-btn" onClick={()=> {
+                    navigator.clipboard.writeText(invite.link);
+                    toast.success('Copiado!', 'Link de convite copiado para a área de transferência.');
+                  }}>📋 Copiar link</button>
+                  {invite.email && (
+                    <a
+                      className="admin-btn"
+                      href={`mailto:${invite.email}?subject=Seu%20convite%20para%20a%20plataforma%20Five%20One&body=Ol%C3%A1%2C%0A%0AVoc%C3%AA%20foi%20convidado(a)%20para%20acessar%20a%20plataforma%20Five%20One.%0AAcesse%20pelo%20link%20abaixo%20para%20criar%20sua%20conta%3A%0A%0A${encodeURIComponent(invite.link)}%0A%0AO%20link%20expira%20em%20${invite.days}%20dia(s).%0A%0AFive%20One`}
+                      style={{textDecoration:'none', display:'inline-flex', alignItems:'center'}}
+                    >✉️ Enviar por e-mail</a>
+                  )}
+                  <button className="admin-btn primary" onClick={()=> { setShowInvite(false); setInvite({ email:'', formation: '', days: 7, link: '' }); }}>Concluir</button>
                 </div>
               </div>
             )}
@@ -685,14 +726,7 @@ export default function AdminAlunos() {
   );
 }
 
-function mockLastAccess(seed: string) {
-  const n = Math.abs(hashCode(seed)) % 30; // 0-29 dias
-  const d = new Date(Date.now() - n * 24*60*60*1000);
-  return d.toLocaleDateString('pt-BR', { day:'2-digit', month:'2-digit', year:'numeric'}) + ' às 18:29h';
-}
-
 function hashCode(s: string){ let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
-
 
 function renderAvatar(name: string, email: string) {
   const initials = name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || email.slice(0,2).toUpperCase();
