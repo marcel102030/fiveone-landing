@@ -674,6 +674,25 @@ const PaginaInicial = () => {
     })),
   [enrolledCourseIds, platformContent.ministries])
 
+  // Stats por curso — para o hero adaptativo multi-curso
+  const courseStats = useMemo(() =>
+    enrolledCourses.map(({ id, ministry }) => {
+      const courseLessons = allLessons.filter(l => l.ministryId === id)
+      const total = courseLessons.length
+      const completed = courseLessons.filter(
+        l => completedIds.has(l.videoId) || completedIds.has(l.id)
+      ).length
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+      const lastItem = lastWatchedArray.find(item => {
+        const key = item.id || item.videoId || item.video_id
+        const lesson = key ? lessonByVideoId.get(key) : null
+        return lesson?.ministryId === id
+      })
+      const hasProgress = completed > 0 || !!lastItem
+      return { id, name: ministry?.name || id, total, completed, pct, hasProgress, lastItem }
+    }),
+  [enrolledCourses, allLessons, completedIds, lastWatchedArray, lessonByVideoId])
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
@@ -697,64 +716,117 @@ const PaginaInicial = () => {
               </h1>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-lg">
-              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                <div className="flex items-center justify-center mb-1 text-mint">
-                  <CheckCircleIcon />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalCompleted}</p>
-                <p className="text-xs text-slate mt-0.5">
-                  {totalCompleted === 1 ? 'Aula concluída' : 'Aulas concluídas'}
-                </p>
-              </div>
-              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                <div className="flex items-center justify-center mb-1 text-mint">
-                  <LayersIcon />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalLessons}</p>
-                <p className="text-xs text-slate mt-0.5">
-                  {totalLessons === 1 ? 'Aula disponível' : 'Aulas disponíveis'}
-                </p>
-              </div>
-              <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                <div className="flex items-center justify-center mb-1 text-mint">
-                  <BookOpenIcon />
-                </div>
-                <p className="text-xl sm:text-2xl font-bold text-slate-white">{progressPercent}%</p>
-                <p className="text-xs text-slate mt-0.5">Concluído</p>
-                {/* Mini barra de progresso */}
-                {totalLessons > 0 && (
-                  <div className="mt-2 h-1 bg-navy-lighter rounded-full overflow-hidden">
+            {/* Stats / Cards — adaptativo por nº de cursos */}
+            {enrolledCourseIds.length > 1 ? (
+              <>
+                {/* ── Multi-curso: card por curso ─────────────────────────── */}
+                <div className="space-y-3 mb-8 max-w-xl">
+                  {courseStats.map(course => (
                     <div
-                      className="h-full bg-mint rounded-full transition-all duration-700"
-                      style={{ width: `${progressPercent}%` }}
-                    />
+                      key={course.id}
+                      className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-4 flex items-center gap-4"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-semibold text-slate-white truncate">{course.name}</p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex-1 h-1.5 bg-navy rounded-full overflow-hidden">
+                            <div
+                              className="h-1.5 bg-mint rounded-full transition-all duration-700"
+                              style={{ width: `${course.pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs text-mint font-semibold tabular-nums flex-shrink-0 w-8 text-right">
+                            {course.pct}%
+                          </span>
+                        </div>
+                        <p className="text-xs text-slate mt-1">
+                          {course.completed} de {course.total} aula{course.total !== 1 ? 's' : ''} concluída{course.completed !== 1 ? 's' : ''}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => {
+                          if (course.lastItem) goToLesson(course.lastItem)
+                          else navigate(`/curso/${course.id}/modulos`)
+                        }}
+                        className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-mint text-navy text-xs font-bold rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                      >
+                        {course.hasProgress ? 'Continuar' : 'Começar'} →
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                {/* Atalho para retomar a última aula assistida (qualquer curso) */}
+                {visibleLastWatched.length > 0 && (
+                  <div className="flex flex-wrap gap-3">
+                    <button
+                      onClick={handleResumeLesson}
+                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
+                    >
+                      <PlayIcon />
+                      Retomar última aula
+                    </button>
                   </div>
                 )}
-              </div>
-            </div>
-
-            {/* CTAs */}
-            <div className="flex flex-wrap gap-3">
-              {visibleLastWatched.length > 0 && (
-                <button
-                  onClick={handleResumeLesson}
-                  className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
-                >
-                  <PlayIcon />
-                  Retomar aula
-                </button>
-              )}
-              {primaryCourseId && (
-                <Link
-                  to={`/curso/${primaryCourseId}/modulos`}
-                  className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
-                >
-                  Explorar módulos
-                </Link>
-              )}
-            </div>
+              </>
+            ) : (
+              <>
+                {/* ── Curso único: stats + CTAs originais ─────────────────── */}
+                <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-lg">
+                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                    <div className="flex items-center justify-center mb-1 text-mint">
+                      <CheckCircleIcon />
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalCompleted}</p>
+                    <p className="text-xs text-slate mt-0.5">
+                      {totalCompleted === 1 ? 'Aula concluída' : 'Aulas concluídas'}
+                    </p>
+                  </div>
+                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                    <div className="flex items-center justify-center mb-1 text-mint">
+                      <LayersIcon />
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalLessons}</p>
+                    <p className="text-xs text-slate mt-0.5">
+                      {totalLessons === 1 ? 'Aula disponível' : 'Aulas disponíveis'}
+                    </p>
+                  </div>
+                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
+                    <div className="flex items-center justify-center mb-1 text-mint">
+                      <BookOpenIcon />
+                    </div>
+                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{progressPercent}%</p>
+                    <p className="text-xs text-slate mt-0.5">Concluído</p>
+                    {totalLessons > 0 && (
+                      <div className="mt-2 h-1 bg-navy-lighter rounded-full overflow-hidden">
+                        <div
+                          className="h-full bg-mint rounded-full transition-all duration-700"
+                          style={{ width: `${progressPercent}%` }}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  {visibleLastWatched.length > 0 && (
+                    <button
+                      onClick={handleResumeLesson}
+                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                    >
+                      <PlayIcon />
+                      Retomar aula
+                    </button>
+                  )}
+                  {primaryCourseId && (
+                    <Link
+                      to={`/curso/${primaryCourseId}/modulos`}
+                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
+                    >
+                      Explorar módulos
+                    </Link>
+                  )}
+                </div>
+              </>
+            )}
           </div>
         </section>
 
