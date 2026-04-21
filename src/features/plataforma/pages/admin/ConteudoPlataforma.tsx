@@ -918,6 +918,9 @@ export default function AdminConteudoPlataforma() {
         setModuleBannerModal(null);
         setShowNewModuleModal(false);
         setShowNewCourseModal(false);
+        setShowBulkDeleteConfirm(false);
+        setPendingLessonRemoval(null);
+        closeLessonModal();
       }
     };
     document.addEventListener('click', onClickAway);
