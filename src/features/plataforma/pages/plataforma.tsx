@@ -122,21 +122,29 @@ const PaginaInicial = () => {
   const effectiveUid = getCurrentUserId() || (authEmail ? authEmail.toLowerCase() : null)
 
   // ── Isolamento entre usuários ─────────────────────────────────────────────
-  // Apaga cache local APENAS quando troca de usuário identificado.
-  // Nunca apaga quando uid é null (página recarregada, auth ainda carregando).
+  // Apaga cache local APENAS quando um usuário DIFERENTE faz login.
+  // Se o MESMO usuário volta (após logout), o cache é preservado — evita que
+  // o "Continuar Assistindo" suma porque o progresso estava só no localStorage.
   useEffect(() => {
     if (!effectiveUid) return // Ainda não identificado — não toca no cache
     try {
       const storedUser = localStorage.getItem('fiveone_active_user')
       const wasLoggedOut = storedUser === '__logged_out__'
-      const isDifferentUser = storedUser && !wasLoggedOut && storedUser !== effectiveUid
-      if (wasLoggedOut || isDifferentUser) {
-        // Troca real de usuário — apaga todos os dados do anterior
+      const isDifferentActiveUser = storedUser && !wasLoggedOut && storedUser !== effectiveUid
+
+      // Determina se é um usuário diferente do que estava antes
+      const lastEmail = localStorage.getItem('fiveone_last_active_email')
+      const isNewUser = wasLoggedOut
+        ? (lastEmail ? lastEmail !== effectiveUid : false) // logout: só limpa se email diferente
+        : isDifferentActiveUser                            // troca direta sem logout
+
+      if (isNewUser) {
+        // Usuário DIFERENTE — apaga cache do anterior
         try { localStorage.removeItem('videos_assistidos') } catch {}
         try { localStorage.removeItem('fiveone_last_lesson') } catch {}
         // CRÍTICO: limpa completions do localStorage E reseta o estado React.
-        // Sem isso, o completedMap inicializa com completions antigas do usuário
-        // anterior e filtra as aulas em andamento do novo usuário como "concluídas".
+        // Sem isso, o completedMap inicializa com completions do usuário anterior
+        // e filtra aulas em andamento do novo usuário como "concluídas".
         clearCompletedLessons()
         setCompletedMap(new Map<string, CompletedLessonInfo>())
         const progressKeys: string[] = []
@@ -154,6 +162,7 @@ const PaginaInicial = () => {
           syncKeys.forEach(k => { try { sessionStorage.removeItem(k) } catch {} })
         } catch {}
       }
+      // Se wasLoggedOut mas mesmo usuário → NÃO limpa o cache → "Continuar Assistindo" persiste
       try { localStorage.setItem('fiveone_active_user', effectiveUid) } catch {}
     } catch {}
   // effectiveUid muda quando authEmail resolve (auth async) — re-verificar nesse momento

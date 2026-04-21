@@ -66,29 +66,33 @@ export function setCurrentUser(email: string, remember = false): void {
 export function clearCurrentUser(): void {
   const local = getStorage('local');
   const session = getStorage('session');
+
+  // Salva o email do usuário que está saindo para comparação no próximo login.
+  // CRÍTICO: se o MESMO usuário voltar, o cache de progresso é preservado.
+  // Se um USUÁRIO DIFERENTE entrar, o isolamento em plataforma.tsx apaga o cache.
+  try {
+    const outgoingEmail =
+      readFrom(session, SESSION_STORAGE_KEY)?.email ||
+      readFrom(local, LOCAL_STORAGE_KEY)?.email ||
+      null;
+    if (outgoingEmail) local?.setItem('fiveone_last_active_email', outgoingEmail);
+  } catch {}
+
   try { local?.removeItem(LOCAL_STORAGE_KEY); } catch {}
   try { session?.removeItem(SESSION_STORAGE_KEY); } catch {}
   try { local?.removeItem(PROFILE_STORAGE_KEY); } catch {}
   try { local?.removeItem(FORMATION_STORAGE_KEY); } catch {}
+
   // Marca como "deslogado" — permite distinguir logout de simples reload
   try { local?.setItem('fiveone_active_user', '__logged_out__'); } catch {}
-  // Limpa todos os dados de progresso do usuário — evita que o próximo login
-  // (ou outro usuário no mesmo dispositivo) veja cache stale
-  try { local?.removeItem('videos_assistidos'); } catch {}
-  try { local?.removeItem('fiveone_last_lesson'); } catch {}
-  try { local?.removeItem('fiveone_completed_lessons_v1'); } catch {}
-  try {
-    if (local) {
-      const keys: string[] = [];
-      for (let i = 0; i < local.length; i++) {
-        const k = local.key(i);
-        if (k?.startsWith('fiveone_progress::')) keys.push(k);
-      }
-      keys.forEach(k => { try { local.removeItem(k); } catch {} });
-    }
-  } catch {}
-  // Limpa throttle de sync de progresso do sessionStorage — evita que o próximo
-  // usuário no mesmo browser herde o throttle do usuário anterior (bug #9)
+
+  // NÃO apaga dados de progresso aqui. O isolamento por usuário é feito em
+  // plataforma.tsx: se o mesmo usuário volta, o cache é reutilizado; se for
+  // um usuário diferente, o cache é apagado nesse momento.
+  // Isso evita que o "Continuar Assistindo" suma quando o mesmo usuário sai e volta.
+
+  // Limpa throttle de sync do sessionStorage — o próximo usuário não deve
+  // herdar os timestamps de throttle do usuário anterior
   try {
     if (session) {
       const syncKeys: string[] = [];
