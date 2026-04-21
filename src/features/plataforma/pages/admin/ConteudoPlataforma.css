@@ -1047,3 +1047,73 @@ code.info-stat-value {
   font-size: 12px;
   color: #64748b;
 }
+
+/* ── Bulk toolbar ───────────────────────────────────────────────────────────── */
+.bulk-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: rgba(251, 191, 36, 0.07);
+  border: 1px solid rgba(251, 191, 36, 0.25);
+  border-radius: 10px;
+  padding: 8px 14px;
+  margin-bottom: 4px;
+}
+
+.bulk-count {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fbbf24;
+  margin-right: 4px;
+  white-space: nowrap;
+}
+
+/* ── Lesson checkbox ────────────────────────────────────────────────────────── */
+.lesson-checkbox {
+  width: 16px;
+  height: 16px;
+  accent-color: #38bdf8;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+/* ── Module description section ─────────────────────────────────────────────── */
+.module-desc-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 6px;
+}
+
+.module-desc-input {
+  width: 100%;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #cbd5e1;
+  font-size: 13px;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.15s;
+  font-family: inherit;
+}
+.module-desc-input:focus {
+  outline: none;
+  border-color: #38bdf8;
+}
+.module-desc-input::placeholder {
+  color: #475569;
+}
+
+/* ── Expired scheduled tag ──────────────────────────────────────────────────── */
+.lesson-tag--expired {
+  color: #f87171;
+  background: rgba(248, 113, 113, 0.1);
+  border: 1px solid rgba(248, 113, 113, 0.3);
+  border-radius: 4px;
+  padding: 1px 6px;
+  font-weight: 600;
+}

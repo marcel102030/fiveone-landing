@@ -560,8 +560,15 @@ export function listLessons(options?: {
       // Módulo em rascunho não aparece para alunos
       if (options?.onlyPublished && module.status !== "published") return;
       module.lessons.forEach((lesson) => {
-        if (options?.onlyPublished && lesson.status !== "published") return;
-        if (options?.onlyPublished && lesson.releaseAt && new Date(lesson.releaseAt) > new Date()) return;
+        if (options?.onlyPublished) {
+          const now = new Date();
+          const relAt = lesson.releaseAt ? new Date(lesson.releaseAt) : null;
+          // Publicada sem data futura → OK
+          const isPublished = lesson.status === 'published' && (!relAt || relAt <= now);
+          // Programada com data já passada → também visível (auto-publish implícito)
+          const isScheduledPast = lesson.status === 'scheduled' && relAt !== null && relAt <= now;
+          if (!isPublished && !isScheduledPast) return;
+        }
         if (options?.onlyActive && !lesson.isActive) return;
         result.push({
           ...structuredCloneSafe(lesson),
@@ -1063,6 +1070,65 @@ export async function unenrollUser(ministryId: MinistryKey, userId: string): Pro
     .eq('course_id', ministryId)
     .eq('user_id', userId);
   if (error) throw error;
+}
+
+export async function findUserByEmail(email: string): Promise<string | null> {
+  try {
+    const { data } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('email', email.trim().toLowerCase())
+      .maybeSingle();
+    return (data as any)?.id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+// ── Módulo: descrição ────────────────────────────────────────────────────────
+
+export async function updateModuleDescription(
+  _ministryId: MinistryKey,
+  moduleId: string,
+  description: string,
+  highlight: string,
+): Promise<void> {
+  const { error } = await supabase
+    .from('platform_module')
+    .update({
+      description: description.trim() || null,
+      highlight: highlight.trim() || null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', moduleId);
+  if (error) throw error;
+  await refreshContent();
+}
+
+// ── Bulk actions ─────────────────────────────────────────────────────────────
+
+export async function bulkSetLessonStatus(lessonIds: string[], status: LessonStatus): Promise<void> {
+  const { error } = await supabase
+    .from('platform_lesson')
+    .update({ status, updated_at: new Date().toISOString() })
+    .in('id', lessonIds);
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function bulkDeleteLessons(lessonIds: string[]): Promise<void> {
+  for (const id of lessonIds) {
+    const lesson = findLessonById(id);
+    await deleteStoredFileFromBucket(lesson?.materialFile ?? null);
+    await deleteStoredFileFromBucket(lesson?.bannerContinue ?? null);
+    await deleteStoredFileFromBucket(lesson?.bannerPlayer ?? null);
+    await deleteStoredFileFromBucket(lesson?.bannerMobile ?? null);
+  }
+  const { error } = await supabase.from('platform_lesson').delete().in('id', lessonIds);
+  if (error) throw error;
+  try { await supabase.from('platform_user_progress').delete().in('lesson_id', lessonIds); } catch { /* silent */ }
+  try { await supabase.from('platform_lesson_completion').delete().in('lesson_id', lessonIds); } catch { /* silent */ }
+  await refreshContent();
 }
 
 export async function deleteModule(ministryId: MinistryKey, moduleId: string): Promise<void> {

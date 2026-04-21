@@ -8,9 +8,12 @@ import {
   deleteLesson,
   deleteMinistry,
   deleteModule,
+  bulkDeleteLessons,
+  bulkSetLessonStatus,
   duplicateLesson,
   Enrollment,
   enrollUser,
+  findUserByEmail,
   getModule,
   listEnrollments,
   listLessons,
@@ -32,6 +35,7 @@ import {
   unenrollUser,
   updateLesson,
   updateMinistry,
+  updateModuleDescription,
   usePlatformContent,
 } from "../../services/platformContent";
 import { openStoredFile } from "../../../../shared/utils/storedFile";
@@ -158,9 +162,17 @@ export default function AdminConteudoPlataforma() {
     if (!selectedMinistry) return;
     setModuleDraftTitles((prev) => {
       const next = { ...prev };
-      selectedMinistry.modules.forEach((mod) => {
-        next[mod.id] = mod.title;
-      });
+      selectedMinistry.modules.forEach((mod) => { next[mod.id] = mod.title; });
+      return next;
+    });
+    setModuleDraftDesc((prev) => {
+      const next = { ...prev };
+      selectedMinistry.modules.forEach((mod) => { next[mod.id] = mod.description ?? ''; });
+      return next;
+    });
+    setModuleDraftHighlight((prev) => {
+      const next = { ...prev };
+      selectedMinistry.modules.forEach((mod) => { next[mod.id] = mod.highlight ?? ''; });
       return next;
     });
   }, [selectedMinistry?.id, moduleFingerprint]);
@@ -184,15 +196,23 @@ export default function AdminConteudoPlataforma() {
   // ── Busca de aulas ────────────────────────────────────────────────────────
   const [lessonSearch, setLessonSearch] = useState('');
 
-  // ── Módulo: mover ─────────────────────────────────────────────────────────
+  // ── Bulk actions ──────────────────────────────────────────────────────────
+  const [selectedLessons, setSelectedLessons] = useState<Set<string>>(new Set());
+  const [bulkActionSubmitting, setBulkActionSubmitting] = useState(false);
+  const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState(false);
+
+  // ── Módulo: mover / descrição ─────────────────────────────────────────────
   const [moduleActionMoveId, setModuleActionMoveId] = useState<string | null>(null);
+  const [moduleDraftDesc, setModuleDraftDesc] = useState<Record<string, string>>({});
+  const [moduleDraftHighlight, setModuleDraftHighlight] = useState<Record<string, string>>({});
 
   // ── Matrículas ────────────────────────────────────────────────────────────
   const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
   const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
-  const [enrollNewUserId, setEnrollNewUserId] = useState('');
+  const [enrollNewInput, setEnrollNewInput] = useState('');
   const [enrollSubmitting, setEnrollSubmitting] = useState(false);
   const [unenrollPending, setUnenrollPending] = useState<string | null>(null);
+  const [enrollmentSearch, setEnrollmentSearch] = useState('');
 
   // ── Novo Curso ────────────────────────────────────────────────────────────
   const [showNewCourseModal, setShowNewCourseModal] = useState(false);
@@ -309,12 +329,23 @@ export default function AdminConteudoPlataforma() {
   };
 
   const handleEnrollUser = async () => {
-    if (!selectedMinistry || !enrollNewUserId.trim()) return;
+    if (!selectedMinistry || !enrollNewInput.trim()) return;
     setEnrollSubmitting(true);
     try {
-      await enrollUser(selectedMinistry.id, enrollNewUserId.trim());
+      let userId = enrollNewInput.trim();
+      // Se parecer e-mail, tenta resolver o UUID pelo e-mail
+      if (userId.includes('@')) {
+        const found = await findUserByEmail(userId);
+        if (!found) {
+          toast.error('Usuário não encontrado', `Nenhuma conta com o e-mail "${userId}". Verifique ou use o UUID diretamente.`);
+          setEnrollSubmitting(false);
+          return;
+        }
+        userId = found;
+      }
+      await enrollUser(selectedMinistry.id, userId);
       toast.success('Aluno matriculado', 'O acesso foi concedido ao curso.');
-      setEnrollNewUserId('');
+      setEnrollNewInput('');
       await loadEnrollments(selectedMinistry.id);
     } catch (err: any) {
       const isDuplicate = err?.message?.includes('duplicate') || err?.code === '23505';
@@ -335,6 +366,59 @@ export default function AdminConteudoPlataforma() {
       toast.error('Erro ao remover matrícula', 'Tente novamente em instantes.');
     } finally {
       setUnenrollPending(null);
+    }
+  };
+
+  // ── Bulk actions ───────────────────────────────────────────────────────────
+  const toggleLessonSelection = (lessonId: string) => {
+    setSelectedLessons((prev) => {
+      const next = new Set(prev);
+      next.has(lessonId) ? next.delete(lessonId) : next.add(lessonId);
+      return next;
+    });
+  };
+
+  const handleBulkStatus = async (status: LessonStatus) => {
+    if (!selectedLessons.size) return;
+    setBulkActionSubmitting(true);
+    try {
+      await bulkSetLessonStatus(Array.from(selectedLessons), status);
+      toast.success(`${selectedLessons.size} aula(s) atualizadas`, `Status alterado para "${lessonStatusLabel[status]}".`);
+      setSelectedLessons(new Set());
+    } catch {
+      toast.error('Erro ao atualizar aulas', 'Tente novamente em instantes.');
+    } finally {
+      setBulkActionSubmitting(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (!selectedLessons.size) return;
+    setBulkActionSubmitting(true);
+    try {
+      await bulkDeleteLessons(Array.from(selectedLessons));
+      toast.info(`${selectedLessons.size} aula(s) excluídas`, 'O conteúdo foi removido permanentemente.');
+      setSelectedLessons(new Set());
+      setShowBulkDeleteConfirm(false);
+    } catch {
+      toast.error('Erro ao excluir aulas', 'Tente novamente em instantes.');
+    } finally {
+      setBulkActionSubmitting(false);
+    }
+  };
+
+  // ── Módulo: descrição inline ───────────────────────────────────────────────
+  const handleModuleDescCommit = async (moduleId: string) => {
+    if (!selectedMinistry) return;
+    try {
+      await updateModuleDescription(
+        selectedMinistry.id,
+        moduleId,
+        moduleDraftDesc[moduleId] ?? '',
+        moduleDraftHighlight[moduleId] ?? '',
+      );
+    } catch {
+      toast.error('Não foi possível salvar descrição', 'Tente novamente em instantes.');
     }
   };
 
@@ -1058,6 +1142,18 @@ export default function AdminConteudoPlataforma() {
                   <button className="lesson-search-clear" onClick={() => setLessonSearch('')} title="Limpar">✕</button>
                 )}
               </div>
+
+              {/* ── Bulk toolbar ── */}
+              {selectedLessons.size > 0 && (
+                <div className="bulk-toolbar">
+                  <span className="bulk-count">{selectedLessons.size} aula(s) selecionada(s)</span>
+                  <button className="adm5-pill" disabled={bulkActionSubmitting} onClick={() => handleBulkStatus('published')}>Publicar</button>
+                  <button className="adm5-pill" disabled={bulkActionSubmitting} onClick={() => handleBulkStatus('draft')}>Rascunho</button>
+                  <button className="adm5-pill danger" disabled={bulkActionSubmitting} onClick={() => setShowBulkDeleteConfirm(true)}>Excluir</button>
+                  <button className="adm5-pill" disabled={bulkActionSubmitting} onClick={() => setSelectedLessons(new Set())}>✕ Limpar</button>
+                </div>
+              )}
+
               {selectedMinistry.modules.map((module, moduleIdx) => {
                 const isOpen = expandedModuleId === module.id;
                 const moduleMenuOpen = openMenu?.moduleId === module.id;
@@ -1167,6 +1263,25 @@ export default function AdminConteudoPlataforma() {
                       </div>
                     </div>
                     <div className="module-body">
+                      {/* ── Descrição do módulo ── */}
+                      <div className="module-desc-section">
+                        <textarea
+                          className="module-desc-input"
+                          placeholder="Descrição do módulo (visível para o aluno)…"
+                          rows={2}
+                          value={moduleDraftDesc[module.id] ?? ''}
+                          onChange={(e) => setModuleDraftDesc((p) => ({ ...p, [module.id]: e.target.value }))}
+                          onBlur={() => handleModuleDescCommit(module.id)}
+                        />
+                        <input
+                          className="module-desc-input"
+                          placeholder="Destaque / frase curta do módulo (opcional)…"
+                          value={moduleDraftHighlight[module.id] ?? ''}
+                          onChange={(e) => setModuleDraftHighlight((p) => ({ ...p, [module.id]: e.target.value }))}
+                          onBlur={() => handleModuleDescCommit(module.id)}
+                        />
+                      </div>
+
                       {lessons.length ? (
                         <div className="lessons-list">
                           {lessons.map((lesson, lessonIdx) => {
@@ -1187,6 +1302,14 @@ export default function AdminConteudoPlataforma() {
                                   isMenuOpen ? 'lesson-row--menu-open' : ''
                                 } ${lessonActionId === lesson.id ? 'lesson-row--loading' : ''}`}
                               >
+                                <input
+                                  type="checkbox"
+                                  className="lesson-checkbox"
+                                  checked={selectedLessons.has(lesson.id)}
+                                  onChange={() => toggleLessonSelection(lesson.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  title="Selecionar aula"
+                                />
                                 <div className="lesson-thumb">
                                   {thumb ? (
                                     <img src={thumb} alt={lesson.title} />
@@ -1207,6 +1330,11 @@ export default function AdminConteudoPlataforma() {
                                     {lesson.releaseAt && new Date(lesson.releaseAt) > new Date() && (
                                       <span className="lesson-tag lesson-tag--scheduled" title={`Liberada em ${new Date(lesson.releaseAt).toLocaleDateString('pt-BR')}`}>
                                         🗓 {new Date(lesson.releaseAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                      </span>
+                                    )}
+                                    {lesson.status === 'scheduled' && lesson.releaseAt && new Date(lesson.releaseAt) <= new Date() && (
+                                      <span className="lesson-tag lesson-tag--expired" title="Data de liberação já passou — considere publicar esta aula manualmente">
+                                        ⚠ programada vencida
                                       </span>
                                     )}
                                   </div>
@@ -1372,22 +1500,22 @@ export default function AdminConteudoPlataforma() {
               <div className="enroll-add-row">
                 <input
                   className="lesson-input"
-                  style={{ flex: 1, maxWidth: 360 }}
-                  placeholder="ID do usuário (UUID do Supabase Auth)"
-                  value={enrollNewUserId}
-                  onChange={(e) => setEnrollNewUserId(e.target.value)}
+                  style={{ flex: 1, maxWidth: 400 }}
+                  placeholder="E-mail ou UUID do aluno"
+                  value={enrollNewInput}
+                  onChange={(e) => setEnrollNewInput(e.target.value)}
                   onKeyDown={(e) => { if (e.key === 'Enter') handleEnrollUser(); }}
                 />
                 <button
                   className="adm5-pill primary"
                   onClick={handleEnrollUser}
-                  disabled={enrollSubmitting || !enrollNewUserId.trim()}
+                  disabled={enrollSubmitting || !enrollNewInput.trim()}
                 >
                   {enrollSubmitting ? 'Matriculando…' : '+ Matricular'}
                 </button>
               </div>
-              <p className="lesson-hint" style={{ marginBottom: 16 }}>
-                Cole o UUID do usuário (encontrado em Authentication → Users no Supabase).
+              <p className="lesson-hint" style={{ marginBottom: 14 }}>
+                Aceita e-mail (busca automática) ou UUID (Authentication → Users no Supabase).
               </p>
 
               {enrollmentsLoading ? (
@@ -1395,33 +1523,54 @@ export default function AdminConteudoPlataforma() {
               ) : enrollments.length === 0 ? (
                 <div className="empty-state">Nenhum aluno matriculado neste curso ainda.</div>
               ) : (
-                <div className="enrollments-list">
-                  <div className="enrollment-header-row">
-                    <span>Usuário</span>
-                    <span>Matriculado em</span>
-                    <span></span>
+                <>
+                  <div className="lesson-search-wrap" style={{ marginBottom: 10 }}>
+                    <input
+                      className="lesson-search-input"
+                      placeholder={`Filtrar entre ${enrollments.length} aluno(s)…`}
+                      value={enrollmentSearch}
+                      onChange={(e) => setEnrollmentSearch(e.target.value)}
+                    />
+                    {enrollmentSearch && (
+                      <button className="lesson-search-clear" onClick={() => setEnrollmentSearch('')}>✕</button>
+                    )}
                   </div>
-                  {enrollments.map((e) => (
-                    <div key={e.userId} className="enrollment-row">
-                      <div className="enrollment-user">
-                        <span className="enrollment-name">{e.userName || e.userEmail || '—'}</span>
-                        {e.userEmail && e.userName && <span className="enrollment-email">{e.userEmail}</span>}
-                        <code className="enrollment-uid">{e.userId}</code>
-                      </div>
-                      <span className="enrollment-date">
-                        {e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString('pt-BR') : '—'}
-                      </span>
-                      <button
-                        className="adm5-pill danger"
-                        style={{ fontSize: 11, padding: '3px 10px' }}
-                        disabled={unenrollPending === e.userId}
-                        onClick={() => handleUnenroll(e.userId)}
-                      >
-                        {unenrollPending === e.userId ? '…' : 'Remover'}
-                      </button>
+                  <div className="enrollments-list">
+                    <div className="enrollment-header-row">
+                      <span>Usuário</span>
+                      <span>Matriculado em</span>
+                      <span></span>
                     </div>
-                  ))}
-                </div>
+                    {enrollments
+                      .filter((e) => {
+                        if (!enrollmentSearch.trim()) return true;
+                        const q = enrollmentSearch.toLowerCase();
+                        return (e.userEmail || '').toLowerCase().includes(q) ||
+                          (e.userName || '').toLowerCase().includes(q) ||
+                          e.userId.toLowerCase().includes(q);
+                      })
+                      .map((e) => (
+                        <div key={e.userId} className="enrollment-row">
+                          <div className="enrollment-user">
+                            <span className="enrollment-name">{e.userName || e.userEmail || '—'}</span>
+                            {e.userEmail && e.userName && <span className="enrollment-email">{e.userEmail}</span>}
+                            <code className="enrollment-uid">{e.userId}</code>
+                          </div>
+                          <span className="enrollment-date">
+                            {e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString('pt-BR') : '—'}
+                          </span>
+                          <button
+                            className="adm5-pill danger"
+                            style={{ fontSize: 11, padding: '3px 10px' }}
+                            disabled={unenrollPending === e.userId}
+                            onClick={() => handleUnenroll(e.userId)}
+                          >
+                            {unenrollPending === e.userId ? '…' : 'Remover'}
+                          </button>
+                        </div>
+                      ))}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -2045,6 +2194,36 @@ export default function AdminConteudoPlataforma() {
               <button className="admin-btn" onClick={() => setShowEditCourseModal(false)} disabled={editCourseSubmitting}>Cancelar</button>
               <button className="admin-btn primary" onClick={handleEditCourse} disabled={editCourseSubmitting || !editCourseForm.title.trim()}>
                 {editCourseSubmitting ? 'Salvando…' : 'Salvar alterações'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Confirmar exclusão em massa ───────────────────────────── */}
+      {showBulkDeleteConfirm && (
+        <div className="lesson-modal-overlay" onClick={() => setShowBulkDeleteConfirm(false)}>
+          <div className="lesson-modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ color: '#f87171' }}>Excluir {selectedLessons.size} aula(s)</h3>
+            <p style={{ color: '#94a3b8', marginTop: 8, marginBottom: 20, fontSize: 13, lineHeight: 1.6 }}>
+              Esta ação é <strong style={{ color: '#f87171' }}>irreversível</strong>. As{' '}
+              <strong style={{ color: '#e2e8f0' }}>{selectedLessons.size} aula(s) selecionada(s)</strong> serão
+              permanentemente removidas da plataforma, incluindo progresso e materiais associados.
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+              <button
+                className="admin-btn"
+                onClick={() => setShowBulkDeleteConfirm(false)}
+                disabled={bulkActionSubmitting}
+              >
+                Cancelar
+              </button>
+              <button
+                className="admin-btn danger"
+                onClick={handleBulkDelete}
+                disabled={bulkActionSubmitting}
+              >
+                {bulkActionSubmitting ? 'Excluindo…' : `Excluir ${selectedLessons.size} aula(s)`}
               </button>
             </div>
           </div>
