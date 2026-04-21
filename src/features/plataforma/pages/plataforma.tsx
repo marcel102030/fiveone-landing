@@ -110,14 +110,16 @@ const PaginaInicial = () => {
   // useAuth lê a sessão Supabase via cookie — persiste mesmo quando
   // sessionStorage é limpo (browser fechado). É o identificador confiável.
   const { email: authEmail } = useAuth()
-  // Ref sempre atualizado — evita closure stale em handlers registrados via addEventListener.
+  // Refs sempre atualizados — evitam closure stale em handlers registrados via addEventListener.
   const authEmailRef = useRef<string | null>(null)
   authEmailRef.current = authEmail
+  const lessonByVideoIdRef = useRef<Map<string, LessonRef>>(new Map())
   const carouselRef = useRef<HTMLDivElement>(null)
 
   // Identificador efetivo: custom storage (sincrono) ou Supabase auth (cookie).
+  // Normaliza lowercase para evitar mismatch com dados gravados no DB.
   // Nunca usa '' como fallback — null significa "ainda não identificado".
-  const effectiveUid = getCurrentUserId() || authEmail || null
+  const effectiveUid = getCurrentUserId() || (authEmail ? authEmail.toLowerCase() : null)
 
   // ── Isolamento entre usuários ─────────────────────────────────────────────
   // Apaga cache local APENAS quando troca de usuário identificado.
@@ -236,6 +238,8 @@ const PaginaInicial = () => {
     })
     return map
   }, [allLessons])
+  // Ref síncrono — permite que closures com deps=[] acessem o Map sempre atualizado
+  lessonByVideoIdRef.current = lessonByVideoId
 
   // ── Carregar progresso (localStorage + remoto) ────────────────────────────
   // Depende de effectiveUid para re-disparar quando o Supabase auth resolve
@@ -250,8 +254,10 @@ const PaginaInicial = () => {
       const parsed = raw ? JSON.parse(raw) : []
       const localArr = mergeByRecency(Array.isArray(parsed) ? parsed : [])
       if (localArr.length) {
+        // Usa ref para enriquecer — pode estar vazio no primeiro render (ok, será re-enriquecido depois)
+        const lbv = lessonByVideoIdRef.current
         localEnriched = localArr.map((item: any) => {
-          const lesson = lessonByVideoId.get(item.id || item.videoId || item.video_id || item.url)
+          const lesson = lbv.get(item.id || item.videoId || item.video_id || item.url)
           return {
             ...item,
             subjectName: item.subjectName || lesson?.subjectName,
@@ -325,15 +331,16 @@ const PaginaInicial = () => {
               localWatched = r.watched_seconds
             }
 
+            const lbv = lessonByVideoIdRef.current
             return {
               id: r.lesson_id, url: '', index: undefined,
               title: r.title, thumbnail: r.thumbnail,
               watchedSeconds: Math.max(r.watched_seconds, localWatched),
               durationSeconds: r.duration_seconds || undefined,
               lastAt: new Date(r.last_at).getTime(),
-              subjectName: lessonByVideoId.get(r.lesson_id)?.subjectName,
-              bannerContinue: lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url || lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
-              bannerMobile: lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url || lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
+              subjectName: lbv.get(r.lesson_id)?.subjectName,
+              bannerContinue: lbv.get(r.lesson_id)?.bannerContinue?.url || lbv.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
+              bannerMobile: lbv.get(r.lesson_id)?.bannerMobile?.url || lbv.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
             }
           })
 
@@ -354,10 +361,43 @@ const PaginaInicial = () => {
     })()
 
     return () => { active = false }
-  // effectiveUid muda de null → email quando o auth do Supabase resolve,
-  // garantindo que o efeito re-rode com o usuário correto sem precisar de authLoading.
+  // effectiveUid muda de null → email quando o auth do Supabase resolve.
+  // lessonByVideoId é acessado via ref — não precisa estar nas deps (evita double-fetch).
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonByVideoId, effectiveUid])
+  }, [effectiveUid])
+
+  // ── Re-enriquece itens existentes quando as aulas carregam ────────────────
+  // O efeito principal de progresso roda antes de lessonByVideoId ser populado
+  // (enrollments são async). Esse efeito preenche subjectName/banners sem re-buscar
+  // dados do servidor.
+  useEffect(() => {
+    if (!allLessons.length) return
+    setLastWatchedArray(prev => {
+      if (!prev.length) return prev
+      let changed = false
+      const next = prev.map(item => {
+        const lessonId = item.id || item.videoId
+        if (!lessonId) return item
+        const lesson = lessonByVideoId.get(lessonId)
+        if (!lesson) return item
+        const sub = lesson.subjectName || null
+        const bc = lesson.bannerContinue?.url || lesson.bannerContinue?.dataUrl || null
+        const bm = lesson.bannerMobile?.url || lesson.bannerMobile?.dataUrl || null
+        const th = lesson.bannerContinue?.url || lesson.bannerContinue?.dataUrl || lesson.thumbnailUrl || null
+        if (item.subjectName === sub && item.bannerContinue === bc && item.bannerMobile === bm) return item
+        changed = true
+        return {
+          ...item,
+          subjectName: item.subjectName || sub,
+          bannerContinue: item.bannerContinue || bc,
+          bannerMobile: item.bannerMobile || bm,
+          thumbnail: item.thumbnail || th,
+        }
+      })
+      return changed ? next : prev
+    })
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [lessonByVideoId])
 
   // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
   // O localStorage é por dispositivo. Para sincronizar entre celular e PC
@@ -397,6 +437,7 @@ const PaginaInicial = () => {
       try {
         const rows = await fetchUserProgress(uid, 24)
         if (!rows?.length) return
+        const lbv = lessonByVideoIdRef.current
         const remote = rows.map(r => ({
           id: r.lesson_id,
           url: '',
@@ -405,9 +446,9 @@ const PaginaInicial = () => {
           watchedSeconds: r.watched_seconds,
           durationSeconds: r.duration_seconds || undefined,
           lastAt: new Date(r.last_at).getTime(),
-          subjectName: lessonByVideoId.get(r.lesson_id)?.subjectName,
-          bannerContinue: lessonByVideoId.get(r.lesson_id)?.bannerContinue?.url || lessonByVideoId.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
-          bannerMobile: lessonByVideoId.get(r.lesson_id)?.bannerMobile?.url || lessonByVideoId.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
+          subjectName: lbv.get(r.lesson_id)?.subjectName,
+          bannerContinue: lbv.get(r.lesson_id)?.bannerContinue?.url || lbv.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
+          bannerMobile: lbv.get(r.lesson_id)?.bannerMobile?.url || lbv.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
         }))
 
         // Lê local também para o merge
@@ -484,21 +525,24 @@ const PaginaInicial = () => {
       window.removeEventListener('focus', syncFromSupabase)
       window.removeEventListener('storage', storageHandler)
     }
-  }, [lessonByVideoId])
+  // Usa lessonByVideoIdRef.current — sem lessonByVideoId nas deps evita re-registrar
+  // listeners a cada vez que as aulas carregam (causaria race condition).
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   // ── IDs concluídos ────────────────────────────────────────────────────────
   const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap])
 
-  const getVideoKey = useCallback((video: any) => getProgressKey(video), [])
 
   const visibleLastWatched = useMemo(() => {
     if (!lastWatchedArray.length) return [] as any[]
     return lastWatchedArray.filter((item) => {
-      const key = getVideoKey(item)
-      if (!key) return true
-      return !completedIds.has(key)
+      // Testa todas as chaves possíveis — dados históricos podem usar id, videoId ou video_id
+      const keys = [item.id, item.videoId, item.video_id].filter(Boolean) as string[]
+      if (!keys.length) return true
+      return !keys.some(k => completedIds.has(k))
     })
-  }, [lastWatchedArray, completedIds, getVideoKey])
+  }, [lastWatchedArray, completedIds])
 
   // ── Stats ─────────────────────────────────────────────────────────────────
   const totalCompleted = completedIds.size
@@ -511,25 +555,31 @@ const PaginaInicial = () => {
   // ── Navegar para aula ─────────────────────────────────────────────────────
   const goToLesson = useCallback((video: any) => {
     const lessonId = video.id || video.videoId || video.video_id
-    const courseId = (lessonId && lessonByVideoId.get(lessonId)?.ministryId) || primaryCourseId
+    const lesson = lessonId ? lessonByVideoId.get(lessonId) : null
+    const courseId = lesson?.ministryId || primaryCourseId
     if (!courseId) return
-    if (video.id) navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(video.id)}`)
+    if (lesson && lessonId) navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lessonId)}`)
     else if (typeof video.index === 'number') navigate(`/curso/${courseId}/aula?i=${video.index}`)
-    else navigate(`/curso/${courseId}/aula?v=${encodeURIComponent(video.url)}`)
+    else if (video.url) navigate(`/curso/${courseId}/aula?v=${encodeURIComponent(video.url)}`)
+    else navigate(`/curso/${courseId}/aula`)
   }, [navigate, lessonByVideoId, primaryCourseId])
 
-  // "Retomar aula" — usa fiveone_last_lesson como fonte da verdade quando disponível
+  // "Retomar aula" — usa fiveone_last_lesson como fonte da verdade quando disponível.
+  // Verifica que a aula pertence a um curso do usuário atual (evita retomar aula de outro usuário).
   const handleResumeLesson = useCallback(() => {
     try {
       const lastId = localStorage.getItem('fiveone_last_lesson')
       if (lastId) {
-        const courseId = lessonByVideoId.get(lastId)?.ministryId || primaryCourseId
-        if (courseId) { navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(lastId)}`); return }
+        const lesson = lessonByVideoId.get(lastId)
+        if (lesson && enrolledCourseIds.includes(lesson.ministryId)) {
+          navigate(`/curso/${lesson.ministryId}/aula?vid=${encodeURIComponent(lastId)}`)
+          return
+        }
       }
     } catch {}
     if (visibleLastWatched.length > 0) goToLesson(visibleLastWatched[0])
     else if (primaryCourseId) navigate(`/curso/${primaryCourseId}/aula`)
-  }, [navigate, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId])
+  }, [navigate, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId, enrolledCourseIds])
 
   // ── Limpar histórico ──────────────────────────────────────────────────────
   const performClearHistory = useCallback(async () => {

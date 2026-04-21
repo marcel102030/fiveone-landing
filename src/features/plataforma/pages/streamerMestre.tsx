@@ -392,6 +392,9 @@ function formatBytes(bytes: number): string {
 // ── Component ───────────────────────────────────────────────────────────────
 const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const { email } = useAuth();
+  // Ref sempre atualizado — evita closure stale no useEffect de unmount (deps=[])
+  const emailRef = useRef<string | null>(null);
+  emailRef.current = email;
 
   const [videoList, setVideoList] = useState<LessonRef[]>(() =>
     listLessons({ ministryId, onlyPublished: true, onlyActive: true })
@@ -991,11 +994,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
 
   // Flush imediato ao desmontar — salva progresso mesmo se o usuário saiu
   // antes dos 15s do throttle dispararem (ex: assistiu 10s e voltou).
+  // Usa emailRef.current (não email) para evitar closure stale — email pode ser null
+  // no mount se o Supabase Auth ainda está resolvendo.
   useEffect(() => {
     return () => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
       if (!lessonId || watchedSeconds <= 0) return;
-      const uid = getCurrentUserId() || email;
+      const uid = getCurrentUserId() || emailRef.current;
       if (!uid) return;
       upsertProgress({
         user_id: uid,
@@ -1275,7 +1280,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     showToast('Aula marcada como concluída.', 'success');
   };
 
-  // Load completions from server
+  // Load completions from server — re-roda quando email resolve (cenário: auth async)
   useEffect(() => {
     const uid = getCurrentUserId() || email;
     if (!uid) return;
@@ -1286,7 +1291,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         setCompletedIds(new Set(merged.keys()));
       } catch {}
     })();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [email]);
 
   const navigate = useNavigate();
 

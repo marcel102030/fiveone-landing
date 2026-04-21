@@ -87,6 +87,18 @@ export function clearCurrentUser(): void {
       keys.forEach(k => { try { local.removeItem(k); } catch {} });
     }
   } catch {}
+  // Limpa throttle de sync de progresso do sessionStorage — evita que o próximo
+  // usuário no mesmo browser herde o throttle do usuário anterior (bug #9)
+  try {
+    if (session) {
+      const syncKeys: string[] = [];
+      for (let i = 0; i < session.length; i++) {
+        const k = session.key(i);
+        if (k?.startsWith('fiveone_progress_sync_')) syncKeys.push(k);
+      }
+      syncKeys.forEach(k => { try { session.removeItem(k); } catch {} });
+    }
+  } catch {}
 }
 
 export default {
