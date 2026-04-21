@@ -911,6 +911,47 @@ export async function setModuleBanner(ministryId: MinistryKey, moduleId: string,
   await refreshContent();
 }
 
+export async function updateMinistry(ministryId: MinistryKey, patch: {
+  title?: string;
+  tagline?: string;
+  focusColor?: string;
+  gradient?: string;
+}): Promise<void> {
+  const updates: Record<string, any> = {};
+  if (patch.title !== undefined) updates.title = patch.title.trim();
+  if (patch.tagline !== undefined) updates.tagline = patch.tagline.trim();
+  if (patch.focusColor !== undefined) updates.focus_color = patch.focusColor;
+  if (patch.gradient !== undefined) updates.gradient = patch.gradient;
+  const { error } = await supabase.from('platform_ministry').update(updates).eq('id', ministryId);
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function deleteModule(ministryId: MinistryKey, moduleId: string): Promise<void> {
+  void ministryId;
+  // Deleta aulas do módulo, depois o módulo
+  const { error: le } = await supabase.from('platform_lesson').delete().eq('module_id', moduleId);
+  if (le) throw le;
+  const { error: me } = await supabase.from('platform_module').delete().eq('id', moduleId);
+  if (me) throw me;
+  await refreshContent();
+}
+
+export async function deleteMinistry(ministryId: MinistryKey): Promise<void> {
+  const ministry = getMinistry(ministryId);
+  if (!ministry) throw new Error('Curso não encontrado');
+  // Deleta aulas de todos os módulos
+  for (const mod of ministry.modules) {
+    await supabase.from('platform_lesson').delete().eq('module_id', mod.id);
+  }
+  // Deleta módulos e matrículas
+  await supabase.from('platform_module').delete().eq('ministry_id', ministryId);
+  await supabase.from('platform_enrollment').delete().eq('course_id', ministryId);
+  const { error } = await supabase.from('platform_ministry').delete().eq('id', ministryId);
+  if (error) throw error;
+  await refreshContent();
+}
+
 export async function createModule(ministryId: MinistryKey, title: string): Promise<void> {
   const ministry = getMinistry(ministryId);
   if (!ministry) throw new Error('Curso não encontrado');
