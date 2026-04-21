@@ -227,9 +227,13 @@ const PaginaInicial = () => {
   }, [])
 
   // ── Map de lessonId → LessonRef ───────────────────────────────────────────
+  // Indexado por videoId E por id para tolerar progresso salvo com qualquer das chaves.
   const lessonByVideoId = useMemo(() => {
     const map = new Map<string, LessonRef>()
-    allLessons.forEach((lesson) => map.set(lesson.videoId, lesson))
+    allLessons.forEach((lesson) => {
+      map.set(lesson.videoId, lesson)
+      if (lesson.id && lesson.id !== lesson.videoId) map.set(lesson.id, lesson)
+    })
     return map
   }, [allLessons])
 
@@ -455,10 +459,8 @@ const PaginaInicial = () => {
       } catch { /* rede indisponível — mantém estado atual */ }
     }
 
-    // 'focus': ao voltar para a aba/app (funciona no PWA e mobile)
-    window.addEventListener('focus', syncFromSupabase)
     // 'storage': outra aba/janela mudou o localStorage (mesma sessão, outro dispositivo não dispara isso)
-    window.addEventListener('storage', () => {
+    const storageHandler = () => {
       try {
         const raw = localStorage.getItem('videos_assistidos')
         if (!raw) return
@@ -472,10 +474,15 @@ const PaginaInicial = () => {
           return sorted
         })
       } catch {}
-    })
+    }
+
+    // 'focus': ao voltar para a aba/app (funciona no PWA e mobile)
+    window.addEventListener('focus', syncFromSupabase)
+    window.addEventListener('storage', storageHandler)
 
     return () => {
       window.removeEventListener('focus', syncFromSupabase)
+      window.removeEventListener('storage', storageHandler)
     }
   }, [lessonByVideoId])
 
@@ -726,13 +733,13 @@ const PaginaInicial = () => {
                   style={{ scrollbarWidth: 'none' }}
                 >
                   {visibleLastWatched.map((video: any, index: number) => {
-                    const desktopImg = video.thumbnail || video.bannerContinue || video.bannerMobile || '/assets/images/miniatura_fundamentos_mestre.png'
-                    const mobileImg = video.bannerMobile || video.bannerContinue || video.thumbnail || desktopImg
+                    const desktopImg = video.thumbnail || video.bannerContinue || video.bannerMobile || null
+                    const mobileImg = video.bannerMobile || video.bannerContinue || video.thumbnail || null
                     const img = isMobile ? mobileImg : desktopImg
                     const watchedSec = Number(video.watchedSeconds || 0)
                     const durationSec = Number(video.durationSeconds || 0)
-                    const effectiveDur = durationSec > 0 ? durationSec : Math.max(watchedSec, 1)
-                    const pct = effectiveDur > 0 ? Math.min(100, Math.round((watchedSec / effectiveDur) * 100)) : 0
+                    const hasDuration = durationSec > 0
+                    const pct = hasDuration ? Math.min(100, Math.round((watchedSec / durationSec) * 100)) : 0
 
                     return (
                       <button
@@ -767,7 +774,7 @@ const PaginaInicial = () => {
                             />
                           </div>
                           <p className="text-xs text-slate/60 mt-1 text-left">
-                            {pct}% assistido
+                            {hasDuration ? `${pct}% assistido` : 'Em andamento'}
                           </p>
                         </div>
                       </button>

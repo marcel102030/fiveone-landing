@@ -11,8 +11,6 @@ import {
   setUserActive,
   updateUserFormation,
   FormationKey,
-  FORMATION_KEYS,
-  toFormationLabel,
   getUserComments,
   setUsersActive,
   updateUsersFormation,
@@ -695,7 +693,6 @@ function mockLastAccess(seed: string) {
 
 function hashCode(s: string){ let h=0; for (let i=0;i<s.length;i++){ h=((h<<5)-h)+s.charCodeAt(i); h|=0; } return h; }
 
-const formatFormation = (f: any) => toFormationLabel(f);
 
 function renderAvatar(name: string, email: string) {
   const initials = name.trim().split(/\s+/).slice(0,2).map(w=>w[0]).join('').toUpperCase() || email.slice(0,2).toUpperCase();
