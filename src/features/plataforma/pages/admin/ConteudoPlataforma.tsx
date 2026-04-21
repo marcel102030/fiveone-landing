@@ -16,6 +16,8 @@ import {
   ModuleStatus,
   setLessonActive,
   setLessonStatus,
+  setModuleBanner,
+  setMinistryBanner,
   setModuleTitle,
   StoredFile,
   toggleModuleStatus,
@@ -162,8 +164,18 @@ export default function AdminConteudoPlataforma() {
 
   // ── Novo Curso ────────────────────────────────────────────────────────────
   const [showNewCourseModal, setShowNewCourseModal] = useState(false);
-  const [newCourseForm, setNewCourseForm] = useState({ title: '', id: '', tagline: '', color: '#38bdf8' });
+  const [newCourseForm, setNewCourseForm] = useState<{ title: string; id: string; tagline: string; color: string; banner: StoredFile | null }>({ title: '', id: '', tagline: '', color: '#38bdf8', banner: null });
   const [newCourseSubmitting, setNewCourseSubmitting] = useState(false);
+
+  // ── Banner do Curso (editar curso existente) ───────────────────────────
+  const [showMinistryBannerModal, setShowMinistryBannerModal] = useState(false);
+  const [ministryBannerFile, setMinistryBannerFile] = useState<StoredFile | null>(null);
+  const [ministryBannerSubmitting, setMinistryBannerSubmitting] = useState(false);
+
+  // ── Banner do Módulo ───────────────────────────────────────────────────
+  const [moduleBannerModal, setModuleBannerModal] = useState<{ moduleId: string; title: string } | null>(null);
+  const [moduleBannerFile, setModuleBannerFile] = useState<StoredFile | null>(null);
+  const [moduleBannerSubmitting, setModuleBannerSubmitting] = useState(false);
 
   const handleCreateCourse = async () => {
     if (!newCourseForm.title.trim()) { toast.warning('Nome obrigatório', 'Informe o nome do curso.'); return; }
@@ -177,9 +189,10 @@ export default function AdminConteudoPlataforma() {
         tagline: newCourseForm.tagline.trim(),
         focusColor: newCourseForm.color,
         gradient: `linear-gradient(135deg, #0f172a, ${newCourseForm.color}44)`,
+        banner: newCourseForm.banner,
       });
       toast.success('Curso criado', `"${newCourseForm.title}" foi adicionado à plataforma.`);
-      setNewCourseForm({ title: '', id: '', tagline: '', color: '#38bdf8' });
+      setNewCourseForm({ title: '', id: '', tagline: '', color: '#38bdf8', banner: null });
       setShowNewCourseModal(false);
     } catch (err: any) {
       const isDuplicate = err?.message?.includes('duplicate') || err?.code === '23505';
@@ -188,6 +201,47 @@ export default function AdminConteudoPlataforma() {
       setNewCourseSubmitting(false);
     }
   };
+
+  const handleSaveMinistryBanner = async () => {
+    if (!selectedMinistry) return;
+    setMinistryBannerSubmitting(true);
+    try {
+      await setMinistryBanner(selectedMinistry.id, ministryBannerFile);
+      toast.success('Capa do curso salva', 'A imagem foi atualizada com sucesso.');
+      setShowMinistryBannerModal(false);
+      setMinistryBannerFile(null);
+    } catch {
+      toast.error('Erro ao salvar capa', 'Tente novamente em instantes.');
+    } finally {
+      setMinistryBannerSubmitting(false);
+    }
+  };
+
+  const handleSaveModuleBanner = async () => {
+    if (!selectedMinistry || !moduleBannerModal) return;
+    setModuleBannerSubmitting(true);
+    try {
+      await setModuleBanner(selectedMinistry.id, moduleBannerModal.moduleId, moduleBannerFile);
+      toast.success('Imagem do módulo salva', 'A imagem foi atualizada com sucesso.');
+      setModuleBannerModal(null);
+      setModuleBannerFile(null);
+    } catch {
+      toast.error('Erro ao salvar imagem', 'Tente novamente em instantes.');
+    } finally {
+      setModuleBannerSubmitting(false);
+    }
+  };
+
+  async function handleBannerFileSelect(file: File, setter: (f: StoredFile | null) => void) {
+    if (!file.type.startsWith('image/')) { toast.error('Arquivo inválido', 'Envie uma imagem PNG ou JPG.'); return; }
+    if (file.size > MAX_IMAGE_SIZE) { toast.error('Imagem muito pesada', 'Utilize imagens de até 4 MB.'); return; }
+    try {
+      const stored = await buildStoredFile(file);
+      setter(stored);
+    } catch {
+      toast.error('Erro ao processar imagem', 'Tente selecionar o arquivo novamente.');
+    }
+  }
 
   // ── Criar Módulo ──────────────────────────────────────────────────────────
   const [showNewModuleModal, setShowNewModuleModal] = useState(false);
@@ -723,6 +777,15 @@ export default function AdminConteudoPlataforma() {
             <div className="ministry-actions">
               <button
                 className="adm5-pill"
+                onClick={() => {
+                  setMinistryBannerFile(selectedMinistry.banner ?? null);
+                  setShowMinistryBannerModal(true);
+                }}
+              >
+                🖼 Capa do curso
+              </button>
+              <button
+                className="adm5-pill"
                 onClick={() => { setNewModuleTitle(''); setShowNewModuleModal(true); }}
               >
                 Criar módulo
@@ -796,6 +859,17 @@ export default function AdminConteudoPlataforma() {
                       <div className="module-actions">
                         <button className="module-new-lesson" type="button" onClick={() => openLessonModal(module.id)}>
                           Nova aula
+                        </button>
+                        <button
+                          className="adm5-pill"
+                          type="button"
+                          title="Imagem do card do módulo (retrato 3:4)"
+                          onClick={() => {
+                            setModuleBannerFile(module.bannerModule ?? null);
+                            setModuleBannerModal({ moduleId: module.id, title: module.title });
+                          }}
+                        >
+                          🖼 Imagem
                         </button>
                         <span className={`status-pill ${module.status}`}>{moduleStatusLabel[module.status]}</span>
                         <button
@@ -1302,11 +1376,105 @@ export default function AdminConteudoPlataforma() {
                   <span style={{ fontSize: 13, color: '#94a3b8' }}>{newCourseForm.color}</span>
                 </div>
               </div>
+              <div>
+                <label className="lesson-label">Capa do curso (opcional) — 1200×800 px</label>
+                <div className="upload-group">
+                  <label className="upload-box">
+                    <input type="file" accept="image/png,image/jpeg,image/webp"
+                      onChange={(e) => handleBannerFileSelect(e.target.files?.[0]!, (f) => setNewCourseForm((prev) => ({ ...prev, banner: f })))} />
+                    <span>Selecionar imagem</span>
+                  </label>
+                  {newCourseForm.banner && (
+                    <div className="file-preview">
+                      <img src={newCourseForm.banner.dataUrl || newCourseForm.banner.url || ''} alt="Capa" style={{ maxHeight: 80, borderRadius: 6 }} />
+                      <div className="file-info">
+                        <strong>{newCourseForm.banner.name}</strong>
+                        {newCourseForm.banner.width && <span>{newCourseForm.banner.width}×{newCourseForm.banner.height}px</span>}
+                        <button type="button" className="linklike" onClick={() => setNewCourseForm((f) => ({ ...f, banner: null }))}>Remover</button>
+                      </div>
+                    </div>
+                  )}
+                  <p className="lesson-hint">Recomendado 1200×800 px. Aparece no card do curso na plataforma.</p>
+                </div>
+              </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
               <button className="admin-btn" onClick={() => setShowNewCourseModal(false)} disabled={newCourseSubmitting}>Cancelar</button>
               <button className="admin-btn primary" onClick={handleCreateCourse} disabled={newCourseSubmitting || !newCourseForm.title.trim()}>
                 {newCourseSubmitting ? 'Criando…' : 'Criar curso'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Capa do Curso ───────────────────────────────────────────── */}
+      {showMinistryBannerModal && selectedMinistry && (
+        <div className="lesson-modal-overlay" onClick={() => { setShowMinistryBannerModal(false); setMinistryBannerFile(null); }}>
+          <div className="lesson-modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Capa do curso — {selectedMinistry.name}</h3>
+            <p style={{ color: '#94a3b8', marginTop: 4, marginBottom: 16, fontSize: 13 }}>
+              Imagem exibida no card do curso na plataforma. Recomendado <strong style={{ color: '#e2e8f0' }}>1200×800 px</strong> (proporção 3:2).
+            </p>
+            <div className="upload-group">
+              <label className="upload-box">
+                <input type="file" accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => handleBannerFileSelect(e.target.files?.[0]!, setMinistryBannerFile)} />
+                <span>{ministryBannerFile ? 'Trocar imagem' : 'Selecionar imagem'}</span>
+              </label>
+              {ministryBannerFile && (
+                <div className="file-preview">
+                  <img src={ministryBannerFile.dataUrl || ministryBannerFile.url || ''} alt="Capa" style={{ maxHeight: 100, borderRadius: 6 }} />
+                  <div className="file-info">
+                    <strong>{ministryBannerFile.name}</strong>
+                    {ministryBannerFile.width && <span>{ministryBannerFile.width}×{ministryBannerFile.height}px</span>}
+                    <button type="button" className="linklike" onClick={() => setMinistryBannerFile(null)}>Remover</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="admin-btn" onClick={() => { setShowMinistryBannerModal(false); setMinistryBannerFile(null); }} disabled={ministryBannerSubmitting}>Cancelar</button>
+              <button className="admin-btn primary" onClick={handleSaveMinistryBanner} disabled={ministryBannerSubmitting}>
+                {ministryBannerSubmitting ? 'Salvando…' : 'Salvar capa'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modal: Imagem do Módulo ───────────────────────────────────────── */}
+      {moduleBannerModal && (
+        <div className="lesson-modal-overlay" onClick={() => { setModuleBannerModal(null); setModuleBannerFile(null); }}>
+          <div className="lesson-modal" style={{ maxWidth: 440 }} onClick={(e) => e.stopPropagation()}>
+            <h3>Imagem do módulo</h3>
+            <p style={{ color: '#94a3b8', marginTop: 4, marginBottom: 4, fontSize: 13 }}>
+              <strong style={{ color: '#e2e8f0' }}>{moduleBannerModal.title}</strong>
+            </p>
+            <p style={{ color: '#94a3b8', marginBottom: 16, fontSize: 13 }}>
+              Imagem do card do módulo na página de módulos. Recomendado <strong style={{ color: '#e2e8f0' }}>600×800 px</strong> (proporção retrato 3:4).
+            </p>
+            <div className="upload-group">
+              <label className="upload-box">
+                <input type="file" accept="image/png,image/jpeg,image/webp"
+                  onChange={(e) => handleBannerFileSelect(e.target.files?.[0]!, setModuleBannerFile)} />
+                <span>{moduleBannerFile ? 'Trocar imagem' : 'Selecionar imagem'}</span>
+              </label>
+              {moduleBannerFile && (
+                <div className="file-preview">
+                  <img src={moduleBannerFile.dataUrl || moduleBannerFile.url || ''} alt="Imagem do módulo" style={{ maxHeight: 100, borderRadius: 6 }} />
+                  <div className="file-info">
+                    <strong>{moduleBannerFile.name}</strong>
+                    {moduleBannerFile.width && <span>{moduleBannerFile.width}×{moduleBannerFile.height}px</span>}
+                    <button type="button" className="linklike" onClick={() => setModuleBannerFile(null)}>Remover</button>
+                  </div>
+                </div>
+              )}
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
+              <button className="admin-btn" onClick={() => { setModuleBannerModal(null); setModuleBannerFile(null); }} disabled={moduleBannerSubmitting}>Cancelar</button>
+              <button className="admin-btn primary" onClick={handleSaveModuleBanner} disabled={moduleBannerSubmitting}>
+                {moduleBannerSubmitting ? 'Salvando…' : 'Salvar imagem'}
               </button>
             </div>
           </div>

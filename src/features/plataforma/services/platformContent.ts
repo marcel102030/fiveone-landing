@@ -875,6 +875,7 @@ export async function createMinistry(input: {
   tagline?: string;
   focusColor?: string;
   gradient?: string;
+  banner?: StoredFile | null;
 }): Promise<void> {
   const safeId = input.id.trim().toUpperCase().replace(/[^A-Z0-9_]/g, '_');
   if (!safeId) throw new Error('ID do curso inválido');
@@ -885,7 +886,27 @@ export async function createMinistry(input: {
     icon: '/assets/icons/default.svg',
     focus_color: input.focusColor || '#38bdf8',
     gradient: input.gradient || 'linear-gradient(135deg, #0f172a, #0369a1)',
+    banner: input.banner ? JSON.stringify(input.banner) : null,
   });
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function setMinistryBanner(ministryId: MinistryKey, banner: StoredFile | null): Promise<void> {
+  const { error } = await supabase
+    .from('platform_ministry')
+    .update({ banner: banner ? JSON.stringify(banner) : null })
+    .eq('id', ministryId);
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function setModuleBanner(ministryId: MinistryKey, moduleId: string, banner: StoredFile | null): Promise<void> {
+  void ministryId; // kept for API consistency
+  const { error } = await supabase
+    .from('platform_module')
+    .update({ banner_module: banner ? JSON.stringify(banner) : null })
+    .eq('id', moduleId);
   if (error) throw error;
   await refreshContent();
 }
