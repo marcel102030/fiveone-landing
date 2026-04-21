@@ -807,6 +807,13 @@ export async function deleteLesson(_ministryId: MinistryKey, _moduleId: string, 
   await deleteStoredFileFromBucket(existing?.bannerMobile ?? null);
   const { error } = await supabase.from("platform_lesson").delete().eq("id", lessonId);
   if (error) throw error;
+  // Limpa registros de progresso associados (silenciosamente — tabelas podem não existir)
+  try {
+    await supabase.from("platform_user_progress").delete().eq("lesson_id", lessonId);
+  } catch { /* não crítico */ }
+  try {
+    await supabase.from("platform_lesson_completion").delete().eq("lesson_id", lessonId);
+  } catch { /* não crítico */ }
   await refreshContent();
 }
 
@@ -917,15 +924,145 @@ export async function updateMinistry(ministryId: MinistryKey, patch: {
   tagline?: string;
   focusColor?: string;
   gradient?: string;
+  icon?: string;
 }): Promise<void> {
   const updates: Record<string, any> = {};
   if (patch.title !== undefined) updates.title = patch.title.trim();
   if (patch.tagline !== undefined) updates.tagline = patch.tagline.trim();
   if (patch.focusColor !== undefined) updates.focus_color = patch.focusColor;
   if (patch.gradient !== undefined) updates.gradient = patch.gradient;
+  if (patch.icon !== undefined) updates.icon = patch.icon.trim();
   const { error } = await supabase.from('platform_ministry').update(updates).eq('id', ministryId);
   if (error) throw error;
   await refreshContent();
+}
+
+export async function setModuleStatus(ministryId: MinistryKey, moduleId: string, status: ModuleStatus): Promise<void> {
+  void ministryId;
+  const { error } = await supabase
+    .from('platform_module')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', moduleId);
+  if (error) throw error;
+  await refreshContent();
+}
+
+export async function moveModule(ministryId: MinistryKey, moduleId: string, direction: -1 | 1): Promise<void> {
+  const ministry = getMinistry(ministryId);
+  if (!ministry) return;
+  const idx = ministry.modules.findIndex((m) => m.id === moduleId);
+  if (idx === -1) return;
+  const swapIdx = idx + direction;
+  if (swapIdx < 0 || swapIdx >= ministry.modules.length) return;
+  const current = ministry.modules[idx];
+  const target = ministry.modules[swapIdx];
+  const [{ error: e1 }, { error: e2 }] = await Promise.all([
+    supabase.from('platform_module').update({ order_index: target.order, updated_at: new Date().toISOString() }).eq('id', current.id),
+    supabase.from('platform_module').update({ order_index: current.order, updated_at: new Date().toISOString() }).eq('id', target.id),
+  ]);
+  if (e1) throw e1;
+  if (e2) throw e2;
+  await refreshContent();
+}
+
+export async function duplicateLesson(ministryId: MinistryKey, moduleId: string, lessonId: string): Promise<void> {
+  const lesson = findLessonById(lessonId);
+  if (!lesson) throw new Error('Aula não encontrada');
+  const module = getModule(ministryId, moduleId);
+  if (!module) throw new Error('Módulo não encontrado');
+  const { data: orderRows, error: orderError } = await supabase
+    .from('platform_lesson')
+    .select('order_index')
+    .eq('module_id', moduleId)
+    .order('order_index', { ascending: false })
+    .limit(1);
+  if (orderError) throw orderError;
+  const nextOrder = ((orderRows?.[0]?.order_index as number | undefined) ?? -1) + 1;
+  const newId = generateLessonId(ministryId, module.order);
+  const { error } = await supabase.from('platform_lesson').insert({
+    id: newId,
+    video_id: newId,
+    module_id: moduleId,
+    order_index: nextOrder,
+    title: `${lesson.title} (cópia)`,
+    subtitle: lesson.subtitle || null,
+    description: lesson.description || null,
+    content_type: lesson.contentType,
+    source_type: lesson.sourceType,
+    video_url: lesson.videoUrl || null,
+    external_url: lesson.externalUrl || null,
+    embed_code: lesson.embedCode || null,
+    subject_id: lesson.subjectId || null,
+    subject_name: lesson.subjectName || null,
+    subject_type: lesson.subjectType || null,
+    instructor: lesson.instructor || null,
+    duration_minutes: lesson.durationMinutes ?? null,
+    status: 'draft',
+    is_active: false,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  });
+  if (error) throw error;
+  await refreshContent();
+}
+
+// ── Matrículas ──────────────────────────────────────────────────────────────
+
+export interface Enrollment {
+  userId: string;
+  courseId: string;
+  enrolledAt: string | null;
+  userEmail?: string;
+  userName?: string;
+}
+
+export async function listEnrollments(ministryId: MinistryKey): Promise<Enrollment[]> {
+  const { data, error } = await supabase
+    .from('platform_enrollment')
+    .select('user_id, course_id, enrolled_at, created_at')
+    .eq('course_id', ministryId);
+  if (error) throw error;
+  const rows = data ?? [];
+  // Enriquece com dados de perfil se disponíveis
+  const userIds = rows.map((r) => r.user_id);
+  const profileMap: Record<string, { email?: string; name?: string }> = {};
+  if (userIds.length > 0) {
+    try {
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, email, full_name')
+        .in('id', userIds);
+      (profiles ?? []).forEach((p: any) => {
+        profileMap[p.id] = { email: p.email, name: p.full_name };
+      });
+    } catch { /* profiles table may not exist */ }
+  }
+  return rows.map((r) => ({
+    userId: r.user_id,
+    courseId: r.course_id,
+    enrolledAt: r.enrolled_at ?? r.created_at ?? null,
+    userEmail: profileMap[r.user_id]?.email,
+    userName: profileMap[r.user_id]?.name,
+  }));
+}
+
+export async function enrollUser(ministryId: MinistryKey, userId: string): Promise<void> {
+  const trimmedId = userId.trim();
+  if (!trimmedId) throw new Error('ID do usuário inválido');
+  const { error } = await supabase.from('platform_enrollment').upsert(
+    { user_id: trimmedId, course_id: ministryId, enrolled_at: new Date().toISOString() },
+    { onConflict: 'user_id,course_id' }
+  );
+  if (error) throw error;
+}
+
+export async function unenrollUser(ministryId: MinistryKey, userId: string): Promise<void> {
+  const { error } = await supabase
+    .from('platform_enrollment')
+    .delete()
+    .eq('course_id', ministryId)
+    .eq('user_id', userId);
+  if (error) throw error;
 }
 
 export async function deleteModule(ministryId: MinistryKey, moduleId: string): Promise<void> {

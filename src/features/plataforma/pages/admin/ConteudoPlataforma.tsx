@@ -8,7 +8,11 @@ import {
   deleteLesson,
   deleteMinistry,
   deleteModule,
+  duplicateLesson,
+  Enrollment,
+  enrollUser,
   getModule,
+  listEnrollments,
   listLessons,
   LessonInput,
   LessonRef,
@@ -17,13 +21,15 @@ import {
   MinistryKey,
   ModuleStatus,
   moveLesson,
+  moveModule,
   setLessonActive,
   setLessonStatus,
   setModuleBanner,
   setMinistryBanner,
+  setModuleStatus,
   setModuleTitle,
   StoredFile,
-  toggleModuleStatus,
+  unenrollUser,
   updateLesson,
   updateMinistry,
   usePlatformContent,
@@ -126,7 +132,7 @@ const defaultLessonForm = (): LessonFormState => ({
 export default function AdminConteudoPlataforma() {
   document.title = "Administração | Five One — Conteúdo";
   const content = usePlatformContent();
-  const [activeTab, setActiveTab] = useState<"modules" | "info" | "certificate">("modules");
+  const [activeTab, setActiveTab] = useState<"modules" | "info" | "enrollments" | "certificate">("modules");
   const [selectedMinistryId, setSelectedMinistryId] = useState<MinistryKey>(() => content.ministries[0]?.id || "");
   const [isHydrating, setIsHydrating] = useState(!content.ministries.length);
   useEffect(() => {
@@ -168,6 +174,26 @@ export default function AdminConteudoPlataforma() {
     }
   }, [selectedMinistry?.id]);
 
+  useEffect(() => {
+    if (activeTab === 'enrollments' && selectedMinistry) {
+      loadEnrollments(selectedMinistry.id);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, selectedMinistry?.id]);
+
+  // ── Busca de aulas ────────────────────────────────────────────────────────
+  const [lessonSearch, setLessonSearch] = useState('');
+
+  // ── Módulo: mover ─────────────────────────────────────────────────────────
+  const [moduleActionMoveId, setModuleActionMoveId] = useState<string | null>(null);
+
+  // ── Matrículas ────────────────────────────────────────────────────────────
+  const [enrollments, setEnrollments] = useState<Enrollment[]>([]);
+  const [enrollmentsLoading, setEnrollmentsLoading] = useState(false);
+  const [enrollNewUserId, setEnrollNewUserId] = useState('');
+  const [enrollSubmitting, setEnrollSubmitting] = useState(false);
+  const [unenrollPending, setUnenrollPending] = useState<string | null>(null);
+
   // ── Novo Curso ────────────────────────────────────────────────────────────
   const [showNewCourseModal, setShowNewCourseModal] = useState(false);
   const [newCourseForm, setNewCourseForm] = useState<{ title: string; id: string; tagline: string; color: string; banner: StoredFile | null }>({ title: '', id: '', tagline: '', color: '#38bdf8', banner: null });
@@ -195,12 +221,12 @@ export default function AdminConteudoPlataforma() {
 
   // ── Editar Curso ──────────────────────────────────────────────────────
   const [showEditCourseModal, setShowEditCourseModal] = useState(false);
-  const [editCourseForm, setEditCourseForm] = useState({ title: '', tagline: '', color: '#38bdf8' });
+  const [editCourseForm, setEditCourseForm] = useState({ title: '', tagline: '', color: '#38bdf8', icon: '' });
   const [editCourseSubmitting, setEditCourseSubmitting] = useState(false);
 
   const openEditCourseModal = () => {
     if (!selectedMinistry) return;
-    setEditCourseForm({ title: selectedMinistry.name, tagline: selectedMinistry.tagline, color: selectedMinistry.focusColor });
+    setEditCourseForm({ title: selectedMinistry.name, tagline: selectedMinistry.tagline, color: selectedMinistry.focusColor, icon: selectedMinistry.icon || '' });
     setShowEditCourseModal(true);
   };
 
@@ -213,6 +239,7 @@ export default function AdminConteudoPlataforma() {
         tagline: editCourseForm.tagline,
         focusColor: editCourseForm.color,
         gradient: `linear-gradient(135deg, #0f172a, ${editCourseForm.color}44)`,
+        icon: editCourseForm.icon || undefined,
       });
       toast.success('Curso atualizado', 'As informações foram salvas.');
       setShowEditCourseModal(false);
@@ -238,6 +265,76 @@ export default function AdminConteudoPlataforma() {
       toast.error('Erro ao excluir módulo', 'Tente novamente em instantes.');
     } finally {
       setDeleteModuleSubmitting(false);
+    }
+  };
+
+  // ── Módulo: mover ─────────────────────────────────────────────────────────
+  const handleMoveModule = async (moduleId: string, direction: -1 | 1) => {
+    if (!selectedMinistry) return;
+    setModuleActionMoveId(moduleId);
+    try {
+      await moveModule(selectedMinistry.id, moduleId, direction);
+    } catch {
+      toast.error('Não foi possível reordenar', 'Tente novamente em instantes.');
+    } finally {
+      setModuleActionMoveId(null);
+    }
+  };
+
+  // ── Módulo: mudar status ───────────────────────────────────────────────────
+  const handleSetModuleStatus = async (moduleId: string, status: ModuleStatus) => {
+    if (!selectedMinistry) return;
+    try {
+      setModuleActionId(moduleId);
+      await setModuleStatus(selectedMinistry.id, moduleId, status);
+      toast.success('Status atualizado', `Módulo agora está como "${moduleStatusLabel[status]}".`);
+    } catch {
+      toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
+    } finally {
+      setModuleActionId(null);
+    }
+  };
+
+  // ── Matrículas ─────────────────────────────────────────────────────────────
+  const loadEnrollments = async (ministryId: string) => {
+    setEnrollmentsLoading(true);
+    try {
+      const data = await listEnrollments(ministryId);
+      setEnrollments(data);
+    } catch {
+      toast.error('Erro ao carregar matrículas', 'Tente novamente em instantes.');
+    } finally {
+      setEnrollmentsLoading(false);
+    }
+  };
+
+  const handleEnrollUser = async () => {
+    if (!selectedMinistry || !enrollNewUserId.trim()) return;
+    setEnrollSubmitting(true);
+    try {
+      await enrollUser(selectedMinistry.id, enrollNewUserId.trim());
+      toast.success('Aluno matriculado', 'O acesso foi concedido ao curso.');
+      setEnrollNewUserId('');
+      await loadEnrollments(selectedMinistry.id);
+    } catch (err: any) {
+      const isDuplicate = err?.message?.includes('duplicate') || err?.code === '23505';
+      toast.error('Erro ao matricular', isDuplicate ? 'Este aluno já está matriculado.' : 'Verifique o ID e tente novamente.');
+    } finally {
+      setEnrollSubmitting(false);
+    }
+  };
+
+  const handleUnenroll = async (userId: string) => {
+    if (!selectedMinistry) return;
+    setUnenrollPending(userId);
+    try {
+      await unenrollUser(selectedMinistry.id, userId);
+      toast.info('Matrícula removida', 'O aluno perdeu acesso ao curso.');
+      setEnrollments((prev) => prev.filter((e) => e.userId !== userId));
+    } catch {
+      toast.error('Erro ao remover matrícula', 'Tente novamente em instantes.');
+    } finally {
+      setUnenrollPending(null);
     }
   };
 
@@ -625,21 +722,6 @@ export default function AdminConteudoPlataforma() {
     }
   };
 
-  const handleToggleModuleStatus = async (moduleId: string) => {
-    if (!selectedMinistry) return;
-    try {
-      setModuleActionId(moduleId);
-      const status = await toggleModuleStatus(selectedMinistry.id, moduleId);
-      const label = status === "published" ? "publicado" : status === "draft" ? "marcado como rascunho" : "atualizado";
-      toast.success('Status do módulo atualizado', `O módulo foi ${label}.`);
-    } catch (error) {
-      console.error("Erro ao alternar status do módulo", error);
-      toast.error('Não foi possível atualizar', 'Tente novamente em instantes.');
-    } finally {
-      setModuleActionId(null);
-    }
-  };
-
   const handleToggleLessonStatus = async (moduleId: string, lesson: LessonRef) => {
     if (!selectedMinistry) return;
     const nextStatus: LessonStatus = lesson.status === "published" ? "draft" : "published";
@@ -704,6 +786,35 @@ export default function AdminConteudoPlataforma() {
     } finally {
       setLessonActionId(null);
     }
+  };
+
+  const handleDuplicateLesson = async (moduleId: string, lesson: LessonRef) => {
+    if (!selectedMinistry) return;
+    setOpenMenu(null);
+    try {
+      setLessonActionId(lesson.id);
+      await duplicateLesson(selectedMinistry.id, moduleId, lesson.id);
+      toast.success('Aula duplicada', 'Uma cópia em rascunho foi criada no mesmo módulo.');
+    } catch {
+      toast.error('Não foi possível duplicar', 'Tente novamente em instantes.');
+    } finally {
+      setLessonActionId(null);
+    }
+  };
+
+  const handleCopyLessonLink = (lesson: LessonRef) => {
+    const courseId = selectedMinistryId;
+    const url = lesson.videoId
+      ? `/curso/${courseId}/aula?vid=${encodeURIComponent(lesson.videoId)}`
+      : `/curso/${courseId}/modulos`;
+    const base = `${window.location.origin}${window.location.pathname}`;
+    const fullUrl = `${base}#${url}`;
+    navigator.clipboard.writeText(fullUrl).then(() => {
+      toast.success('Link copiado!', fullUrl);
+    }).catch(() => {
+      toast.error('Não foi possível copiar', 'Copie manualmente: ' + fullUrl);
+    });
+    setOpenMenu(null);
   };
 
   useEffect(() => {
@@ -919,32 +1030,47 @@ export default function AdminConteudoPlataforma() {
           </div>
 
           <div className="ministry-tabs">
-            <button
-              className={`ministry-tab ${activeTab === "modules" ? "active" : ""}`}
-              onClick={() => setActiveTab("modules")}
-            >
+            <button className={`ministry-tab ${activeTab === "modules" ? "active" : ""}`} onClick={() => setActiveTab("modules")}>
               Módulos
             </button>
-            <button
-              className={`ministry-tab ${activeTab === "info" ? "active" : ""}`}
-              onClick={() => setActiveTab("info")}
-            >
+            <button className={`ministry-tab ${activeTab === "info" ? "active" : ""}`} onClick={() => setActiveTab("info")}>
               Informações
             </button>
-            <button
-              className={`ministry-tab ${activeTab === "certificate" ? "active" : ""}`}
-              onClick={() => setActiveTab("certificate")}
-            >
+            <button className={`ministry-tab ${activeTab === "enrollments" ? "active" : ""}`} onClick={() => setActiveTab("enrollments")}>
+              Matrículas
+            </button>
+            <button className={`ministry-tab ${activeTab === "certificate" ? "active" : ""}`} onClick={() => setActiveTab("certificate")}>
               Certificado
             </button>
           </div>
 
           {activeTab === "modules" && (
             <div className="modules-list">
-              {selectedMinistry.modules.map((module) => {
+              {/* ── Busca ── */}
+              <div className="lesson-search-wrap">
+                <input
+                  className="lesson-search-input"
+                  placeholder="Buscar aula por título, matéria ou professor…"
+                  value={lessonSearch}
+                  onChange={(e) => setLessonSearch(e.target.value)}
+                />
+                {lessonSearch && (
+                  <button className="lesson-search-clear" onClick={() => setLessonSearch('')} title="Limpar">✕</button>
+                )}
+              </div>
+              {selectedMinistry.modules.map((module, moduleIdx) => {
                 const isOpen = expandedModuleId === module.id;
                 const moduleMenuOpen = openMenu?.moduleId === module.id;
-                const lessons = moduleLessons.filter((lesson) => lesson.moduleId === module.id);
+                const allLessons = moduleLessons.filter((lesson) => lesson.moduleId === module.id);
+                const lessons = lessonSearch.trim()
+                  ? allLessons.filter((l) => {
+                      const q = lessonSearch.toLowerCase();
+                      return l.title.toLowerCase().includes(q) ||
+                        (l.subjectName || '').toLowerCase().includes(q) ||
+                        (l.instructor || '').toLowerCase().includes(q);
+                    })
+                  : allLessons;
+                const hasDraftInPublished = module.status === 'published' && allLessons.some(l => l.status !== 'published');
                 return (
                   <div
                     key={module.id}
@@ -976,14 +1102,36 @@ export default function AdminConteudoPlataforma() {
                         />
                       </div>
                       <div className="module-actions">
+                        {/* Reordenar módulo */}
+                        <div className="lesson-reorder">
+                          <button
+                            type="button"
+                            className="lesson-reorder-btn"
+                            title="Mover módulo para cima"
+                            disabled={moduleIdx === 0 || moduleActionMoveId === module.id}
+                            onClick={() => handleMoveModule(module.id, -1)}
+                          >▲</button>
+                          <button
+                            type="button"
+                            className="lesson-reorder-btn"
+                            title="Mover módulo para baixo"
+                            disabled={moduleIdx === selectedMinistry.modules.length - 1 || moduleActionMoveId === module.id}
+                            onClick={() => handleMoveModule(module.id, 1)}
+                          >▼</button>
+                        </div>
                         <span className="module-lesson-count">
                           {(() => {
-                            const pub = lessons.filter(l => l.status === 'published').length;
-                            const total = lessons.length;
+                            const pub = allLessons.filter(l => l.status === 'published').length;
+                            const total = allLessons.length;
                             if (total === 0) return '0 aulas';
                             return `${total} aula${total !== 1 ? 's' : ''} · ${pub} pub.`;
                           })()}
                         </span>
+                        {hasDraftInPublished && (
+                          <span className="module-draft-warning" title="Este módulo está publicado mas contém aulas em rascunho">
+                            ⚠ rascunhos
+                          </span>
+                        )}
                         <button className="module-new-lesson" type="button" onClick={() => openLessonModal(module.id)}>
                           Nova aula
                         </button>
@@ -998,18 +1146,16 @@ export default function AdminConteudoPlataforma() {
                         >
                           🖼 Imagem
                         </button>
-                        <span className={`status-pill ${module.status}`}>{moduleStatusLabel[module.status]}</span>
-                        <button
-                          className="adm5-pill"
-                          onClick={() => handleToggleModuleStatus(module.id)}
+                        <select
+                          className="module-status-select"
+                          value={module.status}
                           disabled={moduleActionId === module.id}
+                          onChange={(e) => handleSetModuleStatus(module.id, e.target.value as ModuleStatus)}
                         >
-                          {moduleActionId === module.id
-                            ? "Atualizando..."
-                            : module.status === "published"
-                            ? "Despublicar"
-                            : "Publicar"}
-                        </button>
+                          {(Object.keys(moduleStatusLabel) as ModuleStatus[]).map((s) => (
+                            <option key={s} value={s}>{moduleStatusLabel[s]}</option>
+                          ))}
+                        </select>
                         <button
                           className="adm5-pill danger"
                           type="button"
@@ -1057,6 +1203,11 @@ export default function AdminConteudoPlataforma() {
                                     {lesson.instructor && <span className="lesson-tag">{lesson.instructor}</span>}
                                     {lesson.durationMinutes && (
                                       <span className="lesson-tag lesson-tag--duration">⏱ {lesson.durationMinutes} min</span>
+                                    )}
+                                    {lesson.releaseAt && new Date(lesson.releaseAt) > new Date() && (
+                                      <span className="lesson-tag lesson-tag--scheduled" title={`Liberada em ${new Date(lesson.releaseAt).toLocaleDateString('pt-BR')}`}>
+                                        🗓 {new Date(lesson.releaseAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })}
+                                      </span>
                                     )}
                                   </div>
                                 </div>
@@ -1118,6 +1269,17 @@ export default function AdminConteudoPlataforma() {
                                       >
                                         Abrir player
                                       </button>
+                                      <button type="button" role="menuitem" onClick={() => handleCopyLessonLink(lesson)}>
+                                        Copiar link
+                                      </button>
+                                      <button
+                                        type="button"
+                                        role="menuitem"
+                                        onClick={() => handleDuplicateLesson(module.id, lesson)}
+                                        disabled={lessonActionId === lesson.id}
+                                      >
+                                        Duplicar
+                                      </button>
                                       <button
                                         type="button"
                                         role="menuitem"
@@ -1152,7 +1314,9 @@ export default function AdminConteudoPlataforma() {
                         </div>
                       ) : (
                         <div className="empty-state">
-                          Nenhuma aula cadastrada para este módulo ainda. Clique em "Nova aula" para começar.
+                          {lessonSearch.trim()
+                            ? `Nenhuma aula encontrada para "${lessonSearch}".`
+                            : 'Nenhuma aula cadastrada para este módulo ainda. Clique em "Nova aula" para começar.'}
                         </div>
                       )}
                     </div>
@@ -1163,11 +1327,102 @@ export default function AdminConteudoPlataforma() {
           )}
 
           {activeTab === "info" && (
-            <div style={{ color: "#94a3b8", lineHeight: 1.6 }}>
-              <p>
-                Utilize esta área para registrar detalhes da formação, visão geral do ministério e orientações para os alunos.
-                Em breve você poderá editar textos ricos, anexar materiais de apoio e definir destaques para a vitrine.
+            <div className="info-tab">
+              <div className="info-tab-grid">
+                <div className="info-stat">
+                  <span className="info-stat-label">ID do curso</span>
+                  <code className="info-stat-value">{selectedMinistry.id}</code>
+                </div>
+                <div className="info-stat">
+                  <span className="info-stat-label">Módulos</span>
+                  <span className="info-stat-value">{selectedMinistry.modules.length}</span>
+                </div>
+                <div className="info-stat">
+                  <span className="info-stat-label">Aulas totais</span>
+                  <span className="info-stat-value">
+                    {selectedMinistry.modules.reduce((acc, m) => acc + m.lessons.length, 0)}
+                  </span>
+                </div>
+                <div className="info-stat">
+                  <span className="info-stat-label">Aulas publicadas</span>
+                  <span className="info-stat-value" style={{ color: '#4ade80' }}>
+                    {selectedMinistry.modules.reduce((acc, m) => acc + m.lessons.filter(l => l.status === 'published').length, 0)}
+                  </span>
+                </div>
+                <div className="info-stat">
+                  <span className="info-stat-label">Cor do curso</span>
+                  <span className="info-stat-value" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ width: 16, height: 16, borderRadius: '50%', background: selectedMinistry.focusColor, display: 'inline-block', border: '1px solid #334155' }} />
+                    {selectedMinistry.focusColor}
+                  </span>
+                </div>
+                <div className="info-stat">
+                  <span className="info-stat-label">Ícone</span>
+                  <span className="info-stat-value" style={{ fontSize: 11, color: '#64748b', wordBreak: 'break-all' }}>{selectedMinistry.icon || '—'}</span>
+                </div>
+              </div>
+              <p style={{ fontSize: 13, color: '#475569', marginTop: 20 }}>
+                Para editar nome, descrição, cor e ícone do curso, use o botão <strong style={{ color: '#e2e8f0' }}>Editar curso</strong> no cabeçalho acima.
               </p>
+            </div>
+          )}
+
+          {activeTab === "enrollments" && (
+            <div className="enrollments-tab">
+              <div className="enroll-add-row">
+                <input
+                  className="lesson-input"
+                  style={{ flex: 1, maxWidth: 360 }}
+                  placeholder="ID do usuário (UUID do Supabase Auth)"
+                  value={enrollNewUserId}
+                  onChange={(e) => setEnrollNewUserId(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleEnrollUser(); }}
+                />
+                <button
+                  className="adm5-pill primary"
+                  onClick={handleEnrollUser}
+                  disabled={enrollSubmitting || !enrollNewUserId.trim()}
+                >
+                  {enrollSubmitting ? 'Matriculando…' : '+ Matricular'}
+                </button>
+              </div>
+              <p className="lesson-hint" style={{ marginBottom: 16 }}>
+                Cole o UUID do usuário (encontrado em Authentication → Users no Supabase).
+              </p>
+
+              {enrollmentsLoading ? (
+                <div style={{ color: '#64748b', fontSize: 13 }}>Carregando matrículas…</div>
+              ) : enrollments.length === 0 ? (
+                <div className="empty-state">Nenhum aluno matriculado neste curso ainda.</div>
+              ) : (
+                <div className="enrollments-list">
+                  <div className="enrollment-header-row">
+                    <span>Usuário</span>
+                    <span>Matriculado em</span>
+                    <span></span>
+                  </div>
+                  {enrollments.map((e) => (
+                    <div key={e.userId} className="enrollment-row">
+                      <div className="enrollment-user">
+                        <span className="enrollment-name">{e.userName || e.userEmail || '—'}</span>
+                        {e.userEmail && e.userName && <span className="enrollment-email">{e.userEmail}</span>}
+                        <code className="enrollment-uid">{e.userId}</code>
+                      </div>
+                      <span className="enrollment-date">
+                        {e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString('pt-BR') : '—'}
+                      </span>
+                      <button
+                        className="adm5-pill danger"
+                        style={{ fontSize: 11, padding: '3px 10px' }}
+                        disabled={unenrollPending === e.userId}
+                        onClick={() => handleUnenroll(e.userId)}
+                      >
+                        {unenrollPending === e.userId ? '…' : 'Remover'}
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
@@ -1774,6 +2029,16 @@ export default function AdminConteudoPlataforma() {
                   />
                   <span style={{ fontSize: 13, color: '#94a3b8' }}>{editCourseForm.color}</span>
                 </div>
+              </div>
+              <div>
+                <label className="lesson-label">Ícone do curso (URL do SVG)</label>
+                <input
+                  className="lesson-input"
+                  value={editCourseForm.icon}
+                  onChange={(e) => setEditCourseForm((f) => ({ ...f, icon: e.target.value }))}
+                  placeholder="/assets/icons/mestre.svg"
+                />
+                <span style={{ fontSize: 11, color: '#64748b' }}>Ícones disponíveis: apostolo, profeta, evangelista, pastor, mestre, default</span>
               </div>
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginTop: 20 }}>
