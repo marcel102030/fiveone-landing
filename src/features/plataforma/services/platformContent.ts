@@ -62,6 +62,7 @@ export interface Module {
   highlight?: string;
   lessons: Lesson[];
   icon?: string;
+  bannerModule?: StoredFile | null;
 }
 
 export interface MinistryMeta {
@@ -71,6 +72,7 @@ export interface MinistryMeta {
   icon: string;
   focusColor: string;
   gradient: string;
+  banner?: StoredFile | null;
 }
 
 export interface Ministry extends MinistryMeta {
@@ -335,6 +337,7 @@ function mapModule(row: any, icon?: string): Module {
     highlight: row.highlight ?? undefined,
     lessons,
     icon,
+    bannerModule: mapStoredFile(row.banner_module),
   };
 }
 
@@ -349,6 +352,7 @@ function mapMinistry(row: any): Ministry {
     icon: row.icon || preset?.icon || "/assets/icons/default.svg",
     focusColor: row.focus_color || preset?.focusColor || "#38bdf8",
     gradient: row.gradient || preset?.gradient || "linear-gradient(135deg, #0f172a, #0369a1)",
+    banner: mapStoredFile(row.banner),
     modules,
   };
 }
@@ -373,6 +377,7 @@ async function fetchContent(): Promise<void> {
         icon,
         focus_color,
         gradient,
+        banner,
         modules:platform_module(
           id,
           order_index,
@@ -380,6 +385,7 @@ async function fetchContent(): Promise<void> {
           status,
           description,
           highlight,
+          banner_module,
           lessons:platform_lesson(
             id,
             video_id,
@@ -415,6 +421,8 @@ async function fetchContent(): Promise<void> {
   const fallbackSelect = baseSelect.replace(",\n            banner_mobile", "");
   const fallbackNoVideoIdSelect = baseSelect.replace(",\n            video_id", "");
   const fallbackNoVideoIdNoMobileSelect = fallbackNoVideoIdSelect.replace(",\n            banner_mobile", "");
+  // Fallbacks para colunas novas do módulo/ministério (podem não existir em DBs antigos)
+  const stripNewCols = (s: string) => s.replace(",\n        banner", "").replace(",\n          banner_module", "");
 
   const execSelect = async (fields: string) =>
     supabase
@@ -429,18 +437,19 @@ async function fetchContent(): Promise<void> {
   if (error) {
     const missingMobile = error.message?.includes("banner_mobile");
     const missingVideoId = error.message?.includes("video_id");
-    if (missingMobile || missingVideoId) {
-      if (missingMobile) {
-        console.warn("Coluna banner_mobile ausente. Reexecutando consulta sem o campo (execute a migração).", error);
-      }
-      if (missingVideoId) {
-        console.warn("Coluna video_id ausente. Reexecutando consulta sem o campo (execute a migração).", error);
-      }
-      const fields = missingMobile && missingVideoId
+    const missingNewCols = error.message?.includes("banner_module") || error.message?.includes('"banner"');
+    if (missingMobile || missingVideoId || missingNewCols) {
+      if (missingMobile) console.warn("Coluna banner_mobile ausente.", error);
+      if (missingVideoId) console.warn("Coluna video_id ausente.", error);
+      if (missingNewCols) console.warn("Colunas banner/banner_module ausentes. Execute a migração.", error);
+      let fields = missingMobile && missingVideoId
         ? fallbackNoVideoIdNoMobileSelect
         : missingMobile
           ? fallbackSelect
-          : fallbackNoVideoIdSelect;
+          : missingVideoId
+            ? fallbackNoVideoIdSelect
+            : baseSelect;
+      if (missingNewCols) fields = stripNewCols(fields);
       const fallback = await execSelect(fields);
       data = fallback.data;
       error = fallback.error;

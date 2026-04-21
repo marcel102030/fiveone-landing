@@ -125,10 +125,16 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
         .filter((value, index, array) => !!value && array.indexOf(value) === index)
         .slice(0, 4);
       const order = module.order + 1;
-      const banner =
-        publishedLessons.find((lesson) => lesson.bannerPlayer?.url || lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.url ||
-        publishedLessons.find((lesson) => lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl ||
+      // Prioridade: bannerModule (portrait 3:4, campo próprio do módulo)
+      // → bannerPlayer da primeira aula (fallback landscape)
+      // → imagem estática modulo01.png
+      const bannerModule =
+        module.bannerModule?.url || module.bannerModule?.dataUrl || null;
+      const lessonBanner =
+        publishedLessons.find((l) => l.bannerPlayer?.url || l.bannerPlayer?.dataUrl)?.bannerPlayer?.url ||
+        publishedLessons.find((l) => l.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl ||
         null;
+      const banner = bannerModule || lessonBanner || null;
       const image = banner || `/assets/images/modulo${String(order).padStart(2, '0')}.png`;
       const totalLessons = publishedLessons.length;
       const completedCount = publishedLessons.filter(

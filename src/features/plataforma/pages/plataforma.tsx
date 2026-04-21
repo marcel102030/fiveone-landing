@@ -1019,6 +1019,7 @@ const PaginaInicial = () => {
                 {enrolledCourses.map(({ id, ministry }) => {
                   const label = ministry?.name || id
                   const gradient = ministry?.gradient || 'linear-gradient(135deg, #0f172a, #0369a1)'
+                  const bannerUrl = ministry?.banner?.url || ministry?.banner?.dataUrl || null
                   return (
                     <Link
                       key={id}
@@ -1026,7 +1027,11 @@ const PaginaInicial = () => {
                       className="group relative min-h-[280px] sm:min-h-[340px] lg:min-h-[390px] rounded-[28px] overflow-hidden border border-mint/25 bg-navy-lighter hover:border-mint/60 hover:-translate-y-1.5 hover:shadow-[0_20px_50px_rgba(0,229,255,0.16)] transition-all duration-300"
                       aria-label={`Acessar ${label}`}
                     >
-                      <div className="absolute inset-0" style={{ background: gradient, opacity: 0.7 }} />
+                      {bannerUrl ? (
+                        <img src={bannerUrl} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0" style={{ background: gradient, opacity: 0.7 }} />
+                      )}
                       <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
 
                       <div className="absolute top-4 left-4 z-10">
