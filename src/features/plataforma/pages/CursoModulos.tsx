@@ -14,6 +14,8 @@ type ModuleCard = {
   topics: string[];
   soon?: boolean;
   banner?: string | null;
+  totalLessons: number;
+  completedCount: number;
 };
 
 interface Props {
@@ -28,6 +30,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   const [lessons, setLessons] = useState<LessonRef[]>(() =>
     listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true })
   );
+  const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set(listCompletedLessonIds()));
 
   useEffect(() => {
     const sync = () => setLessons(listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true }));
@@ -35,6 +38,12 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     const unsubscribe = subscribePlatformContent(() => sync());
     return () => unsubscribe();
   }, [courseId]);
+
+  useEffect(() => {
+    const refresh = () => setCompletedIds(new Set(listCompletedLessonIds()));
+    window.addEventListener('storage', refresh);
+    return () => window.removeEventListener('storage', refresh);
+  }, []);
 
   const abrirModulo = async (module: ModuleCard) => {
     const moduleLessons = lessons.filter((lesson) => lesson.moduleId === module.moduleId);
@@ -121,9 +130,13 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
         publishedLessons.find((lesson) => lesson.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl ||
         null;
       const image = banner || `/assets/images/modulo${String(order).padStart(2, '0')}.png`;
-      return { id: order, moduleId: module.id, image, title: module.title, topics, soon: module.status !== 'published' || !publishedLessons.length, banner };
+      const totalLessons = publishedLessons.length;
+      const completedCount = publishedLessons.filter(
+        (l) => completedIds.has(l.videoId) || completedIds.has(l.id)
+      ).length;
+      return { id: order, moduleId: module.id, image, title: module.title, topics, soon: module.status !== 'published' || !publishedLessons.length, banner, totalLessons, completedCount };
     });
-  }, [lessons, courseId]);
+  }, [lessons, courseId, completedIds]);
 
   const ministry = getMinistry(courseId);
   const courseName = ministry?.name || courseId;
@@ -171,8 +184,28 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
                       Em Breve
                     </div>
                   )}
-                  <div className="absolute bottom-3 left-3 right-3 text-white font-semibold text-xs sm:text-sm z-10 group-hover:[@media(hover:hover)]:opacity-0 transition-opacity duration-200">
-                    {m.title}
+                  <div className="absolute bottom-3 left-3 right-3 z-10 group-hover:[@media(hover:hover)]:opacity-0 transition-opacity duration-200">
+                    <p className="text-white font-semibold text-xs sm:text-sm">{m.title}</p>
+                    {!m.soon && m.totalLessons > 0 && (
+                      <div className="mt-1.5">
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-white/60 text-[10px]">
+                            {m.completedCount}/{m.totalLessons} aulas
+                          </span>
+                          {m.completedCount > 0 && (
+                            <span className="text-mint text-[10px] font-semibold">
+                              {Math.round((m.completedCount / m.totalLessons) * 100)}%
+                            </span>
+                          )}
+                        </div>
+                        <div className="h-1 bg-white/20 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-mint rounded-full transition-all duration-500"
+                            style={{ width: `${Math.round((m.completedCount / m.totalLessons) * 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                   {clickable && (
                     <div className="absolute inset-0 bg-navy/90 flex flex-col justify-center items-center p-3 sm:p-4 opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200 z-20">
@@ -185,6 +218,11 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
                           </li>
                         ))}
                       </ul>
+                      {m.totalLessons > 0 && (
+                        <p className="text-slate/60 text-[10px] mb-2">
+                          {m.completedCount} de {m.totalLessons} aulas concluídas
+                        </p>
+                      )}
                       <button className="bg-mint text-navy text-xs font-bold px-4 py-2 rounded-full hover:bg-mint/90 transition-colors">
                         Entrar →
                       </button>

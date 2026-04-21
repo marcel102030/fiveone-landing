@@ -1964,9 +1964,9 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                                     )}
                                   </div>
                                   {!isCompleted && durationSeconds > 0 && progress > 0 && (
-                                    <div className="h-0.5 bg-navy rounded-full mt-1.5">
+                                    <div className="h-1 bg-navy rounded-full mt-1.5">
                                       <div
-                                        className="h-0.5 bg-mint/60 rounded-full"
+                                        className="h-1 bg-mint rounded-full"
                                         style={{ width: `${Math.round(progress * 100)}%` }}
                                       />
                                     </div>

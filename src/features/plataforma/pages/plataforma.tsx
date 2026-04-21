@@ -799,6 +799,7 @@ const PaginaInicial = () => {
                     const durationSec = Number(video.durationSeconds || 0)
                     const hasDuration = durationSec > 0
                     const pct = hasDuration ? Math.min(100, Math.round((watchedSec / durationSec) * 100)) : 0
+                    const remainingMin = hasDuration ? Math.max(1, Math.ceil((durationSec - watchedSec) / 60)) : 0
 
                     return (
                       <button
@@ -809,8 +810,12 @@ const PaginaInicial = () => {
                       >
                         {/* Imagem */}
                         <div className="relative h-28 sm:h-36 bg-navy-lighter">
-                          {img && (
+                          {img ? (
                             <img src={img} alt={video.title} className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-navy-lighter to-navy-light flex items-end p-3">
+                              <p className="text-xs font-semibold text-slate-white/90 line-clamp-3 leading-tight">{video.title}</p>
+                            </div>
                           )}
                           {/* Overlay play */}
                           <div className="absolute inset-0 bg-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -832,9 +837,18 @@ const PaginaInicial = () => {
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <p className="text-xs text-slate/60 mt-1 text-left">
-                            {hasDuration ? `${pct}% assistido` : 'Em andamento'}
-                          </p>
+                          <div className="flex items-center justify-between mt-1">
+                            <p className="text-xs text-slate/60 text-left">
+                              {hasDuration
+                                ? pct >= 90
+                                  ? 'Quase concluída'
+                                  : `${remainingMin} min restantes`
+                                : 'Em andamento'}
+                            </p>
+                            {hasDuration && pct < 90 && (
+                              <p className="text-xs text-slate/40 tabular-nums">{pct}%</p>
+                            )}
+                          </div>
                         </div>
                       </button>
                     )
