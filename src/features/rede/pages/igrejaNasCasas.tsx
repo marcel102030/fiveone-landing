@@ -36,7 +36,7 @@ const igrejas: IgrejaInfo[] = [
     estado: 'PB',
     nome: 'Igreja Casas Catolé',
     endereco: 'Catolé, Campina Grande - PB',
-    linkMaps: 'https://www.google.com/maps/place/Igreja+Casas+Catolé/@-7.2371273,-35.9068963,17z',
+    linkMaps: 'https://www.google.com/maps/place/Igreja+Casas+Católé/@-7.2371273,-35.9068963,17z',
     linkMapsEmbed: 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4',
     bairro: 'Catolé',
     lider: 'Marcelo Junior',
@@ -45,15 +45,8 @@ const igrejas: IgrejaInfo[] = [
 ];
 
 const heroGallery = [
-  principal1,
-  principal2,
-  principal3,
-  principal4,
-  principal5,
-  principal6,
-  principal7,
-  principal8,
-  principal9,
+  principal1, principal2, principal3, principal4, principal5,
+  principal6, principal7, principal8, principal9,
 ];
 
 const heroImageAlts: Record<string, string> = {
@@ -70,6 +63,39 @@ const heroImageAlts: Record<string, string> = {
 
 const destaqueCards = destaqueCardsData;
 
+const valores = [
+  {
+    icon: '📖',
+    titulo: 'Estudo Bíblico e Partilha',
+    descricao: 'Mesa aberta para mergulhar na Palavra, ouvir testemunhos e orar uns pelos outros.',
+  },
+  {
+    icon: '🎵',
+    titulo: 'Louvor e Comunhão',
+    descricao: 'Adoração simples, família reunida e dons em movimento em cada casa.',
+  },
+  {
+    icon: '✝️',
+    titulo: 'Palavra e Testemunho',
+    descricao: 'Compartilhamos experiências reais, aplicamos o Evangelho e celebramos milagres.',
+  },
+  {
+    icon: '🏠',
+    titulo: 'Discipulado em Família',
+    descricao: 'Casas acolhedoras onde cada geração encontra lugar e propósito no Reino.',
+  },
+  {
+    icon: '🌍',
+    titulo: 'Missão na Cidade',
+    descricao: 'Vemos a cidade como campo missionário e as casas como base de envio.',
+  },
+  {
+    icon: '👑',
+    titulo: 'Sacerdócio de Todos',
+    descricao: 'Cristo como cabeça. Todos participam, todos servem, todos crescem.',
+  },
+];
+
 const manifestoCards = [
   {
     tag: 'Visão',
@@ -84,7 +110,7 @@ const manifestoCards = [
       'Casas como lugares de comunhão, ensino e missão (Romanos 16:3-5)',
     ],
     quote: {
-      text: '“O novo movimento de igrejas precisa de menos púlpitos e mais mesas, menos plateias e mais comunidades.”',
+      text: '"O novo movimento de igrejas precisa de menos púlpitos e mais mesas, menos plateias e mais comunidades."',
       author: 'Wolfgang Simson',
     },
   },
@@ -114,7 +140,7 @@ const manifestoCards = [
       'Cada cristão vivendo seu dom com ousadia (Efésios 4:7-16)',
     ],
     quote: {
-      text: '“A igreja não está morrendo. Ela está se movendo. De volta às casas.”',
+      text: '"A igreja não está morrendo. Ela está se movendo. De volta às casas."',
       author: 'Alan Hirsch',
     },
   },
@@ -180,6 +206,27 @@ const pageLinks = [
   { id: 'contato', label: 'Contato' },
 ];
 
+function CountUp({ end, started, suffix = '' }: { end: number; started: boolean; suffix?: string }) {
+  const [val, setVal] = useState(0);
+  useEffect(() => {
+    if (!started || end === 0) {
+      setVal(end);
+      return;
+    }
+    let startTime: number | null = null;
+    const duration = 1400;
+    const tick = (ts: number) => {
+      if (!startTime) startTime = ts;
+      const prog = Math.min((ts - startTime) / duration, 1);
+      const eased = 1 - Math.pow(1 - prog, 3);
+      setVal(Math.round(eased * end));
+      if (prog < 1) requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  }, [started, end]);
+  return <>{val}{suffix}</>;
+}
+
 const IgrejaNasCasas: React.FC = () => {
   const [estadoSelecionado, setEstadoSelecionado] = useState('');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('');
@@ -190,7 +237,10 @@ const IgrejaNasCasas: React.FC = () => {
     () => Object.fromEntries(encontros.map((item) => [item.id, 0])) as Record<string, number>,
   );
   const [galeriaModal, setGaleriaModal] = useState<{ id: string; index: number } | null>(null);
+  const [headerScrolled, setHeaderScrolled] = useState(false);
+  const [statsVisible, setStatsVisible] = useState(false);
   const heroGridRef = useRef<HTMLDivElement | null>(null);
+  const statsRef = useRef<HTMLDivElement>(null);
   const [heroImagesActive, setHeroImagesActive] = useState<boolean>(typeof window === 'undefined');
   const currentYear = new Date().getFullYear();
   const [liveHouses, setLiveHouses] = useState<RedeHouseChurch[]>([]);
@@ -218,18 +268,35 @@ const IgrejaNasCasas: React.FC = () => {
     return { casasAtivas, bairros, cidades };
   }, [liveHouses]);
 
-  const heroHighlights = [
-    { label: 'Casas ativas', value: dynamicStats.casasAtivas.toString() },
-    { label: 'Bairros', value: dynamicStats.bairros.toString() },
-    { label: 'Cidades', value: dynamicStats.cidades.toString() },
-  ];
+  useEffect(() => {
+    const onScroll = () => setHeaderScrolled(window.scrollY > 24);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === 'development') {
-      // Quick sanity check in dev to ensure gallery assets are loaded
-      // eslint-disable-next-line no-console
-      console.debug('[Rede Five One] heroGallery images', heroGallery.length);
-    }
+    const el = statsRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => { if (entry?.isIntersecting) { setStatsVisible(true); obs.disconnect(); } },
+      { threshold: 0.4 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const observer = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) { e.target.classList.add('is-visible'); observer.unobserve(e.target); }
+      }),
+      { threshold: 0.07 },
+    );
+    const targets = document.querySelectorAll<HTMLElement>('.casas-page .reveal');
+    targets.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
   }, []);
 
   const igrejasFiltradas = useMemo(() => {
@@ -240,18 +307,17 @@ const IgrejaNasCasas: React.FC = () => {
   }, [estadoSelecionado, cidadeSelecionada]);
 
   const cidadesDisponiveis = useMemo(
-    () =>
-      [...new Set(
-        igrejas
-          .filter((igreja) => !estadoSelecionado || igreja.estado === estadoSelecionado)
-          .map((igreja) => igreja.cidade),
-      )],
+    () => [...new Set(
+      igrejas
+        .filter((igreja) => !estadoSelecionado || igreja.estado === estadoSelecionado)
+        .map((igreja) => igreja.cidade),
+    )],
     [estadoSelecionado],
   );
 
   const igrejaSelecionada = igrejasFiltradas[0];
-
   const mapaLink = igrejaSelecionada?.linkMapsEmbed || mapaDefaultEmbed;
+
   const displayedGallery = useMemo(() => {
     if (heroGallery.length === 0) return [] as string[];
     const rotation = heroIndex % heroGallery.length;
@@ -259,10 +325,7 @@ const IgrejaNasCasas: React.FC = () => {
     const tiles: string[] = [];
     const target = 24;
     let idx = 0;
-    while (tiles.length < target) {
-      tiles.push(rotated[idx % rotated.length]);
-      idx += 1;
-    }
+    while (tiles.length < target) { tiles.push(rotated[idx % rotated.length]); idx += 1; }
     return tiles;
   }, [heroIndex]);
 
@@ -277,22 +340,14 @@ const IgrejaNasCasas: React.FC = () => {
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const element = heroGridRef.current;
-    if (!element) {
-      setHeroImagesActive(true);
-      return;
-    }
-
+    if (!element) { setHeroImagesActive(true); return; }
     const observer = new IntersectionObserver(
       (entries) => {
         const entry = entries[0];
-        if (entry?.isIntersecting) {
-          setHeroImagesActive(true);
-          observer.disconnect();
-        }
+        if (entry?.isIntersecting) { setHeroImagesActive(true); observer.disconnect(); }
       },
       { rootMargin: '0px 0px -20% 0px' },
     );
-
     observer.observe(element);
     return () => observer.disconnect();
   }, []);
@@ -311,17 +366,11 @@ const IgrejaNasCasas: React.FC = () => {
         return next;
       });
     }, 4500);
-
     return () => window.clearInterval(interval);
   }, [galeriaModal]);
 
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth > 760) {
-        setIsNavOpen(false);
-      }
-    };
-
+    const handleResize = () => { if (window.innerWidth > 760) setIsNavOpen(false); };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -331,18 +380,13 @@ const IgrejaNasCasas: React.FC = () => {
     if (typeof document === 'undefined') return;
     const shouldLock = isNavOpen && window.innerWidth <= 760;
     document.body.style.overflow = shouldLock ? 'hidden' : '';
-    return () => {
-      if (!galeriaModal) {
-        document.body.style.overflow = '';
-      }
-    };
+    return () => { if (!galeriaModal) document.body.style.overflow = ''; };
   }, [isNavOpen, galeriaModal]);
 
   useEffect(() => {
     if (typeof window === 'undefined' || typeof document === 'undefined') return;
     const sectionIds = pageLinks.map((item) => item.id);
     let ticking = false;
-
     const updateActiveSection = () => {
       ticking = false;
       const header = document.querySelector<HTMLElement>('.page-strip-wrapper');
@@ -352,20 +396,13 @@ const IgrejaNasCasas: React.FC = () => {
       sectionIds.forEach((id) => {
         const section = document.getElementById(id);
         if (!section) return;
-        if (scrollPosition >= section.offsetTop) {
-          currentId = id;
-        }
+        if (scrollPosition >= section.offsetTop) currentId = id;
       });
       setActiveSection((prev) => (prev === currentId ? prev : currentId));
     };
-
     const handleScroll = () => {
-      if (!ticking) {
-        ticking = true;
-        window.requestAnimationFrame(updateActiveSection);
-      }
+      if (!ticking) { ticking = true; window.requestAnimationFrame(updateActiveSection); }
     };
-
     updateActiveSection();
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -378,9 +415,7 @@ const IgrejaNasCasas: React.FC = () => {
     const headerOffset = !isMobile ? header?.getBoundingClientRect().height ?? 0 : 0;
     if (sectionId === 'top') {
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      if (pageLinks[0]?.id) {
-        setActiveSection(pageLinks[0].id);
-      }
+      if (pageLinks[0]?.id) setActiveSection(pageLinks[0].id);
       return;
     }
     const el = document.getElementById(sectionId);
@@ -394,38 +429,22 @@ const IgrejaNasCasas: React.FC = () => {
   const handleNavigate = (sectionId: string) => {
     if (isNavOpen) {
       setIsNavOpen(false);
-      if (typeof document !== 'undefined') {
-        document.body.style.overflow = '';
-      }
+      if (typeof document !== 'undefined') document.body.style.overflow = '';
     }
-
-    if (typeof window === 'undefined') {
-      scrollToSection(sectionId);
-      return;
-    }
-
+    if (typeof window === 'undefined') { scrollToSection(sectionId); return; }
     const isMobile = window.matchMedia('(max-width: 760px)').matches;
-    if (isMobile) {
-      window.setTimeout(() => {
-        scrollToSection(sectionId);
-      }, 220);
-    } else {
-      scrollToSection(sectionId);
-    }
+    if (isMobile) { window.setTimeout(() => scrollToSection(sectionId), 220); }
+    else { scrollToSection(sectionId); }
   };
 
   const openGaleriaModal = (itemId: string, startIndex = 0) => {
     setGaleriaModal({ id: itemId, index: startIndex });
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = 'hidden';
-    }
+    if (typeof document !== 'undefined') document.body.style.overflow = 'hidden';
   };
 
   const closeGaleriaModal = () => {
     setGaleriaModal(null);
-    if (typeof document !== 'undefined') {
-      document.body.style.overflow = '';
-    }
+    if (typeof document !== 'undefined') document.body.style.overflow = '';
   };
 
   const navigateGaleriaModal = (direction: 1 | -1) => {
@@ -442,22 +461,19 @@ const IgrejaNasCasas: React.FC = () => {
   useEffect(() => {
     const handleKey = (event: KeyboardEvent) => {
       if (!galeriaModal) return;
-      if (event.key === 'Escape') {
-        closeGaleriaModal();
-      } else if (event.key === 'ArrowLeft') {
-        navigateGaleriaModal(-1);
-      } else if (event.key === 'ArrowRight') {
-        navigateGaleriaModal(1);
-      }
+      if (event.key === 'Escape') closeGaleriaModal();
+      else if (event.key === 'ArrowLeft') navigateGaleriaModal(-1);
+      else if (event.key === 'ArrowRight') navigateGaleriaModal(1);
     };
-
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, [galeriaModal]);
 
   return (
     <div className="casas-page" id="top">
-      <div className="page-strip-wrapper">
+
+      {/* ── Header ─────────────────────────────────────────── */}
+      <div className={`page-strip-wrapper${headerScrolled ? ' is-scrolled' : ''}`}>
         <div className="page-strip">
           <button
             type="button"
@@ -467,12 +483,12 @@ const IgrejaNasCasas: React.FC = () => {
           >
             <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="page-strip__logo" />
           </button>
-          <nav id="page-strip-nav" className={`page-strip__nav ${isNavOpen ? 'is-open' : ''}`}>
+          <nav id="page-strip-nav" className={`page-strip__nav${isNavOpen ? ' is-open' : ''}`}>
             {pageLinks.map((item) => (
               <button
                 key={item.id}
                 type="button"
-                className={`page-strip__link ${activeSection === item.id ? 'page-strip__link--active' : ''}`}
+                className={`page-strip__link${activeSection === item.id ? ' page-strip__link--active' : ''}`}
                 aria-current={activeSection === item.id ? 'page' : undefined}
                 onClick={() => handleNavigate(item.id)}
               >
@@ -481,15 +497,12 @@ const IgrejaNasCasas: React.FC = () => {
             ))}
           </nav>
           <div className="page-strip__actions">
-            <Link
-              to={visitorFormPath}
-              className="page-strip__cta"
-            >
-              FAÇA PARTE DA REDE
+            <Link to={visitorFormPath} className="page-strip__cta">
+              Faça Parte da Rede
             </Link>
             <button
               type="button"
-              className={`page-strip__toggle ${isNavOpen ? 'is-open' : ''}`}
+              className={`page-strip__toggle${isNavOpen ? ' is-open' : ''}`}
               onClick={() => setIsNavOpen((prev) => !prev)}
               aria-expanded={isNavOpen}
               aria-controls="page-strip-nav"
@@ -500,25 +513,22 @@ const IgrejaNasCasas: React.FC = () => {
               <span className="sr-only">{isNavOpen ? 'Fechar menu' : 'Abrir menu'}</span>
             </button>
           </div>
-          <div
-            className={`page-strip__overlay ${isNavOpen ? 'is-visible' : ''}`}
-            onClick={() => setIsNavOpen(false)}
-          />
         </div>
       </div>
 
+      {/* ── Hero ───────────────────────────────────────────── */}
       <section className="hero">
         <div className="hero-stage" ref={heroGridRef}>
           <div key={heroIndex} className="hero-grid" aria-hidden>
             {heroImagesActive &&
               displayedGallery.map((foto, index) => (
-                <div key={`${foto}-${index}`} className={`hero-grid__item ${index === 0 ? 'active' : ''}`}>
+                <div key={`${foto}-${index}`} className="hero-grid__item">
                   <img
                     src={foto}
                     alt={heroImageAlts[foto] || 'Encontro da Rede Five One nas casas'}
-                    loading={index === 0 ? 'eager' : 'lazy'}
+                    loading={index < 6 ? 'eager' : 'lazy'}
                     decoding="async"
-                    sizes="(max-width: 760px) 70vw, 320px"
+                    sizes="(max-width: 760px) 33vw, 200px"
                   />
                 </div>
               ))}
@@ -531,8 +541,8 @@ const IgrejaNasCasas: React.FC = () => {
             Rede de <span>Igrejas nas Casas</span>
           </h1>
           <p>
-            Um movimento missionário que transforma lares em centros de comunhão, discipulado e envio. Buscamos viver a igreja
-            do novo testamento, uma igreja para a cidade, ativando dons e construindo famílias espirituais que alcançam cada bairro.
+            Um movimento missionário que transforma lares em centros de comunhão, discipulado e envio. Buscamos viver a
+            igreja do novo testamento, ativando dons e construindo famílias espirituais que alcançam cada bairro.
           </p>
           <div className="hero-actions">
             <Link className="btn primary" to={visitorFormPath}>
@@ -542,263 +552,337 @@ const IgrejaNasCasas: React.FC = () => {
               Encontrar uma casa perto de mim
             </button>
           </div>
-          <div className="hero-stats">
-            {heroHighlights.map((stat) => (
-              <div key={stat.label}>
-                <strong>{stat.value}</strong>
-                <span>{stat.label}</span>
-              </div>
-            ))}
+          <div className="hero-stats" ref={statsRef}>
+            <div>
+              <strong>
+                <CountUp end={dynamicStats.casasAtivas} started={statsVisible} />
+              </strong>
+              <span>Casas ativas</span>
+            </div>
+            <div>
+              <strong>
+                <CountUp end={dynamicStats.bairros} started={statsVisible} />
+              </strong>
+              <span>Bairros</span>
+            </div>
+            <div>
+              <strong>
+                <CountUp end={dynamicStats.cidades} started={statsVisible} />
+              </strong>
+              <span>Cidades</span>
+            </div>
           </div>
         </div>
       </section>
 
+      {/* ── Spotlight ──────────────────────────────────────── */}
       <section className="spotlight" aria-label="Principais caminhos">
         {destaqueCards.map((card) => (
-          <article key={card.id} className="spotlight-card" style={{ backgroundImage: `url(${card.imagem})` }}>
+          <article
+            key={card.id}
+            className="spotlight-card"
+            style={{ backgroundImage: `url(${card.imagem})` }}
+          >
             <div className="spotlight-card-overlay">
               <h3>{card.titulo}</h3>
               <p>{card.descricao}</p>
               <Link to={card.path} className="spotlight-link">
-                {card.acao}
+                {card.acao} →
               </Link>
             </div>
           </article>
         ))}
       </section>
 
-      <section className="manifesto" id="manifesto">
-        <div className="manifesto-text">
-          <h2>Quem somos</h2>
-          <p>
-            Somos uma rede de discípulos que coloca a mesa no centro. Abrimos nossos lares para viver o Evangelho com
-            simplicidade, participação e presença do Espírito Santo em cada encontro.
-          </p>
-          <p>
-            Vemos a cidade como campo missionário e as casas como lugares onde Cristo é anunciado, dons são ativados e
-            famílias espirituais florescem. Caminhamos próximos uns dos outros, cultivando discipulado que alcança a vida
-            real.
-          </p>
-          <p>
-            Somos várias igrejas conectadas por uma mesma visão bíblica: uma comunidade simples, perseverante e fiel, capaz
-            de florescer em qualquer cultura até a volta de Cristo. Cada lar abriga uma expressão única dessa família que
-            vive, serve e cresce em unidade.
-          </p>
-          <ul className="manifesto-text__list">
-            <li>
-              Presbitério e liderança distribuída: cada casa conta com presbíteros próximos e os cinco ministérios em
-              movimento, edificando o Corpo em unidade.
-            </li>
-            <li>
-              Descentralização do “lugar santo”: não dependemos de prédios nem de uma casta sacerdotal. Em Cristo, todos os
-              santos participam da comunhão, do ensino, da oração e da missão.
-            </li>
-            <li>
-              Comunidades diversas e locais: caminhamos como família espiritual em meio à diversidade de idades, histórias e
-              culturas, aprendendo a amar para além das afinidades.
-            </li>
-          </ul>
-          <p>
-            A presença de Deus se manifesta onde Cristo é proclamado, a Palavra é honrada e o Espírito Santo conduz. É assim
-            que permanecemos fiéis ao Evangelho, multiplicando vida em cada bairro.
-          </p>
-          <div className="manifesto-text__callout">
-            <span>Rede de Igrejas nas Casas - Five One</span>
-            <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
+      {/* ── Valores ────────────────────────────────────────── */}
+      <section className="valores">
+        <div className="valores-inner">
+          <div className="section-head reveal">
+            <span className="section-label">Nossos Valores</span>
+            <h2>Isto é quem somos</h2>
+            <p>Os princípios que guiam cada encontro, cada mesa e cada discipulado na Rede Five One.</p>
+          </div>
+          <div className="valores-grid">
+            {valores.map((v, i) => (
+              <div
+                key={v.titulo}
+                className={`valor-card reveal reveal-d${Math.min(i + 1, 6)}`}
+              >
+                <div className="valor-card__icon" aria-hidden>{v.icon}</div>
+                <h3>{v.titulo}</h3>
+                <p>{v.descricao}</p>
+              </div>
+            ))}
+          </div>
+          <div className="valores-links reveal">
+            <Link to="/rede-igrejas/como-funciona" className="valores-link">
+              Saiba mais sobre como funcionamos →
+            </Link>
+            <Link to="/rede-igrejas/o-que-e-five-one" className="valores-link">
+              Quer conhecer nossas práticas? →
+            </Link>
           </div>
         </div>
-        <div className="pilares-grid">
-          {manifestoCards.map((card) => (
-            <article key={card.titulo} className="pilar-card">
-              <header>
-                <span>{card.tag}</span>
-                <h3>{card.titulo}</h3>
-              </header>
-              <div className="pilar-card__body">
-                <p>{card.resumo}</p>
-                {card.detalhes?.map((texto) => (
-                  <p key={texto}>{texto}</p>
-                ))}
-                {card.itens && (
-                  <ul className="pilar-card__list">
-                    {card.itens.map((item) => (
-                      <li key={item}>{item}</li>
-                    ))}
-                  </ul>
-                )}
-                {card.quote && (
-                  <div className="pilar-card__quote">
-                    <p>{card.quote.text}</p>
-                    <span>{card.quote.author}</span>
-                  </div>
-                )}
-              </div>
-            </article>
-          ))}
-        </div>
       </section>
 
-      <section className="confissao" id="confissao">
-        <div className="confissao-copy">
-          <h2>Confissão de Fé Five One</h2>
-          <p>
-            Nossa rede caminha alicerçada nas Escrituras. Leia a Confissão de Fé Five One e conheça os fundamentos que
-            guardam a nossa doutrina, a nossa prática ministerial e o compromisso com uma igreja que vive a verdade em
-            amor.
-          </p>
-        </div>
-        <div className="confissao-card">
-          <div className="confissao-badge">Documento oficial</div>
-          <h3>Baixe a nossa Confissão de Fé</h3>
-          <p>
-            Um guia em PDF para líderes, casas e membros estudarem juntos os fundamentos que sustentam a Rede de Igrejas
-            nas Casas.
-          </p>
-          <a className="btn primary" href={confissaoPdf} download>
-            Baixar Confissão de Fé
-          </a>
-        </div>
-      </section>
-
-      <section className="galeria" id="galeria">
-        <div className="section-head">
-          <h2>Como são nossos encontros</h2>
-          <p>Momentos reais da Rede: mesa posta, louvor em família e histórias transformadas pelo Evangelho.</p>
-        </div>
-        <div className="galeria-grid">
-          {encontros.map((encontro) => {
-            const activeIndex = galeriaIndices[encontro.id] ?? 0;
-            const activeImage = encontro.imagens[activeIndex];
-            return (
-              <button
-                key={encontro.id}
-                type="button"
-                className="galeria-card"
-                onClick={() => openGaleriaModal(encontro.id, activeIndex)}
-              >
-                <div className="galeria-card__media">
-                  <img
-                    src={activeImage}
-                    alt={`${encontro.titulo} - encontro ${activeIndex + 1}`}
-                    loading="lazy"
-                    decoding="async"
-                    sizes="(max-width: 760px) 90vw, 300px"
-                  />
-                  <div className="galeria-card__shade" />
-                </div>
-                <div className="galeria-card__content">
-                  <h3>{encontro.titulo}</h3>
-                  <p>{encontro.descricao}</p>
-                  <div className="galeria-card__dots" aria-hidden>
-                    {encontro.imagens.map((_, idx) => (
-                      <span key={idx} className={idx === activeIndex ? 'active' : ''} />
-                    ))}
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="programacao" id="programacao">
-        <div className="section-head">
-          <h2>Agenda Five One</h2>
-          <p>Encontros que sustentam a vida da rede e formam discípulos missionais.</p>
-        </div>
-        <div className="programacao-grid">
-          {programacao.map((item) => (
-            <div key={item.titulo} className="programacao-card">
-              <div className="card-top">
-                <h3>{item.titulo}</h3>
-                <span>{item.destaque}</span>
-              </div>
-              <p>{item.descricao}</p>
-              <a className="btn outline" href={item.link} target="_blank" rel="noopener noreferrer">
-                {item.botao}
-              </a>
+      {/* ── Quem Somos ─────────────────────────────────────── */}
+      <section className="manifesto" id="manifesto">
+        <div className="manifesto-layout">
+          <div className="manifesto-text reveal">
+            <h2>Quem somos</h2>
+            <p>
+              Somos uma rede de discípulos que coloca a mesa no centro. Abrimos nossos lares para viver o Evangelho com
+              simplicidade, participação e presença do Espírito Santo em cada encontro.
+            </p>
+            <p>
+              Vemos a cidade como campo missionário e as casas como lugares onde Cristo é anunciado, dons são ativados e
+              famílias espirituais florescem. Caminhamos próximos uns dos outros, cultivando discipulado que alcança a
+              vida real.
+            </p>
+            <p>
+              Somos várias igrejas conectadas por uma mesma visão bíblica: uma comunidade simples, perseverante e fiel,
+              capaz de florescer em qualquer cultura até a volta de Cristo. Cada lar abriga uma expressão única dessa
+              família que vive, serve e cresce em unidade.
+            </p>
+            <ul className="manifesto-text__list">
+              <li>
+                Presbitério e liderança distribuída: cada casa conta com presbíteros próximos e os cinco ministérios em
+                movimento, edificando o Corpo em unidade.
+              </li>
+              <li>
+                Descentralização do "lugar santo": não dependemos de prédios nem de uma casta sacerdotal. Em Cristo,
+                todos os santos participam da comunhão, do ensino, da oração e da missão.
+              </li>
+              <li>
+                Comunidades diversas e locais: caminhamos como família espiritual em meio à diversidade de idades,
+                histórias e culturas, aprendendo a amar para além das afinidades.
+              </li>
+            </ul>
+            <div className="manifesto-text__callout">
+              <span>Rede de Igrejas nas Casas — Five One</span>
+              <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
             </div>
-          ))}
+          </div>
+          <div className="pilares-grid">
+            {manifestoCards.map((card, i) => (
+              <article key={card.titulo} className={`pilar-card reveal reveal-d${Math.min(i + 1, 3)}`}>
+                <header>
+                  <span>{card.tag}</span>
+                  <h3>{card.titulo}</h3>
+                </header>
+                <div className="pilar-card__body">
+                  <p>{card.resumo}</p>
+                  {card.detalhes?.map((texto) => <p key={texto}>{texto}</p>)}
+                  {card.itens && (
+                    <ul className="pilar-card__list">
+                      {card.itens.map((item) => <li key={item}>{item}</li>)}
+                    </ul>
+                  )}
+                  {card.quote && (
+                    <div className="pilar-card__quote">
+                      <p>{card.quote.text}</p>
+                      <span>{card.quote.author}</span>
+                    </div>
+                  )}
+                </div>
+              </article>
+            ))}
+          </div>
         </div>
       </section>
 
+      {/* ── Quote Highlight ────────────────────────────────── */}
+      <section className="quote-highlight">
+        <div className="quote-highlight-inner">
+          <span className="quote-highlight-label reveal">Rede de Igrejas nas Casas — Five One</span>
+          <blockquote className="reveal">
+            Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.
+          </blockquote>
+          <div className="quote-highlight-secondary reveal">
+            <p>"A igreja não está morrendo. Ela está se movendo. De volta às casas."</p>
+            <cite>Alan Hirsch</cite>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Confissão de Fé ────────────────────────────────── */}
+      <section className="confissao" id="confissao">
+        <div className="confissao-inner">
+          <div className="confissao-copy reveal">
+            <h2>Confissão de Fé Five One</h2>
+            <p>
+              Nossa rede caminha alicerçada nas Escrituras. Leia a Confissão de Fé Five One e conheça os fundamentos
+              que guardam a nossa doutrina, a nossa prática ministerial e o compromisso com uma igreja que vive a verdade
+              em amor.
+            </p>
+          </div>
+          <div className="confissao-card reveal reveal-d2">
+            <div className="confissao-badge">Documento oficial</div>
+            <h3>Baixe a nossa Confissão de Fé</h3>
+            <p>
+              Um guia em PDF para líderes, casas e membros estudarem juntos os fundamentos que sustentam a Rede de
+              Igrejas nas Casas.
+            </p>
+            <a className="btn primary" href={confissaoPdf} download>
+              Baixar Confissão de Fé
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Galeria ────────────────────────────────────────── */}
+      <section className="galeria" id="galeria">
+        <div className="galeria-inner">
+          <div className="section-head reveal">
+            <h2>Como são nossos encontros</h2>
+            <p>Momentos reais da Rede: mesa posta, louvor em família e histórias transformadas pelo Evangelho.</p>
+          </div>
+          <div className="galeria-grid">
+            {encontros.map((encontro, i) => {
+              const activeIndex = galeriaIndices[encontro.id] ?? 0;
+              const activeImage = encontro.imagens[activeIndex];
+              return (
+                <button
+                  key={encontro.id}
+                  type="button"
+                  className={`galeria-card reveal reveal-d${Math.min(i + 1, 4)}`}
+                  onClick={() => openGaleriaModal(encontro.id, activeIndex)}
+                >
+                  <div className="galeria-card__media">
+                    <img
+                      src={activeImage}
+                      alt={`${encontro.titulo} - encontro ${activeIndex + 1}`}
+                      loading="lazy"
+                      decoding="async"
+                      sizes="(max-width: 760px) 48vw, 300px"
+                    />
+                    <div className="galeria-card__shade" />
+                  </div>
+                  <div className="galeria-card__content">
+                    <h3>{encontro.titulo}</h3>
+                    <p>{encontro.descricao}</p>
+                    <div className="galeria-card__dots" aria-hidden>
+                      {encontro.imagens.map((_, idx) => (
+                        <span key={idx} className={idx === activeIndex ? 'active' : ''} />
+                      ))}
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Programação ────────────────────────────────────── */}
+      <section className="programacao" id="programacao">
+        <div className="programacao-inner">
+          <div className="section-head reveal">
+            <h2>Agenda Five One</h2>
+            <p>Encontros que sustentam a vida da rede e formam discípulos missionais.</p>
+          </div>
+          <div className="programacao-grid">
+            {programacao.map((item, i) => (
+              <div key={item.titulo} className={`programacao-card reveal reveal-d${i + 1}`}>
+                <div className="card-top">
+                  <h3>{item.titulo}</h3>
+                  <span>{item.destaque}</span>
+                </div>
+                <p>{item.descricao}</p>
+                <a className="btn outline" href={item.link} target="_blank" rel="noopener noreferrer">
+                  {item.botao}
+                </a>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── Visita CTA ─────────────────────────────────────── */}
       <section className="visita-cta" id="visita">
         <div className="visita-cta__inner">
-          <div className="visita-cta__icon" aria-hidden>🏠</div>
-          <h2>Você visitou uma de nossas casas?</h2>
-          <p>
+          <div className="visita-cta__icon reveal" aria-hidden>🏠</div>
+          <h2 className="reveal reveal-d1">Você visitou uma de nossas casas?</h2>
+          <p className="reveal reveal-d2">
             Registre sua visita em menos de 2 minutos. Nossa liderança vai entrar em contato para caminhar com você.
           </p>
-          <Link className="btn primary" to={visitorFormPath}>
+          <Link className="btn primary reveal reveal-d3" to={visitorFormPath}>
             Fazer meu cadastro de visitante
           </Link>
-          <p className="visita-cta__hint">
+          <p className="visita-cta__hint reveal reveal-d4">
             Gratuito · Sem compromisso · Seu líder cuida de você 🙏
           </p>
         </div>
       </section>
 
+      {/* ── Participe ──────────────────────────────────────── */}
       <section className="participe" id="participe">
-        <div className="participe-content">
-          <h2>Entre para a Rede de Igrejas nas Casas</h2>
-          <p>
-            Quer abrir a sua casa? Deseja encontrar uma família espiritual perto de você? Converse com o nosso time e
-            descubra como podemos caminhar juntos.
-          </p>
-          <div className="participe-actions">
-            <Link className="btn primary" to={visitorFormPath}>
-              Registrar minha visita
-            </Link>
-            <a
-              className="btn ghost"
-              href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Abrir minha casa
-            </a>
+        <div className="participe-inner">
+          <div className="participe-content reveal">
+            <h2>Entre para a Rede de Igrejas nas Casas</h2>
+            <p>
+              Quer abrir a sua casa? Deseja encontrar uma família espiritual perto de você? Converse com o nosso time
+              e descubra como podemos caminhar juntos.
+            </p>
+            <div className="participe-actions">
+              <Link className="btn primary" to={visitorFormPath}>
+                Registrar minha visita
+              </Link>
+              <a
+                className="btn ghost"
+                href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Abrir minha casa
+              </a>
+            </div>
           </div>
-        </div>
-        <div className="participe-highlight">
-          <strong>+ de 30 encontros</strong>
-          <span>ao longo do ano, entre mesas, celebrações e missões.</span>
+          <div className="participe-highlight reveal reveal-d2">
+            <strong>+ de 30 encontros</strong>
+            <span>ao longo do ano, entre mesas, celebrações e missões.</span>
+          </div>
         </div>
       </section>
 
+      {/* ── Mapa ───────────────────────────────────────────── */}
       <section className="mapa" id="mapa">
-        <div className="section-head">
-          <h2>Encontre uma Casa que faça parte da nossa rede</h2>
-          <p>Use os filtros para localizar uma igreja nas casa mais próxima de você e entre em contato com os presbiteros local.</p>
-        </div>
-        <div className="mapa-filtros">
-          <label>
-            <span>Estado</span>
-            <select
-              value={estadoSelecionado}
-              onChange={(event) => {
-                setEstadoSelecionado(event.target.value);
-                setCidadeSelecionada('');
-              }}
-            >
-              <option value="">Selecione</option>
-              <option value="PB">Paraíba</option>
-            </select>
-          </label>
-          <label>
-            <span>Cidade</span>
-            <select
-              value={cidadeSelecionada}
-              onChange={(event) => setCidadeSelecionada(event.target.value)}
-              disabled={cidadesDisponiveis.length === 0}
-            >
-              <option value="">Selecione</option>
-              {cidadesDisponiveis.map((cidade) => (
-                <option key={cidade} value={cidade}>
-                  {cidade}
-                </option>
-              ))}
-            </select>
-          </label>
+        <div className="mapa-inner">
+          <div className="section-head reveal">
+            <h2>Encontre uma Casa que faça parte da nossa rede</h2>
+            <p>
+              Use os filtros para localizar uma igreja nas casas mais próxima de você e entre em contato com os
+              presbíteros locais.
+            </p>
+          </div>
+          <div className="mapa-filtros reveal">
+            <label>
+              <span>Estado</span>
+              <select
+                value={estadoSelecionado}
+                onChange={(event) => {
+                  setEstadoSelecionado(event.target.value);
+                  setCidadeSelecionada('');
+                }}
+              >
+                <option value="">Selecione</option>
+                <option value="PB">Paraíba</option>
+              </select>
+            </label>
+            <label>
+              <span>Cidade</span>
+              <select
+                value={cidadeSelecionada}
+                onChange={(event) => setCidadeSelecionada(event.target.value)}
+                disabled={cidadesDisponiveis.length === 0}
+              >
+                <option value="">Selecione</option>
+                {cidadesDisponiveis.map((cidade) => (
+                  <option key={cidade} value={cidade}>{cidade}</option>
+                ))}
+              </select>
+            </label>
+          </div>
           {estadoSelecionado && cidadeSelecionada && igrejasFiltradas.length > 0 ? (
             <div className="mapa-info">
               <h3>Essas são as casas nesta cidade</h3>
@@ -809,15 +893,11 @@ const IgrejaNasCasas: React.FC = () => {
                     <li key={igreja.nome} className="mapa-info__item">
                       <div className="mapa-info__item-head">
                         <strong>{igreja.nome}</strong>
-                        <span>
-                          {igreja.bairro} · {igreja.cidade} — {igreja.estado}
-                        </span>
+                        <span>{igreja.bairro} · {igreja.cidade} — {igreja.estado}</span>
                       </div>
                       <div className="mapa-info__item-body">
                         <span>Presbítero: {igreja.lider}</span>
-                        <a href={`tel:${telefoneLimpo}`}>
-                          {igreja.telefone}
-                        </a>
+                        <a href={`tel:${telefoneLimpo}`}>{igreja.telefone}</a>
                         <a href={igreja.linkMaps} target="_blank" rel="noopener noreferrer">
                           Ver rota no Google Maps
                         </a>
@@ -829,7 +909,7 @@ const IgrejaNasCasas: React.FC = () => {
             </div>
           ) : estadoSelecionado && cidadeSelecionada ? (
             <div className="mapa-info mapa-info--empty">
-              <p>Selecione um estado e uma cidade para ver as casas disponíveis na rede.</p>
+              <p>Nenhuma casa encontrada nesta cidade. Tente outra localidade.</p>
             </div>
           ) : (
             <div className="mapa-info mapa-info--placeholder">
@@ -837,110 +917,110 @@ const IgrejaNasCasas: React.FC = () => {
               <p>Escolha um estado e depois uma cidade para listar as casas e entrar em contato com os presbíteros locais.</p>
             </div>
           )}
-        </div>
-        <div className="mapa-frame">
-          <iframe
-            title="Mapa de Igrejas nas Casas"
-            src={mapaLink}
-            width="100%"
-            height="460"
-            style={{ border: 0 }}
-            allowFullScreen
-            loading="lazy"
-          />
+          <div className="mapa-frame reveal">
+            <iframe
+              title="Mapa de Igrejas nas Casas"
+              src={mapaLink}
+              width="100%"
+              height="480"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+            />
+          </div>
         </div>
       </section>
 
+      {/* ── Contato ────────────────────────────────────────── */}
       <section className="contato" id="contato">
-        <div className="section-head">
-          <h2>Fale com a Rede</h2>
-          <p>Estamos prontos para caminhar junto com você, sua família e sua casa.</p>
-        </div>
-        <div className="contato-grid">
-          <form
-            className="contato-form"
-            onSubmit={(event) => {
-              event.preventDefault();
-              const formEl = event.currentTarget;
-              const nome = (formEl.elements.namedItem('nome') as HTMLInputElement)?.value || '';
-              const mensagem = (formEl.elements.namedItem('mensagem') as HTMLTextAreaElement)?.value || '';
-              const texto = `Olá! Vim do site da Rede Five One.\n\nNome: ${nome}\nMensagem: ${mensagem}`;
-              window.open(
-                `https://wa.me/5583987181731?text=${encodeURIComponent(texto)}`,
-                '_blank',
-                'noopener,noreferrer',
-              );
-            }}
-          >
-            <label>
-              Nome
-              <input name="nome" type="text" placeholder="Como podemos te chamar?" required />
-            </label>
-            <label>
-              E-mail
-              <input name="email" type="email" placeholder="seuemail@exemplo.com" />
-            </label>
-            <label>
-              Telefone / WhatsApp
-              <input name="telefone" type="tel" placeholder="+55 (83) 98718-1731" />
-            </label>
-            <label>
-              Mensagem
-              <textarea name="mensagem" rows={4} placeholder="Compartilhe como podemos ajudar." required />
-            </label>
-            <button type="submit" className="btn primary">
-              Enviar pelo WhatsApp
-            </button>
-          </form>
-          <div className="contato-info">
-            <div className="info-card">
-              <h3>Conexões Rede de Igreja nas Casas</h3>
-              <p>
-                Catolé · Campina Grande — PB
-                <br />
-                Rede de Igrejas nas Casas Five One
-              </p>
-            </div>
-            <div className="info-card">
-              <span>WhatsApp</span>
-              <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                +55 (83) 98718-1731
-              </a>
-            </div>
-            <div className="info-card">
-              <span>E-mail</span>
-              <a href="mailto:redeigrejasfiveone@gmail.com">redeigrejasfiveone@gmail.com</a>
-            </div>
-            <div className="info-card">
-              <span>Social</span>
-              <div className="social-links">
-                <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
-                  Instagram · @redeigrejasfiveone
+        <div className="contato-inner">
+          <div className="section-head reveal">
+            <h2>Fale com a Rede</h2>
+            <p>Estamos prontos para caminhar junto com você, sua família e sua casa.</p>
+          </div>
+          <div className="contato-grid">
+            <form
+              className="contato-form reveal"
+              onSubmit={(event) => {
+                event.preventDefault();
+                const formEl = event.currentTarget;
+                const nome = (formEl.elements.namedItem('nome') as HTMLInputElement)?.value || '';
+                const mensagem = (formEl.elements.namedItem('mensagem') as HTMLTextAreaElement)?.value || '';
+                const texto = `Olá! Vim do site da Rede Five One.\n\nNome: ${nome}\nMensagem: ${mensagem}`;
+                window.open(
+                  `https://wa.me/5583987181731?text=${encodeURIComponent(texto)}`,
+                  '_blank',
+                  'noopener,noreferrer',
+                );
+              }}
+            >
+              <label>
+                Nome
+                <input name="nome" type="text" placeholder="Como podemos te chamar?" required />
+              </label>
+              <label>
+                E-mail
+                <input name="email" type="email" placeholder="seuemail@exemplo.com" />
+              </label>
+              <label>
+                Telefone / WhatsApp
+                <input name="telefone" type="tel" placeholder="+55 (83) 98718-1731" />
+              </label>
+              <label>
+                Mensagem
+                <textarea name="mensagem" rows={4} placeholder="Compartilhe como podemos ajudar." required />
+              </label>
+              <button type="submit" className="btn primary">
+                Enviar pelo WhatsApp
+              </button>
+            </form>
+            <div className="contato-info reveal reveal-d2">
+              <div className="info-card">
+                <h3>Conexões Rede de Igreja nas Casas</h3>
+                <p>
+                  Catolé · Campina Grande — PB
+                  <br />
+                  Rede de Igrejas nas Casas Five One
+                </p>
+              </div>
+              <div className="info-card">
+                <span>WhatsApp</span>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                  +55 (83) 98718-1731
                 </a>
+              </div>
+              <div className="info-card">
+                <span>E-mail</span>
+                <a href="mailto:redeigrejasfiveone@gmail.com">redeigrejasfiveone@gmail.com</a>
+              </div>
+              <div className="info-card">
+                <span>Social</span>
+                <div className="social-links">
+                  <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
+                    Instagram · @redeigrejasfiveone
+                  </a>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </section>
+
       <FloatingContacts instagramUrl={instagramUrl} whatsappUrl={whatsappLink} />
 
+      {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="footer-modern">
         <div className="footer-modern__grid">
           <div className="footer-modern__brand">
             <h3>Rede de Igrejas nas Casas Five One</h3>
-            <p>
-              Uma família apostólica que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor
-              de Cristo.
-            </p>
+            <p>Uma família mundial de igrejas simples que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor de Cristo.</p>
           </div>
           <div className="footer-modern__column">
             <h4>Contato</h4>
             <ul>
               <li>
                 <span>WhatsApp</span>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
-                  +55 (83) 98718-1731
-                </a>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">+55 (83) 98718-1731</a>
               </li>
               <li>
                 <span>E-mail</span>
@@ -952,36 +1032,37 @@ const IgrejaNasCasas: React.FC = () => {
               </li>
             </ul>
           </div>
-        <div className="footer-modern__column">
-          <h4>Explore</h4>
-          <nav>
-            {pageLinks.map((link) => (
-              <button
-                key={`footer-${link.id}`}
-                type="button"
-                className="footer-modern__nav-button"
-                onClick={() => handleNavigate(link.id)}
-              >
-                {link.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+          <div className="footer-modern__column">
+            <h4>Explore</h4>
+            <nav>
+              {pageLinks.map((link) => (
+                <button
+                  key={`footer-${link.id}`}
+                  type="button"
+                  className="footer-modern__nav-button"
+                  onClick={() => handleNavigate(link.id)}
+                >
+                  {link.label}
+                </button>
+              ))}
+            </nav>
+          </div>
           <div className="footer-modern__column">
             <h4>Conecte-se</h4>
             <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
               Instagram · @redeigrejasfiveone
             </a>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ marginTop: 10 }}>
               WhatsApp
             </a>
           </div>
         </div>
         <div className="footer-modern__bottom">
-          <span>© {currentYear} Rede Five One. Todos os direitos reservados.</span>
+          <span>© {currentYear} Rede de Igrejas nas Casas — Five One. Todos os direitos reservados.</span>
         </div>
       </footer>
 
+      {/* ── Gallery Modal ───────────────────────────────────── */}
       {galeriaModal && (() => {
         const item = encontros.find((enc) => enc.id === galeriaModal.id);
         if (!item) return null;
@@ -992,9 +1073,7 @@ const IgrejaNasCasas: React.FC = () => {
             role="dialog"
             aria-modal="true"
             aria-label={`Fotos de ${item.titulo}`}
-            onClick={(event) => {
-              if (event.target === event.currentTarget) closeGaleriaModal();
-            }}
+            onClick={(event) => { if (event.target === event.currentTarget) closeGaleriaModal(); }}
           >
             <button type="button" className="galeria-modal__close" onClick={closeGaleriaModal} aria-label="Fechar galeria">
               &times;
@@ -1013,7 +1092,6 @@ const IgrejaNasCasas: React.FC = () => {
               className="galeria-modal__image"
               loading="eager"
               decoding="async"
-              sizes="(max-width: 760px) 90vw, 70vw"
             />
             <button
               type="button"
@@ -1028,16 +1106,14 @@ const IgrejaNasCasas: React.FC = () => {
                 <strong>{item.titulo}</strong>
                 <p>{item.descricao}</p>
               </div>
-              <span>
-                {galeriaModal.index + 1} / {item.imagens.length}
-              </span>
+              <span>{galeriaModal.index + 1} / {item.imagens.length}</span>
             </div>
             <div className="galeria-modal__thumbs" role="tablist" aria-label={`Outras fotos de ${item.titulo}`}>
               {item.imagens.map((thumb, idx) => (
                 <button
                   key={`${item.id}-${idx}-${thumb}`}
                   type="button"
-                  className={`galeria-modal__thumb ${idx === galeriaModal.index ? 'is-active' : ''}`}
+                  className={`galeria-modal__thumb${idx === galeriaModal.index ? ' is-active' : ''}`}
                   onClick={() => setGaleriaModal({ id: item.id, index: idx })}
                   aria-label={`${item.titulo} foto ${idx + 1}`}
                   aria-selected={idx === galeriaModal.index}
@@ -1058,27 +1134,38 @@ export default IgrejaNasCasas;
 
 function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string; whatsappUrl: string }) {
   const [isOpen, setIsOpen] = useState(false);
-
   return (
     <div className="floating-contacts" aria-live="polite">
-      <div className={`floating-contacts__card ${isOpen ? 'is-open' : ''}`} aria-hidden={!isOpen}>
+      <div className={`floating-contacts__card${isOpen ? ' is-open' : ''}`} aria-hidden={!isOpen}>
         <strong>WhatsApp</strong>
         <p>Olá 👋 Bem-vindo à Rede Five One. Podemos ajudar?</p>
-        <a className="btn primary" href={whatsappUrl} target="_blank" rel="noopener noreferrer" onClick={() => setIsOpen(false)}>
+        <a
+          className="btn primary"
+          href={whatsappUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={() => setIsOpen(false)}
+        >
           Abrir bate-papo
         </a>
       </div>
       <div className="floating-contacts__fab-group">
         <button
           type="button"
-          className={`floating-contacts__fab floating-contacts__fab--whatsapp ${isOpen ? 'is-active' : ''}`}
+          className={`floating-contacts__fab floating-contacts__fab--whatsapp${isOpen ? ' is-active' : ''}`}
           onClick={() => setIsOpen((prev) => !prev)}
           aria-label={isOpen ? 'Fechar card do WhatsApp' : 'Conversar no WhatsApp'}
           aria-expanded={isOpen}
         >
           <WhatsappIcon />
         </button>
-        <a className="floating-contacts__fab floating-contacts__fab--instagram" href={instagramUrl} target="_blank" rel="noopener noreferrer" aria-label="Visitar Instagram">
+        <a
+          className="floating-contacts__fab floating-contacts__fab--instagram"
+          href={instagramUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Visitar Instagram"
+        >
           <InstagramIcon />
         </a>
       </div>
@@ -1089,15 +1176,8 @@ function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string;
 function WhatsappIcon() {
   return (
     <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden>
-      <path
-        d="M12 2.25c-5.376 0-9.75 4.373-9.75 9.75 0 1.72.45 3.393 1.3 4.883L2.25 21.75l4.984-1.27A9.697 9.697 0 0 0 12 21.75c5.377 0 9.75-4.374 9.75-9.75S17.377 2.25 12 2.25Z"
-        fill="white"
-        opacity="0.2"
-      />
-      <path
-        d="M12 4.5a7.5 7.5 0 0 0-6.557 11.245l-.928 3.12 3.165-.912A7.5 7.5 0 1 0 12 4.5Zm4.286 8.739c-.186.529-.961.968-1.314 1.02-.35.053-.8.076-1.296-.08-.3-.096-.686-.223-1.18-.438-2.073-.898-3.422-2.986-3.528-3.123-.105-.137-.842-1.12-.842-2.136 0-1.017.534-1.517.724-1.724.19-.207.418-.258.557-.258.138 0 .28 0 .404.007.129.007.305-.049.477.362.186.434.635 1.503.692 1.612.057.11.095.237.016.383-.076.137-.114.237-.228.365-.114.128-.24.286-.344.384-.114.114-.232.238-.1.466.131.228.585.963 1.257 1.558.865.771 1.595 1.01 1.823 1.123.228.114.362.1.495-.057.133-.155.569-.662.722-.889.152-.228.304-.19.51-.114.207.076 1.341.632 1.57.746.228.114.379.171.434.266.057.095.057.548-.13 1.077Z"
-        fill="white"
-      />
+      <path d="M12 2.25c-5.376 0-9.75 4.373-9.75 9.75 0 1.72.45 3.393 1.3 4.883L2.25 21.75l4.984-1.27A9.697 9.697 0 0 0 12 21.75c5.377 0 9.75-4.374 9.75-9.75S17.377 2.25 12 2.25Z" fill="white" opacity="0.2" />
+      <path d="M12 4.5a7.5 7.5 0 0 0-6.557 11.245l-.928 3.12 3.165-.912A7.5 7.5 0 1 0 12 4.5Zm4.286 8.739c-.186.529-.961.968-1.314 1.02-.35.053-.8.076-1.296-.08-.3-.096-.686-.223-1.18-.438-2.073-.898-3.422-2.986-3.528-3.123-.105-.137-.842-1.12-.842-2.136 0-1.017.534-1.517.724-1.724.19-.207.418-.258.557-.258.138 0 .28 0 .404.007.129.007.305-.049.477.362.186.434.635 1.503.692 1.612.057.11.095.237.016.383-.076.137-.114.237-.228.365-.114.128-.24.286-.344.384-.114.114-.232.238-.1.466.131.228.585.963 1.257 1.558.865.771 1.595 1.01 1.823 1.123.228.114.362.1.495-.057.133-.155.569-.662.722-.889.152-.228.304-.19.51-.114.207.076 1.341.632 1.57.746.228.114.379.171.434.266.057.095.057.548-.13 1.077Z" fill="white" />
     </svg>
   );
 }
