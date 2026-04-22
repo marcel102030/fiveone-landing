@@ -311,13 +311,9 @@
   display: inline-block;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--casas-teal);
-  background: var(--casas-teal-dim);
-  border: 1px solid rgba(0, 201, 177, 0.28);
-  padding: 5px 14px;
-  border-radius: 50px;
   margin-bottom: 24px;
 }
 
@@ -620,13 +616,9 @@
   display: inline-block;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--casas-teal);
-  background: var(--casas-teal-dim);
-  border: 1px solid rgba(0, 201, 177, 0.22);
-  padding: 4px 10px;
-  border-radius: 50px;
   margin-bottom: 10px;
 }
 .pilar-card h3 {
@@ -801,13 +793,9 @@
   display: inline-block;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--casas-violet);
-  background: var(--casas-violet-dim);
-  border: 1px solid rgba(124, 58, 237, 0.28);
-  padding: 5px 12px;
-  border-radius: 50px;
   margin-bottom: 16px;
 }
 .confissao-card h3 {
@@ -918,69 +906,51 @@
 .programacao-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
+  gap: 0;
+  border-top: 1px solid var(--casas-border);
 }
 .programacao-card {
-  background: var(--casas-surface);
-  border: 1px solid var(--casas-border);
-  border-radius: var(--casas-radius);
-  padding: clamp(28px, 3vw, 44px);
+  padding: clamp(36px, 4.5vw, 56px) clamp(20px, 3vw, 44px) clamp(36px, 4.5vw, 56px) 0;
+  border-right: 1px solid var(--casas-border);
+  background: none;
+  border-radius: 0;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
-  position: relative;
-  overflow: hidden;
+  transition: background 0.3s ease;
+  position: static;
+  overflow: visible;
 }
-.programacao-card::before {
-  content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 3px;
-  border-radius: var(--casas-radius) var(--casas-radius) 0 0;
-}
-.programacao-card:first-child {
-  background: linear-gradient(145deg, rgba(0, 201, 177, 0.07) 0%, var(--casas-surface) 55%);
-}
-.programacao-card:first-child::before {
-  background: linear-gradient(90deg, var(--casas-teal), transparent);
-}
-.programacao-card:last-child {
-  background: linear-gradient(145deg, rgba(124, 58, 237, 0.09) 0%, var(--casas-surface) 55%);
-}
-.programacao-card:last-child::before {
-  background: linear-gradient(90deg, var(--casas-violet), transparent);
-}
-.programacao-card:hover {
-  transform: translateY(-4px);
-  border-color: rgba(255, 255, 255, 0.14);
-}
-.programacao-card:first-child:hover { box-shadow: 0 16px 40px rgba(0, 201, 177, 0.1); }
-.programacao-card:last-child:hover  { box-shadow: 0 16px 40px rgba(124, 58, 237, 0.12); }
+.programacao-card::before { display: none; }
+.programacao-card:last-child { border-right: none; padding-right: 0; }
+.programacao-card:hover { background: rgba(0, 201, 177, 0.02); transform: none; box-shadow: none; }
 .programacao-card .card-top { display: flex; flex-direction: column; gap: 8px; }
 .programacao-card h3 {
   font-family: var(--font-display);
-  font-size: 1.3125rem;
-  font-weight: 700;
+  font-size: clamp(1.25rem, 2vw, 1.75rem);
+  font-weight: 800;
   color: var(--casas-text);
   margin: 0;
+  line-height: 1.2;
+  transition: color 0.2s;
 }
+.programacao-card:hover h3 { color: var(--casas-teal); }
 .programacao-card .card-top span {
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--casas-teal);
-  background: var(--casas-teal-dim);
-  border: 1px solid rgba(0, 201, 177, 0.22);
-  padding: 5px 12px;
-  border-radius: 50px;
+  background: none;
+  border: none;
+  padding: 0;
+  border-radius: 0;
   align-self: flex-start;
 }
 .programacao-card:last-child .card-top span {
   color: var(--casas-violet);
-  background: var(--casas-violet-dim);
-  border-color: rgba(124, 58, 237, 0.28);
+  background: none;
+  border: none;
 }
 .programacao-card p {
   font-size: 0.9375rem;
@@ -1586,6 +1556,8 @@
   .galeria-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
   .galeria-card { aspect-ratio: 4/5; }
   .programacao-grid { grid-template-columns: 1fr; }
+  .programacao-card { border-right: none !important; padding-right: 0 !important; border-bottom: 1px solid var(--casas-border); }
+  .programacao-card:last-child { border-bottom: none; }
   .contato-grid { grid-template-columns: 1fr; }
   .footer-modern__grid { grid-template-columns: 1fr; gap: 28px; }
   .spotlight { grid-template-columns: 1fr; }

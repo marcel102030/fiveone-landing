@@ -474,8 +474,7 @@ const IgrejaNasCasas: React.FC = () => {
             Rede de <span>Igrejas nas Casas</span>
           </h1>
           <p>
-            Um movimento missionário que transforma lares em centros de comunhão, discipulado e envio. Buscamos viver a
-            igreja do novo testamento, ativando dons e construindo famílias espirituais que alcançam cada bairro.
+            Um movimento que transforma lares em centros de comunhão, discipulado e missão — bairro a bairro.
           </p>
           <div className="hero-actions">
             <Link className="btn primary" to={visitorFormPath}>
@@ -560,12 +559,6 @@ const IgrejaNasCasas: React.FC = () => {
                   <ul className="pilar-card__list">
                     {card.itens.map((item) => <li key={item}>{item}</li>)}
                   </ul>
-                )}
-                {card.quote && (
-                  <div className="pilar-card__quote">
-                    <p>{card.quote.text}</p>
-                    <span>{card.quote.author}</span>
-                  </div>
                 )}
               </div>
             </article>
