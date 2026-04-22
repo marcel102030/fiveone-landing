@@ -61,6 +61,7 @@ import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
 import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
 import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
 import Favoritos from "./features/plataforma/pages/Favoritos";
+import MeusCertificados from "./features/plataforma/pages/MeusCertificados";
 import CertificadoPublico from "./features/plataforma/pages/CertificadoPublico";
 import QuizResult from "./features/institucional/pages/QuizResult";
 import { AuthProvider } from "./shared/contexts/AuthContext";
@@ -110,6 +111,7 @@ function AppContent() {
     location.pathname.startsWith("/curso/") ||
     location.pathname === "/perfil" ||
     location.pathname === "/favoritos" ||
+    location.pathname === "/certificados" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/membro") ||
     location.pathname.startsWith("/relatorio") ||
@@ -322,6 +324,14 @@ function AppContent() {
               element={
                 <StudentGuard>
                   <Favoritos />
+                </StudentGuard>
+              }
+            />
+            <Route
+              path="/certificados"
+              element={
+                <StudentGuard>
+                  <MeusCertificados />
                 </StudentGuard>
               }
             />

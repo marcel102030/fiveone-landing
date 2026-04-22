@@ -42,6 +42,14 @@ const UserIcon = () => (
   </svg>
 )
 
+const AwardIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24"
+    fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <circle cx="12" cy="8" r="6" />
+    <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11" />
+  </svg>
+)
+
 // ── Componente principal ──────────────────────────────────────────────────────
 
 const Header = () => {
@@ -248,6 +256,14 @@ const Header = () => {
                       <HeartIcon />
                       Aulas favoritas
                     </Link>
+                    <Link
+                      to="/certificados"
+                      onClick={() => { setDropdownOpen(false); setMenuOpen(false) }}
+                      className="flex items-center gap-2.5 px-3 py-2.5 text-sm text-slate-light hover:text-slate-white hover:bg-navy-lighter rounded-xl transition-colors"
+                    >
+                      <AwardIcon />
+                      Meus certificados
+                    </Link>
                     <div className="border-t border-slate/10 mt-1 pt-1">
                       <button
                         onClick={() => void handleSignOut()}
@@ -322,6 +338,14 @@ const Header = () => {
                 >
                   <HeartIcon />
                   Minhas aulas favoritas
+                </Link>
+                <Link
+                  to="/certificados"
+                  onClick={() => setMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm text-slate-light hover:text-mint hover:bg-mint/5 rounded-xl transition-colors"
+                >
+                  <AwardIcon />
+                  Meus certificados
                 </Link>
               </div>
             </nav>

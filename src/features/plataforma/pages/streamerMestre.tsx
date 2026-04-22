@@ -604,9 +604,25 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toastState, setToastState] = useState<ToastState | null>(null);
   const [showCourseComplete, setShowCourseComplete] = useState(false);
+  const [certVerifyCode, setCertVerifyCode] = useState<string | null>(null);
 
   const syncCompletedIds = useCallback(() => {
     setCompletedIds(new Set(listCompletedLessonIds()));
+  }, []);
+
+  // ── Auto-emissão de certificado ───────────────────────────────────────────
+  // Idempotente no servidor — re-chamadas retornam o mesmo verify_code.
+  const triggerCertificate = useCallback((courseId: string, userEmail: string) => {
+    fetch('/api/auto-emit-certificate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userEmail, ministryId: courseId }),
+    })
+      .then(r => r.json())
+      .then((data: any) => {
+        if (data?.ok && data?.verifyCode) setCertVerifyCode(data.verifyCode);
+      })
+      .catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -1009,11 +1025,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           const allLessonIds = videoList.map(v => v.videoId).filter(Boolean);
           if (allLessonIds.length > 0 && allLessonIds.every(id => next.has(id))) {
             setShowCourseComplete(true);
+            const uid = getCurrentUserId() || email;
+            if (uid && ministryId) triggerCertificate(ministryId, uid);
           }
         }
       }
     },
-    [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds],
+    [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds, ministryId, triggerCertificate],
   );
   persistProgressRef.current = persistProgress;
 
@@ -1333,6 +1351,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     const allIdsCheck = videoList.map(v => v.videoId).filter(Boolean);
     if (allIdsCheck.length > 0 && allIdsCheck.every(id => nextCompletedCheck.has(id))) {
       setShowCourseComplete(true);
+      const uidCheck = uid || getCurrentUserId() || email;
+      if (uidCheck && ministryId) triggerCertificate(ministryId, uidCheck);
     }
   };
 
@@ -2092,18 +2112,39 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
             <h2 id="course-complete-title" className="text-2xl font-bold text-slate-white mb-2">
               Parabéns!
             </h2>
-            <p className="text-slate mb-2 leading-relaxed">
+            <p className="text-slate mb-1 leading-relaxed">
               Você concluiu todas as aulas deste curso!
             </p>
-            <p className="text-slate/70 text-sm mb-8 leading-relaxed">
-              Continue crescendo e aprofundando seu chamado.
+            <p className="text-slate/70 text-sm mb-6 leading-relaxed">
+              Seu certificado foi gerado automaticamente.
             </p>
-            <button
-              onClick={() => setShowCourseComplete(false)}
-              className="px-8 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
-            >
-              Continuar
-            </button>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              {certVerifyCode ? (
+                <a
+                  href={`/#/certificado/${certVerifyCode}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
+                  onClick={() => setShowCourseComplete(false)}
+                >
+                  🏆 Ver meu certificado
+                </a>
+              ) : (
+                <a
+                  href="/#/certificados"
+                  className="px-6 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
+                  onClick={() => setShowCourseComplete(false)}
+                >
+                  🏆 Meus certificados
+                </a>
+              )}
+              <button
+                onClick={() => setShowCourseComplete(false)}
+                className="px-6 py-3 bg-navy text-slate-white font-medium rounded-xl border border-slate/20 hover:border-mint/30 hover:text-mint transition-colors text-sm"
+              >
+                Continuar assistindo
+              </button>
+            </div>
           </div>
         </div>
       )}

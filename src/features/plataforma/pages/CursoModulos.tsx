@@ -2,9 +2,11 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import Header from './Header';
 import { getCurrentUserId } from '../../../shared/utils/user';
+import { useAuth } from '../../../shared/contexts/AuthContext';
 import { fetchUserProgress } from '../services/progress';
+import { fetchCompletionsForUser } from '../services/completions';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
-import { listCompletedLessonIds } from '../../../shared/utils/completedLessons';
+import { listCompletedLessonIds, mergeCompletedLessons } from '../../../shared/utils/completedLessons';
 
 type ModuleCard = {
   id: number;
@@ -26,6 +28,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   const { courseId: paramId } = useParams<{ courseId: string }>();
   const courseId = propCourseId || paramId || '';
   const navigate = useNavigate();
+  const { email: authEmail } = useAuth();
 
   const [lessons, setLessons] = useState<LessonRef[]>(() =>
     listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true })
@@ -39,11 +42,26 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     return () => unsubscribe();
   }, [courseId]);
 
+  // Sync completions: localStorage (instantâneo) + Supabase (cross-device)
   useEffect(() => {
     const refresh = () => setCompletedIds(new Set(listCompletedLessonIds()));
     window.addEventListener('storage', refresh);
     return () => window.removeEventListener('storage', refresh);
   }, []);
+
+  // Busca completions do servidor quando o usuário é identificado.
+  // Garante que o progresso cross-device apareça mesmo sem ter aberto o dashboard.
+  useEffect(() => {
+    const uid = getCurrentUserId() || authEmail;
+    if (!uid) return;
+    fetchCompletionsForUser(uid)
+      .then(list => {
+        const merged = mergeCompletedLessons(list);
+        setCompletedIds(new Set(merged.keys()));
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authEmail]);
 
   const abrirModulo = async (module: ModuleCard) => {
     const moduleLessons = lessons.filter((lesson) => lesson.moduleId === module.moduleId);
