@@ -43,22 +43,6 @@ const igrejas: IgrejaInfo[] = [
   },
 ];
 
-const heroGallery = [
-  principal1, principal2, principal3, principal4, principal5,
-  principal6, principal7, principal8, principal9,
-];
-
-const heroImageAlts: Record<string, string> = {
-  [principal1]: 'Rede Five One — estudo bíblico em Campina Grande',
-  [principal2]: 'Rede Five One — encontro com oração nas casas',
-  [principal3]: 'Rede Five One — discipulado ao redor da mesa',
-  [principal4]: 'Rede Five One — louvor e comunhão em família',
-  [principal5]: 'Rede Five One — celebração missionária nas casas',
-  [principal6]: 'Rede Five One — momento de intercessão e envio',
-  [principal7]: 'Rede Five One — liderança reunida na casa',
-  [principal8]: 'Rede Five One — comunhão intergeracional nas casas',
-  [principal9]: 'Rede Five One — discipulado e alegria na rede',
-};
 
 const valores = [
   {
