@@ -522,14 +522,6 @@ const IgrejaNasCasas: React.FC = () => {
               </div>
             ))}
           </div>
-          <div className="valores-links reveal">
-            <Link to="/rede-igrejas/como-funciona" className="valores-link">
-              Saiba mais sobre como funcionamos →
-            </Link>
-            <Link to="/rede-igrejas/o-que-e-five-one" className="valores-link">
-              Quer conhecer nossas práticas? →
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -571,31 +563,34 @@ const IgrejaNasCasas: React.FC = () => {
               <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
             </div>
           </div>
-          <div className="pilares-grid">
-            {manifestoCards.map((card, i) => (
-              <article key={card.titulo} className={`pilar-card reveal reveal-d${Math.min(i + 1, 3)}`}>
-                <header>
-                  <span>{card.tag}</span>
-                  <h3>{card.titulo}</h3>
-                </header>
-                <div className="pilar-card__body">
-                  <p>{card.resumo}</p>
-                  {card.detalhes?.map((texto) => <p key={texto}>{texto}</p>)}
-                  {card.itens && (
-                    <ul className="pilar-card__list">
-                      {card.itens.map((item) => <li key={item}>{item}</li>)}
-                    </ul>
-                  )}
-                  {card.quote && (
-                    <div className="pilar-card__quote">
-                      <p>{card.quote.text}</p>
-                      <span>{card.quote.author}</span>
-                    </div>
-                  )}
-                </div>
-              </article>
-            ))}
+          <div className="manifesto-photo reveal reveal-d2">
+            <img src={principal3} alt="Rede de Igrejas nas Casas Five One — comunidade" loading="lazy" decoding="async" />
           </div>
+        </div>
+        <div className="pilares-row">
+          {manifestoCards.map((card, i) => (
+            <article key={card.titulo} className={`pilar-card reveal reveal-d${Math.min(i + 1, 3)}`}>
+              <header>
+                <span>{card.tag}</span>
+                <h3>{card.titulo}</h3>
+              </header>
+              <div className="pilar-card__body">
+                <p>{card.resumo}</p>
+                {card.detalhes?.map((texto) => <p key={texto}>{texto}</p>)}
+                {card.itens && (
+                  <ul className="pilar-card__list">
+                    {card.itens.map((item) => <li key={item}>{item}</li>)}
+                  </ul>
+                )}
+                {card.quote && (
+                  <div className="pilar-card__quote">
+                    <p>{card.quote.text}</p>
+                    <span>{card.quote.author}</span>
+                  </div>
+                )}
+              </div>
+            </article>
+          ))}
         </div>
       </section>
 
@@ -903,7 +898,7 @@ const IgrejaNasCasas: React.FC = () => {
       <footer className="footer-modern">
         <div className="footer-modern__grid">
           <div className="footer-modern__brand">
-            <h3>Rede de Igrejas nas Casas Five One</h3>
+            <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="footer-modern__logo" />
             <p>Uma família mundial de igrejas simples que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor de Cristo.</p>
           </div>
           <div className="footer-modern__column">

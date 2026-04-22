@@ -106,7 +106,7 @@
 
 /* ── Section utilities ─────────────────────────────────────── */
 .section-head {
-  text-align: center;
+  text-align: left;
   margin-bottom: clamp(40px, 5vw, 64px);
 }
 .section-head h2 {
@@ -122,7 +122,6 @@
   font-size: clamp(0.9375rem, 1.5vw, 1.0625rem);
   color: var(--casas-muted);
   max-width: 580px;
-  margin-inline: auto;
   line-height: 1.7;
 }
 .section-label {
@@ -516,9 +515,10 @@
   margin-inline: auto;
   padding-inline: var(--section-pad-x);
   display: grid;
-  grid-template-columns: 1.35fr 1fr;
+  grid-template-columns: 1fr 1fr;
   gap: clamp(40px, 5vw, 72px);
   align-items: start;
+  margin-bottom: clamp(60px, 8vw, 100px);
 }
 .manifesto-text h2 {
   font-family: var(--font-display);
@@ -587,12 +587,34 @@
   flex-direction: column;
   gap: 20px;
 }
-.pilar-card {
-  background: var(--casas-surface);
-  border: 1px solid var(--casas-border);
-  border-radius: var(--casas-radius);
-  padding: clamp(22px, 2vw, 30px);
+.manifesto-photo {
+  border-radius: 20px;
+  overflow: hidden;
+  aspect-ratio: 4/5;
+  position: sticky;
+  top: calc(var(--header-h) + 20px);
 }
+.manifesto-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.pilares-row {
+  max-width: var(--content-max-w);
+  margin-inline: auto;
+  padding-inline: var(--section-pad-x);
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid var(--casas-border);
+}
+.pilar-card {
+  padding: clamp(32px, 4vw, 52px) clamp(20px, 3vw, 40px) clamp(32px, 4vw, 52px) 0;
+  border-right: 1px solid var(--casas-border);
+  transition: background 0.3s ease;
+}
+.pilar-card:nth-child(3n) { border-right: none; padding-right: 0; }
+.pilar-card:hover { background: rgba(0, 201, 177, 0.03); }
 .pilar-card header { margin-bottom: 14px; }
 .pilar-card header span {
   display: inline-block;
@@ -812,14 +834,14 @@
 }
 .galeria-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
 }
 .galeria-card {
   position: relative;
   border-radius: var(--casas-radius);
   overflow: hidden;
-  aspect-ratio: 16/10;
+  aspect-ratio: 3/4;
   cursor: pointer;
   background: none;
   border: none;
@@ -1262,12 +1284,13 @@
   gap: clamp(32px, 4vw, 60px);
   margin-bottom: 48px;
 }
-.footer-modern__brand h3 {
-  font-family: var(--font-display);
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--casas-text);
-  margin: 0 0 10px;
+.footer-modern__logo {
+  height: 40px;
+  width: auto;
+  filter: brightness(0) invert(1);
+  display: block;
+  margin-bottom: 16px;
+  opacity: 0.85;
 }
 .footer-modern__brand p {
   font-size: 0.875rem;
@@ -1503,8 +1526,14 @@
 
 /* ── Responsive ────────────────────────────────────────────── */
 @media (max-width: 1024px) {
-  .manifesto-layout { grid-template-columns: 1fr; gap: 40px; }
+  .manifesto-layout { grid-template-columns: 1fr; gap: 40px; margin-bottom: clamp(40px, 6vw, 72px); }
+  .manifesto-photo { aspect-ratio: 16/9; position: static; }
   .pilares-grid { display: grid; grid-template-columns: repeat(2, 1fr); }
+  .pilares-row { grid-template-columns: repeat(2, 1fr); }
+  .pilar-card:nth-child(3n) { border-right: 1px solid var(--casas-border); padding-right: clamp(20px, 3vw, 40px); }
+  .pilar-card:nth-child(even) { border-right: none; padding-right: 0; }
+  .galeria-grid { grid-template-columns: repeat(2, 1fr); }
+  .galeria-card { aspect-ratio: 16/10; }
   .confissao-inner { grid-template-columns: 1fr; }
   .participe-inner { grid-template-columns: 1fr; }
   .footer-modern__grid { grid-template-columns: 1fr 1fr; }
@@ -1556,6 +1585,7 @@
 
   /* Layout */
   .galeria-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .galeria-card { aspect-ratio: 4/5; }
   .programacao-grid { grid-template-columns: 1fr; }
   .contato-grid { grid-template-columns: 1fr; }
   .footer-modern__grid { grid-template-columns: 1fr; gap: 28px; }
@@ -1563,6 +1593,9 @@
   .valores-grid { grid-template-columns: 1fr; }
   .valor-card { border-right: none !important; padding-right: 0 !important; }
   .pilares-grid { grid-template-columns: 1fr; }
+  .pilares-row { grid-template-columns: 1fr; }
+  .pilar-card { border-right: none !important; padding-right: 0 !important; }
+  .manifesto-photo { aspect-ratio: 4/3; position: static; }
 
   /* Modal */
   .galeria-modal__nav--prev { left: 8px; }
