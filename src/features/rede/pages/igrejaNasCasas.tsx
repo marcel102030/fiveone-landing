@@ -779,23 +779,6 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
-      {/* ── Visita CTA ─────────────────────────────────────── */}
-      <section className="visita-cta" id="visita">
-        <div className="visita-cta__inner">
-          <div className="visita-cta__icon reveal" aria-hidden>🏠</div>
-          <h2 className="reveal reveal-d1">Você visitou uma de nossas casas?</h2>
-          <p className="reveal reveal-d2">
-            Registre sua visita em menos de 2 minutos. Nossa liderança vai entrar em contato para caminhar com você.
-          </p>
-          <Link className="btn primary reveal reveal-d3" to={visitorFormPath}>
-            Fazer meu cadastro de visitante
-          </Link>
-          <p className="visita-cta__hint reveal reveal-d4">
-            Gratuito · Sem compromisso · Seu líder cuida de você 🙏
-          </p>
-        </div>
-      </section>
-
       {/* ── Participe ──────────────────────────────────────── */}
       <section className="participe" id="participe">
         <div className="participe-inner">

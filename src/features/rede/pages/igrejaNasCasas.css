@@ -277,6 +277,7 @@
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  padding-bottom: clamp(148px, 18vw, 200px);
 }
 
 .hero-stage {
@@ -381,6 +382,7 @@
   gap: 12px;
   flex-wrap: wrap;
   justify-content: center;
+  margin-bottom: clamp(48px, 7vw, 72px);
 }
 
 .hero-stats-bar {
@@ -498,21 +500,23 @@
   background-size: cover;
   background-position: center;
   background-color: var(--casas-surface);
-  transition: transform 0.4s ease;
+  filter: brightness(1.12) saturate(1.15);
+  transition: transform 0.4s ease, filter 0.4s ease;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   cursor: default;
 }
+.valor-card:hover { filter: brightness(1.2) saturate(1.25); }
 .valor-card::after {
   content: '';
   position: absolute;
   inset: 0;
   background: linear-gradient(
     to top,
-    rgba(5, 10, 25, 0.95) 0%,
-    rgba(5, 10, 25, 0.6) 50%,
-    rgba(5, 10, 25, 0.15) 100%
+    rgba(5, 10, 25, 0.92) 0%,
+    rgba(5, 10, 25, 0.48) 45%,
+    rgba(5, 10, 25, 0.08) 100%
   );
   z-index: 0;
   transition: opacity 0.35s ease;
@@ -878,14 +882,14 @@
 }
 .galeria-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
 }
 .galeria-card {
   position: relative;
   border-radius: var(--casas-radius);
   overflow: hidden;
-  aspect-ratio: 3/4;
+  aspect-ratio: 16/10;
   cursor: pointer;
   background: none;
   border: none;
@@ -970,12 +974,35 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
-  transition: transform 0.25s ease, border-color 0.25s ease;
+  transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+.programacao-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: var(--casas-radius) var(--casas-radius) 0 0;
+}
+.programacao-card:first-child {
+  background: linear-gradient(145deg, rgba(0, 201, 177, 0.07) 0%, var(--casas-surface) 55%);
+}
+.programacao-card:first-child::before {
+  background: linear-gradient(90deg, var(--casas-teal), transparent);
+}
+.programacao-card:last-child {
+  background: linear-gradient(145deg, rgba(124, 58, 237, 0.09) 0%, var(--casas-surface) 55%);
+}
+.programacao-card:last-child::before {
+  background: linear-gradient(90deg, var(--casas-violet), transparent);
 }
 .programacao-card:hover {
   transform: translateY(-4px);
   border-color: rgba(255, 255, 255, 0.14);
 }
+.programacao-card:first-child:hover { box-shadow: 0 16px 40px rgba(0, 201, 177, 0.1); }
+.programacao-card:last-child:hover  { box-shadow: 0 16px 40px rgba(124, 58, 237, 0.12); }
 .programacao-card .card-top { display: flex; flex-direction: column; gap: 8px; }
 .programacao-card h3 {
   font-family: var(--font-display);
@@ -995,6 +1022,11 @@
   padding: 5px 12px;
   border-radius: 50px;
   align-self: flex-start;
+}
+.programacao-card:last-child .card-top span {
+  color: var(--casas-violet);
+  background: var(--casas-violet-dim);
+  border-color: rgba(124, 58, 237, 0.28);
 }
 .programacao-card p {
   font-size: 0.9375rem;
@@ -1187,6 +1219,15 @@
 .mapa-info__item-body a { font-size: 0.875rem; color: var(--casas-muted); }
 .mapa-info__item-body a { color: var(--casas-teal); text-decoration: none; }
 .mapa-info__item-body a:hover { text-decoration: underline; }
+.mapa-info--placeholder {
+  background: transparent;
+  border: 1px dashed rgba(255, 255, 255, 0.1);
+  padding: 14px 20px;
+  margin-bottom: 16px;
+}
+.mapa-info--placeholder h3 { font-size: 0.875rem; margin-bottom: 4px; }
+.mapa-info--placeholder p  { font-size: 0.8125rem; }
+
 .mapa-frame {
   border-radius: var(--casas-radius);
   overflow: hidden;
@@ -1537,7 +1578,6 @@
   .confissao-inner { grid-template-columns: 1fr; }
   .participe-inner { grid-template-columns: 1fr; }
   .footer-modern__grid { grid-template-columns: 1fr 1fr; }
-  .galeria-grid { grid-template-columns: repeat(2, 1fr); }
   .valores-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
