@@ -482,7 +482,7 @@ const IgrejaNasCasas: React.FC = () => {
               Quero Visitar Uma Casa
             </Link>
             <button className="btn ghost" type="button" onClick={() => scrollToSection('mapa')}>
-              Encontrar uma casa perto de mim
+              Ver mapa da rede →
             </button>
           </div>
         </div>
@@ -530,37 +530,17 @@ const IgrejaNasCasas: React.FC = () => {
           <div className="manifesto-text reveal">
             <h2>Quem somos</h2>
             <p>
-              Somos uma rede de discípulos que coloca a mesa no centro. Abrimos nossos lares para viver o Evangelho com
-              simplicidade, participação e presença do Espírito Santo em cada encontro.
+              Somos uma rede de discípulos que abre lares para viver o Evangelho com simplicidade, participação e
+              presença do Espírito Santo em cada encontro.
             </p>
             <p>
-              Vemos a cidade como campo missionário e as casas como lugares onde Cristo é anunciado, dons são ativados e
-              famílias espirituais florescem. Caminhamos próximos uns dos outros, cultivando discipulado que alcança a
-              vida real.
+              Vemos cada casa como campo de missão — lugar onde Cristo é anunciado, dons são ativados e famílias
+              espirituais florescem bairro a bairro.
             </p>
             <p>
-              Somos várias igrejas conectadas por uma mesma visão bíblica: uma comunidade simples, perseverante e fiel,
-              capaz de florescer em qualquer cultura até a volta de Cristo. Cada lar abriga uma expressão única dessa
-              família que vive, serve e cresce em unidade.
+              Caminhamos próximos uns dos outros, conectados por uma mesma visão bíblica: uma comunidade simples,
+              perseverante e fiel, capaz de florescer em qualquer cultura até a volta de Cristo.
             </p>
-            <ul className="manifesto-text__list">
-              <li>
-                Presbitério e liderança distribuída: cada casa conta com presbíteros próximos e os cinco ministérios em
-                movimento, edificando o Corpo em unidade.
-              </li>
-              <li>
-                Descentralização do "lugar santo": não dependemos de prédios nem de uma casta sacerdotal. Em Cristo,
-                todos os santos participam da comunhão, do ensino, da oração e da missão.
-              </li>
-              <li>
-                Comunidades diversas e locais: caminhamos como família espiritual em meio à diversidade de idades,
-                histórias e culturas, aprendendo a amar para além das afinidades.
-              </li>
-            </ul>
-            <div className="manifesto-text__callout">
-              <span>Rede de Igrejas nas Casas — Five One</span>
-              <p>Menos púlpitos e mais mesas, para que cada bairro experimente a igreja viva dentro de casa.</p>
-            </div>
           </div>
           <div className="manifesto-photo reveal reveal-d2">
             <img src={principal3} alt="Rede de Igrejas nas Casas Five One — comunidade" loading="lazy" decoding="async" />
