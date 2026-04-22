@@ -233,7 +233,6 @@ function CountUp({ end, started, suffix = '' }: { end: number; started: boolean;
 const IgrejaNasCasas: React.FC = () => {
   const [estadoSelecionado, setEstadoSelecionado] = useState('');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('');
-  const [heroIndex, setHeroIndex] = useState(0);
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(pageLinks[0]?.id ?? 'manifesto');
   const [galeriaIndices, setGaleriaIndices] = useState<Record<string, number>>(
@@ -242,9 +241,7 @@ const IgrejaNasCasas: React.FC = () => {
   const [galeriaModal, setGaleriaModal] = useState<{ id: string; index: number } | null>(null);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
-  const heroGridRef = useRef<HTMLDivElement | null>(null);
   const statsRef = useRef<HTMLDivElement>(null);
-  const [heroImagesActive, setHeroImagesActive] = useState<boolean>(typeof window === 'undefined');
   const currentYear = new Date().getFullYear();
   const [liveHouses, setLiveHouses] = useState<RedeHouseChurch[]>([]);
 
@@ -320,40 +317,6 @@ const IgrejaNasCasas: React.FC = () => {
 
   const igrejaSelecionada = igrejasFiltradas[0];
   const mapaLink = igrejaSelecionada?.linkMapsEmbed || mapaDefaultEmbed;
-
-  const displayedGallery = useMemo(() => {
-    if (heroGallery.length === 0) return [] as string[];
-    const rotation = heroIndex % heroGallery.length;
-    const rotated = [...heroGallery.slice(rotation), ...heroGallery.slice(0, rotation)];
-    const tiles: string[] = [];
-    const target = 24;
-    let idx = 0;
-    while (tiles.length < target) { tiles.push(rotated[idx % rotated.length]); idx += 1; }
-    return tiles;
-  }, [heroIndex]);
-
-  useEffect(() => {
-    if (heroGallery.length <= 1) return;
-    const id = window.setInterval(() => {
-      setHeroIndex((prev) => (prev + 1) % heroGallery.length);
-    }, 6000);
-    return () => window.clearInterval(id);
-  }, []);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const element = heroGridRef.current;
-    if (!element) { setHeroImagesActive(true); return; }
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const entry = entries[0];
-        if (entry?.isIntersecting) { setHeroImagesActive(true); observer.disconnect(); }
-      },
-      { rootMargin: '0px 0px -20% 0px' },
-    );
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     if (galeriaModal) return;
@@ -520,24 +483,8 @@ const IgrejaNasCasas: React.FC = () => {
       </div>
 
       {/* ── Hero ───────────────────────────────────────────── */}
-      <section className="hero">
-        <div className="hero-stage" ref={heroGridRef}>
-          <div key={heroIndex} className="hero-grid" aria-hidden>
-            {heroImagesActive &&
-              displayedGallery.map((foto, index) => (
-                <div key={`${foto}-${index}`} className="hero-grid__item">
-                  <img
-                    src={foto}
-                    alt={heroImageAlts[foto] || 'Encontro da Rede Five One nas casas'}
-                    loading={index < 6 ? 'eager' : 'lazy'}
-                    decoding="async"
-                    sizes="(max-width: 760px) 33vw, 200px"
-                  />
-                </div>
-              ))}
-          </div>
-          <div className="hero-stage__overlay" />
-        </div>
+      <section className="hero" style={{ backgroundImage: `url(${principal5})` }}>
+        <div className="hero-stage__overlay" />
         <div className="hero-content">
           <span className="hero-badge">Rede Five One</span>
           <h1>
@@ -585,13 +532,9 @@ const IgrejaNasCasas: React.FC = () => {
               <div
                 key={v.titulo}
                 className={`valor-card reveal reveal-d${Math.min(i + 1, 6)}`}
-                style={{ backgroundImage: `url(${v.image})` }}
               >
-                <div className="valor-card__inner">
-                  <div className="valor-card__icon" aria-hidden>{v.icon}</div>
-                  <h3>{v.titulo}</h3>
-                  <p>{v.descricao}</p>
-                </div>
+                <h3>{v.titulo}</h3>
+                <p>{v.descricao}</p>
               </div>
             ))}
           </div>
