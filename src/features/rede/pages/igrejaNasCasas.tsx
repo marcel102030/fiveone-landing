@@ -554,7 +554,6 @@ const IgrejaNasCasas: React.FC = () => {
               </header>
               <div className="pilar-card__body">
                 <p>{card.resumo}</p>
-                {card.detalhes?.map((texto) => <p key={texto}>{texto}</p>)}
                 {card.itens && (
                   <ul className="pilar-card__list">
                     {card.itens.map((item) => <li key={item}>{item}</li>)}
@@ -704,10 +703,10 @@ const IgrejaNasCasas: React.FC = () => {
       <section className="mapa" id="mapa">
         <div className="mapa-inner">
           <div className="section-head reveal">
-            <h2>Encontre uma Casa que faça parte da nossa rede</h2>
+            <h2>Encontre uma Casa</h2>
             <p>
-              Use os filtros para localizar uma igreja nas casas mais próxima de você e entre em contato com os
-              presbíteros locais.
+              Use os filtros para localizar uma igreja nas casas próxima de você e entrar em contato com os presbíteros
+              locais.
             </p>
           </div>
           <div className="mapa-filtros reveal">
