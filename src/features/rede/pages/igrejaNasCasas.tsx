@@ -136,7 +136,7 @@ const manifestoCards = [
 const programacao = [
   {
     titulo: 'Estudo Bíblico nas Casas',
-    destaque: 'Terça-feira · 19h',
+    destaque: 'Sexta-feira · 19h',
     descricao: 'Uma noite para mergulhar na Palavra, partilhar revelações e orar uns pelos outros.',
     botao: 'Quero participar',
     link: 'https://wa.me/5583987181731?text=Quero%20participar%20do%20estudo%20bíblico%20nas%20casas',
@@ -177,7 +177,7 @@ const encontros = [
   },
 ];
 
-const STATIC_STATS = { casasAtivas: 12, bairros: 8, cidades: 3 };
+const STATIC_STATS = { casasAtivas: 1, bairros: 1, cidades: 1 };
 
 const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
 const instagramUrl = 'https://www.instagram.com/redeigrejasfiveone';
