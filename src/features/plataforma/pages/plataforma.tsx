@@ -171,6 +171,7 @@ const PaginaInicial = () => {
 
   // ── Estado de conteúdo ────────────────────────────────────────────────────
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
+  const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false)
   const [allLessons, setAllLessons] = useState<LessonRef[]>([])
   const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([])
   const [progressLoaded, setProgressLoaded] = useState(false)
@@ -202,8 +203,8 @@ const PaginaInicial = () => {
   useEffect(() => {
     if (!effectiveUid) return
     getEnrollments(effectiveUid)
-      .then(ids => setEnrolledCourseIds(ids))
-      .catch(() => setEnrolledCourseIds([]))
+      .then(ids => { setEnrolledCourseIds(ids); setEnrollmentsLoaded(true) })
+      .catch(() => { setEnrolledCourseIds([]); setEnrollmentsLoaded(true) })
   }, [effectiveUid])
 
   // ── Agrega aulas de todos os cursos matriculados ───────────────────────
@@ -1008,8 +1009,13 @@ const PaginaInicial = () => {
               </p>
             </div>
 
-            {enrolledCourses.length === 0 ? (
+            {!enrollmentsLoaded ? (
               <p className="text-center text-slate text-sm py-8">Carregando seus cursos…</p>
+            ) : enrolledCourses.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-slate text-sm">Você ainda não está matriculado em nenhum curso.</p>
+                <p className="text-slate/60 text-xs mt-1">Entre em contato com o administrador para solicitar acesso.</p>
+              </div>
             ) : (
               <div className={`grid gap-5 lg:gap-6 items-stretch ${
                 enrolledCourses.length === 1
