@@ -177,6 +177,8 @@ const encontros = [
   },
 ];
 
+const STATIC_STATS = { casasAtivas: 12, bairros: 8, cidades: 3 };
+
 const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
 const instagramUrl = 'https://www.instagram.com/redeigrejasfiveone';
 const whatsappLink = 'https://wa.me/5583987181731?text=Olá%2C%20vim%20do%20site%20da%20Rede%20de%20Igrejas%20nas%20Casas%20Five%20One';
@@ -240,16 +242,13 @@ const IgrejaNasCasas: React.FC = () => {
   }, []);
 
   const dynamicStats = useMemo(() => {
-    const source = liveHouses.length > 0 ? liveHouses : igrejas.map((ig) => ({
-      id: ig.nome, name: ig.nome, city: ig.cidade, neighborhood: ig.bairro,
-      address: ig.endereco, meeting_day: null, meeting_time: null,
-      capacity: null, status: 'ativa', presbitero_id: null, presbitero_id_2: null,
-      notes: null, whatsapp_group_url: null,
-    } as RedeHouseChurch));
-    const casasAtivas = source.length;
-    const bairros = new Set(source.map((h) => h.neighborhood || h.city || '')).size;
-    const cidades = new Set(source.map((h) => h.city || '')).size;
-    return { casasAtivas, bairros, cidades };
+    if (liveHouses.length > 3) {
+      const casasAtivas = liveHouses.length;
+      const bairros = new Set(liveHouses.map((h) => h.neighborhood || h.city || '')).size;
+      const cidades = new Set(liveHouses.map((h) => h.city || '')).size;
+      return { casasAtivas, bairros, cidades };
+    }
+    return STATIC_STATS;
   }, [liveHouses]);
 
   useEffect(() => {
@@ -702,7 +701,8 @@ const IgrejaNasCasas: React.FC = () => {
       </section>
 
       {/* ── Participe ──────────────────────────────────────── */}
-      <section className="participe" id="participe">
+      <section className="participe" id="participe" style={{ backgroundImage: `url(${principal9})` }}>
+        <div className="participe-overlay" />
         <div className="participe-inner">
           <div className="participe-content reveal">
             <h2>Entre para a Rede de Igrejas nas Casas</h2>
@@ -723,10 +723,6 @@ const IgrejaNasCasas: React.FC = () => {
                 Abrir minha casa
               </a>
             </div>
-          </div>
-          <div className="participe-highlight reveal reveal-d2">
-            <strong>+ de 30 encontros</strong>
-            <span>ao longo do ano, entre mesas, celebrações e missões.</span>
           </div>
         </div>
       </section>
