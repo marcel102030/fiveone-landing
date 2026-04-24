@@ -10,9 +10,9 @@
   --casas-bg: #0a0f1e;
   --casas-surface: #0d1a2d;
   --casas-surface-alt: #112240;
-  --casas-teal: #00c9b1;
-  --casas-teal-dim: rgba(0, 201, 177, 0.15);
-  --casas-teal-glow: rgba(0, 201, 177, 0.3);
+  --casas-teal: #00a896;
+  --casas-teal-dim: rgba(0, 168, 150, 0.15);
+  --casas-teal-glow: rgba(0, 168, 150, 0.3);
   --casas-violet: #7c3aed;
   --casas-violet-dim: rgba(124, 58, 237, 0.15);
   --casas-violet-glow: rgba(124, 58, 237, 0.35);
@@ -407,6 +407,39 @@
   color: rgba(255, 255, 255, 0.55);
 }
 
+/* Facts bar — shown when network is still small (casasAtivas ≤ 1) */
+.hero-facts-bar {
+  position: absolute;
+  bottom: clamp(32px, 4vw, 52px);
+  left: var(--section-pad-x);
+  z-index: 1;
+  display: flex;
+  justify-content: flex-start;
+  gap: clamp(40px, 6vw, 80px);
+}
+.hero-facts-bar > div {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 5px;
+}
+.hero-facts-bar strong {
+  font-family: var(--font-display);
+  font-size: clamp(0.9375rem, 1.6vw, 1.25rem);
+  font-weight: 700;
+  color: var(--casas-text);
+  line-height: 1.1;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+}
+.hero-facts-bar span {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.55);
+}
+
 /* ── Spotlight ─────────────────────────────────────────────── */
 .spotlight {
   display: grid;
@@ -493,7 +526,7 @@
   border-right: none;
   padding-right: 0;
 }
-.valor-card:hover { background: rgba(0, 201, 177, 0.03); }
+.valor-card:hover { background: rgba(0, 168, 150, 0.03); }
 .valor-card h3 {
   font-family: var(--font-display);
   font-size: clamp(1.25rem, 2vw, 1.75rem);
@@ -588,7 +621,7 @@
   margin-top: 28px;
   padding: 20px 24px;
   border-left: 3px solid var(--casas-teal);
-  background: rgba(0, 201, 177, 0.06);
+  background: rgba(0, 168, 150, 0.06);
   border-radius: 0 12px 12px 0;
 }
 .manifesto-text__callout span {
@@ -640,7 +673,7 @@
   transition: background 0.3s ease;
 }
 .pilar-card:nth-child(3n) { border-right: none; padding-right: 0; }
-.pilar-card:hover { background: rgba(0, 201, 177, 0.03); }
+.pilar-card:hover { background: rgba(0, 168, 150, 0.03); }
 .pilar-card header { margin-bottom: 14px; }
 .pilar-card header span {
   display: inline-block;
@@ -947,7 +980,7 @@
 }
 .programacao-card::before { display: none; }
 .programacao-card:last-child { border-right: none; padding-right: 0; }
-.programacao-card:hover { background: rgba(0, 201, 177, 0.02); transform: none; box-shadow: none; }
+.programacao-card:hover { background: rgba(0, 168, 150, 0.02); transform: none; box-shadow: none; }
 .programacao-card .card-top { display: flex; flex-direction: column; gap: 8px; }
 .programacao-card h3 {
   font-family: var(--font-display);
@@ -988,7 +1021,7 @@
 .visita-cta {
   padding-block: var(--section-pad-y);
   background:
-    linear-gradient(135deg, rgba(0, 201, 177, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%),
+    linear-gradient(135deg, rgba(0, 168, 150, 0.1) 0%, rgba(124, 58, 237, 0.1) 100%),
     var(--casas-surface);
   border-top: 1px solid var(--casas-border);
   border-bottom: 1px solid var(--casas-border);
@@ -1582,6 +1615,7 @@
     right: 20px;
   }
   .hero-stats-bar { gap: 28px; }
+  .hero-facts-bar { gap: 24px; }
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn { text-align: center; justify-content: center; }
 

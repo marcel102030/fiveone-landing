@@ -508,20 +508,37 @@ const IgrejaNasCasas: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="hero-stats-bar" ref={statsRef}>
-          <div>
-            <strong><CountUp end={dynamicStats.casasAtivas} started={statsVisible} /></strong>
-            <span>Casas ativas</span>
+        {dynamicStats.casasAtivas > 1 ? (
+          <div className="hero-stats-bar" ref={statsRef}>
+            <div>
+              <strong><CountUp end={dynamicStats.casasAtivas} started={statsVisible} /></strong>
+              <span>Casas ativas</span>
+            </div>
+            <div>
+              <strong><CountUp end={dynamicStats.bairros} started={statsVisible} /></strong>
+              <span>Bairros</span>
+            </div>
+            <div>
+              <strong><CountUp end={dynamicStats.cidades} started={statsVisible} /></strong>
+              <span>Cidades</span>
+            </div>
           </div>
-          <div>
-            <strong><CountUp end={dynamicStats.bairros} started={statsVisible} /></strong>
-            <span>Bairros</span>
+        ) : (
+          <div className="hero-facts-bar" ref={statsRef}>
+            <div>
+              <strong>2025</strong>
+              <span>Fundada</span>
+            </div>
+            <div>
+              <strong>Campina Grande — PB</strong>
+              <span>Cidade ativa</span>
+            </div>
+            <div>
+              <strong>Igreja nas Casas</strong>
+              <span>Modelo</span>
+            </div>
           </div>
-          <div>
-            <strong><CountUp end={dynamicStats.cidades} started={statsVisible} /></strong>
-            <span>Cidades</span>
-          </div>
-        </div>
+        )}
       </section>
 
       {/* ── Valores ────────────────────────────────────────── */}
@@ -529,7 +546,7 @@ const IgrejaNasCasas: React.FC = () => {
         <div className="valores-inner">
           <div className="section-head reveal">
             <span className="section-label">Nossos Valores</span>
-            <h2>Isto é quem somos</h2>
+            <h2>O que fazemos quando nos encontramos?</h2>
             <p>Os princípios que guiam cada encontro, cada mesa e cada discipulado na Rede Five One.</p>
           </div>
           <div className="valores-grid">
@@ -577,11 +594,6 @@ const IgrejaNasCasas: React.FC = () => {
               </header>
               <div className="pilar-card__body">
                 <p>{card.resumo}</p>
-                {card.itens && (
-                  <ul className="pilar-card__list">
-                    {card.itens.map((item) => <li key={item}>{item}</li>)}
-                  </ul>
-                )}
               </div>
             </article>
           ))}
@@ -890,7 +902,7 @@ const IgrejaNasCasas: React.FC = () => {
         <div className="footer-modern__grid">
           <div className="footer-modern__brand">
             <img src={redeLogo} alt="Rede de Igrejas nas Casas Five One" className="footer-modern__logo" />
-            <p>Uma família mundial de igrejas simples que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor de Cristo.</p>
+            <p>Igrejas simples que abre lares para viver a Palavra, discipular pessoas e servir a cidade com o amor de Cristo.</p>
           </div>
           <div className="footer-modern__column">
             <h4>Contato</h4>
