@@ -1227,6 +1227,7 @@
   padding: 18px 0 !important;
   box-shadow: none !important;
   transform: none !important;
+  text-align: left !important;
 }
 .contato .info-card:last-child { border-bottom: none !important; }
 .contato .info-card:hover { transform: none !important; box-shadow: none !important; }
@@ -1533,6 +1534,14 @@
   .valores-grid { grid-template-columns: repeat(2, 1fr); }
   .valor-card:nth-child(3n)   { border-right: 1px solid var(--casas-border); padding-right: clamp(20px, 3vw, 44px); }
   .valor-card:nth-child(even) { border-right: none; padding-right: 0; }
+}
+
+/* ── Tablet médio — grids que não entram no 1024px ────────── */
+@media (max-width: 900px) {
+  .contato-grid { grid-template-columns: 1fr; }
+  .programacao-grid { grid-template-columns: 1fr; }
+  .programacao-card { border-right: none; padding-right: 0; border-bottom: 1px solid var(--casas-border); }
+  .programacao-card:last-child { border-bottom: none; }
 }
 
 @media (max-width: 760px) {
