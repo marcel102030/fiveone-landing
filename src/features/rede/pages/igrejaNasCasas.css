@@ -275,6 +275,7 @@
   overflow: hidden;
   background-size: cover;
   background-position: center;
+  transition: opacity 0.6s ease;
 }
 
 .hero-stage__overlay {
