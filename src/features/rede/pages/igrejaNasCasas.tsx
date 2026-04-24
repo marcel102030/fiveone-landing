@@ -146,14 +146,14 @@ const programacao = [
     destaque: 'Sexta-feira · 19h',
     descricao: 'Uma noite para mergulhar na Palavra, partilhar revelações e orar uns pelos outros.',
     botao: 'Quero participar',
-    link: 'https://wa.me/5583987181731?text=Quero%20participar%20do%20estudo%20bíblico%20nas%20casas',
+    link: 'https://wa.me/5583987181731?text=Olá!%20Vi%20no%20site%20da%20Rede%20Five%20One%20e%20quero%20participar%20do%20estudo%20bíblico%20nas%20casas.%20Quando%20e%20onde%20será%20o%20próximo%20encontro%3F',
   },
   {
     titulo: 'Culto nas Casas',
     destaque: 'Sábado · 19h',
     descricao: 'Celebração com louvor, comunhão e envio missionário direto do coração da família Five One.',
     botao: 'Confirmar presença',
-    link: 'https://wa.me/5583987181731?text=Quero%20confirmar%20presença%20no%20culto%20nas%20casas',
+    link: 'https://wa.me/5583987181731?text=Olá!%20Vi%20no%20site%20da%20Rede%20Five%20One%20e%20quero%20confirmar%20presença%20no%20culto%20nas%20casas%20do%20sábado.%20Como%20funciona%3F',
   },
 ];
 
@@ -188,7 +188,7 @@ const STATIC_STATS = { casasAtivas: 1, bairros: 1, cidades: 1 };
 
 const confissaoPdf = '/assets/pdfs/confissao-de-fe.pdf';
 const instagramUrl = 'https://www.instagram.com/redeigrejasfiveone';
-const whatsappLink = 'https://wa.me/5583987181731?text=Olá%2C%20vim%20do%20site%20da%20Rede%20de%20Igrejas%20nas%20Casas%20Five%20One';
+const whatsappLink = 'https://wa.me/5583987181731?text=Olá!%20Vim%20pelo%20site%20da%20Rede%20Five%20One%20e%20gostaria%20de%20saber%20mais%20sobre%20as%20igrejas%20nas%20casas.';
 const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIkd7rjLhV9dK6WZ7fwc4';
 
 const PUBLIC_VISITOR_TOKEN = 'd8a7f3b2-1c0e-4a69-8b95-6f4e3d2c1b0a';
@@ -723,7 +723,7 @@ const IgrejaNasCasas: React.FC = () => {
               </Link>
               <a
                 className="btn ghost"
-                href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
+                href="https://wa.me/5583987181731?text=Olá!%20Vi%20no%20site%20da%20Rede%20Five%20One%20e%20tenho%20interesse%20em%20abrir%20minha%20casa%20para%20uma%20igreja%20nas%20casas.%20Como%20funciona%3F"
                 target="_blank"
                 rel="noopener noreferrer"
               >
@@ -1022,32 +1022,18 @@ const IgrejaNasCasas: React.FC = () => {
 export default IgrejaNasCasas;
 
 function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string; whatsappUrl: string }) {
-  const [isOpen, setIsOpen] = useState(false);
   return (
-    <div className="floating-contacts" aria-live="polite">
-      <div className={`floating-contacts__card${isOpen ? ' is-open' : ''}`} aria-hidden={!isOpen}>
-        <strong>WhatsApp</strong>
-        <p>Olá 👋 Bem-vindo à Rede Five One. Podemos ajudar?</p>
+    <div className="floating-contacts">
+      <div className="floating-contacts__fab-group">
         <a
-          className="btn primary"
+          className="floating-contacts__fab floating-contacts__fab--whatsapp"
           href={whatsappUrl}
           target="_blank"
           rel="noopener noreferrer"
-          onClick={() => setIsOpen(false)}
-        >
-          Abrir bate-papo
-        </a>
-      </div>
-      <div className="floating-contacts__fab-group">
-        <button
-          type="button"
-          className={`floating-contacts__fab floating-contacts__fab--whatsapp${isOpen ? ' is-active' : ''}`}
-          onClick={() => setIsOpen((prev) => !prev)}
-          aria-label={isOpen ? 'Fechar card do WhatsApp' : 'Conversar no WhatsApp'}
-          aria-expanded={isOpen}
+          aria-label="Conversar no WhatsApp"
         >
           <WhatsappIcon />
-        </button>
+        </a>
         <a
           className="floating-contacts__fab floating-contacts__fab--instagram"
           href={instagramUrl}

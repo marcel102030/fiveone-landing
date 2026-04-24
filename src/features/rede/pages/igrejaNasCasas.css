@@ -1378,42 +1378,6 @@
   bottom: 28px;
   right: 24px;
   z-index: 160;
-  display: flex;
-  flex-direction: column-reverse;
-  gap: 12px;
-  align-items: flex-end;
-}
-.floating-contacts__card {
-  background: var(--casas-surface-alt);
-  border: 1px solid var(--casas-border);
-  border-radius: var(--casas-radius-sm);
-  padding: 16px 18px;
-  width: 264px;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
-  opacity: 0;
-  transform: translateY(10px) scale(0.96);
-  pointer-events: none;
-  transition: all 0.25s ease;
-  margin-bottom: 56px;
-}
-.floating-contacts__card.is-open {
-  opacity: 1;
-  transform: none;
-  pointer-events: auto;
-}
-.floating-contacts__card strong {
-  display: block;
-  font-family: var(--font-display);
-  font-size: 0.9375rem;
-  font-weight: 700;
-  color: var(--casas-text);
-  margin-bottom: 5px;
-}
-.floating-contacts__card p {
-  font-size: 0.8125rem;
-  color: var(--casas-muted);
-  margin: 0 0 14px;
-  line-height: 1.5;
 }
 .floating-contacts__fab-group { display: flex; gap: 10px; align-items: center; }
 .floating-contacts__fab {
@@ -1608,14 +1572,30 @@
   .page-strip__actions .page-strip__cta { display: none; }
   .page-strip__toggle { display: flex; }
 
-  /* Hero */
-  .hero-content {
-    bottom: clamp(100px, 20vw, 140px);
-    left: 20px;
-    right: 20px;
+  /* Hero — flexbox no mobile para caber tudo na tela sem scroll */
+  .hero {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
   }
-  .hero-stats-bar { gap: 28px; }
-  .hero-facts-bar { gap: 24px; }
+  .hero-content {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    right: auto;
+    max-width: 100%;
+    padding: 0 20px 16px;
+    animation: heroContentIn 0.9s 0.25s ease both;
+  }
+  .hero-stats-bar,
+  .hero-facts-bar {
+    position: relative;
+    bottom: auto;
+    left: auto;
+    padding: 0 20px clamp(20px, 5vw, 32px);
+    gap: 24px;
+  }
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn { text-align: center; justify-content: center; }
 
