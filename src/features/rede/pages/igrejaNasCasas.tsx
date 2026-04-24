@@ -17,6 +17,13 @@ import principal9 from '../assets/image/principal/img_9375.jpg';
 import './igrejaNasCasas.css';
 import redeLogo from '../assets/image/logoRedeIgrejas/Post para Instagram Parabéns Aniversário Azul e Branco Divertido Moderno.png?url';
 
+// Hero slideshow — imagens convertidas para JPEG
+const _heroMods = import.meta.glob<{ default: string }>(
+  '../assets/image/principal/Imagens_Header/converted/*.jpg',
+  { eager: true },
+);
+const HERO_IMAGES: string[] = Object.values(_heroMods).map((m) => m.default);
+
 type IgrejaInfo = {
   cidade: string;
   estado: string;
@@ -186,15 +193,6 @@ const mapaDefaultEmbed = 'https://www.google.com/maps/d/embed?mid=1wd8qIMzPhFLIk
 
 const PUBLIC_VISITOR_TOKEN = 'd8a7f3b2-1c0e-4a69-8b95-6f4e3d2c1b0a';
 const visitorFormPath = `/rede/cadastro?token=${PUBLIC_VISITOR_TOKEN}`;
-const heroImageModules = import.meta.glob('../assets/image/principal/Imagens_Header/*.{jpg,JPG,jpeg,JPEG,png,PNG,webp,WEBP}', {
-  eager: true,
-  query: '?url',
-  import: 'default',
-}) as Record<string, string>;
-
-const heroImages = Object.entries(heroImageModules)
-  .sort(([a], [b]) => a.localeCompare(b))
-  .map(([, url]) => url);
 
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
@@ -236,25 +234,10 @@ const IgrejaNasCasas: React.FC = () => {
   const [galeriaModal, setGaleriaModal] = useState<{ id: string; index: number } | null>(null);
   const [headerScrolled, setHeaderScrolled] = useState(false);
   const [statsVisible, setStatsVisible] = useState(false);
+  const [activeHero, setActiveHero] = useState(0);
   const statsRef = useRef<HTMLDivElement>(null);
   const currentYear = new Date().getFullYear();
   const [liveHouses, setLiveHouses] = useState<RedeHouseChurch[]>([]);
-  const [currentHeroImage, setCurrentHeroImage] = useState(0);
-  const [heroVisible, setHeroVisible] = useState(true);
-  useEffect(() => {
-    if (heroImages.length <= 1) return;
-  
-    const interval = window.setInterval(() => {
-      setHeroVisible(false);
-  
-      setTimeout(() => {
-        setCurrentHeroImage((prev) => (prev + 1) % heroImages.length);
-        setHeroVisible(true);
-      }, 300);
-    }, 5000);
-  
-    return () => window.clearInterval(interval);
-  }, []);
 
   useEffect(() => {
     listRedeHouseChurches()
@@ -275,6 +258,14 @@ const IgrejaNasCasas: React.FC = () => {
     }
     return STATIC_STATS;
   }, [liveHouses]);
+
+  useEffect(() => {
+    if (HERO_IMAGES.length <= 1) return;
+    const t = window.setInterval(() => {
+      setActiveHero((prev) => (prev + 1) % HERO_IMAGES.length);
+    }, 5500);
+    return () => window.clearInterval(t);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setHeaderScrolled(window.scrollY > 24);
@@ -491,13 +482,14 @@ const IgrejaNasCasas: React.FC = () => {
       </div>
 
       {/* ── Hero ───────────────────────────────────────────── */}
-      <section
-  className="hero"
-  style={{
-    opacity: heroVisible ? 1 : 0.82,
-    backgroundImage: `linear-gradient(180deg, rgba(7, 10, 24, 0.34) 0%, rgba(7, 10, 24, 0.72) 100%), url(${heroImages[currentHeroImage] || principal5})`,
-  }}
->
+      <section className="hero">
+        <div className="hero-slides" aria-hidden="true">
+          {HERO_IMAGES.map((src, i) => (
+            <div key={src} className={`hero-slide${i === activeHero ? ' is-active' : ''}`}>
+              <img src={src} alt="" loading={i === 0 ? 'eager' : 'lazy'} decoding="async" />
+            </div>
+          ))}
+        </div>
         <div className="hero-stage__overlay" />
         <div className="hero-content">
           <span className="hero-badge">Rede Five One</span>
