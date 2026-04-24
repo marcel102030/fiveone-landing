@@ -1596,8 +1596,14 @@
     padding: 0 20px clamp(20px, 5vw, 32px);
     gap: 24px;
   }
+  /* Barra de fatos/stats — esconde no mobile (fica apertada/cortada pelo chrome do browser) */
+  .hero-facts-bar,
+  .hero-stats-bar { display: none; }
+
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn { text-align: center; justify-content: center; }
+  /* Botões não ficam sob os FABs flutuantes */
+  .hero-actions .btn.ghost { max-width: calc(100% - 120px); }
 
   /* Layout */
   .galeria-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1614,6 +1620,9 @@
   .pilares-row { grid-template-columns: 1fr; }
   .pilar-card { border-right: none !important; padding-right: 0 !important; }
   .manifesto-photo { aspect-ratio: 4/3; position: static; }
+
+  /* FABs — empilha verticalmente no mobile para não sobrepor conteúdo */
+  .floating-contacts__fab-group { flex-direction: column-reverse; }
 
   /* Modal */
   .galeria-modal__nav--prev { left: 8px; }
