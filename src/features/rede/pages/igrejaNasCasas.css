@@ -1572,12 +1572,13 @@
   .page-strip__actions .page-strip__cta { display: none; }
   .page-strip__toggle { display: flex; }
 
-  /* Hero — flexbox no mobile para caber tudo na tela sem scroll */
+  /* Hero — flexbox no mobile: conteúdo sobe do fundo,
+     com 160px de folga para os FABs flutuantes não sobreporem */
   .hero {
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
-    padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
+    padding-bottom: 160px;
   }
   .hero-content {
     position: relative;
@@ -1588,22 +1589,14 @@
     padding: 0 20px 16px;
     animation: heroContentIn 0.9s 0.25s ease both;
   }
-  .hero-stats-bar,
-  .hero-facts-bar {
-    position: relative;
-    bottom: auto;
-    left: auto;
-    padding: 0 20px clamp(20px, 5vw, 32px);
-    gap: 24px;
-  }
-  /* Barra de fatos/stats — esconde no mobile (fica apertada/cortada pelo chrome do browser) */
+  /* Barra de fatos/stats — esconde no mobile */
   .hero-facts-bar,
   .hero-stats-bar { display: none; }
 
+  /* Hero: só o CTA principal no mobile — botão fantasma some */
+  .hero-actions .btn.ghost { display: none; }
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn { text-align: center; justify-content: center; }
-  /* Botões não ficam sob os FABs flutuantes */
-  .hero-actions .btn.ghost { max-width: calc(100% - 120px); }
 
   /* Layout */
   .galeria-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
