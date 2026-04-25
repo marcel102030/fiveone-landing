@@ -1593,10 +1593,22 @@
   .hero-facts-bar,
   .hero-stats-bar { display: none; }
 
-  /* Hero: só o CTA principal no mobile — botão fantasma some */
-  .hero-actions .btn.ghost { display: none; }
+  /* Hero CTAs */
   .hero-actions { flex-direction: column; align-items: flex-start; }
   .hero-actions .btn { text-align: center; justify-content: center; }
+  /* Botão secundário: link compacto — sem borda/bg que compete visualmente */
+  .hero-actions .btn.ghost {
+    display: inline-flex;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    color: rgba(255, 255, 255, 0.75);
+    padding: 8px 0;
+    font-size: 0.875rem;
+    letter-spacing: 0.06em;
+  }
 
   /* Layout */
   .galeria-grid { grid-template-columns: 1fr 1fr; gap: 10px; }
@@ -1612,7 +1624,18 @@
   .pilares-grid { grid-template-columns: 1fr; }
   .pilares-row { grid-template-columns: 1fr; }
   .pilar-card { border-right: none !important; padding-right: 0 !important; }
-  .manifesto-photo { aspect-ratio: 4/3; position: static; }
+
+  /* Reduz padding vertical dos cards no mobile para não esticar demais a página */
+  .valor-card       { padding-top: 24px !important; padding-bottom: 24px !important; }
+  .pilar-card       { padding-top: 24px !important; padding-bottom: 24px !important; }
+  .programacao-card { padding-top: 28px !important; padding-bottom: 28px !important; }
+
+  /* Foto do manifesto menor no mobile */
+  .manifesto-photo { aspect-ratio: 16/9; position: static; }
+
+  /* Participe — botões empilhados full-width */
+  .participe-actions { flex-direction: column; }
+  .participe-actions .btn { width: 100%; justify-content: center; }
 
   /* FABs — empilha verticalmente no mobile para não sobrepor conteúdo */
   .floating-contacts__fab-group { flex-direction: column-reverse; }
