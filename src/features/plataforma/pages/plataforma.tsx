@@ -527,15 +527,30 @@ const PaginaInicial = () => {
       } catch {}
     }
 
+    // visibilitychange: cobre o cenário de voltar ao app no mobile/PWA
+    // e também quando o usuário retorna de outra aba no desktop.
+    const visibilityHandler = () => {
+      if (document.visibilityState === 'visible') syncFromSupabase()
+    }
+
     // 'focus': ao voltar para a aba/app (funciona no PWA e mobile)
+    // 'visibilitychange': complementa o focus para cenários mobile e PWA
     window.addEventListener('focus', syncFromSupabase)
     window.addEventListener('storage', storageHandler)
+    document.addEventListener('visibilitychange', visibilityHandler)
+
+    // Dispara sync imediatamente no mount caso a aba já esteja visível
+    // (cobre o cenário de login → redirect → página já em foco)
+    if (document.visibilityState === 'visible') {
+      syncFromSupabase()
+    }
 
     return () => {
       window.removeEventListener('focus', syncFromSupabase)
       window.removeEventListener('storage', storageHandler)
+      document.removeEventListener('visibilitychange', visibilityHandler)
     }
-  // Usa lessonByVideoIdRef.current — sem lessonByVideoId nas deps evita re-registrar
+  // Usa lessonByVideoIdRef.current e authEmailRef.current — sem deps evita re-registrar
   // listeners a cada vez que as aulas carregam (causaria race condition).
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

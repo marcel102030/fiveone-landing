@@ -975,7 +975,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
       if (userId && watchedSeconds > 0) {
         const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
-        if (now - lastSync > 15000) {
+        if (now - lastSync > 5000) {
           sessionStorage.setItem(syncKey, String(now));
           upsertProgress({
             user_id: userId,
@@ -1062,14 +1062,14 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   }, []);
 
   // Salva progresso quando o usuário sai da aba / minimiza o app / fecha o browser.
-  // O evento 'visibilitychange' dispara ANTES do navegador cancelar requests pendentes,
-  // garantindo que o fetch de upsertProgress chegue ao servidor mesmo em fechamento.
+  // Usa emailRef.current para nunca ter closure stale (email pode ser null no mount
+  // quando Supabase auth ainda está resolvendo). pagehide cobre iOS Safari que nem
+  // sempre dispara visibilitychange no fechamento.
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState !== 'hidden') return;
+    const flush = () => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
       if (!lessonId || watchedSeconds <= 0) return;
-      const uid = getCurrentUserId() || email;
+      const uid = getCurrentUserId() || emailRef.current;
       if (!uid) return;
       upsertProgress({
         user_id: uid,
@@ -1081,10 +1081,17 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         thumbnail,
       }).catch(() => {});
     };
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') flush();
+    };
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  // email muda quando Supabase auth resolve — re-registra com valor atualizado
-  }, [email]);
+    window.addEventListener('pagehide', flush);
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flush);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Background periodic progress sync (30s) ───────────────────────────────
   // Garante que o progresso chega ao Supabase mesmo se o player parar de emitir
