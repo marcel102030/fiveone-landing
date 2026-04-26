@@ -1371,11 +1371,10 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     if (uid) { try { await upsertCompletion(uid, lessonId); } catch {} }
     syncCompletedIds();
     showToast('Aula marcada como concluída.', 'success');
-    // Curso 100% concluído?
+    // Curso 100% concluído? Compara contra TODAS as aulas do curso (não só do módulo atual).
     const nextCompletedCheck = new Set(completedIds);
     nextCompletedCheck.add(lessonId);
-    const allIdsCheck = videoList.map(v => v.videoId).filter(Boolean);
-    if (allIdsCheck.length > 0 && allIdsCheck.every(id => nextCompletedCheck.has(id))) {
+    if (allCourseLessonIds.length > 0 && allCourseLessonIds.every(id => nextCompletedCheck.has(id))) {
       setShowCourseComplete(true);
       const uidCheck = uid || getCurrentUserId() || email;
       if (uidCheck && ministryId) triggerCertificate(ministryId, uidCheck);
