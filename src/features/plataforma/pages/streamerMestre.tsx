@@ -583,6 +583,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   }, [currentIndex, cancelAutoPlay]);
 
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set(listCompletedLessonIds()));
+
+  // Todas as aulas do curso inteiro (todos os módulos) — usado para detectar 100% concluído.
+  const allCourseLessonIds = useMemo(
+    () => listLessons({ ministryId, onlyPublished: true, onlyActive: true }).map(v => v.videoId).filter(Boolean),
+    [ministryId],
+  );
+
   const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarListRef = useRef<HTMLUListElement>(null);
@@ -1024,9 +1031,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
             autoPlayTriggeredRef.current = true;
             setAutoPlayPending(true);
           }
-          // Curso 100% concluído?
-          const allLessonIds = videoList.map(v => v.videoId).filter(Boolean);
-          if (allLessonIds.length > 0 && allLessonIds.every(id => next.has(id))) {
+          // Curso 100% concluído? Compara contra TODAS as aulas do curso (não só do módulo atual).
+          if (allCourseLessonIds.length > 0 && allCourseLessonIds.every(id => next.has(id))) {
             setShowCourseComplete(true);
             const uid2 = getCurrentUserId() || emailRef.current;
             if (uid2 && ministryId) triggerCertificate(ministryId, uid2);
@@ -1034,7 +1040,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         }
       }
     },
-    [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds, ministryId, triggerCertificate],
+    [videoList, currentIndex, isMobile, completedIds, setCompletedIds, syncCompletedIds, ministryId, triggerCertificate, allCourseLessonIds],
   );
   persistProgressRef.current = persistProgress;
 
