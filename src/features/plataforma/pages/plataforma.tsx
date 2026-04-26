@@ -2,19 +2,18 @@ import Header from './Header'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCurrentUserId } from '../../../shared/utils/user'
-import { fetchUserProgress, deleteProgressExceptForUser, upsertProgress } from '../services/progress'
+import { deleteProgressExceptForUser } from '../services/progress'
 import { listLessons, LessonRef, subscribePlatformContent, getMinistry, usePlatformContent } from '../services/platformContent'
 import {
   COMPLETED_EVENT,
-  CompletedLessonInfo,
   readCompletedLessons,
   clearCompletedLessons,
 } from '../../../shared/utils/completedLessons'
-import { fetchCompletionsForUser } from '../services/completions'
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
 import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
 import { getEnrollments } from '../services/userAccount'
+import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -70,38 +69,6 @@ const TrashIcon = () => (
   </svg>
 )
 
-// ── Helpers de progresso (fora do componente para reúso) ─────────────────────
-
-function getProgressKey(video: any): string | null {
-  if (!video) return null
-  if (typeof video.id === 'string' && video.id) return video.id
-  if (typeof video.videoId === 'string' && video.videoId) return video.videoId
-  if (typeof video.video_id === 'string' && video.video_id) return video.video_id
-  if (typeof video.url === 'string' && video.url) return video.url
-  return null
-}
-
-function mergeByRecency(items: any[]): any[] {
-  const byKey = new Map<string, any>()
-  items.forEach((item) => {
-    const key = getProgressKey(item)
-    if (!key) return
-    const prev = byKey.get(key)
-    if (!prev) { byKey.set(key, item); return }
-    const prevAt = Number(prev.lastAt || 0)
-    const nextAt = Number(item.lastAt || 0)
-    const primary = nextAt >= prevAt ? item : prev
-    const secondary = nextAt >= prevAt ? prev : item
-    byKey.set(key, {
-      ...secondary, ...primary,
-      watchedSeconds: Math.max(Number(prev.watchedSeconds || 0), Number(item.watchedSeconds || 0)),
-      durationSeconds: Number(primary.durationSeconds || 0) || Number(secondary.durationSeconds || 0) || undefined,
-      lastAt: Math.max(prevAt, nextAt),
-    })
-  })
-  return Array.from(byKey.values()).sort((a, b) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
-}
-
 // ── Componente principal ──────────────────────────────────────────────────────
 
 const PaginaInicial = () => {
@@ -123,30 +90,21 @@ const PaginaInicial = () => {
 
   // ── Isolamento entre usuários ─────────────────────────────────────────────
   // Apaga cache local APENAS quando um usuário DIFERENTE faz login.
-  // Se o MESMO usuário volta (após logout), o cache é preservado — evita que
-  // o "Continuar Assistindo" suma porque o progresso estava só no localStorage.
   useEffect(() => {
-    if (!effectiveUid) return // Ainda não identificado — não toca no cache
+    if (!effectiveUid) return
     try {
       const storedUser = localStorage.getItem('fiveone_active_user')
       const wasLoggedOut = storedUser === '__logged_out__'
       const isDifferentActiveUser = storedUser && !wasLoggedOut && storedUser !== effectiveUid
-
-      // Determina se é um usuário diferente do que estava antes
       const lastEmail = localStorage.getItem('fiveone_last_active_email')
       const isNewUser = wasLoggedOut
-        ? (lastEmail !== null ? lastEmail !== effectiveUid : true) // sem lastEmail → limpa por segurança (device antigo)
-        : isDifferentActiveUser                                     // troca direta sem logout
-
+        ? (lastEmail !== null ? lastEmail !== effectiveUid : true)
+        : isDifferentActiveUser
       if (isNewUser) {
-        // Usuário DIFERENTE — apaga cache do anterior
         try { localStorage.removeItem('videos_assistidos') } catch {}
         try { localStorage.removeItem('fiveone_last_lesson') } catch {}
-        // CRÍTICO: limpa completions do localStorage E reseta o estado React.
-        // Sem isso, o completedMap inicializa com completions do usuário anterior
-        // e filtra aulas em andamento do novo usuário como "concluídas".
         clearCompletedLessons()
-        setCompletedMap(new Map<string, CompletedLessonInfo>())
+        setSessionCompletions(new Set())
         const progressKeys: string[] = []
         for (let i = 0; i < localStorage.length; i++) {
           const k = localStorage.key(i)
@@ -162,10 +120,8 @@ const PaginaInicial = () => {
           syncKeys.forEach(k => { try { sessionStorage.removeItem(k) } catch {} })
         } catch {}
       }
-      // Se wasLoggedOut mas mesmo usuário → NÃO limpa o cache → "Continuar Assistindo" persiste
       try { localStorage.setItem('fiveone_active_user', effectiveUid) } catch {}
     } catch {}
-  // effectiveUid muda quando authEmail resolve (auth async) — re-verificar nesse momento
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveUid])
 
@@ -173,23 +129,28 @@ const PaginaInicial = () => {
   const [enrolledCourseIds, setEnrolledCourseIds] = useState<string[]>([])
   const [enrollmentsLoaded, setEnrollmentsLoaded] = useState(false)
   const [allLessons, setAllLessons] = useState<LessonRef[]>([])
-  const [lastWatchedArray, setLastWatchedArray] = useState<any[]>([])
-  const [progressLoaded, setProgressLoaded] = useState(false)
-  const [completedMap, setCompletedMap] = useState<Map<string, CompletedLessonInfo>>(() => {
-    // Não lê localStorage se o usuário acabou de sair — evita dados stale do usuário anterior
-    try {
-      const activeUser = localStorage.getItem('fiveone_active_user')
-      if (!activeUser || activeUser === '__logged_out__') return new Map()
-      const currentId = getCurrentUserId()
-      if (currentId && currentId === activeUser) return readCompletedLessons()
-    } catch {}
-    return new Map()
-  })
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches)
 
   // ── Modal limpar histórico ────────────────────────────────────────────────
   const [showClearConfirm, setShowClearConfirm] = useState(false)
   const [clearing, setClearing] = useState(false)
+
+  // ── Completions in-session (optimistic updates do streamer) ───────────────
+  const [sessionCompletions, setSessionCompletions] = useState<Set<string>>(new Set())
+
+  // ── Dados do aluno — banco é a ÚNICA fonte de verdade ────────────────────
+  const {
+    progress,
+    completedIds: dbCompletedIds,
+    loading: progressLoading,
+    refresh: refreshProgress,
+  } = useStudentProgress(effectiveUid)
+
+  // completedIds = DB + aulas concluídas nesta sessão (optimistic)
+  const completedIds = useMemo(
+    () => new Set([...dbCompletedIds, ...sessionCompletions]),
+    [dbCompletedIds, sessionCompletions],
+  )
 
   // ── Responsividade ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -199,7 +160,7 @@ const PaginaInicial = () => {
     return () => mq.removeEventListener('change', update)
   }, [])
 
-  // ── Carrega matrículas quando o usuário é identificado ───────────────────
+  // ── Matrículas ────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!effectiveUid) return
     getEnrollments(effectiveUid)
@@ -207,7 +168,7 @@ const PaginaInicial = () => {
       .catch(() => { setEnrolledCourseIds([]); setEnrollmentsLoaded(true) })
   }, [effectiveUid])
 
-  // ── Agrega aulas de todos os cursos matriculados ───────────────────────
+  // ── Aulas dos cursos matriculados ─────────────────────────────────────────
   useEffect(() => {
     const sync = () => {
       if (!enrolledCourseIds.length) return
@@ -221,25 +182,14 @@ const PaginaInicial = () => {
     return () => unsubscribe()
   }, [enrolledCourseIds])
 
-  // ── Sync de completions ───────────────────────────────────────────────────
-  // NÃO chama sync() no mount — o estado correto vem da busca remota no efeito de progresso.
-  // sync() no mount causaria sobrescrever completions corretas do servidor com cache stale.
+  // ── Completions in-session: escuta streamer via COMPLETED_EVENT ───────────
   useEffect(() => {
-    const sync = () => setCompletedMap(readCompletedLessons())
-    const handler = () => sync()
+    const handler = () => setSessionCompletions(new Set(readCompletedLessons().keys()))
     window.addEventListener(COMPLETED_EVENT, handler)
-    const storageHandler = (event: StorageEvent) => {
-      if (event.key === 'fiveone_completed_lessons_v1') sync()
-    }
-    window.addEventListener('storage', storageHandler)
-    return () => {
-      window.removeEventListener(COMPLETED_EVENT, handler)
-      window.removeEventListener('storage', storageHandler)
-    }
+    return () => window.removeEventListener(COMPLETED_EVENT, handler)
   }, [])
 
-  // ── Map de lessonId → LessonRef ───────────────────────────────────────────
-  // Indexado por videoId E por id para tolerar progresso salvo com qualquer das chaves.
+  // ── Map lessonId → LessonRef ──────────────────────────────────────────────
   const lessonByVideoId = useMemo(() => {
     const map = new Map<string, LessonRef>()
     allLessons.forEach((lesson) => {
@@ -248,385 +198,91 @@ const PaginaInicial = () => {
     })
     return map
   }, [allLessons])
-  // Ref síncrono — permite que closures com deps=[] acessem o Map sempre atualizado
   lessonByVideoIdRef.current = lessonByVideoId
 
-  // ── Carregar progresso (localStorage + remoto) ────────────────────────────
-  // Depende de effectiveUid para re-disparar quando o Supabase auth resolve
-  // (cenário: login sem "lembrar-me", browser reaberto, sessionStorage vazio,
-  //  mas cookie do Supabase ainda válido → authEmail chega após o primeiro render)
-  useEffect(() => {
-    let active = true
+  // ── lastWatchedArray — derivado do banco, enriquecido com metadados ───────
+  // Não usa localStorage como fonte de exibição.
+  // O mesmo usuário vê os mesmos dados em qualquer navegador/dispositivo.
+  const lastWatchedArray = useMemo((): any[] => {
+    const lbv = lessonByVideoId
+    return progress.map(r => ({
+      id:              r.lesson_id,
+      url:             '',
+      title:           r.title,
+      thumbnail:       r.thumbnail,
+      watchedSeconds:  r.watched_seconds,
+      durationSeconds: r.duration_seconds || undefined,
+      lastAt:          new Date(r.last_at).getTime(),
+      subjectName:     lbv.get(r.lesson_id)?.subjectName,
+      bannerContinue:  lbv.get(r.lesson_id)?.bannerContinue?.url  || lbv.get(r.lesson_id)?.bannerContinue?.dataUrl  || null,
+      bannerMobile:    lbv.get(r.lesson_id)?.bannerMobile?.url    || lbv.get(r.lesson_id)?.bannerMobile?.dataUrl    || null,
+    }))
+  }, [progress, lessonByVideoId])
 
-    let localEnriched: any[] = []
+  // progressLoaded para compatibilidade com lógica de UI existente
+  const progressLoaded = !progressLoading
+
+  // ── Popula localStorage como cache derivado (player seek + módulos) ───────
+  // O banco é a fonte de verdade. Este efeito propaga dados do banco para o
+  // localStorage para que: (a) o player saiba onde fazer seek, (b) páginas de
+  // módulos que lêem videos_assistidos mostrem progresso correto.
+  useEffect(() => {
+    if (!progress.length) return
+    const lbv = lessonByVideoId
+    progress.forEach(r => {
+      if (!r.lesson_id || r.watched_seconds <= 0) return
+      try {
+        const localKey = `fiveone_progress::${r.lesson_id}`
+        const existing = localStorage.getItem(localKey)
+        const localWatched = existing ? Number(JSON.parse(existing).watchedSeconds || 0) : 0
+        if (r.watched_seconds >= localWatched) {
+          localStorage.setItem(localKey, JSON.stringify({
+            watchedSeconds:  r.watched_seconds,
+            durationSeconds: r.duration_seconds || 0,
+            lastAt:          new Date(r.last_at).getTime(),
+          }))
+        }
+      } catch {}
+    })
     try {
-      const raw = localStorage.getItem('videos_assistidos')
-      const parsed = raw ? JSON.parse(raw) : []
-      const localArr = mergeByRecency(Array.isArray(parsed) ? parsed : [])
-      if (localArr.length) {
-        // Usa ref para enriquecer — pode estar vazio no primeiro render (ok, será re-enriquecido depois)
-        const lbv = lessonByVideoIdRef.current
-        localEnriched = localArr.map((item: any) => {
-          const lesson = lbv.get(item.id || item.videoId || item.video_id || item.url)
-          return {
-            ...item,
-            subjectName: item.subjectName || lesson?.subjectName,
-            bannerContinue: item.bannerContinue || lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || null,
-            bannerMobile: item.bannerMobile || lesson?.bannerMobile?.url || lesson?.bannerMobile?.dataUrl || null,
-            thumbnail: item.thumbnail || lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || lesson?.bannerMobile?.url || lesson?.bannerMobile?.dataUrl || lesson?.thumbnailUrl || item.bannerContinue,
-          }
-        })
-        setLastWatchedArray(localEnriched)
+      const arr = progress.slice(0, 12).map(r => {
+        const lesson = lbv.get(r.lesson_id)
+        return {
+          id:              r.lesson_id,
+          title:           r.title,
+          thumbnail:       r.thumbnail,
+          watchedSeconds:  r.watched_seconds,
+          durationSeconds: r.duration_seconds || undefined,
+          lastAt:          new Date(r.last_at).getTime(),
+          subjectName:     lesson?.subjectName,
+          bannerContinue:  lesson?.bannerContinue?.url  || lesson?.bannerContinue?.dataUrl  || null,
+          bannerMobile:    lesson?.bannerMobile?.url    || lesson?.bannerMobile?.dataUrl    || null,
+        }
+      })
+      localStorage.setItem('videos_assistidos', JSON.stringify(arr))
+      if (progress[0]?.lesson_id) {
+        localStorage.setItem('fiveone_last_lesson', progress[0].lesson_id)
       }
     } catch {}
+  }, [progress, lessonByVideoId])
 
-    ;(async () => {
-      // effectiveUid = custom storage OU cookie do Supabase — nunca null se logado.
-      // Quando é null, o auth ainda está resolvendo. O efeito re-roda automaticamente
-      // quando effectiveUid muda de null → email (pois está nas dependências).
-      const uid = effectiveUid
-      if (!uid) return
-      try {
-        // ── Busca progresso E completions em paralelo ─────────────────────────
-        // CRÍTICO: buscar juntos e processar completions ANTES de setar
-        // lastWatchedArray garante que visibleLastWatched (que filtra por completedIds)
-        // já tem o estado correto do usuário atual quando o carousel é renderizado.
-        // Fetches sequenciais causavam race condition: completedIds desatualizado
-        // filtrava aulas válidas como "concluídas" durante a janela entre os dois awaits.
-        const [rows, completions] = await Promise.all([
-          fetchUserProgress(uid, 24),
-          fetchCompletionsForUser(uid),
-        ])
-        if (!active) return
-
-        // 1. Seta completions PRIMEIRO — antes de tocar em lastWatchedArray.
-        //    Assim visibleLastWatched já nasce com o filtro correto.
-        //    Seta diretamente sem clearCompletedLessons() para evitar que
-        //    o evento COMPLETED_EVENT dispare um re-render intermediário desnecessário.
-        const newCompletedMap = new Map<string, CompletedLessonInfo>()
-        if (completions && completions.length) {
-          completions.forEach(id => {
-            newCompletedMap.set(id, { completedAt: Date.now(), previousWatched: null, previousDuration: null })
-          })
-        }
-        try {
-          localStorage.setItem('fiveone_completed_lessons_v1',
-            JSON.stringify(Object.fromEntries(Array.from(newCompletedMap.entries()))))
-        } catch {}
-        setCompletedMap(newCompletedMap)
-
-        // 2. Agora processa e seta o progresso
-        if (rows && rows.length) {
-          const remote = rows.map(r => {
-            const localKey = `fiveone_progress::${r.lesson_id}`
-            let localWatched = 0
-            try {
-              const raw = localStorage.getItem(localKey)
-              if (raw) {
-                const parsed = JSON.parse(raw)
-                localWatched = Number(parsed.watchedSeconds || parsed.watched || 0)
-              }
-            } catch {}
-
-            // Escreve progresso remoto no localStorage para que o streamer
-            // retome no tempo certo ao abrir neste dispositivo
-            if (r.watched_seconds > localWatched) {
-              try {
-                localStorage.setItem(localKey, JSON.stringify({
-                  watchedSeconds: r.watched_seconds,
-                  durationSeconds: r.duration_seconds || 0,
-                  lastAt: new Date(r.last_at).getTime(),
-                }))
-              } catch {}
-              localWatched = r.watched_seconds
-            }
-
-            const lbv = lessonByVideoIdRef.current
-            return {
-              id: r.lesson_id, url: '', index: undefined,
-              title: r.title, thumbnail: r.thumbnail,
-              watchedSeconds: Math.max(r.watched_seconds, localWatched),
-              durationSeconds: r.duration_seconds || undefined,
-              lastAt: new Date(r.last_at).getTime(),
-              subjectName: lbv.get(r.lesson_id)?.subjectName,
-              bannerContinue: lbv.get(r.lesson_id)?.bannerContinue?.url || lbv.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
-              bannerMobile: lbv.get(r.lesson_id)?.bannerMobile?.url || lbv.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
-            }
-          })
-
-          const sortedRemote = [...remote].sort((a, b) => Number(b.lastAt) - Number(a.lastAt))
-          if (sortedRemote[0]?.id) {
-            try { localStorage.setItem('fiveone_last_lesson', sortedRemote[0].id) } catch {}
-          }
-
-          const finalMerged = mergeByRecency([...localEnriched, ...remote])
-          try { localStorage.setItem('videos_assistidos', JSON.stringify(finalMerged.slice(0, 12))) } catch {}
-          setLastWatchedArray(finalMerged)
-        }
-
-        // ── Recovery sync: localStorage → Supabase ────────────────────────
-        // Faz upload de todo progresso salvo localmente que ainda não chegou
-        // ao servidor (ex: dados do período quando a RPC retornava HTTP 400
-        // por tipo float→int). Usa GREATEST no servidor, então é seguro
-        // enviar mesmo que o servidor já tenha o registro.
-        // Roda apenas uma vez por sessão para evitar requisições redundantes.
-        const recoverySyncKey = `fiveone_recovery_synced_${uid}`
-        const alreadySynced = sessionStorage.getItem(recoverySyncKey)
-        if (!alreadySynced) {
-          try {
-            const progressKeys: string[] = []
-            for (let i = 0; i < localStorage.length; i++) {
-              const k = localStorage.key(i)
-              if (k?.startsWith('fiveone_progress::')) progressKeys.push(k)
-            }
-            // Primeiro: chaves fiveone_progress::{id}
-            for (const key of progressKeys) {
-              try {
-                const raw = localStorage.getItem(key)
-                if (!raw) continue
-                const local = JSON.parse(raw)
-                const lessonId = key.replace('fiveone_progress::', '')
-                const localWatched = Math.round(Number(local.watchedSeconds || 0))
-                if (localWatched <= 0) continue
-                const remoteRow = (rows || []).find((r: any) => r.lesson_id === lessonId)
-                if (remoteRow && remoteRow.watched_seconds >= localWatched) continue
-                const lesson = lessonByVideoIdRef.current.get(lessonId)
-                await upsertProgress({
-                  user_id: uid,
-                  lesson_id: lessonId,
-                  last_at: local.lastAt ? new Date(local.lastAt).toISOString() : new Date().toISOString(),
-                  watched_seconds: localWatched,
-                  duration_seconds: local.durationSeconds ? Math.round(Number(local.durationSeconds)) : null,
-                  title: lesson?.title || lessonId,
-                  thumbnail: lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || lesson?.bannerMobile?.url || null,
-                }).catch(() => {})
-              } catch {}
-            }
-            // Segundo: entradas no array videos_assistidos que não têm chave individual
-            try {
-              const vaRaw = localStorage.getItem('videos_assistidos')
-              if (vaRaw) {
-                const vaArr = JSON.parse(vaRaw)
-                if (Array.isArray(vaArr)) {
-                  const uploadedIds = new Set(progressKeys.map(k => k.replace('fiveone_progress::', '')))
-                  for (const item of vaArr) {
-                    const lessonId = item.id || item.videoId || item.video_id
-                    if (!lessonId || uploadedIds.has(lessonId)) continue
-                    const localWatched = Math.round(Number(item.watchedSeconds || 0))
-                    if (localWatched <= 0) continue
-                    const remoteRow = (rows || []).find((r: any) => r.lesson_id === lessonId)
-                    if (remoteRow && remoteRow.watched_seconds >= localWatched) continue
-                    const lesson = lessonByVideoIdRef.current.get(lessonId)
-                    await upsertProgress({
-                      user_id: uid,
-                      lesson_id: lessonId,
-                      last_at: item.lastAt ? new Date(item.lastAt).toISOString() : new Date().toISOString(),
-                      watched_seconds: localWatched,
-                      duration_seconds: item.durationSeconds ? Math.round(Number(item.durationSeconds)) : null,
-                      title: item.title || lesson?.title || lessonId,
-                      thumbnail: item.thumbnail || lesson?.bannerContinue?.url || null,
-                    }).catch(() => {})
-                  }
-                }
-              }
-            } catch {}
-            sessionStorage.setItem(recoverySyncKey, '1')
-          } catch {}
-        }
-
-        setProgressLoaded(true)
-      } catch {
-        if (active) setProgressLoaded(true)
-      }
-    })()
-
-    return () => { active = false }
-  // effectiveUid muda de null → email quando o auth do Supabase resolve.
-  // lessonByVideoId é acessado via ref — não precisa estar nas deps (evita double-fetch).
+  // ── Recovery sync: localStorage → banco (uma vez por sessão) ─────────────
+  // Faz upload de progresso salvo localmente que nunca chegou ao banco.
+  // Cobre o período em que a RPC falhava com HTTP 400 (bug float→int).
+  // Após o upload, faz refresh para que o carousel reflita os novos dados.
+  useEffect(() => {
+    if (!effectiveUid) return
+    recoverLocalProgress(
+      effectiveUid,
+      id => lessonByVideoIdRef.current.get(id),
+      progress,
+    ).then(() => refreshProgress()).catch(() => {})
+  // Roda uma vez por sessão (flag sessionStorage interno ao hook)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [effectiveUid])
 
-  // ── Re-enriquece itens existentes quando as aulas carregam ────────────────
-  // O efeito principal de progresso roda antes de lessonByVideoId ser populado
-  // (enrollments são async). Esse efeito preenche subjectName/banners sem re-buscar
-  // dados do servidor.
-  useEffect(() => {
-    if (!allLessons.length) return
-    setLastWatchedArray(prev => {
-      if (!prev.length) return prev
-      let changed = false
-      const next = prev.map(item => {
-        const lessonId = item.id || item.videoId
-        if (!lessonId) return item
-        const lesson = lessonByVideoId.get(lessonId)
-        if (!lesson) return item
-        const sub = lesson.subjectName || null
-        const bc = lesson.bannerContinue?.url || lesson.bannerContinue?.dataUrl || null
-        const bm = lesson.bannerMobile?.url || lesson.bannerMobile?.dataUrl || null
-        const th = lesson.bannerContinue?.url || lesson.bannerContinue?.dataUrl || lesson.thumbnailUrl || null
-        if (item.subjectName === sub && item.bannerContinue === bc && item.bannerMobile === bm) return item
-        changed = true
-        return {
-          ...item,
-          subjectName: item.subjectName || sub,
-          bannerContinue: item.bannerContinue || bc,
-          bannerMobile: item.bannerMobile || bm,
-          thumbnail: item.thumbnail || th,
-        }
-      })
-      return changed ? next : prev
-    })
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lessonByVideoId])
-
-  // ── Sincroniza "Continuar Assistindo" cross-device ───────────────────────
-  // O localStorage é por dispositivo. Para sincronizar entre celular e PC
-  // consultamos o Supabase sempre que a janela recebe foco. Isso garante que
-  // ao abrir no celular após assistir no PC (ou vice-versa), o carousel reflita
-  // o progresso real do servidor.
-  useEffect(() => {
-    let lastFetch = 0
-    const DEBOUNCE_MS = 3000 // não busca mais de 1x a cada 3s
-
-    const syncFromSupabase = async () => {
-      const now = Date.now()
-      if (now - lastFetch < DEBOUNCE_MS) return
-      lastFetch = now
-
-      // Usa cookie do Supabase como fallback (persiste após fechar browser).
-      // authEmailRef.current é sempre o valor mais recente — evita closure stale.
-      const uid = getCurrentUserId() || authEmailRef.current || null
-      if (!uid) {
-        // sem conta identificada: só relê localStorage local
-        try {
-          const raw = localStorage.getItem('videos_assistidos')
-          if (!raw) return
-          const parsed = JSON.parse(raw)
-          if (!Array.isArray(parsed) || !parsed.length) return
-          const sorted = [...parsed].sort((a: any, b: any) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
-          setLastWatchedArray(prev => {
-            const firstNew = sorted[0]?.id || sorted[0]?.url
-            const firstOld = prev[0]?.id || prev[0]?.url
-            if (firstNew === firstOld && sorted.length === prev.length) return prev
-            return sorted
-          })
-        } catch {}
-        return
-      }
-
-      try {
-        const rows = await fetchUserProgress(uid, 24)
-        if (!rows?.length) return
-        const lbv = lessonByVideoIdRef.current
-        const remote = rows.map(r => ({
-          id: r.lesson_id,
-          url: '',
-          title: r.title,
-          thumbnail: r.thumbnail,
-          watchedSeconds: r.watched_seconds,
-          durationSeconds: r.duration_seconds || undefined,
-          lastAt: new Date(r.last_at).getTime(),
-          subjectName: lbv.get(r.lesson_id)?.subjectName,
-          bannerContinue: lbv.get(r.lesson_id)?.bannerContinue?.url || lbv.get(r.lesson_id)?.bannerContinue?.dataUrl || null,
-          bannerMobile: lbv.get(r.lesson_id)?.bannerMobile?.url || lbv.get(r.lesson_id)?.bannerMobile?.dataUrl || null,
-        }))
-
-        // Lê local também para o merge
-        let localArr: any[] = []
-        try {
-          const raw = localStorage.getItem('videos_assistidos')
-          if (raw) {
-            const parsed = JSON.parse(raw)
-            if (Array.isArray(parsed)) localArr = parsed
-          }
-        } catch {}
-
-        const merged = mergeByRecency([...localArr, ...remote])
-        setLastWatchedArray(prev => {
-          const firstNew = merged[0]?.id || merged[0]?.url
-          const firstOld = prev[0]?.id || prev[0]?.url
-          if (firstNew === firstOld && merged.length === prev.length) return prev
-          return merged
-        })
-
-        // ── CRÍTICO: escreve progresso remoto no localStorage local ───────
-        // O streamerMestre lê fiveone_progress::{id} para saber onde retomar.
-        // Se o aluno assistiu em outro dispositivo, esse dado só existe no
-        // Supabase. Precisamos populá-lo aqui para o streamer resumir no tempo certo.
-        rows.forEach(r => {
-          if (!r.lesson_id || r.watched_seconds <= 0) return
-          try {
-            const localKey = `fiveone_progress::${r.lesson_id}`
-            const existing = localStorage.getItem(localKey)
-            const localData = existing ? JSON.parse(existing) : null
-            const localWatched = Number(localData?.watchedSeconds || 0)
-            // só sobrescreve se o remoto tem mais progresso ou dado local inexistente
-            if (r.watched_seconds >= localWatched) {
-              localStorage.setItem(localKey, JSON.stringify({
-                watchedSeconds: r.watched_seconds,
-                durationSeconds: r.duration_seconds || localData?.durationSeconds || 0,
-                lastAt: new Date(r.last_at).getTime(),
-              }))
-            }
-          } catch {}
-        })
-
-        // Atualiza fiveone_last_lesson com o ID mais recente do servidor
-        if (merged[0]?.id) {
-          try { localStorage.setItem('fiveone_last_lesson', merged[0].id) } catch {}
-        }
-        // Persiste lista mesclada para carregamento instantâneo na próxima visita
-        try { localStorage.setItem('videos_assistidos', JSON.stringify(merged.slice(0, 12))) } catch {}
-      } catch { /* rede indisponível — mantém estado atual */ }
-    }
-
-    // 'storage': outra aba/janela mudou o localStorage (mesma sessão, outro dispositivo não dispara isso)
-    const storageHandler = () => {
-      try {
-        const raw = localStorage.getItem('videos_assistidos')
-        if (!raw) return
-        const parsed = JSON.parse(raw)
-        if (!Array.isArray(parsed)) return
-        const sorted = [...parsed].sort((a: any, b: any) => Number(b.lastAt || 0) - Number(a.lastAt || 0))
-        setLastWatchedArray(prev => {
-          const firstNew = sorted[0]?.id || sorted[0]?.url
-          const firstOld = prev[0]?.id || prev[0]?.url
-          if (firstNew === firstOld && sorted.length === prev.length) return prev
-          return sorted
-        })
-      } catch {}
-    }
-
-    // visibilitychange: cobre o cenário de voltar ao app no mobile/PWA
-    // e também quando o usuário retorna de outra aba no desktop.
-    const visibilityHandler = () => {
-      if (document.visibilityState === 'visible') syncFromSupabase()
-    }
-
-    // 'focus': ao voltar para a aba/app (funciona no PWA e mobile)
-    // 'visibilitychange': complementa o focus para cenários mobile e PWA
-    window.addEventListener('focus', syncFromSupabase)
-    window.addEventListener('storage', storageHandler)
-    document.addEventListener('visibilitychange', visibilityHandler)
-
-    // Dispara sync imediatamente no mount caso a aba já esteja visível
-    // (cobre o cenário de login → redirect → página já em foco)
-    if (document.visibilityState === 'visible') {
-      syncFromSupabase()
-    }
-
-    return () => {
-      window.removeEventListener('focus', syncFromSupabase)
-      window.removeEventListener('storage', storageHandler)
-      document.removeEventListener('visibilitychange', visibilityHandler)
-    }
-  // Usa lessonByVideoIdRef.current e authEmailRef.current — sem deps evita re-registrar
-  // listeners a cada vez que as aulas carregam (causaria race condition).
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // ── IDs concluídos ────────────────────────────────────────────────────────
-  const completedIds = useMemo(() => new Set(Array.from(completedMap.keys())), [completedMap])
+  // completedIds já declarado acima (merge DB + session)
 
 
   const visibleLastWatched = useMemo(() => {
@@ -659,77 +315,52 @@ const PaginaInicial = () => {
     else navigate(`/curso/${courseId}/aula`)
   }, [navigate, lessonByVideoId, primaryCourseId])
 
-  // "Retomar aula" — usa fiveone_last_lesson como fonte da verdade quando disponível.
-  // Verifica que a aula pertence a um curso do usuário atual (evita retomar aula de outro usuário).
+  // "Retomar aula" — usa progress[0] do banco (mais recente assistida) como fonte de verdade.
+  // O banco é cross-device, então funciona em qualquer navegador/perfil.
   const handleResumeLesson = useCallback(() => {
-    try {
-      const lastId = localStorage.getItem('fiveone_last_lesson')
-      if (lastId) {
-        const lesson = lessonByVideoId.get(lastId)
-        if (lesson && enrolledCourseIds.includes(lesson.ministryId)) {
-          navigate(`/curso/${lesson.ministryId}/aula?vid=${encodeURIComponent(lastId)}`)
-          return
-        }
+    if (progress.length > 0) {
+      const latest = progress[0]
+      const lesson = lessonByVideoId.get(latest.lesson_id)
+      if (lesson && enrolledCourseIds.includes(lesson.ministryId)) {
+        navigate(`/curso/${lesson.ministryId}/aula?vid=${encodeURIComponent(latest.lesson_id)}`)
+        return
       }
-    } catch {}
+    }
     if (visibleLastWatched.length > 0) goToLesson(visibleLastWatched[0])
     else if (primaryCourseId) navigate(`/curso/${primaryCourseId}/aula`)
-  }, [navigate, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId, enrolledCourseIds])
+  }, [navigate, progress, visibleLastWatched, goToLesson, lessonByVideoId, primaryCourseId, enrolledCourseIds])
 
   // ── Limpar histórico ──────────────────────────────────────────────────────
   const performClearHistory = useCallback(async () => {
-    const completedIdList = Array.from(completedIds.values()).filter((id): id is string => typeof id === 'string' && id.length > 0)
-    const keepBases = new Set<string>()
-    let storedWatched: Array<{ id?: string; videoId?: string; url?: string }> = []
-    try {
-      const watchedRaw = localStorage.getItem('videos_assistidos')
-      if (watchedRaw) {
-        const parsed = JSON.parse(watchedRaw)
-        if (Array.isArray(parsed)) storedWatched = parsed
-      }
-    } catch {}
+    // Mantém no banco apenas as aulas concluídas; remove o restante
+    const completedIdList = Array.from(completedIds).filter((id): id is string => typeof id === 'string' && id.length > 0)
+    const uid = effectiveUid
+    if (uid) await deleteProgressExceptForUser(uid, completedIdList)
 
-    if (completedIdList.length) {
-      allLessons.forEach((lesson) => {
-        if (!lesson.videoId || !completedIds.has(lesson.videoId)) return
-        keepBases.add(lesson.videoId)
-        if (lesson.videoUrl) keepBases.add(lesson.videoUrl)
-      })
-      storedWatched.forEach((item) => {
-        const candidateId = item?.id || item?.videoId
-        if (candidateId && completedIds.has(candidateId)) {
-          keepBases.add(candidateId)
-          if (typeof item?.url === 'string' && item.url) keepBases.add(item.url)
-        }
-      })
-    }
-
-    localStorage.removeItem('videos_assistidos')
-    const progressPrefix = 'fiveone_progress::'
+    // Limpa cache local correspondente (player seek + módulos)
+    try { localStorage.removeItem('videos_assistidos') } catch {}
+    try { localStorage.removeItem('fiveone_last_lesson') } catch {}
     const progressKeys: string[] = []
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i)
-      if (key && key.startsWith(progressPrefix)) {
-        const base = key.slice(progressPrefix.length)
-        if (!keepBases.has(base)) progressKeys.push(key)
+      if (key?.startsWith('fiveone_progress::')) {
+        const base = key.slice('fiveone_progress::'.length)
+        if (!completedIds.has(base)) progressKeys.push(key)
       }
     }
-    progressKeys.forEach((key) => { try { localStorage.removeItem(key) } catch {} })
-
+    progressKeys.forEach(key => { try { localStorage.removeItem(key) } catch {} })
     try {
-      const syncPrefix = 'fiveone_progress_sync_'
+      const toRemove: string[] = []
       for (let i = 0; i < sessionStorage.length; i++) {
         const key = sessionStorage.key(i)
-        if (key && key.startsWith(syncPrefix)) {
-          try { sessionStorage.removeItem(key) } catch {}
-        }
+        if (key?.startsWith('fiveone_progress_sync_')) toRemove.push(key)
       }
+      toRemove.forEach(k => { try { sessionStorage.removeItem(k) } catch {} })
     } catch {}
 
-    const uid = effectiveUid
-    if (uid) await deleteProgressExceptForUser(uid, completedIdList)
-    setLastWatchedArray([])
-  }, [completedIds, allLessons, effectiveUid])
+    // Re-fetch: o carousel reflete o estado real do banco após a limpeza
+    refreshProgress()
+  }, [completedIds, effectiveUid, refreshProgress])
 
   const handleClearHistory = useCallback(async () => {
     setClearing(true)
