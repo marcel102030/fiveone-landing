@@ -26,12 +26,15 @@ export async function fetchUserProgress(userId: string, limit = 24): Promise<Pro
 export async function upsertProgress(row: ProgressRow): Promise<void> {
   // Usa RPC com GREATEST para garantir que watched_seconds nunca regride
   // em caso de race condition (dois dispositivos enviando ao mesmo tempo).
+  // Math.round é obrigatório: o player (Vimeo/YouTube) retorna floats como
+  // 1780.181728, mas a coluna Postgres é integer — sem arredondamento a RPC
+  // retorna HTTP 400 e o progresso nunca é salvo.
   const { error } = await supabase.rpc('upsert_progress_safe', {
     p_user_id:          row.user_id,
     p_lesson_id:        row.lesson_id,
     p_last_at:          row.last_at,
-    p_watched_seconds:  row.watched_seconds,
-    p_duration_seconds: row.duration_seconds ?? null,
+    p_watched_seconds:  Math.round(row.watched_seconds),
+    p_duration_seconds: row.duration_seconds != null ? Math.round(row.duration_seconds) : null,
     p_title:            row.title,
     p_thumbnail:        row.thumbnail ?? null,
   });
