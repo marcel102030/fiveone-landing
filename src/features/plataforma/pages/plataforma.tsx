@@ -2,7 +2,7 @@ import Header from './Header'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCurrentUserId } from '../../../shared/utils/user'
-import { fetchUserProgress, deleteProgressExceptForUser } from '../services/progress'
+import { fetchUserProgress, deleteProgressExceptForUser, upsertProgress } from '../services/progress'
 import { listLessons, LessonRef, subscribePlatformContent, getMinistry, usePlatformContent } from '../services/platformContent'
 import {
   COMPLETED_EVENT,
@@ -362,6 +362,76 @@ const PaginaInicial = () => {
           const finalMerged = mergeByRecency([...localEnriched, ...remote])
           try { localStorage.setItem('videos_assistidos', JSON.stringify(finalMerged.slice(0, 12))) } catch {}
           setLastWatchedArray(finalMerged)
+        }
+
+        // ── Recovery sync: localStorage → Supabase ────────────────────────
+        // Faz upload de todo progresso salvo localmente que ainda não chegou
+        // ao servidor (ex: dados do período quando a RPC retornava HTTP 400
+        // por tipo float→int). Usa GREATEST no servidor, então é seguro
+        // enviar mesmo que o servidor já tenha o registro.
+        // Roda apenas uma vez por sessão para evitar requisições redundantes.
+        const recoverySyncKey = `fiveone_recovery_synced_${uid}`
+        const alreadySynced = sessionStorage.getItem(recoverySyncKey)
+        if (!alreadySynced) {
+          try {
+            const progressKeys: string[] = []
+            for (let i = 0; i < localStorage.length; i++) {
+              const k = localStorage.key(i)
+              if (k?.startsWith('fiveone_progress::')) progressKeys.push(k)
+            }
+            // Primeiro: chaves fiveone_progress::{id}
+            for (const key of progressKeys) {
+              try {
+                const raw = localStorage.getItem(key)
+                if (!raw) continue
+                const local = JSON.parse(raw)
+                const lessonId = key.replace('fiveone_progress::', '')
+                const localWatched = Math.round(Number(local.watchedSeconds || 0))
+                if (localWatched <= 0) continue
+                const remoteRow = (rows || []).find((r: any) => r.lesson_id === lessonId)
+                if (remoteRow && remoteRow.watched_seconds >= localWatched) continue
+                const lesson = lessonByVideoIdRef.current.get(lessonId)
+                await upsertProgress({
+                  user_id: uid,
+                  lesson_id: lessonId,
+                  last_at: local.lastAt ? new Date(local.lastAt).toISOString() : new Date().toISOString(),
+                  watched_seconds: localWatched,
+                  duration_seconds: local.durationSeconds ? Math.round(Number(local.durationSeconds)) : null,
+                  title: lesson?.title || lessonId,
+                  thumbnail: lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || lesson?.bannerMobile?.url || null,
+                }).catch(() => {})
+              } catch {}
+            }
+            // Segundo: entradas no array videos_assistidos que não têm chave individual
+            try {
+              const vaRaw = localStorage.getItem('videos_assistidos')
+              if (vaRaw) {
+                const vaArr = JSON.parse(vaRaw)
+                if (Array.isArray(vaArr)) {
+                  const uploadedIds = new Set(progressKeys.map(k => k.replace('fiveone_progress::', '')))
+                  for (const item of vaArr) {
+                    const lessonId = item.id || item.videoId || item.video_id
+                    if (!lessonId || uploadedIds.has(lessonId)) continue
+                    const localWatched = Math.round(Number(item.watchedSeconds || 0))
+                    if (localWatched <= 0) continue
+                    const remoteRow = (rows || []).find((r: any) => r.lesson_id === lessonId)
+                    if (remoteRow && remoteRow.watched_seconds >= localWatched) continue
+                    const lesson = lessonByVideoIdRef.current.get(lessonId)
+                    await upsertProgress({
+                      user_id: uid,
+                      lesson_id: lessonId,
+                      last_at: item.lastAt ? new Date(item.lastAt).toISOString() : new Date().toISOString(),
+                      watched_seconds: localWatched,
+                      duration_seconds: item.durationSeconds ? Math.round(Number(item.durationSeconds)) : null,
+                      title: item.title || lesson?.title || lessonId,
+                      thumbnail: item.thumbnail || lesson?.bannerContinue?.url || null,
+                    }).catch(() => {})
+                  }
+                }
+              }
+            } catch {}
+            sessionStorage.setItem(recoverySyncKey, '1')
+          } catch {}
         }
 
         setProgressLoaded(true)
