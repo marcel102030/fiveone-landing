@@ -24,6 +24,7 @@ import "./AdministracaoFiveOne.css";
 import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
 import { useAdminToast } from "../../../../shared/components/AdminToast";
+import { supabase } from "../../../../shared/lib/supabaseClient";
 
 export default function AdminAlunos() {
   document.title = "Administração | Five One — Alunos";
@@ -117,7 +118,7 @@ export default function AdminAlunos() {
 
   async function onCreate(e: React.FormEvent) {
     e.preventDefault();
-    if (!form.name || !form.email || !form.password || !form.formation) {
+    if (!form.name || !form.email || !form.password || !newCourseIds.length) {
       toast.warning('Campos obrigatórios', 'Informe nome, e-mail, senha e pelo menos um curso para cadastrar o aluno.');
       return;
     }
@@ -130,18 +131,21 @@ export default function AdminAlunos() {
       return;
     }
     try {
-      const firstCourse = newCourseIds[0] || (form.formation as FormationKey) || null;
+      const firstCourse = (newCourseIds[0] || form.formation || null) as FormationKey | null;
       await createUser({ email: form.email, password: form.password, name: form.name, formation: firstCourse as FormationKey });
-      if (newCourseIds.length) await setEnrollments(form.email, newCourseIds);
+      await setEnrollments(form.email, newCourseIds);
     } catch (err: any) {
       toast.error('Erro ao criar aluno', err?.message || 'Tente novamente em instantes.');
       return;
     }
     if (sendEmail) {
       try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const headers: Record<string, string> = { 'content-type': 'application/json' };
+        if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
         await fetch('/api/student-created-email', {
           method: 'POST',
-          headers: { 'content-type': 'application/json' },
+          headers,
           body: JSON.stringify({ to: form.email, name: form.name, user: form.email, password: form.password }),
         });
       } catch (e) {

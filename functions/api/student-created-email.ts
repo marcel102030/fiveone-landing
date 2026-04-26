@@ -1,6 +1,9 @@
-// Envia um e-mail de boas-vindas com usuário e senha quando um aluno é criado
+// Envia um e-mail de boas-vindas com usuário e senha quando um aluno é criado.
+// Recebe a senha em texto plano — exige admin autenticado para evitar abuso/spam.
 
-type Env = {
+import { assertAdmin, type AdminAuthEnv } from './_adminAuth';
+
+type Env = AdminAuthEnv & {
   RESEND_API_KEY: string;
   RESEND_FROM?: string;
   RESEND_REPLY_TO?: string;
@@ -35,6 +38,10 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
 
   if (method !== "POST")
     return new Response("Method Not Allowed", { status: 405, headers: { ...CORS, Allow: "POST, GET, OPTIONS" } });
+
+  // Exige admin autenticado — payload tem a senha do aluno em texto plano.
+  const authResult = await assertAdmin(request, env);
+  if (!authResult.ok) return authResult.response;
 
   try {
     const body = (await request.json()) as Payload;
