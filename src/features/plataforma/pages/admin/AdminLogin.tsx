@@ -81,15 +81,19 @@ export default function AdminLogin() {
           } catch { }
         }
       }
-      // Admins (sem role MEMBER) vão para o painel admin
-      if (role === 'ADMIN' || !role) {
+      // Apenas usuários com role explicitamente ADMIN entram no painel administrativo.
+      if (role === 'ADMIN') {
+        if ((row as any)?.is_active === false) {
+          setError("Conta administrativa desativada. Procure outro administrador.");
+          return;
+        }
         setAdminAuthenticated(email, rememberMe);
         const to = location?.state?.from?.pathname || "/admin/administracao";
         navigate(to, { replace: true });
         return;
       }
       if (role !== "MEMBER") {
-        setError("Este usuário não possui perfil de membro.");
+        setError("Este usuário não possui acesso ao painel.");
         return;
       }
       const formation = (row?.formation as FormationKey | null) || null;
@@ -164,7 +168,11 @@ export default function AdminLogin() {
                 </span>
                 Permanecer logado
               </label>
-              <a className="link-ghost" href="#" onClick={(e) => e.preventDefault()}>
+              <a
+                className="link-ghost"
+                href="#/esqueci-senha"
+                onClick={(e) => { e.preventDefault(); navigate('/esqueci-senha'); }}
+              >
                 Esqueceu a senha?
               </a>
             </div>

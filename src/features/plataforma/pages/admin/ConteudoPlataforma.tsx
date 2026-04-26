@@ -355,13 +355,13 @@ export default function AdminConteudoPlataforma() {
     }
   };
 
-  const handleUnenroll = async (userId: string) => {
+  const handleUnenroll = async (userEmail: string) => {
     if (!selectedMinistry) return;
-    setUnenrollPending(userId);
+    setUnenrollPending(userEmail);
     try {
-      await unenrollUser(selectedMinistry.id, userId);
+      await unenrollUser(selectedMinistry.id, userEmail);
       toast.info('Matrícula removida', 'O aluno perdeu acesso ao curso.');
-      setEnrollments((prev) => prev.filter((e) => e.userId !== userId));
+      setEnrollments((prev) => prev.filter((e) => e.userEmail !== userEmail));
     } catch {
       toast.error('Erro ao remover matrícula', 'Tente novamente em instantes.');
     } finally {
@@ -1549,15 +1549,13 @@ export default function AdminConteudoPlataforma() {
                         if (!enrollmentSearch.trim()) return true;
                         const q = enrollmentSearch.toLowerCase();
                         return (e.userEmail || '').toLowerCase().includes(q) ||
-                          (e.userName || '').toLowerCase().includes(q) ||
-                          e.userId.toLowerCase().includes(q);
+                          (e.userName || '').toLowerCase().includes(q);
                       })
                       .map((e) => (
-                        <div key={e.userId} className="enrollment-row">
+                        <div key={e.userEmail} className="enrollment-row">
                           <div className="enrollment-user">
                             <span className="enrollment-name">{e.userName || e.userEmail || '—'}</span>
                             {e.userEmail && e.userName && <span className="enrollment-email">{e.userEmail}</span>}
-                            <code className="enrollment-uid">{e.userId}</code>
                           </div>
                           <span className="enrollment-date">
                             {e.enrolledAt ? new Date(e.enrolledAt).toLocaleDateString('pt-BR') : '—'}
@@ -1565,10 +1563,10 @@ export default function AdminConteudoPlataforma() {
                           <button
                             className="adm5-pill danger"
                             style={{ fontSize: 11, padding: '3px 10px' }}
-                            disabled={unenrollPending === e.userId}
-                            onClick={() => handleUnenroll(e.userId)}
+                            disabled={unenrollPending === e.userEmail}
+                            onClick={() => handleUnenroll(e.userEmail)}
                           >
-                            {unenrollPending === e.userId ? '…' : 'Remover'}
+                            {unenrollPending === e.userEmail ? '…' : 'Remover'}
                           </button>
                         </div>
                       ))}

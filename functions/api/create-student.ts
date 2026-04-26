@@ -6,24 +6,15 @@
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
 
-import { createClient } from '@supabase/supabase-js';
+import { ADMIN_AUTH_CORS as CORS, assertAdmin, type AdminAuthEnv } from './_adminAuth';
 
-type Env = {
-  SUPABASE_URL: string;
-  SUPABASE_SERVICE_ROLE_KEY: string;
-};
+type Env = AdminAuthEnv;
 
 type Payload = {
   email: string;
   password: string;
   name?: string | null;
   formation?: string;
-};
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS, GET',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export const onRequest = async (ctx: { request: Request; env: Env }) => {
@@ -43,6 +34,11 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     return new Response('Method Not Allowed', { status: 405, headers: CORS });
   }
 
+  // Cadastro de aluno cria conta no Auth — restringe a admins autenticados.
+  const authResult = await assertAdmin(request, env);
+  if (!authResult.ok) return authResult.response;
+  const { admin } = authResult;
+
   try {
     const body = (await request.json().catch(() => null)) as Partial<Payload> | null;
 
@@ -58,17 +54,6 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const name = (body.name || '').trim() || null;
     // formation é campo legado — aceita qualquer string de curso ou null
     const safeFormation = (body.formation || '').toString().trim() || null;
-
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Configuração de servidor incompleta' }),
-        { status: 500, headers: { 'content-type': 'application/json', ...CORS } }
-      );
-    }
-
-    const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false },
-    });
 
     // Verificar se o e-mail já existe na tabela platform_user
     const { count: existingCount } = await admin

@@ -6,21 +6,20 @@
 //   SUPABASE_URL
 //   SUPABASE_SERVICE_ROLE_KEY
 
-import { createClient } from '@supabase/supabase-js';
+import { ADMIN_AUTH_CORS as CORS, assertAdmin, type AdminAuthEnv } from './_adminAuth';
 
-type Env = { SUPABASE_URL: string; SUPABASE_SERVICE_ROLE_KEY: string };
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+type Env = AdminAuthEnv;
 
 export const onRequest = async (ctx: { request: Request; env: Env }) => {
   const { request, env } = ctx;
 
   if (request.method === 'OPTIONS') return new Response(null, { status: 204, headers: CORS });
   if (request.method !== 'POST') return new Response('Method Not Allowed', { status: 405, headers: CORS });
+
+  // Operação destrutiva — somente admins autenticados.
+  const authResult = await assertAdmin(request, env);
+  if (!authResult.ok) return authResult.response;
+  const { admin, callerEmail } = authResult;
 
   try {
     const body = (await request.json().catch(() => null)) as { email?: string } | null;
@@ -32,15 +31,12 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       });
     }
 
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return new Response(JSON.stringify({ ok: false, error: 'Configuração de servidor incompleta' }), {
-        status: 500, headers: { 'content-type': 'application/json', ...CORS },
+    // Impede o admin de deletar a própria conta por descuido.
+    if (email === callerEmail) {
+      return new Response(JSON.stringify({ ok: false, error: 'Você não pode remover a própria conta administrativa.' }), {
+        status: 400, headers: { 'content-type': 'application/json', ...CORS },
       });
     }
-
-    const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false },
-    });
 
     // 1. Localizar o user_id no Supabase Auth pelo e-mail
     const { data: listData } = await admin.auth.admin.listUsers({ perPage: 1000 });

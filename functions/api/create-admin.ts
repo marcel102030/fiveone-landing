@@ -7,25 +7,14 @@
 //   SUPABASE_SERVICE_ROLE_KEY
 //   ADMIN_SECRET  ← chave secreta para proteger este endpoint
 
-import { createClient } from '@supabase/supabase-js';
+import { ADMIN_AUTH_CORS as CORS, assertAdmin, type AdminAuthEnv } from './_adminAuth';
 
-type Env = {
-  SUPABASE_URL: string;
-  SUPABASE_SERVICE_ROLE_KEY: string;
-  ADMIN_SECRET?: string;
-};
+type Env = AdminAuthEnv;
 
 type Payload = {
   email: string;
   password: string;
   name?: string | null;
-  secret?: string;
-};
-
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 export const onRequest = async (ctx: { request: Request; env: Env }) => {
@@ -38,6 +27,11 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   const json = (body: object, status = 200) =>
     new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...CORS } });
 
+  // Apenas administradores autenticados podem promover/cadastrar outros administradores.
+  const authResult = await assertAdmin(request, env);
+  if (!authResult.ok) return authResult.response;
+  const { admin } = authResult;
+
   try {
     const body = (await request.json().catch(() => null)) as Partial<Payload> | null;
 
@@ -45,22 +39,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       return json({ ok: false, error: 'email e password são obrigatórios' }, 400);
     }
 
-    // Proteger o endpoint com um segredo configurável
-    if (env.ADMIN_SECRET && body.secret !== env.ADMIN_SECRET) {
-      return json({ ok: false, error: 'Não autorizado' }, 403);
-    }
-
     const email = body.email.trim().toLowerCase();
     const password = body.password;
     const name = (body.name || '').trim() || null;
-
-    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
-      return json({ ok: false, error: 'Configuração de servidor incompleta' }, 500);
-    }
-
-    const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-      auth: { persistSession: false },
-    });
 
     // Verificar se já existe como ADMIN
     const { data: existing } = await admin

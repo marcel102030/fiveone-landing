@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import {
   Route,
   HashRouter as Router,
@@ -8,63 +9,12 @@ import {
   Navigate,
 } from "react-router-dom";
 
-import BlogList from "./features/institucional/pages/BlogList";
 import Home from "./features/institucional/pages/Home";
-import Quiz from "./features/institucional/pages/Quiz";
-import About from "./features/institucional/pages/About";
-import Contact from "./features/institucional/pages/Contact";
-import Services from "./features/institucional/pages/Services";
-import BlogPostPage from "./features/institucional/pages/BlogPostPage";
-import Ministerio from "./features/institucional/pages/Ministerio";
-import IgrejaNasCasas from "./features/rede/pages/igrejaNasCasas";
-import ComoFuncionaCasas from "./features/rede/pages/redeIgrejas/ComoFunciona";
-import RedeFiveOne from "./features/rede/pages/redeIgrejas/RedeFiveOne";
-import OQueEFiveOne from "./features/rede/pages/redeIgrejas/OQueEFiveOne";
-import Plataforma from "./features/plataforma/pages/plataforma";
-import LoginAluno from "./features/plataforma/pages/loginAluno";
-import StreamerApostolo from "./features/plataforma/pages/streamerApostolo";
-import CursoModulos from "./features/plataforma/pages/CursoModulos";
-import CursoStreamer from "./features/plataforma/pages/CursoStreamer";
-import PerfilAluno from "./features/plataforma/pages/PerfilAluno";
-import AdminChurches from "./features/plataforma/pages/admin/AdminChurches";
-import AdminRedeIgrejas from "./features/rede/pages/admin/AdminRedeIgrejas";
-import RedeCadastroMembro from "./features/rede/pages/RedeCadastroMembro";
-import AdminLogin from "./features/plataforma/pages/admin/AdminLogin";
 import AdminGuard from "./features/plataforma/guards/AdminGuard";
 import MemberGuard from "./features/plataforma/guards/MemberGuard";
 import StudentGuard from "./features/plataforma/guards/StudentGuard";
-import MemberLayout from "./features/rede/pages/membro/MemberLayout";
-import MemberDashboard from "./features/rede/pages/membro/MemberDashboard";
-import MemberPlaceholder from "./features/rede/pages/membro/MemberPlaceholder";
-import MemberHouse from "./features/rede/pages/membro/MemberHouse";
-import MemberDiscipulado from "./features/rede/pages/membro/MemberDiscipulado";
-import MemberTracks from "./features/rede/pages/membro/MemberTracks";
-import MemberNotices from "./features/rede/pages/membro/MemberNotices";
-import AdministracaoFiveOne from "./features/plataforma/pages/admin/AdministracaoFiveOne";
-import AdminAlunos from "./features/plataforma/pages/admin/Alunos";
-import AdminConteudoPlataforma from "./features/plataforma/pages/admin/ConteudoPlataforma";
-import AdminRelatorioQuiz from "./features/plataforma/pages/admin/RelatorioQuiz";
-import AdminBlogSite from "./features/plataforma/pages/admin/BlogSite";
-import ModeracaoComentarios from "./features/plataforma/pages/admin/ModeracaoComentarios";
-import EmitirCertificados from "./features/plataforma/pages/admin/EmitirCertificados";
-import GerenciarAdmins from "./features/plataforma/pages/admin/GerenciarAdmins";
-import CalendarioConteudo from "./features/plataforma/pages/admin/CalendarioConteudo";
-import ChurchReport from "./features/rede/pages/ChurchReport";
-import ChurchCreateInvite from "./features/rede/pages/ChurchCreateInvite";
-import CopyLink from "./features/rede/pages/CopyLink";
-import MentoriaForm from "./features/institucional/pages/forms/MentoriaForm";
-import PalestraForm from "./features/institucional/pages/forms/PalestraForm";
-import TreinamentoForm from "./features/institucional/pages/forms/TreinamentoForm";
-import ImersaoForm from "./features/institucional/pages/forms/ImersaoForm";
-import ChurchSolutions from "./features/institucional/pages/ChurchSolutions";
-
-import EsqueciSenha from "./features/plataforma/pages/EsqueciSenha";
-import RedefinirSenha from "./features/plataforma/pages/RedefinirSenha";
-import Favoritos from "./features/plataforma/pages/Favoritos";
-import MeusCertificados from "./features/plataforma/pages/MeusCertificados";
-import CertificadoPublico from "./features/plataforma/pages/CertificadoPublico";
-import QuizResult from "./features/institucional/pages/QuizResult";
 import { AuthProvider } from "./shared/contexts/AuthContext";
+import { PageLoader } from "./shared/components/ui/Spinner";
 
 import "./App.css";
 
@@ -73,6 +23,58 @@ import Navbar from "./shared/components/layout/Navbar/Navbar";
 import ScrollToTop from "./shared/components/layout/ScrollToTop/ScrollToTop";
 import ScrollToTopOnMount from "./shared/components/layout/ScrollToTop/ScrollToTopOnMount";
 import PWAInstallBanner from "./shared/components/PWAInstallBanner/PWAInstallBanner";
+
+// ── Lazy chunks: cada rota vira um chunk separado ─────────────────────────────
+const BlogList = lazy(() => import("./features/institucional/pages/BlogList"));
+const Quiz = lazy(() => import("./features/institucional/pages/Quiz"));
+const About = lazy(() => import("./features/institucional/pages/About"));
+const Contact = lazy(() => import("./features/institucional/pages/Contact"));
+const Services = lazy(() => import("./features/institucional/pages/Services"));
+const BlogPostPage = lazy(() => import("./features/institucional/pages/BlogPostPage"));
+const Ministerio = lazy(() => import("./features/institucional/pages/Ministerio"));
+const IgrejaNasCasas = lazy(() => import("./features/rede/pages/igrejaNasCasas"));
+const ComoFuncionaCasas = lazy(() => import("./features/rede/pages/redeIgrejas/ComoFunciona"));
+const RedeFiveOne = lazy(() => import("./features/rede/pages/redeIgrejas/RedeFiveOne"));
+const OQueEFiveOne = lazy(() => import("./features/rede/pages/redeIgrejas/OQueEFiveOne"));
+const Plataforma = lazy(() => import("./features/plataforma/pages/plataforma"));
+const LoginAluno = lazy(() => import("./features/plataforma/pages/loginAluno"));
+const CursoModulos = lazy(() => import("./features/plataforma/pages/CursoModulos"));
+const CursoStreamer = lazy(() => import("./features/plataforma/pages/CursoStreamer"));
+const PerfilAluno = lazy(() => import("./features/plataforma/pages/PerfilAluno"));
+const AdminChurches = lazy(() => import("./features/plataforma/pages/admin/AdminChurches"));
+const AdminRedeIgrejas = lazy(() => import("./features/rede/pages/admin/AdminRedeIgrejas"));
+const RedeCadastroMembro = lazy(() => import("./features/rede/pages/RedeCadastroMembro"));
+const AdminLogin = lazy(() => import("./features/plataforma/pages/admin/AdminLogin"));
+const MemberLayout = lazy(() => import("./features/rede/pages/membro/MemberLayout"));
+const MemberDashboard = lazy(() => import("./features/rede/pages/membro/MemberDashboard"));
+const MemberPlaceholder = lazy(() => import("./features/rede/pages/membro/MemberPlaceholder"));
+const MemberHouse = lazy(() => import("./features/rede/pages/membro/MemberHouse"));
+const MemberDiscipulado = lazy(() => import("./features/rede/pages/membro/MemberDiscipulado"));
+const MemberTracks = lazy(() => import("./features/rede/pages/membro/MemberTracks"));
+const MemberNotices = lazy(() => import("./features/rede/pages/membro/MemberNotices"));
+const AdministracaoFiveOne = lazy(() => import("./features/plataforma/pages/admin/AdministracaoFiveOne"));
+const AdminAlunos = lazy(() => import("./features/plataforma/pages/admin/Alunos"));
+const AdminConteudoPlataforma = lazy(() => import("./features/plataforma/pages/admin/ConteudoPlataforma"));
+const AdminRelatorioQuiz = lazy(() => import("./features/plataforma/pages/admin/RelatorioQuiz"));
+const AdminBlogSite = lazy(() => import("./features/plataforma/pages/admin/BlogSite"));
+const ModeracaoComentarios = lazy(() => import("./features/plataforma/pages/admin/ModeracaoComentarios"));
+const EmitirCertificados = lazy(() => import("./features/plataforma/pages/admin/EmitirCertificados"));
+const GerenciarAdmins = lazy(() => import("./features/plataforma/pages/admin/GerenciarAdmins"));
+const CalendarioConteudo = lazy(() => import("./features/plataforma/pages/admin/CalendarioConteudo"));
+const ChurchReport = lazy(() => import("./features/rede/pages/ChurchReport"));
+const ChurchCreateInvite = lazy(() => import("./features/rede/pages/ChurchCreateInvite"));
+const CopyLink = lazy(() => import("./features/rede/pages/CopyLink"));
+const MentoriaForm = lazy(() => import("./features/institucional/pages/forms/MentoriaForm"));
+const PalestraForm = lazy(() => import("./features/institucional/pages/forms/PalestraForm"));
+const TreinamentoForm = lazy(() => import("./features/institucional/pages/forms/TreinamentoForm"));
+const ImersaoForm = lazy(() => import("./features/institucional/pages/forms/ImersaoForm"));
+const ChurchSolutions = lazy(() => import("./features/institucional/pages/ChurchSolutions"));
+const EsqueciSenha = lazy(() => import("./features/plataforma/pages/EsqueciSenha"));
+const RedefinirSenha = lazy(() => import("./features/plataforma/pages/RedefinirSenha"));
+const Favoritos = lazy(() => import("./features/plataforma/pages/Favoritos"));
+const MeusCertificados = lazy(() => import("./features/plataforma/pages/MeusCertificados"));
+const CertificadoPublico = lazy(() => import("./features/plataforma/pages/CertificadoPublico"));
+const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
 
 function AppContent() {
   const location = useLocation();
@@ -130,6 +132,7 @@ function AppContent() {
       <div className={`app ${hideLayout ? "plataforma-mode no-navbar-padding" : ""}`}>
         {!hideLayout && <Navbar />}
         <main>
+          <Suspense fallback={<PageLoader label="Carregando…" />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/admin" element={<AdminLogin />} />
@@ -286,31 +289,10 @@ function AppContent() {
                 </StudentGuard>
               }
             />
-            {/* Rotas legadas — mantidas para compatibilidade com bookmarks */}
-            <Route
-              path="/streamer-apostolo"
-              element={
-                <StudentGuard>
-                  <StreamerApostolo />
-                </StudentGuard>
-              }
-            />
-            <Route
-              path="/streamer-mestre"
-              element={
-                <StudentGuard>
-                  <CursoStreamer courseId="MESTRE" />
-                </StudentGuard>
-              }
-            />
-            <Route
-              path="/modulos-mestre"
-              element={
-                <StudentGuard>
-                  <CursoModulos courseId="MESTRE" />
-                </StudentGuard>
-              }
-            />
+            {/* Redirecionamentos das URLs legadas para o caminho /curso/:id/... */}
+            <Route path="/streamer-apostolo" element={<Navigate to="/curso/APOSTOLO/aula" replace />} />
+            <Route path="/streamer-mestre" element={<Navigate to="/curso/MESTRE/aula" replace />} />
+            <Route path="/modulos-mestre" element={<Navigate to="/curso/MESTRE/modulos" replace />} />
             <Route
               path="/perfil"
               element={
@@ -340,6 +322,7 @@ function AppContent() {
             <Route path="/esqueci-senha"  element={<EsqueciSenha />} />
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           </Routes>
+          </Suspense>
         </main>
         <ScrollToTop />
         {!hideLayout && !isInviteTest && <Footer />}

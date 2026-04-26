@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
 function computeInitials(name: string | null | undefined, email: string): string {
@@ -28,18 +28,41 @@ export const onRequest = async (ctx: any) => {
     return new Response('Method Not Allowed', { status: 405, headers: { ...CORS, Allow: 'GET, OPTIONS' } });
   }
 
-  const url = new URL(request.url);
-  const q = (url.searchParams.get('q') || '').trim();
-  const limit = Math.min(parseInt(url.searchParams.get('limit') || '6', 10) || 6, 12);
-
+  // Exige usuário autenticado — buscar e-mails de outros alunos é privilégio
+  // mínimo de aluno logado. Service role + endpoint público vazaria toda a base.
   const supabaseUrl = env.SUPABASE_URL as string | undefined;
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
-  if (!supabaseUrl || !serviceKey) {
+  const anonKey = (env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY) as string | undefined;
+  if (!supabaseUrl || !serviceKey || !anonKey) {
     return new Response(JSON.stringify({ ok: false, error: 'Supabase credentials not configured' }), {
       status: 500,
       headers: { 'content-type': 'application/json', ...CORS },
     });
   }
+
+  const auth = request.headers.get('authorization') || request.headers.get('Authorization') || '';
+  const token = auth.toLowerCase().startsWith('bearer ') ? auth.slice('bearer '.length).trim() : null;
+  if (!token) {
+    return new Response(JSON.stringify({ ok: false, error: 'Sessão ausente' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json', ...CORS },
+    });
+  }
+  const userClient = createClient(supabaseUrl, anonKey, {
+    auth: { persistSession: false },
+    global: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const { data: userData } = await userClient.auth.getUser(token);
+  if (!userData?.user?.email) {
+    return new Response(JSON.stringify({ ok: false, error: 'Sessão inválida' }), {
+      status: 401,
+      headers: { 'content-type': 'application/json', ...CORS },
+    });
+  }
+
+  const url = new URL(request.url);
+  const q = (url.searchParams.get('q') || '').trim();
+  const limit = Math.min(parseInt(url.searchParams.get('limit') || '6', 10) || 6, 12);
 
   const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 

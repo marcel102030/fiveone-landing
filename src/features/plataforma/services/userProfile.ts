@@ -147,7 +147,11 @@ export async function searchMentionProfiles(term: string, limit = 6): Promise<Me
   const params = new URLSearchParams();
   if (term) params.set('q', term);
   params.set('limit', String(limit));
-  const res = await fetch(`/api/profile-mention-search?${params.toString()}`, { method: 'GET' });
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const headers: Record<string, string> = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  const res = await fetch(`/api/profile-mention-search?${params.toString()}`, { method: 'GET', headers });
   if (!res.ok) {
     throw new Error('Não foi possível buscar alunos para menção.');
   }

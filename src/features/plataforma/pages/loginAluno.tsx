@@ -8,6 +8,7 @@ import { storePlatformProfile } from "../hooks/usePlatformUserProfile";
 import { getUserProfileDetails } from "../services/userProfile";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../../shared/contexts/AuthContext";
+import { supabase } from "../../../shared/lib/supabaseClient";
 import { Button } from "../../../shared/components/ui/Button";
 import { Input, FormField } from "../../../shared/components/ui/Input";
 
@@ -82,6 +83,14 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
           getUserByEmail(normalizedEmail),
           getUserProfileDetails(normalizedEmail).catch(() => null),
         ]);
+
+        // Bloqueia o acesso quando o admin desativou a conta.
+        if ((row as any)?.is_active === false) {
+          await supabase.auth.signOut().catch(() => {});
+          setErro("Conta desativada. Entre em contato com o administrador.");
+          setLoading(false);
+          return;
+        }
 
         let memberId = (row as any)?.member_id || null;
         let role     = (row as any)?.role || null;

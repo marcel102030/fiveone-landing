@@ -19,22 +19,34 @@ export default function AdminGuard({ children }: Props) {
 
     async function ensureSession() {
       // Tenta obter a sessão atual
-      const { data: { session } } = await supabase.auth.getSession();
+      let { data: { session } } = await supabase.auth.getSession();
 
-      if (session) {
-        setStatus("ok");
+      if (!session) {
+        const { error } = await supabase.auth.refreshSession();
+        if (error) {
+          clearAdminAuthenticated();
+          setStatus("redirect");
+          return;
+        }
+        ({ data: { session } } = await supabase.auth.getSession());
+      }
+
+      if (!session) {
+        clearAdminAuthenticated();
+        setStatus("redirect");
         return;
       }
 
-      // Sem sessão ativa — tenta renovar via refresh token
-      const { error } = await supabase.auth.refreshSession();
-      if (error) {
-        // Renovação falhou: limpa o flag e redireciona para login
+      // Revalida que o e-mail desta sessão ainda tem role=ADMIN.
+      // Sem isso, um admin recém-revogado mantém acesso por 7 dias.
+      const { data: stillAdmin, error: rpcError } = await supabase.rpc('is_platform_admin');
+      if (rpcError || stillAdmin !== true) {
         clearAdminAuthenticated();
         setStatus("redirect");
-      } else {
-        setStatus("ok");
+        return;
       }
+
+      setStatus("ok");
     }
 
     void ensureSession();

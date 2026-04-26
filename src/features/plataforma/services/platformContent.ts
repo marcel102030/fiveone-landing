@@ -812,15 +812,11 @@ export async function deleteLesson(_ministryId: MinistryKey, _moduleId: string, 
   await deleteStoredFileFromBucket(existing?.bannerContinue ?? null);
   await deleteStoredFileFromBucket(existing?.bannerPlayer ?? null);
   await deleteStoredFileFromBucket(existing?.bannerMobile ?? null);
+  // RPC limpa progresso/completion/favoritos com SECURITY DEFINER — admin
+  // não consegue deletar progresso de outros usuários via PostgREST direto.
+  await supabase.rpc('admin_delete_lesson_artifacts', { p_lesson_ids: [lessonId] });
   const { error } = await supabase.from("platform_lesson").delete().eq("id", lessonId);
   if (error) throw error;
-  // Limpa registros de progresso associados (silenciosamente — tabelas podem não existir)
-  try {
-    await supabase.from("platform_user_progress").delete().eq("lesson_id", lessonId);
-  } catch { /* não crítico */ }
-  try {
-    await supabase.from("platform_lesson_completion").delete().eq("lesson_id", lessonId);
-  } catch { /* não crítico */ }
   await refreshContent();
 }
 
@@ -1014,75 +1010,68 @@ export async function duplicateLesson(ministryId: MinistryKey, moduleId: string,
 }
 
 // ── Matrículas ──────────────────────────────────────────────────────────────
+// A tabela platform_enrollment usa user_email (texto) como chave, não user_id (uuid).
+// As implementações canônicas vivem em services/userAccount.ts; aqui apenas adaptamos
+// para a interface pública usada pela área administrativa.
 
 export interface Enrollment {
-  userId: string;
+  userEmail: string;
   courseId: string;
   enrolledAt: string | null;
-  userEmail?: string;
-  userName?: string;
+  userName?: string | null;
 }
 
 export async function listEnrollments(ministryId: MinistryKey): Promise<Enrollment[]> {
   const { data, error } = await supabase
     .from('platform_enrollment')
-    .select('user_id, course_id, enrolled_at, created_at')
+    .select('user_email, course_id, enrolled_at')
     .eq('course_id', ministryId);
   if (error) throw error;
   const rows = data ?? [];
-  // Enriquece com dados de perfil se disponíveis
-  const userIds = rows.map((r) => r.user_id);
-  const profileMap: Record<string, { email?: string; name?: string }> = {};
-  if (userIds.length > 0) {
-    try {
-      const { data: profiles } = await supabase
-        .from('profiles')
-        .select('id, email, full_name')
-        .in('id', userIds);
-      (profiles ?? []).forEach((p: any) => {
-        profileMap[p.id] = { email: p.email, name: p.full_name };
-      });
-    } catch { /* profiles table may not exist */ }
-  }
-  return rows.map((r) => ({
-    userId: r.user_id,
+  if (!rows.length) return [];
+  const emails = rows.map((r: any) => String(r.user_email).toLowerCase());
+  const nameMap: Record<string, string | null> = {};
+  try {
+    const { data: users } = await supabase
+      .from('platform_user')
+      .select('email, name')
+      .in('email', emails);
+    (users ?? []).forEach((u: any) => { nameMap[u.email] = u.name ?? null; });
+  } catch { /* fallback silencioso */ }
+  return rows.map((r: any) => ({
+    userEmail: r.user_email,
     courseId: r.course_id,
-    enrolledAt: r.enrolled_at ?? r.created_at ?? null,
-    userEmail: profileMap[r.user_id]?.email,
-    userName: profileMap[r.user_id]?.name,
+    enrolledAt: r.enrolled_at ?? null,
+    userName: nameMap[String(r.user_email).toLowerCase()] ?? null,
   }));
 }
 
-export async function enrollUser(ministryId: MinistryKey, userId: string): Promise<void> {
-  const trimmedId = userId.trim();
-  if (!trimmedId) throw new Error('ID do usuário inválido');
+export async function enrollUser(ministryId: MinistryKey, email: string): Promise<void> {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) throw new Error('E-mail do aluno inválido');
   const { error } = await supabase.from('platform_enrollment').upsert(
-    { user_id: trimmedId, course_id: ministryId, enrolled_at: new Date().toISOString() },
-    { onConflict: 'user_id,course_id' }
+    { user_email: normalized, course_id: ministryId, enrolled_at: new Date().toISOString() },
+    { onConflict: 'user_email,course_id' }
   );
   if (error) throw error;
 }
 
-export async function unenrollUser(ministryId: MinistryKey, userId: string): Promise<void> {
+export async function unenrollUser(ministryId: MinistryKey, email: string): Promise<void> {
   const { error } = await supabase
     .from('platform_enrollment')
     .delete()
     .eq('course_id', ministryId)
-    .eq('user_id', userId);
+    .eq('user_email', email.trim().toLowerCase());
   if (error) throw error;
 }
 
 export async function findUserByEmail(email: string): Promise<string | null> {
-  try {
-    const { data } = await supabase
-      .from('profiles')
-      .select('id')
-      .eq('email', email.trim().toLowerCase())
-      .maybeSingle();
-    return (data as any)?.id ?? null;
-  } catch {
-    return null;
-  }
+  const { data } = await supabase
+    .from('platform_user')
+    .select('email')
+    .eq('email', email.trim().toLowerCase())
+    .maybeSingle();
+  return (data as { email?: string } | null)?.email ?? null;
 }
 
 // ── Módulo: descrição ────────────────────────────────────────────────────────
@@ -1124,10 +1113,9 @@ export async function bulkDeleteLessons(lessonIds: string[]): Promise<void> {
     await deleteStoredFileFromBucket(lesson?.bannerPlayer ?? null);
     await deleteStoredFileFromBucket(lesson?.bannerMobile ?? null);
   }
+  await supabase.rpc('admin_delete_lesson_artifacts', { p_lesson_ids: lessonIds });
   const { error } = await supabase.from('platform_lesson').delete().in('id', lessonIds);
   if (error) throw error;
-  try { await supabase.from('platform_user_progress').delete().in('lesson_id', lessonIds); } catch { /* silent */ }
-  try { await supabase.from('platform_lesson_completion').delete().in('lesson_id', lessonIds); } catch { /* silent */ }
   await refreshContent();
 }
 

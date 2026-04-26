@@ -1,5 +1,19 @@
 import { supabase } from "../../../shared/lib/supabaseClient";
 
+/**
+ * Adiciona o JWT da sessão Supabase atual no header Authorization.
+ * Necessário para que as Cloudflare Functions possam validar que a chamada
+ * vem de um administrador autenticado.
+ */
+async function adminFetch(input: string, init: RequestInit = {}): Promise<Response> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  const headers = new Headers(init.headers || {});
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+  if (!headers.has('Content-Type') && init.body) headers.set('Content-Type', 'application/json');
+  return fetch(input, { ...init, headers });
+}
+
 export type PlatformUser = {
   email: string;
   name?: string | null;
@@ -48,17 +62,12 @@ export async function unenrollUser(email: string, courseId: CourseId): Promise<v
   if (error) throw error;
 }
 
-/** Substitui todas as matrículas de um aluno pela lista fornecida. */
+/** Substitui todas as matrículas de um aluno pela lista fornecida (atômico via RPC). */
 export async function setEnrollments(email: string, courseIds: CourseId[]): Promise<void> {
-  const lEmail = email.toLowerCase();
-  const { error: delError } = await supabase
-    .from('platform_enrollment')
-    .delete()
-    .eq('user_email', lEmail);
-  if (delError) throw delError;
-  if (!courseIds.length) return;
-  const rows = courseIds.map(course_id => ({ user_email: lEmail, course_id }));
-  const { error } = await supabase.from('platform_enrollment').insert(rows);
+  const { error } = await supabase.rpc('admin_set_user_enrollments', {
+    p_email: email.toLowerCase(),
+    p_course_ids: courseIds.length ? courseIds : null,
+  });
   if (error) throw error;
 }
 
@@ -101,9 +110,8 @@ export async function createUser(u: PlatformUserCreateInput): Promise<void> {
   // Usa a Admin API via Cloudflare Function — jamais usar supabase.auth.signUp()
   // no painel admin, pois esse método é para auto-cadastro e falha com 422 para
   // e-mails já existentes no Auth (mesmo que seja o próprio admin tentando criar outro).
-  const res = await fetch('/api/create-student', {
+  const res = await adminFetch('/api/create-student', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       email: u.email.toLowerCase(),
       password: u.password,
@@ -195,9 +203,8 @@ export async function emailExists(email: string): Promise<boolean> {
 
 export async function updateUserEmail(oldEmail: string, newEmail: string): Promise<void> {
   // Usa a Admin API via Cloudflare Function para sincronizar Auth + DB + enrollment
-  const res = await fetch('/api/update-student-email', {
+  const res = await adminFetch('/api/update-student-email', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ oldEmail: oldEmail.toLowerCase(), newEmail: newEmail.toLowerCase() }),
   });
   const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
@@ -231,9 +238,8 @@ export async function updateUserName(email: string, name: string | null): Promis
 export async function resetUserPassword(email: string, newPassword: string): Promise<void> {
   // Usa a Admin API via Cloudflare Function — supabase.auth.updateUser() só
   // alteraria a senha do usuário ATUALMENTE LOGADO, não do aluno alvo.
-  const res = await fetch('/api/reset-student-password', {
+  const res = await adminFetch('/api/reset-student-password', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase(), password: newPassword }),
   });
   const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
@@ -254,9 +260,8 @@ export async function listAdmins(): Promise<AdminUser[]> {
 }
 
 export async function createAdmin(email: string, password: string, name?: string | null): Promise<void> {
-  const res = await fetch('/api/create-admin', {
+  const res = await adminFetch('/api/create-admin', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase(), password, name: name || null }),
   });
   const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
@@ -277,9 +282,8 @@ export async function signOut(): Promise<void> {
 
 export async function deleteUser(email: string): Promise<void> {
   // Usa a Admin API via Cloudflare Function para remover do Auth + DB + enrollment
-  const res = await fetch('/api/delete-student', {
+  const res = await adminFetch('/api/delete-student', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ email: email.toLowerCase() }),
   });
   const data = await res.json().catch(() => ({ ok: false, error: 'Resposta inválida do servidor' })) as { ok: boolean; error?: string };
@@ -322,10 +326,24 @@ export async function addCourseToUsers(emails: string[], courseId: CourseId): Pr
   await supabase.from('platform_user').update({ formation: courseId }).in('email', emails.map(e => e.toLowerCase()));
 }
 
+/**
+ * Redefine a senha de vários alunos via Admin API (uma chamada por aluno).
+ * Não existe coluna `password` em platform_user — a senha vive apenas no Supabase Auth,
+ * portanto cada reset precisa passar pela function /api/reset-student-password.
+ */
 export async function resetUsersPasswords(emails: string[], newPassword: string): Promise<void> {
   if (!emails.length) return;
-  const { error } = await supabase.from('platform_user').update({ password: newPassword }).in('email', emails.map(e=>e.toLowerCase()));
-  if (error) throw error;
+  const errors: string[] = [];
+  for (const email of emails) {
+    try {
+      await resetUserPassword(email, newPassword);
+    } catch (e: any) {
+      errors.push(`${email}: ${e?.message || 'erro desconhecido'}`);
+    }
+  }
+  if (errors.length) {
+    throw new Error(`Falha ao redefinir ${errors.length} senha(s): ${errors.slice(0, 3).join('; ')}`);
+  }
 }
 
 export async function deleteUsers(emails: string[]): Promise<void> {

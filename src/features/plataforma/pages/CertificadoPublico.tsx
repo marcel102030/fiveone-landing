@@ -5,12 +5,11 @@ import { supabase } from "../../../shared/lib/supabaseClient";
 
 interface CertData {
   id: string;
-  user_id: string;
   ministry_id: string;
   issued_at: string;
   verify_code: string;
-  userName?: string | null;
-  courseName?: string | null;
+  userName: string | null;
+  courseName: string | null;
 }
 
 export default function CertificadoPublico() {
@@ -27,24 +26,24 @@ export default function CertificadoPublico() {
   useEffect(() => {
     if (!verifyCode) { setNotFound(true); setLoading(false); return; }
 
+    // Usa a RPC pública criada na migration de auditoria — a tabela
+    // platform_certificate exige auth.email() = user_id, que não rola para
+    // o visitante anônimo da página de verificação.
     supabase
-      .from("platform_certificate")
-      .select("id, user_id, ministry_id, issued_at, verify_code")
-      .eq("verify_code", verifyCode)
-      .maybeSingle()
-      .then(async ({ data }) => {
-        if (!data) { setNotFound(true); return; }
-
-        // Buscar nome do aluno e nome do curso em paralelo
-        const [userRes, courseRes] = await Promise.all([
-          supabase.from("platform_user").select("name").eq("email", data.user_id).maybeSingle(),
-          supabase.from("platform_ministry").select("title").eq("id", data.ministry_id).maybeSingle(),
-        ]);
-
+      .rpc('fetch_certificate_by_code', { p_code: verifyCode })
+      .then(({ data, error }) => {
+        if (error || !data || (Array.isArray(data) && data.length === 0)) {
+          setNotFound(true);
+          return;
+        }
+        const row = Array.isArray(data) ? data[0] : data;
         setCert({
-          ...data,
-          userName: userRes.data?.name ?? null,
-          courseName: courseRes.data?.title ?? null,
+          id: row.id,
+          ministry_id: row.ministry_id,
+          issued_at: row.issued_at,
+          verify_code: verifyCode,
+          userName: row.user_display_name || null,
+          courseName: row.ministry_title || null,
         });
       })
       .then(() => setLoading(false), () => setLoading(false));
@@ -78,7 +77,7 @@ export default function CertificadoPublico() {
   }
 
   const formation = cert.courseName || cert.ministry_id;
-  const displayName = cert.userName || cert.user_id;
+  const displayName = cert.userName || '—';
   const issuedDate = new Date(cert.issued_at).toLocaleDateString("pt-BR", {
     day: "2-digit",
     month: "long",
