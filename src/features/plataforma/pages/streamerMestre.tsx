@@ -736,6 +736,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   // Load stored progress when video changes.
   // Se não há progresso local (dispositivo nunca assistiu), busca do Supabase
   // e popula localStorage ANTES de inicializar o player — assim o seek funciona.
+  // email está nas deps para re-buscar quando o Supabase auth resolve após o mount
+  // (cenário: cookie válido mas sessionStorage/localStorage vazio → email chega async).
   useEffect(() => {
     if (!currentVideo?.videoId) return;
     const stored = getStoredProgress(currentVideo);
@@ -779,7 +781,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         } catch {}
       }
     }).catch(() => {});
-  }, [currentVideo?.videoId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentVideo?.videoId, email]);
 
   // Load favorite state when video changes
   useEffect(() => {
@@ -968,7 +971,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         }
       } catch {}
 
-      const userId = getCurrentUserId() || email;
+      const userId = getCurrentUserId() || emailRef.current;
       if (userId && watchedSeconds > 0) {
         const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
@@ -1013,7 +1016,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
               }
             }
           } catch {}
-          const uid = getCurrentUserId() || email;
+          const uid = getCurrentUserId() || emailRef.current;
           if (uid) upsertCompletion(uid, lesson.videoId).catch(() => {});
           syncCompletedIds();
           // Trigger auto-play for next lesson
@@ -1025,8 +1028,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           const allLessonIds = videoList.map(v => v.videoId).filter(Boolean);
           if (allLessonIds.length > 0 && allLessonIds.every(id => next.has(id))) {
             setShowCourseComplete(true);
-            const uid = getCurrentUserId() || email;
-            if (uid && ministryId) triggerCertificate(ministryId, uid);
+            const uid2 = getCurrentUserId() || emailRef.current;
+            if (uid2 && ministryId) triggerCertificate(ministryId, uid2);
           }
         }
       }
@@ -1159,7 +1162,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
       // Sincroniza com Supabase ao abrir a aula, mas NUNCA com watched_seconds=0
       // pois isso destruiria o progresso salvo em outro dispositivo.
       // Só enviamos se já temos progresso local real (> 0).
-      const uid = getCurrentUserId() || email;
+      const uid = getCurrentUserId() || emailRef.current;
       if (uid && lesson.videoId) {
         const stored = getStoredProgress(lesson);
         const localWatched = Number(stored?.watchedSeconds || 0);
@@ -1189,11 +1192,21 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                     lastAt: new Date(row.last_at).getTime(),
                   }));
                 } catch {}
+                // Agenda seek para quando o player estiver pronto
+                pendingSeekRef.current = row.watched_seconds;
                 // Atualiza a UI de progresso
                 setUiProgress({
                   watchedSeconds: row.watched_seconds,
                   durationSeconds: row.duration_seconds || 0,
                 });
+                // Se o player já estiver disponível, faz o seek imediatamente
+                try {
+                  if (youtubePlayerRef.current?.seekTo) {
+                    youtubePlayerRef.current.seekTo(row.watched_seconds, true);
+                  } else if (playerInstanceRef.current?.setCurrentTime) {
+                    void playerInstanceRef.current.setCurrentTime(row.watched_seconds);
+                  }
+                } catch {}
               }
             }).catch(() => {});
           }).catch(() => {});
