@@ -5,9 +5,10 @@
 //
 // Como funciona:
 //   1. Recebe o JWT do Supabase pelo header `Authorization: Bearer <jwt>`.
-//   2. Usa a anon key para validar o token e obter o e-mail do usuário.
+//   2. Usa o service role para chamar `auth.getUser(token)` — o GoTrue valida
+//      a assinatura do JWT independentemente da apikey fornecida.
 //   3. Confirma na tabela `platform_user` que o e-mail tem role = 'ADMIN'
-//      e is_active = true (consulta feita com service role).
+//      e is_active = true.
 //
 // Em caso de falha retorna uma `Response` 401/403 pronta — o caller deve
 // devolver essa Response imediatamente.
@@ -16,8 +17,6 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
 export type AdminAuthEnv = {
   SUPABASE_URL: string;
-  SUPABASE_ANON_KEY?: string;
-  SUPABASE_PUBLISHABLE_KEY?: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
 };
 
@@ -48,26 +47,22 @@ export async function assertAdmin(request: Request, env: AdminAuthEnv): Promise<
     return { ok: false, response: jsonResponse({ ok: false, error: 'Sessão administrativa ausente.' }, 401) };
   }
 
-  const anonKey = env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY;
-  if (!env.SUPABASE_URL || !anonKey || !env.SUPABASE_SERVICE_ROLE_KEY) {
+  if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) {
     return { ok: false, response: jsonResponse({ ok: false, error: 'Configuração de servidor incompleta.' }, 500) };
   }
 
-  const userClient = createClient(env.SUPABASE_URL, anonKey, {
+  const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
     auth: { persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
   });
 
-  const { data: userData, error: userError } = await userClient.auth.getUser(token);
+  // O GoTrue valida o JWT a partir do próprio token; o apikey usado para
+  // a chamada não importa para autenticidade.
+  const { data: userData, error: userError } = await admin.auth.getUser(token);
   if (userError || !userData?.user?.email) {
     return { ok: false, response: jsonResponse({ ok: false, error: 'Sessão inválida ou expirada.' }, 401) };
   }
 
   const callerEmail = userData.user.email.toLowerCase();
-
-  const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
-    auth: { persistSession: false },
-  });
 
   const { data: row } = await admin
     .from('platform_user')

@@ -32,8 +32,7 @@ export const onRequest = async (ctx: any) => {
   // mínimo de aluno logado. Service role + endpoint público vazaria toda a base.
   const supabaseUrl = env.SUPABASE_URL as string | undefined;
   const serviceKey = env.SUPABASE_SERVICE_ROLE_KEY as string | undefined;
-  const anonKey = (env.SUPABASE_ANON_KEY || env.SUPABASE_PUBLISHABLE_KEY) as string | undefined;
-  if (!supabaseUrl || !serviceKey || !anonKey) {
+  if (!supabaseUrl || !serviceKey) {
     return new Response(JSON.stringify({ ok: false, error: 'Supabase credentials not configured' }), {
       status: 500,
       headers: { 'content-type': 'application/json', ...CORS },
@@ -48,11 +47,11 @@ export const onRequest = async (ctx: any) => {
       headers: { 'content-type': 'application/json', ...CORS },
     });
   }
-  const userClient = createClient(supabaseUrl, anonKey, {
-    auth: { persistSession: false },
-    global: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const { data: userData } = await userClient.auth.getUser(token);
+
+  const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
+
+  // GoTrue valida o JWT a partir do próprio token, qualquer apikey serve.
+  const { data: userData } = await admin.auth.getUser(token);
   if (!userData?.user?.email) {
     return new Response(JSON.stringify({ ok: false, error: 'Sessão inválida' }), {
       status: 401,
@@ -63,8 +62,6 @@ export const onRequest = async (ctx: any) => {
   const url = new URL(request.url);
   const q = (url.searchParams.get('q') || '').trim();
   const limit = Math.min(parseInt(url.searchParams.get('limit') || '6', 10) || 6, 12);
-
-  const admin = createClient(supabaseUrl, serviceKey, { auth: { persistSession: false } });
 
   try {
     let query = admin
