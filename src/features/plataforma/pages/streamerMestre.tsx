@@ -593,6 +593,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const isModuloAberto = true;
   const videoRef = useRef<HTMLDivElement>(null);
   const sidebarListRef = useRef<HTMLUListElement>(null);
+  const sidebarListMobileRef = useRef<HTMLUListElement>(null);
 
   const getPlayerIframe = useCallback((): HTMLIFrameElement | null => {
     const container = videoRef.current;
@@ -607,7 +608,9 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   }, []);
 
   const [isMobile, setIsMobile] = useState(() => window.matchMedia('(max-width: 640px)').matches);
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(true);
+  // Em mobile, a Lista de aulas inicia recolhida — o aluno foca no player primeiro
+  // e expande a lista só quando precisar trocar de aula.
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [confirmState, setConfirmState] = useState<ConfirmState | null>(null);
   const [toastState, setToastState] = useState<ToastState | null>(null);
   const [showCourseComplete, setShowCourseComplete] = useState(false);
@@ -1458,7 +1461,10 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   }, [filteredList, videoList]);
 
   // Scroll sidebar to top when filter changes
-  useEffect(() => { sidebarListRef.current?.scrollTo({ top: 0 }); }, [filterSubject]);
+  useEffect(() => {
+    sidebarListRef.current?.scrollTo({ top: 0 });
+    sidebarListMobileRef.current?.scrollTo({ top: 0 });
+  }, [filterSubject]);
 
   const currentLessonKey = useMemo(() => currentVideo?.videoId || '', [currentVideo?.videoId]);
 
@@ -1942,6 +1948,164 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                   </label>
                 )}
 
+                {/* ── Mobile: Lista de aulas — fica logo abaixo do player ─────────────
+                    Em desktop, a mesma sidebar aparece sticky no RIGHT COLUMN.
+                    Mantém o toggle expansível para não empurrar notas/comentários
+                    para muito longe. */}
+                <div className="lg:hidden mt-6">
+                  <button
+                    type="button"
+                    className="w-full flex items-center justify-between px-4 py-3 bg-navy-lighter/60 border border-slate/10 rounded-xl text-sm font-medium text-slate-white"
+                    onClick={() => setMobileSidebarOpen(v => !v)}
+                    aria-expanded={mobileSidebarOpen}
+                  >
+                    <span>📋 Lista de aulas ({videoList.length})</span>
+                    <svg className={`w-4 h-4 text-slate transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                  </button>
+                  <div
+                    className={`flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden transition-all duration-300 ${
+                      mobileSidebarOpen ? 'max-h-[60vh] mt-2 opacity-100' : 'max-h-0 mt-0 opacity-0 pointer-events-none'
+                    }`}
+                  >
+                    {videoList.length > 0 && (() => {
+                      const completedInCourse = videoList.reduce(
+                        (n, v) => n + (completedIds.has(v.videoId) || completedIds.has(v.id) ? 1 : 0),
+                        0,
+                      );
+                      const pct = Math.round((completedInCourse / videoList.length) * 100);
+                      return (
+                        <div className="p-4 border-b border-slate/10 flex-shrink-0">
+                          <p className="text-sm font-semibold text-slate-white">
+                            {completedInCourse} de {videoList.length} aulas concluídas
+                          </p>
+                          <div className="h-1.5 bg-navy-lighter rounded-full mt-2">
+                            <div
+                              className="h-1.5 bg-mint rounded-full transition-all duration-300"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })()}
+
+                    <div className="px-4 pt-3 pb-2 border-b border-slate/10 flex-shrink-0">
+                      <SubjectDropdown
+                        label="Matéria"
+                        value={filterSubject}
+                        onChange={setFilterSubject}
+                        options={subjects}
+                      />
+                    </div>
+
+                    <ul ref={sidebarListMobileRef} className="flex-1 overflow-y-auto py-2 px-2 space-y-1">
+                      {groupedList.map((group) => (
+                        <li key={`m-${group.moduleOrder}-${group.moduleTitle}`}>
+                          <div className="text-xs font-semibold text-slate uppercase tracking-wider px-2 py-2">
+                            {group.moduleTitle}
+                          </div>
+                          <ul className="space-y-0.5">
+                            {group.items.map(({ video, globalIndex }) => {
+                              const itemKey = video.videoId;
+                              if (!itemKey) return null;
+                              const isActive = globalIndex === currentIndex;
+                              const isCompleted = completedIds.has(itemKey);
+                              const isItemLocked = video.status === 'scheduled' && !!video.releaseAt && new Date(video.releaseAt) > new Date();
+                              const stored = getStoredProgress(video);
+                              const durationSeconds =
+                                (stored?.durationSeconds && stored.durationSeconds > 0 ? stored.durationSeconds : 0) ||
+                                (typeof video.durationMinutes === 'number' && video.durationMinutes > 0 ? video.durationMinutes * 60 : 0);
+                              const watchedSeconds = stored?.watchedSeconds || 0;
+                              const rawProgress = durationSeconds > 0 ? Math.min(1, watchedSeconds / durationSeconds) : 0;
+                              const progress = isCompleted ? 1 : rawProgress;
+                              const thumbnail =
+                                video.bannerMobile?.url || video.bannerMobile?.dataUrl ||
+                                video.bannerContinue?.url || video.bannerContinue?.dataUrl ||
+                                video.thumbnailUrl ||
+                                '/assets/images/miniatura_fundamentos_apostololicos.png';
+                              return (
+                                <li
+                                  key={`m-${itemKey}`}
+                                  onClick={() => {
+                                    setCurrentIndex(globalIndex);
+                                    // Em mobile, recolhe o painel para que o player volte ao topo.
+                                    setMobileSidebarOpen(false);
+                                    // Sobe a página para que o aluno veja o player atualizado.
+                                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                                  }}
+                                  title={video.title}
+                                  className={`flex gap-2.5 p-2 rounded-lg cursor-pointer transition-all ${
+                                    isActive
+                                      ? 'bg-navy-lighter border-l-2 border-mint pl-[6px]'
+                                      : 'hover:bg-navy-lighter/60 border-l-2 border-transparent'
+                                  }`}
+                                >
+                                  <div className="relative flex-shrink-0">
+                                    <img
+                                      src={thumbnail}
+                                      alt={`Miniatura ${video.title}`}
+                                      className={`w-16 h-10 object-cover rounded ${isItemLocked ? 'opacity-40' : ''}`}
+                                    />
+                                    {isCompleted && !isItemLocked && (
+                                      <div className="absolute inset-0 bg-navy/50 rounded flex items-center justify-center">
+                                        <svg className="w-4 h-4 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                          <polyline points="20 6 9 17 4 12"/>
+                                        </svg>
+                                      </div>
+                                    )}
+                                    {isItemLocked && (
+                                      <div className="absolute inset-0 bg-navy/60 rounded flex items-center justify-center">
+                                        <span className="text-sm" role="img" aria-label="bloqueada">🔒</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <p className={`text-xs font-medium truncate leading-snug ${isActive ? 'text-mint' : 'text-slate-white'}`}>
+                                      {video.title}
+                                    </p>
+                                    {video.subjectName && (
+                                      <p className="text-xs text-slate truncate mt-0.5">{video.subjectName}</p>
+                                    )}
+                                    <div className="flex items-center gap-2 mt-1">
+                                      {durationSeconds > 0 && (
+                                        <span className="text-xs text-slate/70 tabular-nums">{formatClock(durationSeconds)}</span>
+                                      )}
+                                      {isCompleted && (
+                                        <span className="text-xs text-mint font-medium">✓ Concluída</span>
+                                      )}
+                                    </div>
+                                    {!isCompleted && durationSeconds > 0 && progress > 0 && (
+                                      <div className="h-1 bg-navy rounded-full mt-1.5">
+                                        <div
+                                          className="h-1 bg-mint rounded-full"
+                                          style={{ width: `${Math.round(progress * 100)}%` }}
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <div className="p-3 border-t border-slate/10 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          handleNext();
+                          setMobileSidebarOpen(false);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        }}
+                        disabled={currentIndex >= videoList.length - 1}
+                        className="w-full py-2 text-sm font-medium text-mint rounded-lg border border-mint/30 hover:bg-mint/10 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        Próxima aula →
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Material */}
                 {currentVideo.materialFile && (
                   <div className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 sm:p-4 bg-navy-lighter/50 border border-slate/10 rounded-xl mt-6 hover:border-mint/30 transition-colors group">
@@ -1982,17 +2146,9 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                 </div>
               </div>
 
-              {/* ── RIGHT COLUMN — sidebar ──────────────────────────────────── */}
-              <div className={`w-full flex-shrink-0 ${!theaterMode ? 'lg:w-80 xl:w-96' : ''}`}>
-                {/* Mobile: toggle para lista de aulas */}
-                <button
-                  className="lg:hidden w-full flex items-center justify-between px-4 py-3 bg-navy-lighter/60 border border-slate/10 rounded-xl text-sm font-medium text-slate-white"
-                  onClick={() => setMobileSidebarOpen(v => !v)}
-                >
-                  <span>📋 Lista de aulas ({videoList.length})</span>
-                  <svg className={`w-4 h-4 text-slate transition-transform ${mobileSidebarOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
-                </button>
-                <div className={`lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden lg:max-h-[calc(100vh-5rem)] ${mobileSidebarOpen ? 'max-h-72 mt-2' : 'max-h-0'} lg:max-h-[calc(100vh-5rem)] transition-all duration-300 lg:mt-0`}>
+              {/* ── RIGHT COLUMN — sidebar (apenas desktop) ─────────────────── */}
+              <div className={`hidden lg:block w-full flex-shrink-0 ${!theaterMode ? 'lg:w-80 xl:w-96' : ''}`}>
+                <div className="lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden lg:max-h-[calc(100vh-5rem)]">
 
                   {/* Progress summary — conta apenas aulas DESTE curso, não as globais */}
                   {videoList.length > 0 && (() => {
