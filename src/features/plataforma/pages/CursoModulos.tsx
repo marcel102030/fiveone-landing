@@ -168,8 +168,8 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-navy pt-6 pb-12 px-4">
-        <div className="max-w-screen-xl mx-auto">
+      <div className="min-h-screen bg-navy pt-6 pb-12 px-4 overflow-x-hidden">
+        <div className="max-w-screen-xl mx-auto w-full">
           {courseName && (
             <button
               onClick={() => navigate('/plataforma')}

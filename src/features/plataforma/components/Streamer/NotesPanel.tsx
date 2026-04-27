@@ -183,7 +183,7 @@ export default function NotesPanel({ lessonId, currentSeconds, onSeek }: NotesPa
           placeholder={`Adicionar nota no ${formatTs(currentSeconds)}…`}
           disabled={adding}
           rows={2}
-          className="w-full bg-navy-lighter border border-slate/20 rounded-lg px-3 py-2 text-sm
+          className="block w-full max-w-full box-border bg-navy-lighter border border-slate/20 rounded-lg px-3 py-2 text-sm
                      text-slate-white placeholder-slate resize-none
                      focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/30
                      transition-colors disabled:opacity-50"
@@ -191,15 +191,15 @@ export default function NotesPanel({ lessonId, currentSeconds, onSeek }: NotesPa
             if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); void handleSubmit(e as unknown as FormEvent); }
           }}
         />
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-slate">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-2">
+          <span className="text-xs text-slate whitespace-nowrap">
             ⏱ {formatTs(currentSeconds)}
           </span>
           <button
             type="submit"
             disabled={!draft.trim() || adding}
-            className="flex items-center gap-1.5 px-4 py-2.5 sm:py-1.5 text-xs font-medium rounded-lg
-                       bg-mint text-navy transition-all min-h-[44px] sm:min-h-0
+            className="flex items-center gap-1.5 px-3 sm:px-4 py-2.5 sm:py-1.5 text-xs font-medium rounded-lg
+                       bg-mint text-navy transition-all min-h-[44px] sm:min-h-0 whitespace-nowrap
                        hover:bg-mint/90 disabled:opacity-40 disabled:cursor-not-allowed"
           >
             {adding ? (
@@ -211,7 +211,8 @@ export default function NotesPanel({ lessonId, currentSeconds, onSeek }: NotesPa
                 <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
               </svg>
             )}
-            {adding ? "Salvando…" : "Adicionar nota"}
+            <span className="sm:hidden">{adding ? "…" : "Salvar"}</span>
+            <span className="hidden sm:inline">{adding ? "Salvando…" : "Adicionar nota"}</span>
           </button>
         </div>
       </form>

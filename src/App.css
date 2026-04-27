@@ -1,6 +1,16 @@
+/* Previne overflow horizontal causado por elementos rebeldes (iframes,
+   pré-formatados, embeds etc.). Sem isso, o Safari iOS deixa a página
+   horizontalmente scrollável e cliva botões à direita. */
+html,
+body {
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
 #root {
   width: 100%;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .app {
@@ -13,6 +23,16 @@ main {
   flex: 1;
   padding-top: var(--navbar-height);
   width: 100%;
+  /* Em landscape, respeita o notch lateral. Em portrait, env() é 0. */
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Modo plataforma: o Header já cuida do padding-top do notch.
+   O main não precisa adicionar o padding-top da navbar institucional. */
+.app.plataforma-mode main {
+  padding-top: 0 !important;
+  padding-bottom: env(safe-area-inset-bottom);
 }
 
 /* Global container class */

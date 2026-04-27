@@ -1688,8 +1688,8 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-navy pb-16">
-        <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+      <div className="min-h-screen bg-navy pb-16 overflow-x-hidden">
+        <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6 w-full">
 
           {/* Empty state */}
           {!videoList.length && (
@@ -1878,16 +1878,16 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                   </div>
 
                   {/* Center: Navigation + Progress */}
-                  <div className="flex items-center gap-2 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-center">
+                  <div className="flex flex-wrap items-center gap-2 order-1 sm:order-2 w-full sm:w-auto justify-between sm:justify-center min-w-0">
                     {currentIndex > 0 && (
                       <button
                         onClick={handlePrevious}
-                        className="px-4 py-2.5 sm:py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0"
+                        className="px-3 sm:px-4 py-2.5 sm:py-1.5 text-xs sm:text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0 whitespace-nowrap"
                       >
                         ← Anterior
                       </button>
                     )}
-                    <span className="text-xs sm:text-sm text-slate px-1 tabular-nums" aria-label="Progresso da aula">
+                    <span className="text-xs sm:text-sm text-slate px-1 tabular-nums whitespace-nowrap flex-shrink-0" aria-label="Progresso da aula">
                       {uiProgress.durationSeconds > 0
                         ? `${formatClock(uiProgress.watchedSeconds)} / ${formatClock(uiProgress.durationSeconds)}`
                         : formatClock(uiProgress.watchedSeconds)}
@@ -1895,7 +1895,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                     {currentIndex < videoList.length - 1 && (
                       <button
                         onClick={handleNext}
-                        className="px-4 py-2.5 sm:py-1.5 text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0"
+                        className="px-3 sm:px-4 py-2.5 sm:py-1.5 text-xs sm:text-sm text-slate hover:text-slate-white bg-navy-lighter rounded-lg border border-transparent hover:border-slate/20 transition-all min-h-[44px] sm:min-h-0 whitespace-nowrap"
                       >
                         Próxima →
                       </button>
@@ -1994,20 +1994,27 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                 </button>
                 <div className={`lg:sticky lg:top-6 flex flex-col rounded-xl border border-slate/10 bg-navy-lighter/40 overflow-hidden lg:max-h-[calc(100vh-5rem)] ${mobileSidebarOpen ? 'max-h-72 mt-2' : 'max-h-0'} lg:max-h-[calc(100vh-5rem)] transition-all duration-300 lg:mt-0`}>
 
-                  {/* Progress summary */}
-                  {videoList.length > 0 && (
-                    <div className="p-4 border-b border-slate/10 flex-shrink-0">
-                      <p className="text-sm font-semibold text-slate-white">
-                        {completedIds.size} de {videoList.length} aulas concluídas
-                      </p>
-                      <div className="h-1.5 bg-navy-lighter rounded-full mt-2">
-                        <div
-                          className="h-1.5 bg-mint rounded-full transition-all duration-300"
-                          style={{ width: `${Math.round((completedIds.size / videoList.length) * 100)}%` }}
-                        />
+                  {/* Progress summary — conta apenas aulas DESTE curso, não as globais */}
+                  {videoList.length > 0 && (() => {
+                    const completedInCourse = videoList.reduce(
+                      (n, v) => n + (completedIds.has(v.videoId) || completedIds.has(v.id) ? 1 : 0),
+                      0,
+                    );
+                    const pct = Math.round((completedInCourse / videoList.length) * 100);
+                    return (
+                      <div className="p-4 border-b border-slate/10 flex-shrink-0">
+                        <p className="text-sm font-semibold text-slate-white">
+                          {completedInCourse} de {videoList.length} aulas concluídas
+                        </p>
+                        <div className="h-1.5 bg-navy-lighter rounded-full mt-2">
+                          <div
+                            className="h-1.5 bg-mint rounded-full transition-all duration-300"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Filter */}
                   <div className="px-4 pt-3 pb-2 border-b border-slate/10 flex-shrink-0">
