@@ -217,6 +217,52 @@ async function prepareStoredFile(
   return file;
 }
 
+/**
+ * Faz upload de banner de curso/módulo no Storage e retorna o StoredFile
+ * com `url`/`storagePath` populados (sem o dataUrl base64). Usado pelas
+ * funções `setMinistryBanner` e `setModuleBanner` para evitar gravar
+ * arquivos gigantes inline na coluna `banner` do banco.
+ */
+async function uploadCourseAsset(
+  kind: 'ministry-banner' | 'module-banner',
+  ctx: { ministryId: MinistryKey; moduleId?: string },
+  file: StoredFile,
+): Promise<StoredFile> {
+  if (!file.file) return file; // já é um StoredFile pronto, não há nada a subir
+  await ensureStorageBucket();
+  const extension = (() => {
+    const fromName = file.name?.split('.').pop();
+    if (fromName) return fromName.toLowerCase();
+    const fromType = file.type?.split('/').pop();
+    return fromType ? fromType.toLowerCase() : 'bin';
+  })();
+  const safeBase = slugify(file.name?.replace(/\.[^.]+$/, '') || kind) || kind;
+  const timestamp = Date.now();
+  const folder = ctx.moduleId
+    ? `${ctx.ministryId}/_modules/${ctx.moduleId}`
+    : `${ctx.ministryId}/_ministry`;
+  const path = `${folder}/${kind}-${safeBase}-${timestamp}.${extension}`;
+  const { error } = await supabase.storage.from(STORAGE_BUCKET).upload(path, file.file, {
+    cacheControl: '3600',
+    upsert: true,
+    contentType: file.type,
+  });
+  if (error) throw error;
+  const { data: publicUrlData } = supabase.storage.from(STORAGE_BUCKET).getPublicUrl(path);
+  return {
+    name: file.name,
+    size: file.size,
+    type: file.type,
+    width: file.width,
+    height: file.height,
+    storageBucket: STORAGE_BUCKET,
+    storagePath: path,
+    url: publicUrlData.publicUrl,
+    dataUrl: null,
+    uploadedAt: new Date().toISOString(),
+  };
+}
+
 const ministryPresets: MinistryMeta[] = [
   {
     id: "APOSTOLO",
@@ -904,19 +950,22 @@ export async function createMinistry(input: {
 }
 
 export async function setMinistryBanner(ministryId: MinistryKey, banner: StoredFile | null): Promise<void> {
+  // Faz upload no Storage antes de salvar — sem isso o `banner.file` seria
+  // perdido e só sobraria o dataUrl base64 (gigante e bloqueia o load).
+  const processed = banner ? await uploadCourseAsset('ministry-banner', { ministryId }, banner) : null;
   const { error } = await supabase
     .from('platform_ministry')
-    .update({ banner: banner ? JSON.stringify(banner) : null })
+    .update({ banner: processed ? JSON.stringify(serializeStoredFile(processed)) : null })
     .eq('id', ministryId);
   if (error) throw error;
   await refreshContent();
 }
 
 export async function setModuleBanner(ministryId: MinistryKey, moduleId: string, banner: StoredFile | null): Promise<void> {
-  void ministryId; // kept for API consistency
+  const processed = banner ? await uploadCourseAsset('module-banner', { ministryId, moduleId }, banner) : null;
   const { error } = await supabase
     .from('platform_module')
-    .update({ banner_module: banner ? JSON.stringify(banner) : null })
+    .update({ banner_module: processed ? JSON.stringify(serializeStoredFile(processed)) : null })
     .eq('id', moduleId);
   if (error) throw error;
   await refreshContent();

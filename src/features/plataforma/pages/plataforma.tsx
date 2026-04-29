@@ -419,7 +419,26 @@ const PaginaInicial = () => {
 
         {/* ── HERO ────────────────────────────────────────────────────────── */}
         <section className="relative overflow-hidden bg-gradient-to-br from-navy to-navy-light border-b border-slate/10">
-          {/* Decoração de fundo */}
+          {/* Foto de fundo — desktop e mobile diferentes via <picture>.
+              Para trocar, substitua os arquivos em /public/assets/images/. */}
+          <picture aria-hidden="true">
+            <source media="(min-width: 768px)" srcSet="/assets/images/banner-login-fiveone.png" />
+            <img
+              src="/assets/images/BemVindo.png"
+              alt=""
+              className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
+              draggable={false}
+              loading="eager"
+            />
+          </picture>
+
+          {/* Overlay escurecedor para garantir legibilidade do texto */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-gradient-to-b from-navy/85 via-navy/70 to-navy/95 sm:bg-gradient-to-r sm:from-navy/90 sm:via-navy/65 sm:to-navy/40"
+          />
+
+          {/* Decoração de fundo (manchas mint sutis) */}
           <div className="absolute inset-0 pointer-events-none">
             <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-mint/5 blur-3xl" />
             <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-mint/5 blur-3xl" />
@@ -741,7 +760,13 @@ const PaginaInicial = () => {
                 {enrolledCourses.map(({ id, ministry }) => {
                   const label = ministry?.name || id
                   const gradient = ministry?.gradient || 'linear-gradient(135deg, #0f172a, #0369a1)'
-                  const bannerUrl = ministry?.banner?.url || ministry?.banner?.dataUrl || null
+                  // Prioriza URL pública (Storage). Aceita dataUrl apenas se for pequeno
+                  // (<200 KB) — dataUrls gigantes bloqueiam o load e estouram a página.
+                  const banner = ministry?.banner
+                  const dataUrlSafe = banner?.dataUrl && banner.dataUrl.length < 200_000 ? banner.dataUrl : null
+                  const bannerUrl = banner?.url || dataUrlSafe || null
+                  // Iniciais do curso para o fallback (até 2 letras).
+                  const initials = (label || id).replace(/[^A-Za-zÀ-ú0-9]+/g, ' ').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')
                   return (
                     <Link
                       key={id}
@@ -750,11 +775,23 @@ const PaginaInicial = () => {
                       aria-label={`Acessar ${label}`}
                     >
                       {bannerUrl ? (
-                        <img src={bannerUrl} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+                        <img src={bannerUrl} alt={label} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
                       ) : (
-                        <div className="absolute inset-0" style={{ background: gradient, opacity: 0.7 }} />
+                        <>
+                          <div className="absolute inset-0" style={{ background: gradient }} />
+                          {/* Padrão decorativo no fallback — círculos mint translúcidos + iniciais grandes */}
+                          <div className="absolute inset-0 pointer-events-none">
+                            <div className="absolute -top-10 -right-10 w-40 h-40 rounded-full bg-mint/15 blur-2xl" />
+                            <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-mint/10 blur-3xl" />
+                          </div>
+                          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-[120px] sm:text-[140px] font-black text-mint/15 leading-none select-none">
+                              {initials || '★'}
+                            </span>
+                          </div>
+                        </>
                       )}
-                      <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/30 to-navy/95" />
+                      <div className="absolute inset-0 bg-gradient-to-b from-navy/10 via-navy/35 to-navy/95" />
 
                       <div className="absolute top-4 left-4 z-10">
                         <span className="inline-flex items-center rounded-full border border-mint/25 bg-navy/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint backdrop-blur-md">
@@ -762,8 +799,11 @@ const PaginaInicial = () => {
                         </span>
                       </div>
 
-                      <div className="absolute inset-0 flex items-center justify-center px-6">
-                        <p className="text-slate-white font-bold text-xl text-center leading-tight drop-shadow-lg">{label}</p>
+                      <div className="absolute left-4 right-4 bottom-16 z-10 sm:bottom-20">
+                        <p className="text-slate-white font-bold text-xl sm:text-2xl leading-tight drop-shadow-lg">{label}</p>
+                        {ministry?.tagline && (
+                          <p className="text-slate-light/80 text-xs sm:text-sm mt-1.5 line-clamp-2">{ministry.tagline}</p>
+                        )}
                       </div>
 
                       <div className="absolute right-3 bottom-3 z-10">

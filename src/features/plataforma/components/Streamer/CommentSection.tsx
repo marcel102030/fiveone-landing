@@ -18,6 +18,7 @@ type Comment = {
   ts: number;
   likes: number;
   parentId: string | null;
+  status?: 'pendente' | 'aprovado' | 'reprovado';
   author: CommentAuthor;
 };
 
@@ -293,6 +294,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
       ts: new Date(raw.created_at).getTime(),
       likes: raw.likes,
       parentId: raw.parent_id || null,
+      status: (raw.status as 'pendente' | 'aprovado' | 'reprovado' | undefined) ?? 'aprovado',
       author: {
         id: raw.user_id,
         name: resolvedName,
@@ -324,7 +326,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
 
     loadFromStorage();
 
-    fetchComments(videoId)
+    fetchComments(videoId, userId)
       .then((rows) => {
         if (cancelled) return;
         setIsLoading(false);
@@ -372,6 +374,9 @@ export default function CommentSection({ videoId }: { videoId: string }) {
       ts: Date.now(),
       likes: 0,
       parentId,
+      // Comentários novos vão como pendentes (a moderação aprova depois).
+      // Marcando como pendente, a UI mostra o badge "Em revisão".
+      status: 'pendente',
       author: currentAuthor || {
         id: userId,
         name: fallbackName,
@@ -388,7 +393,7 @@ export default function CommentSection({ videoId }: { videoId: string }) {
     });
 
     addComment(userId, videoId, value, parentId)
-      .then(() => fetchComments(videoId))
+      .then(() => fetchComments(videoId, userId))
       .then((rows) => {
         const mapped = rows.map(mapComment);
         setList(mapped);
@@ -458,8 +463,16 @@ export default function CommentSection({ videoId }: { videoId: string }) {
               <span className="text-xs text-slate" title={new Date(comment.ts).toLocaleString("pt-BR")}>
                 {relativeTime(comment.ts)}
               </span>
+              {comment.status === 'pendente' && comment.author.id === userId && (
+                <span
+                  className="text-[10px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-300 border border-amber-500/30"
+                  title="Seu comentário foi enviado e aguarda aprovação da moderação. Outros alunos verão quando for aprovado."
+                >
+                  Em revisão
+                </span>
+              )}
             </div>
-            <div className="text-sm text-slate-light mt-1 leading-relaxed">
+            <div className={`text-sm mt-1 leading-relaxed ${comment.status === 'pendente' ? 'text-slate-light/80' : 'text-slate-light'}`}>
               {renderCommentText(comment.text)}
             </div>
 
