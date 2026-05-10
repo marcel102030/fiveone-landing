@@ -869,6 +869,218 @@
   margin: 0 0 24px;
 }
 
+/* ── Estrutura (Identidade) ────────────────────────────────── */
+.estrutura {
+  padding-block: var(--section-pad-y);
+  background: var(--casas-surface);
+  border-top: 1px solid var(--casas-border);
+}
+.estrutura-inner {
+  max-width: var(--content-max-w);
+  margin-inline: auto;
+  padding-inline: var(--section-pad-x);
+}
+.estrutura-tabs {
+  display: flex;
+  gap: clamp(8px, 2vw, 28px);
+  border-bottom: 1px solid var(--casas-border);
+  margin-bottom: clamp(28px, 4vw, 48px);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.estrutura-tabs::-webkit-scrollbar { display: none; }
+.estrutura-tab {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--casas-muted);
+  padding: 16px 4px;
+  position: relative;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  transition: color 0.2s;
+}
+.estrutura-tab::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: var(--casas-teal);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.3s ease;
+}
+.estrutura-tab:hover { color: var(--casas-text); }
+.estrutura-tab.is-active {
+  color: var(--casas-text);
+}
+.estrutura-tab.is-active::after { transform: scaleX(1); }
+
+.estrutura-panel {
+  animation: estruturaFade 0.45s ease both;
+}
+@keyframes estruturaFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+.estrutura-panel[hidden] { display: none; }
+
+/* Hero — imagem full-width com texto sobreposto */
+.estrutura-panel__hero {
+  position: relative;
+  border-radius: var(--casas-radius);
+  overflow: hidden;
+  aspect-ratio: 21/9;
+  min-height: 320px;
+  margin-bottom: clamp(36px, 4vw, 64px);
+  isolation: isolate;
+}
+.estrutura-panel__hero img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.estrutura-panel__hero-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(10, 15, 30, 0) 0%, rgba(10, 15, 30, 0.55) 50%, rgba(10, 15, 30, 0.92) 100%),
+    linear-gradient(135deg, rgba(0, 168, 150, 0.14) 0%, rgba(124, 58, 237, 0.14) 100%);
+  z-index: 1;
+}
+.estrutura-panel__hero-content {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: clamp(24px, 4vw, 56px) clamp(24px, 4vw, 56px) clamp(28px, 4vw, 56px);
+  z-index: 2;
+}
+.estrutura-panel__eyebrow {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--casas-teal);
+  margin-bottom: 14px;
+}
+.estrutura-panel__hero-content h3 {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 4vw, 3.25rem);
+  font-weight: 800;
+  line-height: 1.05;
+  letter-spacing: -0.02em;
+  color: var(--casas-text);
+  margin: 0;
+  max-width: 760px;
+}
+
+/* Corpo — texto principal e listas */
+.estrutura-panel__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+  gap: clamp(32px, 5vw, 72px);
+  align-items: start;
+}
+
+.estrutura-panel__lead p {
+  font-size: clamp(0.9375rem, 1.25vw, 1.0625rem);
+  color: var(--casas-text);
+  line-height: 1.78;
+  margin: 0 0 16px;
+  opacity: 0.9;
+}
+.estrutura-panel__lead p:last-of-type { margin-bottom: 0; }
+
+.estrutura-panel__verse {
+  margin: 28px 0 0;
+  padding: 20px 24px;
+  border-left: 3px solid var(--casas-teal);
+  background: rgba(0, 168, 150, 0.06);
+  border-radius: 0 12px 12px 0;
+}
+.estrutura-panel__verse p {
+  font-family: var(--font-display);
+  font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  font-style: normal;
+  font-weight: 600;
+  color: var(--casas-text);
+  margin: 0 0 8px;
+  line-height: 1.4;
+}
+.estrutura-panel__verse cite {
+  display: block;
+  font-size: 0.75rem;
+  font-style: normal;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--casas-teal);
+}
+
+.estrutura-panel__items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+  border-top: 1px solid var(--casas-border);
+}
+.estrutura-panel__items li {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--casas-border);
+}
+.estrutura-panel__items li strong {
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--casas-teal);
+}
+.estrutura-panel__items li span {
+  font-size: 0.9375rem;
+  color: var(--casas-text);
+  line-height: 1.6;
+  opacity: 0.88;
+}
+
+.estrutura-panel__callout {
+  grid-column: 1 / -1;
+  margin-top: clamp(20px, 3vw, 36px);
+  padding: 22px 26px;
+  border-left: 3px solid var(--casas-violet);
+  background: rgba(124, 58, 237, 0.08);
+  border-radius: 0 12px 12px 0;
+}
+.estrutura-panel__callout span {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--casas-violet);
+  margin-bottom: 8px;
+}
+.estrutura-panel__callout p {
+  font-size: 1.0625rem;
+  font-style: italic;
+  color: var(--casas-text);
+  margin: 0;
+  line-height: 1.6;
+}
+
 /* ── Galeria ───────────────────────────────────────────────── */
 .galeria {
   padding-block: var(--section-pad-y);
@@ -1526,6 +1738,8 @@
   .pilar-card:nth-child(even) { border-right: none; padding-right: 0; }
   .galeria-grid { grid-template-columns: repeat(2, 1fr); }
   .galeria-card { aspect-ratio: 16/10; }
+  .estrutura-panel__hero { aspect-ratio: 16/9; }
+  .estrutura-panel__body { grid-template-columns: 1fr; gap: 36px; }
   .confissao-inner { grid-template-columns: 1fr; }
   .footer-modern__grid { grid-template-columns: 1fr 1fr; }
   .valores-grid { grid-template-columns: repeat(2, 1fr); }
@@ -1624,6 +1838,10 @@
   .pilares-grid { grid-template-columns: 1fr; }
   .pilares-row { grid-template-columns: 1fr; }
   .pilar-card { border-right: none !important; padding-right: 0 !important; }
+  .estrutura-tabs { gap: 18px; }
+  .estrutura-tab { font-size: 0.875rem; padding: 14px 2px; }
+  .estrutura-panel__hero { aspect-ratio: 4/3; min-height: 0; }
+  .estrutura-panel__items li strong { font-size: 0.75rem; }
 
   /* Reduz padding vertical dos cards no mobile para não esticar demais a página */
   .valor-card       { padding-top: 24px !important; padding-bottom: 24px !important; }

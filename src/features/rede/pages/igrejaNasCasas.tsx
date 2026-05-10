@@ -140,6 +140,137 @@ const manifestoCards = [
   },
 ];
 
+type EstruturaTab = {
+  id: string;
+  label: string;
+  eyebrow: string;
+  titulo: string;
+  paragrafos: string[];
+  versiculo?: { texto: string; referencia: string };
+  itens?: { titulo: string; descricao: string }[];
+  destaque?: string;
+  imagem: string;
+};
+
+const estruturaTabs: EstruturaTab[] = [
+  {
+    id: 'visao',
+    label: 'Visão Geral',
+    eyebrow: 'Rede de igrejas nas casas',
+    titulo: 'Cinco ministérios cuidando das casas',
+    paragrafos: [
+      'O nome da igreja local não é "Five One". Cada igreja é, antes de tudo, uma igreja na casa. A Rede Five One é a rede dos cinco ministérios de Efésios 4 — apóstolos, profetas, evangelistas, pastores e mestres — que cuidam, acompanham e fortalecem essas casas, para que o Corpo de Cristo seja edificado de forma saudável e fiel à Escritura.',
+      'Nós somos a Igreja. Não somos uma denominação, e nenhuma instituição "possui" as casas. A natureza dos vínculos entre nós se parece mais com os de uma família do que com os de uma estrutura institucional: depende de amor, confiança, tempo e longevidade.',
+    ],
+    versiculo: {
+      texto: 'Permaneçam firmes e apeguem-se às tradições que ensinamos a vocês, quer por palavra, quer por carta nossa.',
+      referencia: '2 Tessalonicenses 2.15',
+    },
+    itens: [
+      { titulo: 'Igreja é gente, não local', descricao: 'A casa não vira "templo" porque a igreja se reúne nela. Quem é Igreja é o povo de Deus reunido por Cristo.' },
+      { titulo: 'Cinco ministérios juntos', descricao: 'Apóstolos, profetas, evangelistas, pastores e mestres servindo o Corpo — sem o "ministério de um homem só".' },
+      { titulo: 'Vínculos relacionais', descricao: 'Acompanhamento de família, não de organização: caminhar próximo, com amor e tempo.' },
+      { titulo: 'Unidade com a Igreja', descricao: 'Lutamos contra o "nós contra eles" e pela unidade com outras igrejas locais e com o Corpo de Cristo na cidade.' },
+    ],
+    destaque: 'A Rede Five One é apenas uma expressão da igreja entre tantas outras boas e fiéis. Não somos uma marca; somos um lar.',
+    imagem: principal3,
+  },
+  {
+    id: 'lideranca',
+    label: 'Liderança',
+    eyebrow: 'Liderança plural sob o Sumo Pastor',
+    titulo: 'Presbíteros e os cinco dons ministeriais',
+    paragrafos: [
+      'O modelo neotestamentário não conhece o líder solitário no topo de uma estrutura piramidal. Conhece, sim, presbíteros — sempre no plural — que cuidam juntos do rebanho de Deus, reconhecidos pelo caráter antes da capacidade, ao longo do tempo (At 14.23; Tt 1.5-9; 1Pe 5.1-4).',
+      'Distinguimos cuidadosamente presbítero de pastor. Em Efésios 4.11, pastor é um dos cinco dons ministeriais que Cristo distribuiu à sua Igreja. Um presbítero pode ter o dom de pastor — mas também pode liderar pelo dom de mestre, profeta, evangelista ou apóstolo. Queremos resgatar a pluralidade dos cinco ministérios e abandonar o modelo de "ministério de um homem só".',
+    ],
+    itens: [
+      { titulo: 'Apóstolos', descricao: 'Enviados que abrem caminhos, plantam comunidades e cuidam da fidelidade ao evangelho.' },
+      { titulo: 'Profetas', descricao: 'Vozes que ouvem a Deus para o presente, exortando, consolando e chamando à conversão.' },
+      { titulo: 'Evangelistas', descricao: 'Proclamadores das boas-novas, com paixão e clareza para alcançar os que ainda não creem.' },
+      { titulo: 'Pastores', descricao: 'Cuidadores que conhecem cada ovelha pelo nome, alimentando, protegendo e curando.' },
+      { titulo: 'Mestres', descricao: 'Guardiões da sã doutrina, que ensinam com fidelidade e profundidade as Escrituras.' },
+      { titulo: 'Áreas que servem o corpo', descricao: 'Equipes de membros que servem em finanças, mídia, louvor, ceia, departamento infantil e prospecção de necessidades — para que cada casa funcione como família espiritual viva.' },
+    ],
+    destaque: 'Cada igreja na casa é liderada por uma equipe plural de presbíteros, e não por um único líder. Liderar é servir aqueles que compartilham o mesmo dom.',
+    imagem: principal2,
+  },
+  {
+    id: 'vida',
+    label: 'Vida da Igreja',
+    eyebrow: 'Como vivemos como igreja',
+    titulo: 'Casas, mesa, dons e discipulado',
+    paragrafos: [
+      'A igreja nas casas não é uma estratégia de crescimento nem uma reação contra estruturas maiores. É uma convicção: a casa é o ambiente mais natural para a formação de discípulos. Em torno da mesa, ninguém é plateia. A Palavra é compartilhada, as crianças participam, os fardos são divididos, o pão e o vinho lembram o sacrifício de Cristo, e a hospitalidade se torna serviço de adoração.',
+      'Cremos que os dons espirituais permanecem plenamente ativos hoje, distribuídos pelo Espírito Santo segundo sua vontade soberana. Damos espaço para o exercício dos dons em nossas reuniões, com ordem e edificação — rejeitando tanto o cessacionismo quanto o sensacionalismo (1Co 12; 14.40).',
+    ],
+    itens: [
+      { titulo: 'Igreja na casa', descricao: 'Reunimo-nos prioritariamente em lares, recuperando o modelo neotestamentário e relacional dos primeiros discípulos.' },
+      { titulo: 'Ceia ao redor da mesa', descricao: 'Celebramos a Ceia como refeição comunitária autêntica, não como rito isolado — em memória de Cristo e antecipando o banquete do Reino.' },
+      { titulo: 'Batismo por imersão', descricao: 'Celebramos o batismo de quem professa fé consciente, como festa comunitária e entrada visível no Corpo.' },
+      { titulo: 'Discipulado relacional', descricao: 'Cada cristão é discípulo e discipulador, formando outros no convívio diário, e não apenas pela transmissão de conteúdo.' },
+      { titulo: 'Sacerdócio de todos', descricao: 'Rejeitamos o clericalismo: cada irmão e irmã tem dom, vocação e responsabilidade no Reino.' },
+      { titulo: 'Mutualismo no Reino', descricao: 'Homens e mulheres, criados igualmente à imagem de Deus, podem servir em todas as funções da igreja, conforme os dons recebidos do Espírito.' },
+    ],
+    imagem: principal1,
+  },
+  {
+    id: 'motivos',
+    label: '5 Motivos',
+    eyebrow: 'Por que nos encontramos',
+    titulo: 'Os cinco motivos do encontro',
+    paragrafos: [
+      'Cada encontro existe para que permaneçamos firmes nos cinco motivos pelos quais a igreja se reúne — não como agenda, mas como vida compartilhada ao redor da mesa, na presença do Espírito Santo.',
+    ],
+    itens: [
+      { titulo: 'Adoração', descricao: 'Cristo no centro de cada encontro — em palavra, oração e canto, dirigida ao Pai, por meio do Filho, no Espírito.' },
+      { titulo: 'Comunhão', descricao: 'Mesa aberta, vidas conectadas, presença real entre irmãos. Não há cristianismo solitário.' },
+      { titulo: 'Discipulado', descricao: 'Aprender a obedecer a Jesus juntos, no cotidiano — ensinando uns aos outros tudo o que Ele ordenou.' },
+      { titulo: 'Serviço', descricao: 'Cada um servindo com o dom que recebeu, dentro e fora da casa, em sacerdócio real.' },
+      { titulo: 'Evangelismo', descricao: 'A casa como base de envio para o bairro, a cidade e os povos — porque Cristo é o único Mediador.' },
+    ],
+    destaque: 'Em uma igreja na casa, cada membro faz muita falta. Como a proposta é sermos menos em número, a presença de cada um pesa muito — o nosso encontro é prioridade.',
+    imagem: principal4,
+  },
+  {
+    id: 'membresia',
+    label: 'Membresia',
+    eyebrow: 'Pacto comunitário',
+    titulo: 'Membresia é aliança, não cadastro',
+    paragrafos: [
+      'A membresia formal em uma igreja local não é mera adesão administrativa, mas um pacto de aliança espiritual entre o crente e a comunidade da fé, comprometendo-os mutuamente diante de Deus e uns dos outros (Hb 10.24-25; At 2.42-47).',
+      'Para se tornar membro de uma igreja na casa da Rede Five One, a pessoa precisa concluir o curso Bases — onde percorre os fundamentos da fé cristã e nossa identidade como rede — e ler esta Confissão de Fé junto com os presbíteros, acolhendo-a como sua.',
+    ],
+    itens: [
+      { titulo: 'Submissão mútua', descricao: 'Viver em aliança fraterna com os demais irmãos (Ef 4.1-3; Hb 10.24-25).' },
+      { titulo: 'Participação ativa', descricao: 'Estar nas reuniões, ministérios e expressões da comunidade (1Co 14.26; At 2.42).' },
+      { titulo: 'Missão e discipulado', descricao: 'Assumir o chamado de fazer discípulos e servir com amor, dentro e fora da igreja (Mt 28.19-20).' },
+      { titulo: 'Generosidade alegre', descricao: 'Sustentar a missão do Reino e cuidar dos necessitados com simplicidade e administração sábia (At 2.44-45; 2Co 9.7).' },
+      { titulo: 'Cuidado pastoral', descricao: 'Receber o cuidado dos presbíteros e dos cinco ministérios, acolhendo correção amorosa quando necessário (Hb 13.17; 1Pe 5.1-5).' },
+    ],
+    imagem: principal7,
+  },
+  {
+    id: 'multiplicacao',
+    label: 'Multiplicação',
+    eyebrow: 'Como uma nova casa nasce',
+    titulo: 'Multiplicar quando estiver maduro',
+    paragrafos: [
+      'Nosso desejo é multiplicar. Mas a multiplicação só ocorrerá quando identificarmos presbíteros preparados para conduzir uma nova casa. Entendemos pela Escritura que cabe ao ministério apostólico reconhecer presbíteros — queremos ser o mais fiéis possível ao texto.',
+      'Cada nova casa permanece sob o acompanhamento da Rede e participa de uma reunião geral mensal com as demais igrejas da rede na mesma cidade. Seus presbíteros se reúnem com a liderança da rede em periodicidade aproximada de dois meses, para que a unidade seja preservada.',
+    ],
+    itens: [
+      { titulo: 'Caráter bíblico', descricao: 'Amar a Cristo de todo o coração, com o caráter que a Escritura exige de presbíteros (1Tm 3; Tt 1).' },
+      { titulo: 'Vida nos 5 motivos', descricao: 'Participação ativa, constante e colaborativa em adoração, comunhão, discipulado, serviço e evangelismo.' },
+      { titulo: 'Confissão acolhida', descricao: 'Conhecer e viver a Confissão de Fé, alinhado com a doutrina e as convicções da rede.' },
+      { titulo: 'Comunhão real', descricao: 'Amizade e relacionamento verdadeiro com os presbíteros atuais, para preservar a unidade.' },
+      { titulo: 'Conexão entre as casas', descricao: 'Reunião mensal das casas da mesma cidade e contribuição financeira para que a obra continue avançando.' },
+    ],
+    destaque: 'Cada casa que surgir separa um valor mensal para a Rede Five One — para multiplicar novas casas, abrir orfanatos e cumprir outros chamados que o Senhor venha a colocar diante de nós.',
+    imagem: principal5,
+  },
+];
+
 const programacao = [
   {
     titulo: 'Estudo Bíblico nas Casas',
@@ -196,6 +327,7 @@ const visitorFormPath = `/rede/cadastro?token=${PUBLIC_VISITOR_TOKEN}`;
 
 const pageLinks = [
   { id: 'manifesto', label: 'Quem somos' },
+  { id: 'estrutura', label: 'Estrutura' },
   { id: 'confissao', label: 'Confissão de Fé' },
   { id: 'mapa', label: 'Mapa da Rede' },
   { id: 'programacao', label: 'Programação' },
@@ -226,6 +358,7 @@ function CountUp({ end, started, suffix = '' }: { end: number; started: boolean;
 const IgrejaNasCasas: React.FC = () => {
   const [estadoSelecionado, setEstadoSelecionado] = useState('');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('');
+  const [estruturaTab, setEstruturaTab] = useState<string>(estruturaTabs[0]?.id ?? 'visao');
   const [isNavOpen, setIsNavOpen] = useState(false);
   const [activeSection, setActiveSection] = useState<string>(pageLinks[0]?.id ?? 'manifesto');
   const [galeriaIndices, setGaleriaIndices] = useState<Record<string, number>>(
@@ -597,6 +730,92 @@ const IgrejaNasCasas: React.FC = () => {
               </div>
             </article>
           ))}
+        </div>
+      </section>
+
+      {/* ── Estrutura (Identidade) ─────────────────────────── */}
+      <section className="estrutura" id="estrutura">
+        <div className="estrutura-inner">
+          <div className="section-head reveal">
+            <span className="section-label">Identidade e estrutura</span>
+            <h2>Como funciona a Rede Five One</h2>
+            <p>
+              Em todo relacionamento sério, é preciso ser claro sobre intenções, caminhos e expectativas. Aqui está,
+              em resumo, o que significa fazer parte da Rede Five One — bairro a bairro, casa a casa.
+            </p>
+          </div>
+
+          <div className="estrutura-tabs reveal" role="tablist" aria-label="Estrutura da Rede Five One">
+            {estruturaTabs.map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={estruturaTab === tab.id}
+                aria-controls={`estrutura-panel-${tab.id}`}
+                id={`estrutura-tab-${tab.id}`}
+                className={`estrutura-tab${estruturaTab === tab.id ? ' is-active' : ''}`}
+                onClick={() => setEstruturaTab(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {estruturaTabs.map((tab) => {
+            const isActive = estruturaTab === tab.id;
+            return (
+              <div
+                key={tab.id}
+                id={`estrutura-panel-${tab.id}`}
+                role="tabpanel"
+                aria-labelledby={`estrutura-tab-${tab.id}`}
+                hidden={!isActive}
+                className="estrutura-panel"
+              >
+                <div className="estrutura-panel__hero">
+                  <img src={tab.imagem} alt="" loading="lazy" decoding="async" />
+                  <div className="estrutura-panel__hero-shade" />
+                  <div className="estrutura-panel__hero-content">
+                    <span className="estrutura-panel__eyebrow">{tab.eyebrow}</span>
+                    <h3>{tab.titulo}</h3>
+                  </div>
+                </div>
+
+                <div className="estrutura-panel__body">
+                  <div className="estrutura-panel__lead">
+                    {tab.paragrafos.map((p, idx) => (
+                      <p key={idx}>{p}</p>
+                    ))}
+                    {tab.versiculo && (
+                      <blockquote className="estrutura-panel__verse">
+                        <p>“{tab.versiculo.texto}”</p>
+                        <cite>— {tab.versiculo.referencia}</cite>
+                      </blockquote>
+                    )}
+                  </div>
+
+                  {tab.itens && tab.itens.length > 0 && (
+                    <ul className="estrutura-panel__items">
+                      {tab.itens.map((item) => (
+                        <li key={item.titulo}>
+                          <strong>{item.titulo}</strong>
+                          <span>{item.descricao}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+
+                  {tab.destaque && (
+                    <div className="estrutura-panel__callout">
+                      <span>Em destaque</span>
+                      <p>{tab.destaque}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </section>
 
