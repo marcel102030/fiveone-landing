@@ -406,31 +406,39 @@
 }
 
 /* Indicador animado de scroll — ancorado à direita do hero */
-.hero-scroll-cue {
+.casas-page .hero .hero-scroll-cue {
   position: absolute;
   right: var(--section-pad-x);
   bottom: clamp(32px, 4vw, 52px);
   z-index: 2;
-  background: none;
-  border: none;
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  border: none !important;
+  border-radius: 0 !important;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 14px;
-  padding: 8px 0;
+  padding: 8px 0 !important;
+  margin: 0 !important;
+  width: auto !important;
   font-family: var(--font-body);
   font-size: 0.625rem;
   font-weight: 600;
   letter-spacing: 0.24em;
   text-transform: uppercase;
+  text-decoration: none;
   color: rgba(255, 255, 255, 0.65);
   transition: color 0.25s ease, transform 0.25s ease;
   animation: heroCueIn 0.8s 1.2s ease both;
+  box-shadow: none !important;
 }
-.hero-scroll-cue:hover {
-  color: var(--casas-teal);
+.casas-page .hero .hero-scroll-cue:hover {
+  color: var(--casas-teal) !important;
   transform: translateY(-3px);
+  background: transparent !important;
 }
 .hero-scroll-cue__line {
   display: block;
@@ -2225,6 +2233,9 @@
   /* Barra de fatos/stats — esconde no mobile */
   .hero-facts-bar,
   .hero-stats-bar { display: none; }
+
+  /* Chevron de scroll — colide com FABs no mobile */
+  .casas-page .hero .hero-scroll-cue { display: none; }
 
   /* Hero CTAs */
   .hero-actions { flex-direction: column; align-items: flex-start; }
