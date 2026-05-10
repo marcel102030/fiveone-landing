@@ -401,7 +401,12 @@ const IgrejaNasCasas: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setHeaderScrolled(window.scrollY > 24);
+    const onScroll = () => {
+      setHeaderScrolled(window.scrollY > 24);
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (window.scrollY / docHeight) * 100 : 0;
+      document.documentElement.style.setProperty('--scroll-progress', `${Math.min(100, Math.max(0, progress))}%`);
+    };
     window.addEventListener('scroll', onScroll, { passive: true });
     onScroll();
     return () => window.removeEventListener('scroll', onScroll);
@@ -570,6 +575,11 @@ const IgrejaNasCasas: React.FC = () => {
   return (
     <div className="casas-page" id="top">
 
+      {/* ── Progress bar de scroll ──────────────────────────── */}
+      <div className="page-progress" aria-hidden="true">
+        <div className="page-progress__bar" />
+      </div>
+
       {/* ── Header ─────────────────────────────────────────── */}
       <div className={`page-strip-wrapper${headerScrolled ? ' is-scrolled' : ''}`}>
         <div className="page-strip">
@@ -624,10 +634,13 @@ const IgrejaNasCasas: React.FC = () => {
           ))}
         </div>
         <div className="hero-stage__overlay" />
+        <div className="hero-vignette" aria-hidden="true" />
         <div className="hero-content">
           <span className="hero-badge">Rede Five One</span>
           <h1>
-            Rede de <span>Igrejas nas Casas</span>
+            <span className="word">Rede</span> <span className="word">de</span>{' '}
+            <span className="word accent">Igrejas</span> <span className="word accent">nas</span>{' '}
+            <span className="word accent">Casas</span>
           </h1>
           <p>
             Um movimento que transforma lares em centros de comunhão, discipulado e missão — bairro a bairro.
@@ -641,6 +654,15 @@ const IgrejaNasCasas: React.FC = () => {
             </button>
           </div>
         </div>
+        <button
+          type="button"
+          className="hero-scroll-cue"
+          onClick={() => scrollToSection('manifesto')}
+          aria-label="Rolar para a próxima seção"
+        >
+          <span>Role para descobrir</span>
+          <span className="hero-scroll-cue__line" aria-hidden="true" />
+        </button>
         {dynamicStats.casasAtivas > 1 ? (
           <div className="hero-stats-bar" ref={statsRef}>
             <div>
@@ -688,8 +710,13 @@ const IgrejaNasCasas: React.FC = () => {
                 key={v.titulo}
                 className={`valor-card reveal reveal-d${Math.min(i + 1, 6)}`}
               >
-                <h3>{v.titulo}</h3>
-                <p>{v.descricao}</p>
+                <span className="valor-card__index" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
+                <div className="valor-card__body">
+                  <h3>{v.titulo}</h3>
+                  <p>{v.descricao}</p>
+                </div>
               </div>
             ))}
           </div>
@@ -722,11 +749,27 @@ const IgrejaNasCasas: React.FC = () => {
           {manifestoCards.map((card, i) => (
             <article key={card.titulo} className={`pilar-card reveal reveal-d${Math.min(i + 1, 3)}`}>
               <header>
+                <span className="pilar-card__index" aria-hidden="true">
+                  {String(i + 1).padStart(2, '0')}
+                </span>
                 <span>{card.tag}</span>
                 <h3>{card.titulo}</h3>
               </header>
               <div className="pilar-card__body">
                 <p>{card.resumo}</p>
+                {card.itens && card.itens.length > 0 && (
+                  <ul className="pilar-card__list">
+                    {card.itens.slice(0, 3).map((item) => (
+                      <li key={item}>{item}</li>
+                    ))}
+                  </ul>
+                )}
+                {card.quote && (
+                  <div className="pilar-card__quote">
+                    <p>{card.quote.text}</p>
+                    <span>{card.quote.author}</span>
+                  </div>
+                )}
               </div>
             </article>
           ))}
@@ -820,7 +863,8 @@ const IgrejaNasCasas: React.FC = () => {
       </section>
 
       {/* ── Quote Highlight ────────────────────────────────── */}
-      <section className="quote-highlight">
+      <section className="quote-highlight" style={{ backgroundImage: `url(${principal6})` }}>
+        <div className="quote-highlight__shade" aria-hidden="true" />
         <div className="quote-highlight-inner">
           <span className="quote-highlight-label reveal">Rede de Igrejas nas Casas — Five One</span>
           <blockquote className="reveal">
@@ -886,6 +930,7 @@ const IgrejaNasCasas: React.FC = () => {
                     />
                     <div className="galeria-card__shade" />
                   </div>
+                  <span className="galeria-card__expand" aria-hidden="true">+</span>
                   <div className="galeria-card__content">
                     <h3>{encontro.titulo}</h3>
                     <p>{encontro.descricao}</p>
@@ -899,6 +944,19 @@ const IgrejaNasCasas: React.FC = () => {
               );
             })}
           </div>
+        </div>
+      </section>
+
+      {/* ── Versículo guia ─────────────────────────────────── */}
+      <section className="versiculo-guia" aria-labelledby="versiculo-guia-title">
+        <div className="versiculo-guia__inner reveal">
+          <span className="versiculo-guia__label">Versículo guia</span>
+          <p id="versiculo-guia-title" className="versiculo-guia__text">
+            E perseveravam <em>na doutrina dos apóstolos, e na comunhão, e no partir do pão, e
+            nas orações</em>… partindo o pão em casa, comiam juntos com alegria e singeleza
+            de coração.
+          </p>
+          <cite className="versiculo-guia__ref">Atos 2.42, 46</cite>
         </div>
       </section>
 
@@ -1062,24 +1120,25 @@ const IgrejaNasCasas: React.FC = () => {
                 );
               }}
             >
-              <label>
-                Nome
-                <input name="nome" type="text" placeholder="Como podemos te chamar?" required />
+              <label className="contato-field">
+                <input name="nome" type="text" placeholder=" " required />
+                <span className="contato-field__label">Nome</span>
               </label>
-              <label>
-                E-mail
-                <input name="email" type="email" placeholder="seuemail@exemplo.com" />
+              <label className="contato-field">
+                <input name="email" type="email" placeholder=" " />
+                <span className="contato-field__label">E-mail</span>
               </label>
-              <label>
-                Telefone / WhatsApp
-                <input name="telefone" type="tel" placeholder="+55 (83) 98718-1731" />
+              <label className="contato-field">
+                <input name="telefone" type="tel" placeholder=" " />
+                <span className="contato-field__label">Telefone / WhatsApp</span>
               </label>
-              <label>
-                Mensagem
-                <textarea name="mensagem" rows={4} placeholder="Compartilhe como podemos ajudar." required />
+              <label className="contato-field">
+                <textarea name="mensagem" rows={4} placeholder=" " required />
+                <span className="contato-field__label">Compartilhe como podemos ajudar</span>
               </label>
-              <button type="submit" className="btn primary">
+              <button type="submit" className="btn primary contato-form__submit">
                 Enviar pelo WhatsApp
+                <span aria-hidden="true">→</span>
               </button>
             </form>
             <div className="contato-info reveal reveal-d2">
