@@ -2,7 +2,7 @@
   "name": "Five One — Plataforma Ministerial",
   "short_name": "Five One",
   "description": "Plataforma de formação ministerial Five One. Acesse as formações, módulos e aulas.",
-  "start_url": "/#/plataforma",
+  "start_url": "/plataforma",
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui"],
@@ -37,21 +37,21 @@
       "name": "Plataforma",
       "short_name": "Plataforma",
       "description": "Acessar a plataforma de formação",
-      "url": "/#/plataforma",
+      "url": "/plataforma",
       "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Módulos",
       "short_name": "Módulos",
       "description": "Ver os módulos disponíveis",
-      "url": "/#/modulos-mestre",
+      "url": "/modulos-mestre",
       "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
     },
     {
       "name": "Login",
       "short_name": "Login",
       "description": "Entrar na conta",
-      "url": "/#/login-aluno",
+      "url": "/login-aluno",
       "icons": [{ "src": "/web-app-manifest-192x192.png", "sizes": "192x192" }]
     }
   ]

@@ -105,8 +105,8 @@ function ChurchCreateInviteInner() {
       // dispara email com instruções para o responsável
       try {
         const origin = (typeof window !== "undefined") ? window.location.origin : "";
-        const testUrl = successData.quiz_url || `${origin}/#/teste-dons?churchSlug=${slug}`;
-        const reportUrl = successData.report_url || `${origin}/#/relatorio/${slug}`;
+        const testUrl = successData.quiz_url || `${origin}/descubra-seu-dom?churchSlug=${slug}`;
+        const reportUrl = successData.report_url || `${origin}/relatorio/${slug}`;
         const whatsappUrl = `https://wa.me/5583989004764?text=${encodeURIComponent(`Olá! Cadastrei a igreja ${name} (slug: ${slug}). Poderiam me ajudar?`)}`;
         const resp = await fetch("/api/church-created-email", {
           method: "POST",
@@ -137,8 +137,8 @@ function ChurchCreateInviteInner() {
 
   if (success) {
     const origin = (typeof window !== "undefined") ? window.location.origin : "";
-    const quizLink = `${origin}/#/teste-dons?churchSlug=${success.slug}`;
-    // const reportLink = success.report_url || `${origin}/#/relatorio/${success.slug}`;
+    const quizLink = `${origin}/descubra-seu-dom?churchSlug=${success.slug}`;
+    // const reportLink = success.report_url || `${origin}/relatorio/${success.slug}`;
     // const inviteLink = success.invite_url || `${origin}/c/${success.slug}`;
     return (
       <div className="invite-wrap">

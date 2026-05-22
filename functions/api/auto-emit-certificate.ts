@@ -105,7 +105,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     // ── Enviar e-mail (não bloqueia a resposta) ───────────────────────────────
     if (env.RESEND_API_KEY?.startsWith('re_')) {
       const site = env.SITE_URL || `https://${new URL(request.url).host}`;
-      const certUrl = `${site}/#/certificado/${verifyCode}`;
+      const certUrl = `${site}/certificado/${verifyCode}`;
       const from = env.RESEND_FROM_ALUNO?.trim() || 'Five One <bemvindofiveone@fiveonemovement.com>';
       const dateFormatted = new Date(issuedAt).toLocaleDateString('pt-BR', {
         day: '2-digit', month: 'long', year: 'numeric',

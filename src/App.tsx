@@ -1,7 +1,7 @@
 import { lazy, Suspense } from "react";
 import {
   Route,
-  HashRouter as Router,
+  BrowserRouter as Router,
   Routes,
   useLocation,
   useNavigate,
@@ -79,12 +79,21 @@ const MeusCertificados = lazy(() => import("./features/plataforma/pages/MeusCert
 const CertificadoPublico = lazy(() => import("./features/plataforma/pages/CertificadoPublico"));
 const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
 
+function RedirectWithQuery({ to }: { to: string }) {
+  const { search } = useLocation();
+  return <Navigate to={`${to}${search}`} replace />;
+}
+
 function AppContent() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  const isInviteTest = location.pathname === "/teste-dons" && searchParams.has("churchSlug");
+  const isInviteTest =
+    (location.pathname === "/descubra-seu-dom" ||
+      location.pathname === "/teste-dons" ||
+      location.pathname === "/quiz") &&
+    searchParams.has("churchSlug");
 
   const handleLogin = () => {
     const next = searchParams.get("next");
@@ -260,8 +269,9 @@ function AppContent() {
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
             <Route path="/copiar" element={<CopyLink />} />
             <Route path="/quem-somos" element={<About />} />
-            <Route path="/teste-dons" element={<Quiz />} />
-            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/descubra-seu-dom" element={<Quiz />} />
+            <Route path="/teste-dons" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
+            <Route path="/quiz" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
             <Route path="/formacao-ministerial" element={<Services />} />
             <Route path="/insights" element={<BlogList />} />
             <Route path="/insights/:postId" element={<BlogPostPage />} />

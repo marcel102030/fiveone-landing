@@ -248,7 +248,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
 
         <p className="mt-8 text-xs text-slate/60 text-center">
           Ao acessar você concorda com os{" "}
-          <a href="/#/contato" className="text-slate/80 hover:text-mint transition-colors underline underline-offset-2">
+          <a href="/contato" className="text-slate/80 hover:text-mint transition-colors underline underline-offset-2">
             termos de uso e privacidade
           </a>{" "}
           da Five One.

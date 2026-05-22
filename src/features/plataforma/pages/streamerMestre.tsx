@@ -2309,7 +2309,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               {certVerifyCode ? (
                 <a
-                  href={`/#/certificado/${certVerifyCode}`}
+                  href={`/certificado/${certVerifyCode}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="px-6 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
@@ -2319,7 +2319,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
                 </a>
               ) : (
                 <a
-                  href="/#/certificados"
+                  href="/certificados"
                   className="px-6 py-3 bg-mint text-navy font-bold rounded-xl hover:bg-mint/90 transition-colors text-sm"
                   onClick={() => setShowCourseComplete(false)}
                 >

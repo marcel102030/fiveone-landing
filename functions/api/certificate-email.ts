@@ -67,7 +67,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     }
 
     const site = env.SITE_URL || `https://${new URL(request.url).host}`;
-    const certUrl = `${site}/#/certificado/${verifyCode}`;
+    const certUrl = `${site}/certificado/${verifyCode}`;
     const from =
       env.RESEND_FROM_ALUNO?.trim() || 'Five One <no-reply@fiveonemovement.com>';
     const reply_to =

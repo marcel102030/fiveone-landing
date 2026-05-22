@@ -55,7 +55,7 @@ const ConhecaMais = () => {
           ))}
         </div>
         <h3 className="quiz-card-title">Pronto para descobrir seu dom?</h3>
-        <div className="quiz-card" onClick={() => navigate("/teste-dons")}>
+        <div className="quiz-card" onClick={() => navigate("/descubra-seu-dom")}>
           <img
             src={apostoloIcon}
             alt="Ícone representando o teste de dons"

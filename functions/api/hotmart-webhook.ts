@@ -274,7 +274,7 @@ async function sendWelcomeEmail(opts: {
     const reply_to =
       env.RESEND_REPLY_TO_ALUNO?.trim() || 'escolafiveone@gmail.com';
 
-    const loginUrl = `${site}/#/login-aluno?utm_source=email&utm_medium=transactional&utm_campaign=hotmart_purchase`;
+    const loginUrl = `${site}/login-aluno?utm_source=email&utm_medium=transactional&utm_campaign=hotmart_purchase`;
     const greeting = name ? `Olá, ${escapeHtml(name)}!` : 'Olá!';
 
     const html = `

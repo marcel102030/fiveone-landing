@@ -1,0 +1,6 @@
+# Redirects de URLs antigas do quiz (preserva query string automaticamente)
+/teste-dons    /descubra-seu-dom    301
+/quiz          /descubra-seu-dom    301
+
+# SPA fallback para Cloudflare Pages (BrowserRouter)
+/*    /index.html    200

@@ -165,7 +165,7 @@ export default function EmitirCertificados() {
                       <p className="text-xs font-mono text-mint">{c.verify_code.slice(0, 8)}…</p>
                     </div>
                     <a
-                      href={`/#/certificado/${c.verify_code}`}
+                      href={`/certificado/${c.verify_code}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-xs px-3 py-1.5 rounded-lg bg-mint/10 text-mint border border-mint/20 hover:bg-mint/20 transition-colors whitespace-nowrap">

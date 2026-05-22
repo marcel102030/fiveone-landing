@@ -9,8 +9,7 @@ const appleTouchLink = document.querySelector<HTMLLinkElement>('link[rel="apple-
 const redeIgrejasFavicon = "/rede-igrejas-favicon.jpeg";
 
 const updateFavicon = () => {
-  const hash = window.location.hash || "";
-  const isRedeIgrejas = hash.includes("/rede-igrejas");
+  const isRedeIgrejas = window.location.pathname.startsWith("/rede-igrejas");
 
   if (isRedeIgrejas) {
     if (faviconLink) {
@@ -32,7 +31,22 @@ const updateFavicon = () => {
 };
 
 updateFavicon();
-window.addEventListener("hashchange", updateFavicon);
+window.addEventListener("popstate", updateFavicon);
+
+// Como pushState/replaceState não disparam evento nativo, monitora-os para
+// atualizar o favicon em navegações internas do React Router.
+const originalPushState = window.history.pushState.bind(window.history);
+const originalReplaceState = window.history.replaceState.bind(window.history);
+window.history.pushState = (...args) => {
+  const result = originalPushState(...args);
+  updateFavicon();
+  return result;
+};
+window.history.replaceState = (...args) => {
+  const result = originalReplaceState(...args);
+  updateFavicon();
+  return result;
+};
 
 createRoot(rootElement as HTMLElement).render(
   <StrictMode>

@@ -44,8 +44,8 @@ const Navbar = () => {
             QUEM SOMOS
           </Link>
           <Link
-            to="/teste-dons"
-            className={`nav-link ${isActive("/teste-dons") ? "active" : ""}`}
+            to="/descubra-seu-dom"
+            className={`nav-link ${isActive("/descubra-seu-dom") ? "active" : ""}`}
             onClick={() => setIsMenuOpen(false)}
           >
             DESCUBRA O SEU DOM MINISTERIAL

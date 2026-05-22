@@ -149,7 +149,7 @@ export default function AdminChurches() {
     return {
       invite_url: `${PROD_ORIGIN}/c/${slug}`,
       report_url: `/relatorio/${slug}`,
-      quiz_url: `${PROD_ORIGIN}/#/teste-dons?churchSlug=${slug}`,
+      quiz_url: `${PROD_ORIGIN}/descubra-seu-dom?churchSlug=${slug}`,
     };
   }
 
@@ -420,7 +420,7 @@ export default function AdminChurches() {
 
   function onShareWhatsApp(slug: string, name: string) {
     const origin = (typeof window !== 'undefined') ? window.location.origin : '';
-    const link = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
+    const link = `${origin}/descubra-seu-dom?churchSlug=${encodeURIComponent(slug)}`;
     const text = encodeURIComponent(`Olá! Segue o link do Teste dos 5 Ministérios para a igreja "${name}": ${link}`);
     window.open(`https://wa.me/?text=${text}`, '_blank');
   }
@@ -1055,7 +1055,7 @@ export default function AdminChurches() {
                   className="admin-btn"
                   onClick={() => {
                     const origin = (typeof window !== 'undefined') ? window.location.origin : '';
-                    copyToClipboard(`${origin}/#/cadastrar-igreja`);
+                    copyToClipboard(`${origin}/cadastrar-igreja`);
                   }}
                   title="Copiar link para o líder preencher o cadastro da igreja"
                 >

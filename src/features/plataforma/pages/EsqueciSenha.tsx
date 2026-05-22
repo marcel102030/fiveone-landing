@@ -20,7 +20,7 @@ export default function EsqueciSenha() {
 
     try {
       // URL de redirecionamento após clicar no link do email
-      const redirectTo = `${window.location.origin}/#/redefinir-senha`;
+      const redirectTo = `${window.location.origin}/redefinir-senha`;
       const { error } = await supabase.auth.resetPasswordForEmail(email.trim().toLowerCase(), { redirectTo });
       if (error) throw error;
       setSent(true);

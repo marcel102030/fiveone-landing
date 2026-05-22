@@ -191,8 +191,8 @@ export const onRequest = async ({ request, env }: { request: Request; env: Env }
     }
 
     const originSite = env.SITE_URL || new URL(request.url).origin;
-    const quizUrl = `${originSite}/#/teste-dons?churchSlug=${encodeURIComponent(insertedChurch.slug)}`;
-    const reportUrl = `${originSite}/#/relatorio/${encodeURIComponent(insertedChurch.slug)}`;
+    const quizUrl = `${originSite}/descubra-seu-dom?churchSlug=${encodeURIComponent(insertedChurch.slug)}`;
+    const reportUrl = `${originSite}/relatorio/${encodeURIComponent(insertedChurch.slug)}`;
 
     await sendContactEmail({
       request,

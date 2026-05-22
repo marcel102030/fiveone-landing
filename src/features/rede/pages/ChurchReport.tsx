@@ -1,6 +1,6 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, useSearchParams, Link } from "react-router-dom";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import "./ChurchReport.css";
@@ -243,15 +243,9 @@ const EXPRESSIONS_MAP: Record<ProfileDomKey, { expressionTitle: string; expressi
   },
 };
 
-// Lê querystring do hash (HashRouter)
-function useHashQuery() {
-  const { hash } = useLocation();
-  return useMemo(() => new URLSearchParams(hash.includes("?") ? hash.split("?")[1] : ""), [hash]);
-}
-
 function ChurchReportInner() {
   const params = useParams();
-  const query = useHashQuery();
+  const [query] = useSearchParams();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -621,7 +615,7 @@ function ChurchReportInner() {
           {!isPublic && (() => {
             const s = data?.slug || slug;
             const origin = typeof window !== 'undefined' ? window.location.origin : '';
-            const href = `${origin}/#/teste-dons?churchSlug=${encodeURIComponent(String(s))}`;
+            const href = `${origin}/descubra-seu-dom?churchSlug=${encodeURIComponent(String(s))}`;
             return (
               <a className="btn ghost" href={href} target="_blank" rel="noopener noreferrer">
                 Abrir teste
@@ -1332,7 +1326,7 @@ async function exportExecutivePDF(slug: string, data: ApiResponse | null, cardsE
 
 function copyPublicLink(slug: string, from: string, to: string, toast: AdminToastApi) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const url = `${origin}/#/r/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
+  const url = `${origin}/r/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
   if (navigator.clipboard && window.isSecureContext) {
     navigator.clipboard.writeText(url)
       .then(() => toast.success('Link copiado', 'Compartilhe o painel público com a sua igreja.'))
@@ -1360,7 +1354,7 @@ function copyPublicLink(slug: string, from: string, to: string, toast: AdminToas
 
 function shareReportLink(slug: string, from: string, to: string, toast: AdminToastApi) {
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
-  const url = `${origin}/#/relatorio/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
+  const url = `${origin}/relatorio/${slug}?from=${encodeURIComponent(from||'')}&to=${encodeURIComponent(to||'')}`;
   const title = `Relatório — ${slug}`;
   if ((navigator as any).share) {
     (navigator as any).share({ title, url }).catch(() => copyToClipboard(url));

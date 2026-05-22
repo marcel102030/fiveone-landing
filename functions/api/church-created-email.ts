@@ -44,8 +44,8 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     }
 
     const site = env.SITE_URL || `https://${request.headers.get("host")}`;
-    const baseTest = body?.links?.testUrl || `${site}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
-    const baseReport = body?.links?.reportUrl || `${site}/#/relatorio/${encodeURIComponent(slug)}`;
+    const baseTest = body?.links?.testUrl || `${site}/descubra-seu-dom?churchSlug=${encodeURIComponent(slug)}`;
+    const baseReport = body?.links?.reportUrl || `${site}/relatorio/${encodeURIComponent(slug)}`;
     const whatsappUrl = body?.links?.whatsappUrl || `https://wa.me/5583989004764`;
 
     const testUrl = withUtm(baseTest);
@@ -105,7 +105,7 @@ function renderHtml({ name, testUrl, reportUrl, whatsappUrl, responsibleName }: 
       href: testUrl,
       cta: 'Abrir link',
       linkCopy: visibleTest,
-      copyHref: withUtm(`${originOf(testUrl)}/#/copiar?u=${encodeURIComponent(testUrl)}`),
+      copyHref: withUtm(`${originOf(testUrl)}/copiar?u=${encodeURIComponent(testUrl)}`),
     })}
     ${optionSecondary({
       emoji: '📊',

@@ -52,9 +52,9 @@ export const onRequestPost = async (ctx: any) => {
     // defina o domínio do seu site nas variáveis do Cloudflare
     const site = (ctx.env.SITE_URL as string) || 'https://seusite.com';
     const inviteUrl = `${site}/c/${data.slug}`;
-    const reportUrl = `${site}/#/relatorio/${data.slug}`;
+    const reportUrl = `${site}/relatorio/${data.slug}`;
     // Corrigido: link correto do teste com churchSlug
-    const quizUrl = `${site}/#/teste-dons?churchSlug=${encodeURIComponent(data.slug)}`;
+    const quizUrl = `${site}/descubra-seu-dom?churchSlug=${encodeURIComponent(data.slug)}`;
 
     return new Response(
       JSON.stringify({

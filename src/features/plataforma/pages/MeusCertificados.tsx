@@ -87,7 +87,7 @@ const MeusCertificados = () => {
           {!loading && certs.length > 0 && (
             <div className="space-y-3">
               {certs.map(cert => {
-                const certHref = `/#/certificado/${cert.verify_code}`
+                const certHref = `/certificado/${cert.verify_code}`
                 return (
                   <div
                     key={cert.id}

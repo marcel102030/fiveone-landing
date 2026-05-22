@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "./AdministracaoFiveOne.css";
 import "./ConteudoPlataforma.css";
 import {
@@ -135,6 +136,7 @@ const defaultLessonForm = (): LessonFormState => ({
 
 export default function AdminConteudoPlataforma() {
   document.title = "Administração | Five One — Conteúdo";
+  const navigate = useNavigate();
   const content = usePlatformContent();
   const [activeTab, setActiveTab] = useState<"modules" | "info" | "enrollments" | "certificate">("modules");
   const [selectedMinistryId, setSelectedMinistryId] = useState<MinistryKey>(() => content.ministries[0]?.id || "");
@@ -1024,7 +1026,7 @@ export default function AdminConteudoPlataforma() {
         <h1 className="adm5-title">Conteúdo da Plataforma</h1>
         <button
           className="adm5-pill"
-          onClick={() => (window.history.length ? history.back() : (location.hash = "#/admin/administracao"))}
+          onClick={() => (window.history.length > 1 ? history.back() : navigate("/admin/administracao"))}
         >
           ← Voltar ao hub
         </button>

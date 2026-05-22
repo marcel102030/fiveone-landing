@@ -27,12 +27,12 @@
       const params = new URLSearchParams(window.location.search);
       const token = params.get("token");
       const tokenQuery = token ? `?token=${encodeURIComponent(token)}` : "";
-      const target = `${window.location.origin}/#/rede/cadastro${tokenQuery}`;
+      const target = `${window.location.origin}/rede/cadastro${tokenQuery}`;
       window.location.replace(target);
     </script>
     <noscript>
       <p>Redirecionando para o cadastro...</p>
-      <a href="/#/rede/cadastro">Abrir cadastro</a>
+      <a href="/rede/cadastro">Abrir cadastro</a>
     </noscript>
   </body>
 </html>

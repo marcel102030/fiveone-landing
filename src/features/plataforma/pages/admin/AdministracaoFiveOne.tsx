@@ -7,7 +7,7 @@ import { usePlatformContent } from "../../services/platformContent";
 
 const quickAccessLinks = [
   { label: "Acessar Site", href: "https://fiveonemovement.com/", icon: "🌐" },
-  { label: "Acessar Plataforma", href: "https://fiveonemovement.com/#/login-aluno", icon: "🎓" },
+  { label: "Acessar Plataforma", href: "https://fiveonemovement.com/login-aluno", icon: "🎓" },
   { label: "Rede de Igrejas", href: "https://redeigrejanascasas.com/", icon: "🏠" },
 ];
 

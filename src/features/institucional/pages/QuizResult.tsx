@@ -165,7 +165,7 @@ const QuizResult = () => {
         <p style={{ color: '#cfd8dc', marginBottom: '2rem' }}>
           Este link pode ter expirado ou é inválido.
         </p>
-        <Link to="/teste-dons" className="start-button" style={{ textDecoration: 'none', display: 'inline-block', padding: '0.9rem 2rem' }}>
+        <Link to="/descubra-seu-dom" className="start-button" style={{ textDecoration: 'none', display: 'inline-block', padding: '0.9rem 2rem' }}>
           Fazer o Teste
         </Link>
       </section>
@@ -246,7 +246,7 @@ const QuizResult = () => {
           Quer descobrir o seu Dom Ministerial?
         </p>
         <Link
-          to="/teste-dons"
+          to="/descubra-seu-dom"
           className="start-button"
           style={{ textDecoration: 'none', display: 'inline-block', padding: '1rem 2.5rem' }}
         >

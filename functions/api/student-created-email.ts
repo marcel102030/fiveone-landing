@@ -59,7 +59,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     }
 
     const site = env.SITE_URL || `https://${request.headers.get("host")}`;
-    const loginUrl = withUtm(`${site}/#/login-aluno`);
+    const loginUrl = withUtm(`${site}/login-aluno`);
 
     const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Five One <no-reply@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";

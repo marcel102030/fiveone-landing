@@ -91,7 +91,7 @@ const ServiceFormPage: React.FC<ServiceFormPageProps> = ({
   fields,
   ctaLabel = "Enviar formulário",
   successMessage = DEFAULT_SUCCESS,
-  backUrl = "/teste-dons",
+  backUrl = "/descubra-seu-dom",
   serviceType,
   serviceLabel,
   buildSubmission,
@@ -211,9 +211,9 @@ const ServiceFormPage: React.FC<ServiceFormPageProps> = ({
 
       const quizUrl =
         json?.church?.quiz_url ||
-        `${window.location.origin}/#/teste-dons?churchSlug=${encodeURIComponent(json?.church?.slug || "")}`;
+        `${window.location.origin}/descubra-seu-dom?churchSlug=${encodeURIComponent(json?.church?.slug || "")}`;
       const reportUrl =
-        json?.church?.report_url || `${window.location.origin}/#/relatorio/${encodeURIComponent(json?.church?.slug || "")}`;
+        json?.church?.report_url || `${window.location.origin}/relatorio/${encodeURIComponent(json?.church?.slug || "")}`;
 
       const success: SuccessData = {
         serviceType,

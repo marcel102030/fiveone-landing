@@ -113,7 +113,7 @@ function getChurchFromURL() {
   slugFromQuery = url.searchParams.get('churchSlug') ?? undefined;
   idFromQuery = url.searchParams.get('church') ?? url.searchParams.get('churchId') ?? undefined;
 
-  // --- Suporte ao HashRouter: hash do tipo "#/teste-dons?churchSlug=..." ou "#/c/<slug>?..."
+  // --- Compat com links legados que ainda contenham hash (#/teste-dons?... ou #/c/<slug>?...)
   if (!slugFromPath && hash) {
     const hashStr = hash.startsWith('#') ? hash.slice(1) : hash;
     const [hashPath, hashQuery] = hashStr.split('?');
@@ -358,7 +358,7 @@ const Quiz = () => {
   const churchCtx = getChurchFromURL();
   const isInviteLink = Boolean(churchCtx.churchSlug);
 
-  const lastHashRef = useRef(window.location.hash);
+  const lastUrlRef = useRef(window.location.pathname + window.location.search);
 
   const [churchInfo, setChurchInfo] = useState<{ id?: string; name?: string; slug?: string } | null>(null);
 
@@ -393,8 +393,8 @@ const Quiz = () => {
 
     window.history.pushState = function (...args) {
       const result = originalPushState.apply(this, args as any);
-      const newHash = window.location.hash;
-      if (lastHashRef.current !== newHash) {
+      const newUrl = window.location.pathname + window.location.search;
+      if (lastUrlRef.current !== newUrl) {
         const event = new PopStateEvent("popstate");
         window.dispatchEvent(event);
       }
@@ -403,18 +403,20 @@ const Quiz = () => {
 
     const handlePopState = () => {
       if (quizStarted && !showResults) {
-        const currentHash = window.location.hash;
-        const previousHash = lastHashRef.current;
+        const currentUrl = window.location.pathname + window.location.search;
+        const previousUrl = lastUrlRef.current;
 
-        if (currentHash !== previousHash) {
-          window.history.pushState(null, "", previousHash);
+        if (currentUrl !== previousUrl) {
+          window.history.pushState(null, "", previousUrl);
           pendingLeaveAction.current = () => {
-            window.location.hash = currentHash;
+            lastUrlRef.current = currentUrl;
+            window.history.pushState(null, "", currentUrl);
+            window.dispatchEvent(new PopStateEvent("popstate"));
           };
           setShowLeaveModal(true);
         }
       } else {
-        lastHashRef.current = window.location.hash;
+        lastUrlRef.current = window.location.pathname + window.location.search;
       }
     };
 
@@ -428,13 +430,12 @@ const Quiz = () => {
 
   const confirmLeave = () => {
     pendingLeaveAction.current?.();
-    window.history.pushState(null, "", window.location.hash);
-    lastHashRef.current = window.location.hash;
+    pendingLeaveAction.current = null;
     setShowLeaveModal(false);
   };
 
   const cancelLeave = () => {
-    window.history.pushState(null, "", lastHashRef.current);
+    window.history.pushState(null, "", lastUrlRef.current);
     pendingLeaveAction.current = null;
     setShowLeaveModal(false);
   };
@@ -455,6 +456,21 @@ const Quiz = () => {
   useEffect(() => {
     const img = new Image();
     img.src = logo;
+  }, []);
+
+  useEffect(() => {
+    const previousTitle = document.title;
+    const description = document.querySelector('meta[name="description"]');
+    const previousDescription = description?.getAttribute("content") || "";
+    document.title = "Teste dos 5 Ministérios — Descubra seu Dom (Apóstolo, Profeta, Evangelista, Pastor, Mestre) | Five One";
+    description?.setAttribute(
+      "content",
+      "Faça o Teste dos 5 Ministérios da Five One e descubra seu dom ministerial — Apóstolo, Profeta, Evangelista, Pastor ou Mestre. Baseado em Efésios 4:11-13. Gratuito, ~10 minutos, com PDF de resultado."
+    );
+    return () => {
+      document.title = previousTitle;
+      if (previousDescription) description?.setAttribute("content", previousDescription);
+    };
   }, []);
 
   useEffect(() => {
@@ -783,7 +799,7 @@ const Quiz = () => {
     // Branding
     ctx.fillStyle = '#64ffda';
     ctx.font = 'bold 32px system-ui, sans-serif';
-    ctx.fillText('fiveonemovement.com/teste-dons', SIZE / 2, 940);
+    ctx.fillText('fiveonemovement.com/descubra-seu-dom', SIZE / 2, 940);
     ctx.fillStyle = '#4a6572';
     ctx.font = '26px system-ui, sans-serif';
     ctx.fillText('Quiz dos 5 Ministérios — Five One', SIZE / 2, 990);

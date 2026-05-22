@@ -31,7 +31,7 @@ export const onRequestPost = async (ctx: any) => {
     if (!secret) return json({ error: 'REPORT_SHARE_SECRET não configurado' }, 500);
 
     const token = await sign(payload, secret);
-    const url = `${site}/#/r/${encodeURIComponent(slug)}${from||to ? `?${buildQuery({ from, to, token })}` : `?${buildQuery({ token })}`}`;
+    const url = `${site}/r/${encodeURIComponent(slug)}${from||to ? `?${buildQuery({ from, to, token })}` : `?${buildQuery({ token })}`}`;
     return json({ ok: true, token, url });
   } catch (e) {
     return json({ error: String(e) }, 500);

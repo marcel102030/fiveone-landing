@@ -599,7 +599,7 @@ export default function RelatorioQuiz() {
                   <td style={{ padding: '10px 14px' }}>
                     {row.result_token && (
                       <a
-                        href={`/#/resultado/${row.result_token}`}
+                        href={`/resultado/${row.result_token}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Ver resultado"

@@ -25,9 +25,11 @@ import "./Admin.css";
 import { getUserProfileDetails, UserProfileDetails } from "../../services/userProfile";
 import { useAdminToast } from "../../../../shared/components/AdminToast";
 import { supabase } from "../../../../shared/lib/supabaseClient";
+import { useNavigate } from "react-router-dom";
 
 export default function AdminAlunos() {
   document.title = "Administração | Five One — Alunos";
+  const navigate = useNavigate();
   const [q, setQ] = useState("");
   const [rows, setRows] = useState<PlatformUserListItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -190,7 +192,7 @@ export default function AdminAlunos() {
     <div className="adm5-wrap">
       <div className="adm5-topbar" style={{marginBottom:12}}>
         <h1 className="adm5-title">Alunos</h1>
-        <button className="adm5-pill" onClick={()=> { location.hash = '#/admin/administracao'; }}>← Voltar ao hub</button>
+        <button className="adm5-pill" onClick={()=> { navigate('/admin/administracao'); }}>← Voltar ao hub</button>
       </div>
       <p className="adm5-sub">Aqui você visualiza e edita o acesso de todos os alunos da plataforma Five One</p>
 
@@ -616,7 +618,7 @@ export default function AdminAlunos() {
                 }
                 try {
                   const res = await createInvite(invite.email, invite.formation as FormationKey, invite.days);
-                  const url = `${location.origin}/#/login-aluno?token=${res.token}`;
+                  const url = `${location.origin}/login-aluno?token=${res.token}`;
                   setInvite({...invite, link: url});
                   toast.success('Convite gerado', 'Copie o link e envie ao aluno.');
                 } catch {

@@ -124,7 +124,7 @@ const Header = () => {
   const navLinks = [
     { to: '/plataforma', label: 'Início', internal: true },
     { to: 'https://discord.gg/aCNSSzpY', label: 'Comunidade Five One', internal: false },
-    { to: 'https://fiveonemovement.com/#/teste-dons', label: 'Descobrir meu Dom', internal: false },
+    { to: 'https://fiveonemovement.com/descubra-seu-dom', label: 'Descobrir meu Dom', internal: false },
     { to: 'https://fiveonemovement.com/', label: 'Site Five One', internal: false },
   ]
 

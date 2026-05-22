@@ -56,9 +56,9 @@ export const onRequestGet = async (ctx: any) => {
         total_responses: total,
         participation_pct: participationPct,
         last_response_at: lastResponseMap.get(c.id) ?? null,
-        report_url: `${site}/#/relatorio/${c.slug}`,
+        report_url: `${site}/relatorio/${c.slug}`,
         invite_url: `${site}/c/${c.slug}`,
-        quiz_url: `${site}/#/c/${c.slug}`,
+        quiz_url: `${site}/c/${c.slug}`,
       };
     });
 

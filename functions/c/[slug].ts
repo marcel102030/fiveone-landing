@@ -8,7 +8,7 @@ export const onRequestGet = async (ctx: any) => {
   const site = (ctx.env.SITE_URL as string) || `https://${ctx.request.headers.get('host')}`;
 
   // Redireciona para a rota do quiz com querystring
-  const target = `${site}/#/teste-dons?churchSlug=${encodeURIComponent(slug)}`;
+  const target = `${site}/descubra-seu-dom?churchSlug=${encodeURIComponent(slug)}`;
 
   return Response.redirect(target, 302);
 };
