@@ -61,7 +61,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const site = env.SITE_URL || `https://${request.headers.get("host")}`;
     const loginUrl = withUtm(`${site}/#/login-aluno`);
 
-    const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Five One <bemvindofiveone@fiveonemovement.com>";
+    const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Five One <no-reply@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
 
     const subject = "Bem-vindo à plataforma Five One — suas credenciais";
@@ -108,7 +108,7 @@ function renderHtml({ name, user, password, loginUrl, site }: { name?: string | 
           </div>
           <p style="margin-top:10px; color:#475569; font-size:14px;">Guarde estas informações com segurança. Você pode alterar a senha após o primeiro acesso.</p>
           <div style="margin-top:12px;">
-            <a href="${loginUrl}" style="background:#06b6d4; color:#ffffff; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; display:inline-block; min-height:44px; line-height:20px;">Acessar a plataforma</a>
+            <a href="${loginUrl}" style="background:#64ffda; color:#0a192f; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; font-weight:600; display:inline-block; min-height:44px; line-height:20px;">Acessar a plataforma</a>
           </div>
         </td>
       </tr>
@@ -122,7 +122,7 @@ function renderHtml({ name, user, password, loginUrl, site }: { name?: string | 
       </ul>
     </div>
 
-    <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© 2025 Five One — Todos os direitos reservados</p>
+    <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© ${new Date().getFullYear()} Five One — Todos os direitos reservados</p>
   </div>`;
 }
 

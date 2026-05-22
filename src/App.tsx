@@ -15,6 +15,7 @@ import MemberGuard from "./features/plataforma/guards/MemberGuard";
 import StudentGuard from "./features/plataforma/guards/StudentGuard";
 import { AuthProvider } from "./shared/contexts/AuthContext";
 import { PageLoader } from "./shared/components/ui/Spinner";
+import { ErrorBoundary } from "./shared/components/ErrorBoundary";
 
 import "./App.css";
 
@@ -61,6 +62,7 @@ const ModeracaoComentarios = lazy(() => import("./features/plataforma/pages/admi
 const EmitirCertificados = lazy(() => import("./features/plataforma/pages/admin/EmitirCertificados"));
 const GerenciarAdmins = lazy(() => import("./features/plataforma/pages/admin/GerenciarAdmins"));
 const CalendarioConteudo = lazy(() => import("./features/plataforma/pages/admin/CalendarioConteudo"));
+const AdminVendas = lazy(() => import("./features/plataforma/pages/admin/Vendas"));
 const ChurchReport = lazy(() => import("./features/rede/pages/ChurchReport"));
 const ChurchCreateInvite = lazy(() => import("./features/rede/pages/ChurchCreateInvite"));
 const CopyLink = lazy(() => import("./features/rede/pages/CopyLink"));
@@ -72,6 +74,7 @@ const ChurchSolutions = lazy(() => import("./features/institucional/pages/Church
 const EsqueciSenha = lazy(() => import("./features/plataforma/pages/EsqueciSenha"));
 const RedefinirSenha = lazy(() => import("./features/plataforma/pages/RedefinirSenha"));
 const Favoritos = lazy(() => import("./features/plataforma/pages/Favoritos"));
+const MeuProgresso = lazy(() => import("./features/plataforma/pages/MeuProgresso"));
 const MeusCertificados = lazy(() => import("./features/plataforma/pages/MeusCertificados"));
 const CertificadoPublico = lazy(() => import("./features/plataforma/pages/CertificadoPublico"));
 const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
@@ -113,6 +116,7 @@ function AppContent() {
     location.pathname.startsWith("/curso/") ||
     location.pathname === "/perfil" ||
     location.pathname === "/favoritos" ||
+    location.pathname === "/meu-progresso" ||
     location.pathname === "/certificados" ||
     location.pathname.startsWith("/admin") ||
     location.pathname.startsWith("/membro") ||
@@ -132,6 +136,7 @@ function AppContent() {
       <div className={`app ${hideLayout ? "plataforma-mode no-navbar-padding" : ""}`}>
         {!hideLayout && <Navbar />}
         <main>
+          <ErrorBoundary scope="route">
           <Suspense fallback={<PageLoader label="Carregando…" />}>
           <Routes>
             <Route path="/" element={<Home />} />
@@ -241,6 +246,14 @@ function AppContent() {
                 </AdminGuard>
               }
             />
+            <Route
+              path="/admin/vendas"
+              element={
+                <AdminGuard>
+                  <AdminVendas />
+                </AdminGuard>
+              }
+            />
             <Route path="/relatorio/:slug" element={<ChurchReport />} />
             <Route path="/r/:slug" element={<ChurchReport />} />
             <Route path="/resultado/:token" element={<QuizResult />} />
@@ -310,6 +323,14 @@ function AppContent() {
               }
             />
             <Route
+              path="/meu-progresso"
+              element={
+                <StudentGuard>
+                  <MeuProgresso />
+                </StudentGuard>
+              }
+            />
+            <Route
               path="/certificados"
               element={
                 <StudentGuard>
@@ -323,6 +344,7 @@ function AppContent() {
             <Route path="/redefinir-senha" element={<RedefinirSenha />} />
           </Routes>
           </Suspense>
+          </ErrorBoundary>
         </main>
         <ScrollToTop />
         {!hideLayout && !isInviteTest && <Footer />}

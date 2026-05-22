@@ -16,6 +16,7 @@ const navCards = [
   { to: "/admin/conteudo", title: "Conteúdo", desc: "Cursos, módulos e aulas.", icon: "📚" },
   { to: "/admin/moderacao", title: "Moderação", desc: "Aprovar e rejeitar comentários.", icon: "💬" },
   { to: "/admin/certificados", title: "Certificados", desc: "Emitir e visualizar certificados.", icon: "🏆" },
+  { to: "/admin/vendas", title: "Vendas", desc: "Produtos e compras via Hotmart.", icon: "💳" },
   { to: "/admin/igrejas", title: "Quiz de Igrejas", desc: "Cadastro e relatórios do quiz.", icon: "⛪" },
   { to: "/admin/rede-igrejas", title: "Rede de Igrejas", desc: "Cadastros da rede nas casas.", icon: "🏘️" },
   { to: "/admin/relatorio-quiz", title: "Relatório Quiz", desc: "Consolidados e exportações.", icon: "📊" },

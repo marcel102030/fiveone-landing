@@ -69,7 +69,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const site = env.SITE_URL || `https://${new URL(request.url).host}`;
     const certUrl = `${site}/#/certificado/${verifyCode}`;
     const from =
-      env.RESEND_FROM_ALUNO?.trim() || 'Five One <bemvindofiveone@fiveonemovement.com>';
+      env.RESEND_FROM_ALUNO?.trim() || 'Five One <no-reply@fiveonemovement.com>';
     const reply_to =
       env.RESEND_REPLY_TO_ALUNO?.trim() || 'escolafiveone@gmail.com';
 
@@ -100,7 +100,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
         <p style="margin:0 0 16px; color:#475569; font-size:14px;">
           Você pode acessar e compartilhar seu certificado através do link abaixo:
         </p>
-        <a href="${certUrl}" style="background:#06b6d4; color:#ffffff; text-decoration:none; padding:12px 20px; border-radius:10px; font-size:15px; display:inline-block; font-weight:600;">
+        <a href="${certUrl}" style="background:#64ffda; color:#0a192f; text-decoration:none; padding:12px 20px; border-radius:10px; font-size:15px; display:inline-block; font-weight:600;">
           Ver meu certificado →
         </a>
       </td>
@@ -113,7 +113,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     </p>
   </div>
 
-  <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© 2025 Five One — Todos os direitos reservados</p>
+  <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© ${new Date().getFullYear()} Five One — Todos os direitos reservados</p>
 </div>`;
 
     const text = [
