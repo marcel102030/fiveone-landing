@@ -201,13 +201,12 @@ function escapeHtml(input: string) {
 // ─── Template do email do cliente ──────────────────────────────────────────
 type DomKey = "APOSTOLO" | "PROFETA" | "EVANGELISTA" | "PASTOR" | "MESTRE";
 
-const DOM_ICONS: Record<DomKey, string> = {
-  APOSTOLO: '<svg xmlns="http://www.w3.org/2000/svg" width="ICONSIZE" height="ICONSIZE" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><polygon points="16.24 7.76 14.12 14.12 7.76 16.24 9.88 9.88 16.24 7.76"></polygon></svg>',
-  PROFETA: '<svg xmlns="http://www.w3.org/2000/svg" width="ICONSIZE" height="ICONSIZE" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"></path></svg>',
-  EVANGELISTA: '<svg xmlns="http://www.w3.org/2000/svg" width="ICONSIZE" height="ICONSIZE" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11l18-5v12L3 14v-3z"></path><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"></path></svg>',
-  PASTOR: '<svg xmlns="http://www.w3.org/2000/svg" width="ICONSIZE" height="ICONSIZE" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path></svg>',
-  MESTRE: '<svg xmlns="http://www.w3.org/2000/svg" width="ICONSIZE" height="ICONSIZE" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>',
-};
+const EMAIL_ICON_BASE = "https://fiveonemovement.com/assets/email-icons";
+
+function domIconImg(dom: DomKey, sizePx: number): string {
+  const file = dom.toLowerCase();
+  return `<img src="${EMAIL_ICON_BASE}/${file}.png" alt="${DOM_LABELS[dom]}" width="${sizePx}" height="${sizePx}" style="display:inline-block; border:0; max-width:${sizePx}px; width:${sizePx}px; height:auto;" />`;
+}
 
 const DOM_PHRASES: Record<DomKey, string> = {
   APOSTOLO: "Você tem visão estratégica e paixão por abrir novos caminhos.",
@@ -275,8 +274,8 @@ function buildCustomerEmailHtml(payload: {
 
   const isTie = topDoms.length > 1;
   const iconSize = topDoms.length === 1 ? 72 : topDoms.length === 2 ? 64 : 56;
-  const iconSvgSize = topDoms.length === 1 ? 34 : topDoms.length === 2 ? 30 : 26;
-  const iconMarginTop = topDoms.length === 1 ? 19 : topDoms.length === 2 ? 17 : 15;
+  const iconImgSize = topDoms.length === 1 ? 46 : topDoms.length === 2 ? 40 : 34;
+  const iconMarginTop = topDoms.length === 1 ? 13 : topDoms.length === 2 ? 12 : 11;
   const nameFontSize = topDoms.length === 1 ? 34 : topDoms.length === 2 ? 26 : 20;
   const labelsList = topDoms.map((d) => DOM_LABELS[d]);
   const topNamesStr = labelsList.join(" + ");
@@ -289,11 +288,11 @@ function buildCustomerEmailHtml(payload: {
 
   const iconsHtml = topDoms
     .map((d) => {
-      const svg = DOM_ICONS[d].replaceAll("ICONSIZE", String(iconSvgSize));
+      const img = domIconImg(d, iconImgSize);
       return `
-        <div style="display:inline-block; width:${iconSize}px; height:${iconSize}px; line-height:${iconSize}px; border-radius:50%; text-align:center; background:${DOM_COLORS[d].hex}; box-shadow:0 0 0 4px rgba(${DOM_COLORS[d].rgba},0.22); margin:0 ${isTie ? 8 : 0}px;">
-          <span style="display:inline-block; vertical-align:middle; margin-top:${iconMarginTop}px;">${svg}</span>
-        </div>`;
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="display:inline-table; vertical-align:middle; margin:0 ${isTie ? 8 : 0}px;"><tr><td bgcolor="${DOM_COLORS[d].hex}" align="center" valign="middle" width="${iconSize}" height="${iconSize}" style="background-color:${DOM_COLORS[d].hex}; border-radius:50%; width:${iconSize}px; height:${iconSize}px; line-height:${iconSize}px; text-align:center; box-shadow:0 0 0 4px rgba(${DOM_COLORS[d].rgba},0.22);">
+          <span style="display:inline-block; vertical-align:middle; line-height:0; margin-top:${iconMarginTop}px;">${img}</span>
+        </td></tr></table>`;
     })
     .join("");
 
@@ -331,7 +330,15 @@ function buildCustomerEmailHtml(payload: {
 
   return `<!doctype html>
 <html lang="pt-BR">
-<head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="format-detection" content="telephone=no, date=no, address=no, email=no, url=no" />
+  <meta name="x-apple-disable-message-reformatting" />
+  <meta name="color-scheme" content="light dark" />
+  <meta name="supported-color-schemes" content="light dark" />
+  <title>Seu Resultado — Teste dos 5 Ministérios</title>
+</head>
 <body style="margin:0; background:#e9ecef; padding:24px 12px; font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="600" style="max-width:600px; width:100%; background:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 12px 40px rgba(10,25,47,0.12); margin:0 auto;">
   <tr><td bgcolor="#0a192f" style="background-color:#0a192f; background-image:linear-gradient(135deg, #0a192f 0%, #112240 100%); padding:40px 32px 36px; text-align:center;">
@@ -366,7 +373,7 @@ function buildCustomerEmailHtml(payload: {
       <tr><td style="padding:20px 22px;">
         <p style="margin:0 0 8px; font-size:11px; font-weight:700; letter-spacing:2px; color:#3d4f6f; text-transform:uppercase;">
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#3d4f6f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:6px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>
-          Inspirado em Efésios 4:11-13
+          Inspirado em Efésios <span style="color:inherit; text-decoration:none; pointer-events:none;">4<span style="display:none">.</span>:11-13</span>
         </p>
         <p style="margin:0; color:#0a192f; font-size:14px; line-height:1.7; font-style:italic;">"E ele mesmo concedeu uns para apóstolos, outros para profetas, outros para evangelistas e outros para pastores e mestres, com vistas ao aperfeiçoamento dos santos para o desempenho do seu serviço, para a edificação do corpo de Cristo."</p>
       </td></tr>
@@ -376,7 +383,7 @@ function buildCustomerEmailHtml(payload: {
     <div style="height:2px; width:32px; background:#64ffda; margin-bottom:14px;"></div>
     <h3 style="margin:0 0 4px; font-size:18px; font-weight:700;">Próximos passos</h3>
     <p style="margin:0 0 20px; font-size:13px; color:#6c7a93;">Aprofunde sua jornada com a Five One:</p>
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:10px;"><tr><td style="background:#64ffda; border-radius:10px; text-align:center;"><a href="https://fiveonemovement.com/solucoes/mentoria-individual" style="display:block; padding:15px 24px; color:#0a192f; font-weight:700; font-size:15px; text-decoration:none;">Agende sua Mentoria Individual</a></td></tr></table>
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:10px;"><tr><td bgcolor="#64ffda" style="background-color:#64ffda; border-radius:10px; text-align:center; mso-padding-alt:0;"><a href="https://fiveonemovement.com/solucoes/mentoria-individual" style="display:block; padding:15px 24px; color:#0a192f !important; font-weight:700; font-size:15px; text-decoration:none; background-color:#64ffda; border-radius:10px;"><!--[if mso]><span style="color:#0a192f;"><![endif]-->Agende sua Mentoria Individual<!--[if mso]></span><![endif]--></a></td></tr></table>
     <p style="margin:-2px 0 14px; font-size:12px; color:#6c7a93; padding:0 4px;">Sessão personalizada online ou presencial, ${ctaSubtext}.</p>
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="margin-bottom:10px;"><tr><td style="background:#ffffff; border:1.5px solid #0a192f; border-radius:10px; text-align:center;"><a href="https://fiveonemovement.com/cursos-plataforma" style="display:block; padding:14px 24px; color:#0a192f; font-weight:600; font-size:14px; text-decoration:none;">Veja os nossos Cursos</a></td></tr></table>
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%"><tr><td style="background:#ffffff; border:1.5px solid #25D366; border-radius:10px; text-align:center;"><a href="https://wa.me/5583989004764?text=Acabei%20de%20fazer%20o%20Teste%20dos%205%20Minist%C3%A9rios%20e%20gostaria%20de%20conversar" style="display:block; padding:14px 24px; color:#25D366; font-weight:600; font-size:14px; text-decoration:none;"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#25D366" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-3px; margin-right:6px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>Converse pelo WhatsApp</a></td></tr></table>
@@ -391,9 +398,9 @@ function buildCustomerEmailHtml(payload: {
     <p style="margin:30px 0 16px 0; font-size:14px; color:#3d4f6f; font-weight:600;">Siga a Five One para mais conteúdos</p>
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto 10px;">
       <tr>
-        <td style="padding:0 14px; text-align:center;"><a href="https://www.instagram.com/fiveone.oficial/" aria-label="Instagram" style="text-decoration:none; display:inline-block; width:40px; height:40px; background:#0a192f; border-radius:50%; text-align:center;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:11px;"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"></rect><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"></line></svg></a></td>
-        <td style="padding:0 14px; text-align:center;"><a href="https://wa.me/5583989004764" aria-label="WhatsApp" style="text-decoration:none; display:inline-block; width:40px; height:40px; background:#0a192f; border-radius:50%; text-align:center;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:11px;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg></a></td>
-        <td style="padding:0 14px; text-align:center;"><a href="https://fiveonemovement.com" aria-label="Site Five One" style="text-decoration:none; display:inline-block; width:40px; height:40px; background:#0a192f; border-radius:50%; text-align:center;"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#64ffda" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:11px;"><circle cx="12" cy="12" r="10"></circle><line x1="2" y1="12" x2="22" y2="12"></line><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path></svg></a></td>
+        <td style="padding:0 14px; text-align:center;"><a href="https://www.instagram.com/fiveone.oficial/" aria-label="Instagram"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0a192f" align="center" valign="middle" width="40" height="40" style="background-color:#0a192f; border-radius:50%; width:40px; height:40px;"><img src="${EMAIL_ICON_BASE}/instagram.png" alt="Instagram" width="22" height="22" style="display:inline-block; border:0; width:22px; height:22px;" /></td></tr></table></a></td>
+        <td style="padding:0 14px; text-align:center;"><a href="https://wa.me/5583989004764" aria-label="WhatsApp"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0a192f" align="center" valign="middle" width="40" height="40" style="background-color:#0a192f; border-radius:50%; width:40px; height:40px;"><img src="${EMAIL_ICON_BASE}/whatsapp.png" alt="WhatsApp" width="22" height="22" style="display:inline-block; border:0; width:22px; height:22px;" /></td></tr></table></a></td>
+        <td style="padding:0 14px; text-align:center;"><a href="https://fiveonemovement.com" aria-label="Site Five One"><table role="presentation" cellspacing="0" cellpadding="0" border="0"><tr><td bgcolor="#0a192f" align="center" valign="middle" width="40" height="40" style="background-color:#0a192f; border-radius:50%; width:40px; height:40px;"><img src="${EMAIL_ICON_BASE}/site.png" alt="Site" width="22" height="22" style="display:inline-block; border:0; width:22px; height:22px;" /></td></tr></table></a></td>
       </tr>
       <tr>
         <td style="padding:8px 14px 0; text-align:center; font-size:11px; color:#8892b0; font-weight:600;">Instagram</td>
