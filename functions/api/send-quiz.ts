@@ -334,7 +334,7 @@ function buildCustomerEmailHtml(payload: {
 <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
 <body style="margin:0; background:#e9ecef; padding:24px 12px; font-family:'Inter','Segoe UI',system-ui,-apple-system,sans-serif;">
 <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" width="600" style="max-width:600px; width:100%; background:#ffffff; border-radius:18px; overflow:hidden; box-shadow:0 12px 40px rgba(10,25,47,0.12); margin:0 auto;">
-  <tr><td style="background:linear-gradient(135deg, #0a192f 0%, #112240 100%); padding:40px 32px 36px; text-align:center;">
+  <tr><td bgcolor="#0a192f" style="background-color:#0a192f; background-image:linear-gradient(135deg, #0a192f 0%, #112240 100%); padding:40px 32px 36px; text-align:center;">
     <img src="https://fiveonemovement.com/assets/images/logo-fiveone-white-small.png" alt="Five One" width="146" height="80" style="display:inline-block; margin-bottom:18px; border:0; max-width:160px; height:auto;" />
     <p style="margin:0 0 6px; color:#64ffda; font-size:13px; font-weight:600; letter-spacing:2px; text-transform:uppercase;">Seu resultado chegou</p>
     <h1 style="margin:0; color:#ffffff; font-size:28px; font-weight:800; line-height:1.2; letter-spacing:-0.5px;">Seu Dom Ministerial<br/>Foi Revelado</h1>
@@ -345,8 +345,8 @@ function buildCustomerEmailHtml(payload: {
     <p style="margin:0 0 28px; font-size:15px; line-height:1.65; color:#3d4f6f;">Você concluiu o <strong>Teste dos 5 Ministérios</strong> e aqui está o que descobrimos sobre o seu chamado. O PDF completo está em anexo para você guardar e refletir.</p>
   </td></tr>
   <tr><td style="padding:0 32px;">
-    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:linear-gradient(135deg, #0a192f 0%, #1d3461 100%); border-radius:16px; overflow:hidden;">
-      <tr><td style="padding:32px 28px; text-align:center; color:#ffffff;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" bgcolor="#0a192f" style="background-color:#0a192f; background-image:linear-gradient(135deg, #0a192f 0%, #1d3461 100%); border-radius:16px; overflow:hidden;">
+      <tr><td bgcolor="#0a192f" style="background-color:#0a192f; padding:32px 28px; text-align:center; color:#ffffff;">
         <p style="margin:0 0 16px; font-size:11px; font-weight:700; letter-spacing:3px; color:#64ffda; text-transform:uppercase;">${eyebrowLabel}</p>
         <div style="margin-bottom:18px; line-height:1; font-size:0;">${iconsHtml}</div>
         <h2 style="margin:0 0 6px; color:#ffffff; font-size:${nameFontSize}px; font-weight:800; letter-spacing:-0.5px; line-height:1.15;">${topNamesStr}</h2>
