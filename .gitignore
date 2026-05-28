@@ -3,4 +3,4 @@
 cypress/
 cypress.config.ts
 cypress.config.js
-cypress.json
+cypress.json.DS_Store
