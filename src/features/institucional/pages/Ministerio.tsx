@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import escolaFiveOne from "../../../assets/images/escola-fiveone.jpeg";
 import "./Ministerio.css";
@@ -58,6 +59,16 @@ const ministeriosDetalhes: Record<string, { titulo: string; conteudo: string; pr
 const Ministerio = () => {
   const { nome } = useParams<{ nome: string }>();
   const detalhes = ministeriosDetalhes[nome?.toLowerCase() || ""];
+
+  useEffect(() => {
+    document.title = detalhes
+      ? `${detalhes.titulo} — 5 Ministérios | Five One`
+      : "5 Ministérios | Five One";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta && detalhes) {
+      meta.setAttribute("content", detalhes.conteudo.slice(0, 160));
+    }
+  }, [detalhes]);
 
   return (
     <div className="ministerio-page">
