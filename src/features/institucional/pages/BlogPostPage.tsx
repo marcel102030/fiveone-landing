@@ -18,6 +18,7 @@ import NextPostCard from "../components/blog/NextPostCard";
 import AuthorCard from "../components/blog/AuthorCard";
 import ReaderControls from "../components/blog/ReaderControls";
 import ReadingJourney from "../components/blog/ReadingJourney";
+import InstagramShareButton from "../components/blog/InstagramShareButton";
 import {
   buildShareUrl,
   calculateReadingTime,
@@ -283,7 +284,10 @@ const BlogPostPage = () => {
                 </>
               )}
             </div>
-            <ShareButton title={post.title} shareUrl={shareUrl} />
+            <div className="flex items-center gap-2">
+              <ShareButton title={post.title} shareUrl={shareUrl} />
+              <InstagramShareButton post={post} />
+            </div>
           </div>
         </div>
       </header>

@@ -18,6 +18,7 @@ import {
   uploadBlogCover,
 } from "../../../institucional/services/blog";
 import { buildShareUrl } from "../../../institucional/components/blog/blogHelpers";
+import InstagramShareButton from "../../../institucional/components/blog/InstagramShareButton";
 
 type Mode = "list" | "editor";
 
@@ -319,6 +320,9 @@ function BlogList({
                         >
                           Copiar link
                         </button>
+                      )}
+                      {p.status === "published" && (
+                        <InstagramShareButton post={p} variant="compact" />
                       )}
                       <button
                         onClick={() => onEdit(p.id)}
