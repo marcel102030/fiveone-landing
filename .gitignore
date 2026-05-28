@@ -3,4 +3,7 @@
 cypress/
 cypress.config.ts
 cypress.config.js
-cypress.json.DS_Store
+cypress.json
+
+# macOS
+.DS_Store
