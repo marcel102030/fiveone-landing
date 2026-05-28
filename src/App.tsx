@@ -71,7 +71,6 @@ const MentoriaForm = lazy(() => import("./features/institucional/pages/forms/Men
 const PalestraForm = lazy(() => import("./features/institucional/pages/forms/PalestraForm"));
 const TreinamentoForm = lazy(() => import("./features/institucional/pages/forms/TreinamentoForm"));
 const ImersaoForm = lazy(() => import("./features/institucional/pages/forms/ImersaoForm"));
-const ChurchSolutions = lazy(() => import("./features/institucional/pages/ChurchSolutions"));
 const EsqueciSenha = lazy(() => import("./features/plataforma/pages/EsqueciSenha"));
 const RedefinirSenha = lazy(() => import("./features/plataforma/pages/RedefinirSenha"));
 const Favoritos = lazy(() => import("./features/plataforma/pages/Favoritos"));
@@ -298,7 +297,7 @@ function AppContent() {
             <Route path="/solucoes/palestra-introdutoria" element={<PalestraForm />} />
             <Route path="/solucoes/treinamento-lideranca" element={<TreinamentoForm />} />
             <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
-            <Route path="/solucoes" element={<ChurchSolutions />} />
+            <Route path="/solucoes" element={<Navigate to="/cursos" replace />} />
             <Route path="/cursos/apologetica" element={<CursoApologetica />} />
             <Route
               path="/plataforma"

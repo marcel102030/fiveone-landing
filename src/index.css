@@ -11,6 +11,13 @@
   box-sizing: border-box;
 }
 
+/* Rolagem suave ao navegar para âncoras (#cursos, #formatos-treinamento) */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
 :root {
   font-family: "Inter", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
   line-height: 1.6;

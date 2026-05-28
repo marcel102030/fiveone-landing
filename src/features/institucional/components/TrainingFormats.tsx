@@ -97,7 +97,7 @@ const TrainingFormats: React.FC = () => {
   return (
     <section
       id="formatos-treinamento"
-      className="relative bg-navy-light/40 py-20 lg:py-28 overflow-hidden"
+      className="relative bg-navy-light/40 py-20 lg:py-28 overflow-hidden scroll-mt-20"
       aria-labelledby="formatos-heading"
     >
       {/* Background sutil */}

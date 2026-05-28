@@ -64,14 +64,30 @@ const AwardIcon = () => (
   </svg>
 );
 
+const BookIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+  </svg>
+);
+
+const ChurchIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <path d="M12 2v6" />
+    <path d="M9 5h6" />
+    <path d="M12 8l6 4v10H6V12l6-4z" />
+    <path d="M10 22v-4a2 2 0 0 1 4 0v4" />
+  </svg>
+);
+
 const Cursos = () => {
   useEffect(() => {
-    document.title = "Cursos | Five One";
+    document.title = "Cursos e Treinamentos | Five One";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Conheça os cursos bíblicos da Five One. Conteúdo com fundamento teológico, linguagem clara e aplicação prática. Comece pelo Curso de Apologética."
+        "Cursos bíblicos online e treinamentos dos 5 Ministérios para igrejas. Fundamento teológico, linguagem clara e aplicação prática — para você e para a sua comunidade."
       );
     }
   }, []);
@@ -86,22 +102,91 @@ const Cursos = () => {
 
         <div className="relative max-w-5xl mx-auto px-6 lg:px-8 text-center">
           <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Nossos cursos
+            Cursos e Treinamentos
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
-            Conhecimento bíblico que <br className="hidden sm:block" />
-            <span className="text-mint">transforma</span> a sua vida
+            Conhecimento bíblico que <span className="text-mint">transforma</span>
+            <br className="hidden sm:block" /> você e a sua igreja
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate max-w-2xl mx-auto leading-relaxed">
-            Cursos online com fundamento teológico, linguagem clara e aplicação
-            prática. Acesso ilimitado enquanto sua assinatura estiver ativa.
+            Cursos online sob demanda para a sua jornada e treinamentos dos 5
+            Ministérios para a sua comunidade. Fundamento teológico, linguagem
+            clara e aplicação prática.
           </p>
+        </div>
+
+        {/* ───────────── Resumo do que oferecemos (cursos + treinamentos) ─── */}
+        <div className="relative max-w-5xl mx-auto px-6 lg:px-8 mt-10 lg:mt-12">
+          <div className="grid sm:grid-cols-2 gap-4 lg:gap-5">
+            <a
+              href="#cursos"
+              className="group relative flex flex-col p-6 lg:p-7 rounded-2xl bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
+            >
+              <span className="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-mint/10 border border-mint/30 text-mint mb-4">
+                <BookIcon />
+              </span>
+              <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
+                Para você
+              </span>
+              <h2 className="text-xl font-bold text-slate-white mb-2">
+                Cursos online
+              </h2>
+              <p className="text-sm text-slate leading-relaxed grow">
+                Estude no seu ritmo, 100% online, com certificado. Comece pelo
+                Curso de Apologética — e novos cursos a caminho.
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
+                Ver cursos
+                <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
+                </svg>
+              </span>
+            </a>
+
+            <a
+              href="#formatos-treinamento"
+              className="group relative flex flex-col p-6 lg:p-7 rounded-2xl bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
+            >
+              <span className="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-mint/10 border border-mint/30 text-mint mb-4">
+                <ChurchIcon />
+              </span>
+              <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
+                Para sua igreja
+              </span>
+              <h2 className="text-xl font-bold text-slate-white mb-2">
+                Treinamentos para igrejas
+              </h2>
+              <p className="text-sm text-slate leading-relaxed grow">
+                Leve os 5 Ministérios para a sua igreja — palestras,
+                treinamento de liderança, mentoria e imersão ministerial.
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
+                Ver treinamentos
+                <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
       </section>
 
       {/* ───────────────────────────── Card destaque Apologética ─── */}
-      <section className="pb-14 lg:pb-16">
+      <section id="cursos" className="pt-6 pb-14 lg:pb-16 scroll-mt-24">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
+          <div className="max-w-2xl mb-8 lg:mb-10">
+            <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-3">
+              Cursos online
+            </span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-white tracking-tight">
+              Estude no seu ritmo, com profundidade
+            </h2>
+            <p className="mt-2 text-sm sm:text-base text-slate leading-relaxed">
+              Conteúdo 100% online, com certificado e acesso ilimitado enquanto
+              a assinatura estiver ativa.
+            </p>
+          </div>
+
           <article className="relative bg-gradient-to-br from-navy-light to-navy border border-mint/20 rounded-3xl overflow-hidden shadow-card-hover">
             <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[100px] rounded-full" />
 

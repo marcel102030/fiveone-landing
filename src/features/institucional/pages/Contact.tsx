@@ -20,7 +20,7 @@ const channels = [
     description: "Quer levar o Five One para sua comunidade? Fale com nosso time pedagógico e monte um plano sob medida.",
     action: {
       label: "Agendar conversa",
-      href: "#/solucoes",
+      href: "/cursos#formatos-treinamento",
     },
   },
   {

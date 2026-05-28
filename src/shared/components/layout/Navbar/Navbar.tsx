@@ -6,9 +6,8 @@ import logoUrl from "../../../../assets/images/logo-fiveone-white.png";
 type NavItem = { to: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
-  { to: "/cursos", label: "Cursos" },
+  { to: "/cursos", label: "Cursos e Treinamentos" },
   { to: "/descubra-seu-dom", label: "Descubra seu dom" },
-  { to: "/solucoes", label: "Para sua igreja" },
   { to: "/insights", label: "Para Ler" },
   { to: "/contato", label: "Contato" },
 ];
