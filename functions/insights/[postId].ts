@@ -41,6 +41,14 @@ export const onRequest = async (ctx: {
   const indexResp = await env.ASSETS.fetch(new URL("/index.html", request.url));
   let html = await indexResp.text();
 
+  // Garante caminhos absolutos de assets (defesa caso o build use base relativa).
+  // Em rota aninhada (/insights/slug), `./assets` resolveria errado e o app não
+  // carregaria — força para `/assets` e `/blog`.
+  html = html
+    .replace(/(src|href)="\.\/assets\//g, '$1="/assets/')
+    .replace(/(src|href)="\.\/blog\//g, '$1="/blog/')
+    .replace(/(src|href)="\.\/(favicon|apple-touch|web-app|site\.webmanifest)/g, '$1="/$2');
+
   // 2. Busca o post publicado no Supabase
   try {
     const apiUrl =

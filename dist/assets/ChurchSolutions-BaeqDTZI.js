@@ -1,1 +1,0 @@
-import{j as s,T as o}from"./index-Cchdo0B3.js";/* empty css                        */const a=()=>s.jsx("main",{className:"solo-page",style:{minHeight:"100vh",background:"#030712"},children:s.jsx(o,{})});export{a as default};

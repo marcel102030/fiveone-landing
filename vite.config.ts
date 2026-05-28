@@ -4,7 +4,10 @@ import react from "@vitejs/plugin-react";
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: "",
+  // base "/" gera caminhos absolutos (/assets/...) — necessário para rotas
+  // aninhadas como /insights/:slug e /cursos/apologetica funcionarem em
+  // acesso direto. Com "" (relativo), ./assets quebrava em sub-rotas.
+  base: "/",
   server: {
     proxy: {
       "/api": {
