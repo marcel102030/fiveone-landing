@@ -28,6 +28,7 @@ export interface BlogPost {
   tags: string[];
   takeaways: string[];
   status: BlogPostStatus;
+  is_featured: boolean;
   published_at: string | null;
   created_at: string;
   updated_at: string;
@@ -226,6 +227,8 @@ export async function getPostByIdAdmin(id: string): Promise<BlogPost | null> {
 }
 
 export async function createPost(input: BlogPostInput): Promise<BlogPost> {
+  // Destaque é único: limpa o anterior antes de inserir este como destaque.
+  if (input.is_featured) await clearOtherFeatured();
   const payload = {
     ...input,
     published_at:
@@ -242,10 +245,27 @@ export async function createPost(input: BlogPostInput): Promise<BlogPost> {
   return data as BlogPost;
 }
 
+/**
+ * Zera o destaque de todos os posts (opcionalmente exceto um). Mantém a regra de
+ * "no máximo um destaque por vez" antes de marcar um novo.
+ */
+async function clearOtherFeatured(exceptId?: string): Promise<void> {
+  let q = supabase
+    .from("platform_blog_post")
+    .update({ is_featured: false })
+    .eq("is_featured", true);
+  if (exceptId) q = q.neq("id", exceptId);
+  const { error } = await q;
+  if (error) throw error;
+}
+
 export async function updatePost(
   id: string,
   patch: Partial<BlogPostInput>,
 ): Promise<BlogPost> {
+  // Destaque é único: ao marcar este, limpa o destaque dos demais.
+  if (patch.is_featured === true) await clearOtherFeatured(id);
+
   // Se status mudou para published e não tem published_at, preencher
   const update: Record<string, unknown> = { ...patch };
   if (patch.status === "published" && !patch.published_at) {

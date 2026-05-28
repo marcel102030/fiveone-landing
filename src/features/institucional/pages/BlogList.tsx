@@ -46,7 +46,11 @@ const BlogList = () => {
   }, [category]);
 
   const { featured, rest } = useMemo(() => {
-    return { featured: posts[0] || null, rest: posts.slice(1, 1 + PAGE_SIZE) };
+    // Destaque = post marcado manualmente (is_featured). Se nenhum estiver
+    // marcado, cai no mais recente (posts já vêm ordenados por published_at).
+    const f = posts.find((p) => p.is_featured) || posts[0] || null;
+    const r = posts.filter((p) => p.id !== f?.id).slice(0, PAGE_SIZE);
+    return { featured: f, rest: r };
   }, [posts]);
 
   return (

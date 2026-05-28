@@ -272,7 +272,17 @@ function BlogList({
               {filtered.map((p) => (
                 <tr key={p.id} className="hover:bg-navy-lighter/30 transition">
                   <td className="px-4 py-3">
-                    <div className="text-slate-white font-medium">{p.title}</div>
+                    <div className="text-slate-white font-medium flex items-center gap-2">
+                      {p.is_featured && (
+                        <span
+                          title="Post em destaque na página de Insights"
+                          className="inline-flex items-center gap-1 text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full bg-golden/15 text-golden border border-golden/30"
+                        >
+                          ⭐ Destaque
+                        </span>
+                      )}
+                      {p.title}
+                    </div>
                     <div className="text-2xs text-slate mt-0.5"><code>/insights/{p.slug}</code></div>
                   </td>
                   <td className="px-4 py-3 text-slate-light">{p.category}</td>
@@ -350,6 +360,7 @@ type EditorState = {
   tags: string;
   takeaways: string;
   status: BlogPostStatus;
+  is_featured: boolean;
 };
 
 // Template padrão pra posts novos — garante estrutura consistente
@@ -400,6 +411,7 @@ function emptyState(): EditorState {
     tags: "",
     takeaways: "",
     status: "draft",
+    is_featured: false,
   };
 }
 
@@ -476,6 +488,7 @@ function BlogEditor({
           tags: (p.tags || []).join(", "),
           takeaways: (p.takeaways || []).join("\n"),
           status: p.status,
+          is_featured: !!p.is_featured,
         });
         setSlugTouched(true);
       })
@@ -515,6 +528,7 @@ function BlogEditor({
         tags: state.tags.split(",").map((t) => t.trim()).filter(Boolean),
         takeaways: state.takeaways.split("\n").map((t) => t.trim()).filter(Boolean),
         status: state.status,
+        is_featured: state.is_featured,
         published_at: null,
       };
       const saved = postId
@@ -691,6 +705,24 @@ function BlogEditor({
                 <option value="published">Publicado</option>
               </select>
             </Field>
+
+            <label className="flex items-start gap-3 cursor-pointer rounded-xl border border-slate/15 bg-navy/40 px-3.5 py-3 hover:border-mint/40 transition">
+              <input
+                type="checkbox"
+                checked={state.is_featured}
+                onChange={(e) => update("is_featured", e.target.checked)}
+                className="mt-0.5 h-4 w-4 shrink-0 accent-mint cursor-pointer"
+              />
+              <span className="text-sm">
+                <span className="font-medium text-slate-white flex items-center gap-1.5">
+                  ⭐ Post em destaque
+                </span>
+                <span className="block text-2xs text-slate mt-0.5 leading-snug">
+                  Ocupa o card principal em /insights. Marcar este desmarca
+                  automaticamente o destaque anterior.
+                </span>
+              </span>
+            </label>
 
             <Field label="Categoria">
               <select
