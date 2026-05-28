@@ -17,6 +17,7 @@ import {
   updatePost,
   uploadBlogCover,
 } from "../../../institucional/services/blog";
+import { buildShareUrl } from "../../../institucional/components/blog/blogHelpers";
 
 type Mode = "list" | "editor";
 
@@ -291,6 +292,24 @@ function BlogList({
                   </td>
                   <td className="px-4 py-3 text-right">
                     <div className="inline-flex gap-2">
+                      {p.status === "published" && (
+                        <button
+                          onClick={async () => {
+                            try {
+                              await navigator.clipboard.writeText(
+                                buildShareUrl(p.slug, p.updated_at),
+                              );
+                              onToast("Link de compartilhamento copiado.", true);
+                            } catch {
+                              onToast("Não foi possível copiar o link.", false);
+                            }
+                          }}
+                          title="Copia a URL com cache-busting — o WhatsApp re-busca o preview após edições"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-slate/20 hover:border-mint hover:text-mint transition"
+                        >
+                          Copiar link
+                        </button>
+                      )}
                       <button
                         onClick={() => onEdit(p.id)}
                         className="text-xs px-3 py-1.5 rounded-lg border border-slate/20 hover:border-mint hover:text-mint transition"

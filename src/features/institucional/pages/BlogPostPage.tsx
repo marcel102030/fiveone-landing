@@ -19,6 +19,7 @@ import AuthorCard from "../components/blog/AuthorCard";
 import ReaderControls from "../components/blog/ReaderControls";
 import ReadingJourney from "../components/blog/ReadingJourney";
 import {
+  buildShareUrl,
   calculateReadingTime,
   extractToc,
   headingSlug,
@@ -227,12 +228,15 @@ const BlogPostPage = () => {
   }
 
   const nextPost = related[0] || null;
+  // URL de compartilhamento versionada por updated_at — força WhatsApp/Meta a
+  // re-buscarem o card sempre que o post (ex.: a capa) é editado.
+  const shareUrl = buildShareUrl(slug, post.updated_at);
 
   return (
     <div className="bg-navy text-slate-light min-h-screen">
       <ReadingProgress targetSelector="article.post-article" />
       <ReaderControls />
-      <SelectionShare title={post.title} />
+      <SelectionShare title={post.title} shareUrl={shareUrl} />
 
       {/* ─────────── Hero do post ─── */}
       <header className="relative pt-8 sm:pt-10 pb-8 overflow-hidden">
@@ -279,7 +283,7 @@ const BlogPostPage = () => {
                 </>
               )}
             </div>
-            <ShareButton title={post.title} />
+            <ShareButton title={post.title} shareUrl={shareUrl} />
           </div>
         </div>
       </header>
@@ -358,11 +362,11 @@ function ArticleFooter({ post }: { post: BlogPost }) {
 
 // ─── Share button ─────────────────────────────────────────────
 
-function ShareButton({ title }: { title: string }) {
+function ShareButton({ title, shareUrl }: { title: string; shareUrl: string }) {
   const [copied, setCopied] = useState(false);
 
   async function handleShare() {
-    const url = window.location.href;
+    const url = shareUrl;
     if (navigator.share) {
       try {
         await navigator.share({ title, url });

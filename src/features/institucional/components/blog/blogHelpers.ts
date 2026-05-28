@@ -17,6 +17,33 @@ export function calculateReadingTime(markdown: string): number {
   return Math.max(1, Math.round(words / WORDS_PER_MINUTE));
 }
 
+const SITE_ORIGIN = "https://fiveonemovement.com";
+
+/**
+ * Monta a URL de compartilhamento de um post, anexando um token de versão
+ * derivado de `updatedAt`.
+ *
+ * Por que: WhatsApp/Facebook (Meta) cacheiam o card de preview por URL EXATA,
+ * por ~7 dias. Uma vez que um link foi compartilhado, eles continuam exibindo
+ * a imagem/título antigos mesmo depois de você editar o post — daí o sintoma
+ * de "troquei a capa e o WhatsApp ainda mostra a antiga".
+ *
+ * Solução: versionar a URL com a data de atualização. Ao trocar a capa (ou
+ * qualquer edição), `updated_at` muda → o token muda → vira uma URL nova que o
+ * WhatsApp nunca viu → ele busca o card do zero e mostra a imagem/título atuais.
+ * Sem edição, o token é o mesmo e a URL permanece estável (não fragmenta cache
+ * à toa). O og:url canônico continua limpo; o token só afeta a chave de cache.
+ */
+export function buildShareUrl(slug: string, updatedAt?: string | null): string {
+  const base = `${SITE_ORIGIN}/insights/${slug}`;
+  if (!updatedAt) return base;
+  const t = Date.parse(updatedAt);
+  if (Number.isNaN(t)) return base;
+  // Token compacto: minutos desde epoch em base36. Muda só quando o post muda.
+  const token = Math.floor(t / 60000).toString(36);
+  return `${base}?v=${token}`;
+}
+
 /**
  * Slugify de heading pra ancorar no HTML.
  */

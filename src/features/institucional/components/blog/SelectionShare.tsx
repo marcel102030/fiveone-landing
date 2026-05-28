@@ -9,9 +9,12 @@ type Pos = { x: number; y: number };
 export default function SelectionShare({
   targetSelector = ".post-content",
   title = "",
+  shareUrl,
 }: {
   targetSelector?: string;
   title?: string;
+  /** URL versionada (cache-busting) do post; cai pra location.href se ausente. */
+  shareUrl?: string;
 }) {
   const [selectedText, setSelectedText] = useState<string>("");
   const [pos, setPos] = useState<Pos | null>(null);
@@ -55,7 +58,8 @@ export default function SelectionShare({
 
   if (!pos || !selectedText) return null;
 
-  const quote = `"${selectedText.length > 220 ? selectedText.slice(0, 220) + "…" : selectedText}"${title ? `\n\n— ${title}` : ""}\n\n${typeof window !== "undefined" ? window.location.href : ""}`;
+  const linkForQuote = shareUrl || (typeof window !== "undefined" ? window.location.href : "");
+  const quote = `"${selectedText.length > 220 ? selectedText.slice(0, 220) + "…" : selectedText}"${title ? `\n\n— ${title}` : ""}\n\n${linkForQuote}`;
 
   async function copyQuote() {
     try {
