@@ -11,6 +11,8 @@
 
 interface Env {
   ASSETS: { fetch: (input: RequestInfo | URL) => Promise<Response> };
+  SUPABASE_URL: string;
+  SUPABASE_SERVICE_ROLE_KEY: string;
 }
 
 const SITE = "https://fiveonemovement.com";
@@ -43,12 +45,14 @@ const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Cursos bíblicos online e treinamentos dos 5 Ministérios para igrejas. Fundamento teológico, linguagem clara e aplicação prática.",
     url: `${SITE}/cursos`,
+    image: `${SITE}/assets/og-cursos.jpg`,
   },
   "/cursos/apologetica": {
     title: "Curso de Apologética | Five One",
     description:
       "Aprenda a defender a fé com solidez bíblica e racional. 20 aulas em vídeo, do básico ao avançado, com certificado.",
     url: `${SITE}/cursos/apologetica`,
+    image: `${SITE}/assets/og-cursos.jpg`,
   },
   "/contato": {
     title: "Contato | Five One",
@@ -79,11 +83,18 @@ export const onRequest = async (ctx: {
   const meta = ROUTE_META[path];
   if (!meta) return next(); // assets, /api/*, /c/*, /insights/:post, etc.
 
+  // /insights usa a capa do post em destaque (ou o mais recente) como imagem.
+  const resolved = { ...meta };
+  if (path === "/insights") {
+    const cover = await featuredPostCover(env);
+    if (cover) resolved.image = cover;
+  }
+
   // Carrega o index.html base e injeta as meta tags da rota.
   const indexResp = await env.ASSETS.fetch(new URL("/index.html", request.url));
   if (!indexResp.ok) return next();
   let html = await indexResp.text();
-  html = injectMeta(html, meta);
+  html = injectMeta(html, resolved);
 
   return new Response(html, {
     headers: {
@@ -94,6 +105,39 @@ export const onRequest = async (ctx: {
 };
 
 // ── Helpers ───────────────────────────────────────────────────
+
+/**
+ * Busca a capa do post em destaque (is_featured) ou, na falta, do mais recente,
+ * e devolve uma versão otimizada 1200×630 (via weserv) para o card OG.
+ */
+async function featuredPostCover(env: Env): Promise<string | null> {
+  try {
+    if (!env.SUPABASE_URL || !env.SUPABASE_SERVICE_ROLE_KEY) return null;
+    const api =
+      `${env.SUPABASE_URL}/rest/v1/platform_blog_post` +
+      `?status=eq.published&cover_url=not.is.null` +
+      `&order=is_featured.desc,published_at.desc&limit=1&select=cover_url`;
+    const resp = await fetch(api, {
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        Accept: "application/json",
+      },
+    });
+    if (!resp.ok) return null;
+    const rows = (await resp.json()) as { cover_url?: string }[];
+    const cover = Array.isArray(rows) ? rows[0]?.cover_url : null;
+    if (!cover) return null;
+    const noProto = String(cover).replace(/^https?:\/\//i, "");
+    return (
+      "https://images.weserv.nl/?url=" +
+      encodeURIComponent("ssl:" + noProto) +
+      "&w=1200&h=630&fit=cover&a=attention&output=jpg&q=82"
+    );
+  } catch {
+    return null;
+  }
+}
 
 function escapeAttr(s: string): string {
   return String(s)
