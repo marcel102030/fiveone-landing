@@ -14,6 +14,13 @@ import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
 import { getEnrollments } from '../services/userAccount'
 import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
+import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.png'
+
+// Capas locais por curso, usadas como fallback quando não há banner no banco.
+// O banner do admin (Storage) sempre tem prioridade sobre estas.
+const LOCAL_COURSE_COVERS: { match: RegExp; src: string }[] = [
+  { match: /apolog/i, src: apologeticaCover },
+]
 
 // ── Ícones ────────────────────────────────────────────────────────────────────
 
@@ -764,7 +771,8 @@ const PaginaInicial = () => {
                   // (<200 KB) — dataUrls gigantes bloqueiam o load e estouram a página.
                   const banner = ministry?.banner
                   const dataUrlSafe = banner?.dataUrl && banner.dataUrl.length < 200_000 ? banner.dataUrl : null
-                  const bannerUrl = banner?.url || dataUrlSafe || null
+                  const localCover = LOCAL_COURSE_COVERS.find((c) => c.match.test(label) || c.match.test(id))?.src || null
+                  const bannerUrl = banner?.url || dataUrlSafe || localCover
                   // Iniciais do curso para o fallback (até 2 letras).
                   const initials = (label || id).replace(/[^A-Za-zÀ-ú0-9]+/g, ' ').trim().split(/\s+/).slice(0, 2).map(w => w[0]?.toUpperCase() || '').join('')
                   return (
