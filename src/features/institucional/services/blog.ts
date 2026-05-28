@@ -353,23 +353,64 @@ export async function deleteComment(id: string): Promise<void> {
 const BLOG_COVER_BUCKET = "lesson-assets";
 
 /**
- * Faz upload de uma imagem de capa pro Storage e retorna a URL pública.
+ * Redimensiona e comprime uma imagem no browser antes do upload.
+ * - Largura máxima 1280px (mantém proporção)
+ * - Exporta JPEG com qualidade 0.85
+ * - Achata transparência sobre fundo navy (#0a192f) para evitar fundo preto
+ * Retorna o Blob otimizado (ou o arquivo original se algo falhar).
+ */
+async function optimizeImage(file: File): Promise<{ blob: Blob; ext: string }> {
+  // SVG ou GIF: não processa (mantém original)
+  if (file.type === "image/svg+xml" || file.type === "image/gif") {
+    return { blob: file, ext: file.type.split("/").pop() || "png" };
+  }
+  try {
+    const bitmap = await createImageBitmap(file);
+    const maxW = 1280;
+    const scale = Math.min(1, maxW / bitmap.width);
+    const w = Math.round(bitmap.width * scale);
+    const h = Math.round(bitmap.height * scale);
+
+    const canvas = document.createElement("canvas");
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return { blob: file, ext: "jpg" };
+
+    // Fundo navy para imagens com transparência (PNG)
+    ctx.fillStyle = "#0a192f";
+    ctx.fillRect(0, 0, w, h);
+    ctx.drawImage(bitmap, 0, 0, w, h);
+    bitmap.close?.();
+
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg", 0.85),
+    );
+    if (!blob) return { blob: file, ext: "jpg" };
+    // Se otimizado ficou maior que original (raro), usa original
+    if (blob.size >= file.size && file.size < 600_000) {
+      return { blob: file, ext: file.type.split("/").pop() || "jpg" };
+    }
+    return { blob, ext: "jpg" };
+  } catch {
+    return { blob: file, ext: file.type.split("/").pop() || "jpg" };
+  }
+}
+
+/**
+ * Faz upload de uma imagem de capa pro Storage (otimizada) e retorna a URL pública.
  */
 export async function uploadBlogCover(file: File): Promise<string> {
-  const ext = (
-    file.name.split(".").pop() ||
-    file.type.split("/").pop() ||
-    "jpg"
-  ).toLowerCase();
+  const { blob, ext } = await optimizeImage(file);
   const ts = Date.now();
   const base = slugify(file.name.replace(/\.[^.]+$/, "")) || "capa";
   const path = `blog/${base}-${ts}.${ext}`;
   const { error } = await supabase.storage
     .from(BLOG_COVER_BUCKET)
-    .upload(path, file, {
-      cacheControl: "3600",
+    .upload(path, blob, {
+      cacheControl: "31536000", // 1 ano — URL é única por timestamp
       upsert: true,
-      contentType: file.type,
+      contentType: blob.type || "image/jpeg",
     });
   if (error) throw error;
   const { data } = supabase.storage.from(BLOG_COVER_BUCKET).getPublicUrl(path);
