@@ -190,22 +190,19 @@ const Cursos = () => {
           <article className="relative bg-gradient-to-br from-navy-light to-navy border border-mint/20 rounded-3xl overflow-hidden shadow-card-hover">
             <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[100px] rounded-full" />
 
-            <div className="relative grid lg:grid-cols-5 gap-0 lg:gap-8">
-              {/* Capa */}
-              <div className="lg:col-span-2 p-6 lg:p-10 flex items-center justify-center">
-                <div className="relative w-full max-w-sm lg:max-w-none">
-                  <div className="absolute -inset-4 bg-gradient-to-br from-mint/20 to-transparent rounded-2xl blur-xl" />
-                  <img
-                    src={courseCover}
-                    alt="Curso de Apologética"
-                    className="relative w-full h-auto rounded-2xl shadow-card border border-slate/10"
-                    draggable={false}
-                  />
-                </div>
+            <div className="relative grid lg:grid-cols-5 gap-0">
+              {/* Capa — preenche a coluna inteira (flush), nítida, sem borda vazia. */}
+              <div className="lg:col-span-2 relative overflow-hidden bg-navy aspect-square lg:aspect-auto">
+                <img
+                  src={courseCover}
+                  alt="Curso de Apologética"
+                  className="absolute inset-0 w-full h-full object-cover"
+                  draggable={false}
+                />
               </div>
 
               {/* Conteúdo */}
-              <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 lg:pl-0 flex flex-col">
+              <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint text-navy text-xs font-bold uppercase tracking-wider">
                     Lançamento

@@ -127,19 +127,12 @@ const CourseShowcase = () => {
           <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[100px] rounded-full" />
 
           <div className="relative grid lg:grid-cols-5 gap-0">
-            {/* Capa — preenche a coluna inteira (flush), sem borda vazia e sem cortar.
-                O fundo é a própria capa desfocada; a capa nítida vai por cima (contain). */}
+            {/* Capa — preenche a coluna inteira (flush), nítida, sem borda vazia. */}
             <div className="lg:col-span-2 relative overflow-hidden bg-navy aspect-square lg:aspect-auto">
               <img
                 src={featured.cover}
-                aria-hidden
-                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50"
-              />
-              <div className="absolute inset-0 bg-navy/30" />
-              <img
-                src={featured.cover}
                 alt={`Curso de ${featured.title}`}
-                className="relative w-full h-full object-contain"
+                className="absolute inset-0 w-full h-full object-cover"
                 loading="lazy"
                 draggable={false}
               />
