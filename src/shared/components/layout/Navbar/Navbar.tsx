@@ -48,6 +48,7 @@ const Navbar = () => {
   }, [isMenuOpen]);
 
   return (
+    <>
     <nav
       className={`fixed top-0 inset-x-0 z-50 h-20 transition-all duration-300 ${
         isScrolled
@@ -133,10 +134,11 @@ const Navbar = () => {
           </span>
         </button>
       </div>
+    </nav>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (fora do <nav> pra não herdar o containing-block do backdrop-filter) */}
       <div
-        className={`lg:hidden fixed inset-x-0 top-20 bottom-0 bg-navy/95 backdrop-blur-md transition-all duration-300 ${
+        className={`lg:hidden fixed inset-x-0 top-20 bottom-0 z-40 bg-navy/95 backdrop-blur-md transition-all duration-300 ${
           isMenuOpen
             ? "opacity-100 pointer-events-auto"
             : "opacity-0 pointer-events-none"
@@ -172,7 +174,7 @@ const Navbar = () => {
           </div>
         </div>
       </div>
-    </nav>
+    </>
   );
 };
 
