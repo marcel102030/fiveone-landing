@@ -99,9 +99,23 @@ function clamp(text: string, max: number): string {
 }
 
 function absolutizeImage(coverUrl: string | null): string {
-  if (!coverUrl) return DEFAULT_IMAGE;
-  if (/^https?:\/\//i.test(coverUrl)) return coverUrl;
-  return `${SITE}${coverUrl.startsWith("/") ? "" : "/"}${coverUrl}`;
+  // URL absoluta da imagem original
+  const src = !coverUrl
+    ? DEFAULT_IMAGE
+    : /^https?:\/\//i.test(coverUrl)
+      ? coverUrl
+      : `${SITE}${coverUrl.startsWith("/") ? "" : "/"}${coverUrl}`;
+
+  // Otimiza para o formato ideal de Open Graph (1200x630), independente do
+  // tamanho/peso da imagem original. Resolve retroativamente TODOS os posts
+  // (capas grandes que o WhatsApp não conseguia processar) e os futuros.
+  // weserv.nl: proxy de imagem gratuito atrás de Cloudflare.
+  const noProto = src.replace(/^https?:\/\//i, "");
+  return (
+    "https://images.weserv.nl/?url=" +
+    encodeURIComponent("ssl:" + noProto) +
+    "&w=1200&h=630&fit=cover&a=attention&output=jpg&q=82"
+  );
 }
 
 function escapeAttr(s: string): string {
@@ -152,8 +166,9 @@ function injectMeta(
   // Garante og:image:width/height + alt (inseridos antes de </head> se não existirem)
   const extra =
     `<meta property="og:image:alt" content="${title}" />` +
-    `<meta property="og:image:width" content="1280" />` +
-    `<meta property="og:image:height" content="720" />` +
+    `<meta property="og:image:type" content="image/jpeg" />` +
+    `<meta property="og:image:width" content="1200" />` +
+    `<meta property="og:image:height" content="630" />` +
     (meta.author ? `<meta property="article:author" content="${escapeAttr(meta.author)}" />` : "") +
     (meta.publishedAt ? `<meta property="article:published_time" content="${escapeAttr(meta.publishedAt)}" />` : "");
   if (!out.includes('property="og:image:width"')) {
