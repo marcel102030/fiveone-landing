@@ -51,19 +51,19 @@ const Platform = () => {
   return (
     <section className="platform-section">
       <div className="content-container">
-        <h2>Escola Five One</h2>
+        <h2>Movimento Five One</h2>
         <p className="platform-description">
-          A Escola Five One tem uma plataforma online dedicada a ajudar cada
+          O Movimento Five One tem uma plataforma online dedicada a ajudar cada
           pessoa a descobrir e desenvolver seu dom ministerial, preparando-a
           para atuar de forma plena e significativa em seu chamado. Além de uma
           formação ministerial, o aluno também terá uma formação teológica
-          completa, os alunos têm a oportunidade de aprender com professores
-          especializados em diferentes dons ministeriais, garantindo uma
-          abordagem diversificada e rica no ensino. A escola desenvolve aulas ao
-          vivo e incentiva a construção de uma comunidade sólida através de
-          grupos no Discord e WhatsApp, onde os alunos podem compartilhar
-          experiências, crescer juntos e se apoiar mutuamente em sua jornada de
-          aprendizado e crescimento espiritual.
+          completa, com a oportunidade de aprender com professores especializados
+          em diferentes dons ministeriais, garantindo uma abordagem diversificada
+          e rica no ensino. Desenvolvemos aulas ao vivo e incentivamos a
+          construção de uma comunidade sólida através de grupos no Discord e
+          WhatsApp, onde os alunos podem compartilhar experiências, crescer
+          juntos e se apoiar mutuamente em sua jornada de aprendizado e
+          crescimento espiritual.
         </p>
         <div className="platform-screenshots">
           {platformImages.map((image, index) => (

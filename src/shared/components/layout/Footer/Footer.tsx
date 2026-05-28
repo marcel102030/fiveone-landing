@@ -14,12 +14,11 @@ const Footer = () => {
     <footer className="footer">
       <div className="content-container footer-content">
         <div className="footer-section">
-          <h3>ESCOLA FIVE ONE</h3>
+          <h3>MOVIMENTO FIVE ONE</h3>
           <p>
-            Uma escola onde você pode contar com ensino que valoriza as
-            Escrituras em primeiro lugar, com fundamentação da teologia, sem
-            perder o foco na importância da vida devocional e do relacionamento
-            pessoal com Deus.
+            Um movimento que valoriza as Escrituras em primeiro lugar, com
+            fundamentação da teologia, sem perder o foco na importância da vida
+            devocional e do relacionamento pessoal com Deus.
           </p>
         </div>
 

@@ -107,10 +107,10 @@ const Ministerio = () => {
       )}
       <section className="promo-escola-section">
         <div className="promo-escola-image">
-          <img src={escolaFiveOne} alt="Escola Five One" />
+          <img src={escolaFiveOne} alt="Movimento Five One" />
         </div>
         <div className="promo-escola-content">
-          <h3>Descubra a Escola Five One</h3>
+          <h3>Descubra o Movimento Five One</h3>
           <p>
             Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
             ministerial e conecte-se com uma comunidade de aprendizado e propósito.

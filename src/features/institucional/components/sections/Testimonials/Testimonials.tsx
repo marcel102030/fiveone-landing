@@ -3,7 +3,7 @@ import "./Testimonials.css";
 const testimonials = [
   {
     content:
-      "A Escola Five One me ajudou a crescer espiritualmente e a descobrir meu chamado ministerial. Recomendo a todos!",
+      "O Movimento Five One me ajudou a crescer espiritualmente e a descobrir meu chamado ministerial. Recomendo a todos!",
     author: "João Silva",
   },
   {

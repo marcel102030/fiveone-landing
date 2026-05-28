@@ -6,11 +6,11 @@ const About = () => {
       <div className="content-container">
         <h2>Viva Plenamente o seu Chamado</h2>
         <p>
-          Somos uma escola dedicada a formar você em seu Dom Ministerial, seja
+          Somos um movimento dedicado a formar você em seu Dom Ministerial, seja
           como Pastor, Evangelista, Profeta, Apóstolo ou Mestre. No Five One,
-          nosso propósito é criar um espaço de ensino centrado nos cinco
-          ministérios de Efésios 4, com o objetivo principal de ajudá-lo a
-          descobrir, aperfeiçoar e viver plenamente o seu. Acreditamos que seu
+          nosso propósito é criar um espaço centrado nos cinco ministérios de
+          Efésios 4, com o objetivo principal de ajudá-lo a descobrir,
+          aperfeiçoar e viver plenamente o seu. Acreditamos que seu
           chamado define sua identidade, seus dons revelam suas habilidades, e
           sua unção traz propósito à sua vida. Estamos aqui para apoiar seu
           crescimento e desenvolvimento no seu dom ministerial, ajudando você a

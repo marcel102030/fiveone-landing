@@ -94,7 +94,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // ── Navegação (SPA com HashRouter) ────────────────────────────────────
+  // ── Navegação (SPA com BrowserRouter) ─────────────────────────────────
   // Estratégia: Network First → cache → offline.html
   if (request.mode === 'navigate') {
     event.respondWith(

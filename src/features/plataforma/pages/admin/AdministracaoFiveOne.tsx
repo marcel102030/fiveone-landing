@@ -14,7 +14,8 @@ const quickAccessLinks = [
 const navCards = [
   { to: "/admin/alunos", title: "Alunos", desc: "Gerencie perfis e matrículas.", icon: "👥" },
   { to: "/admin/conteudo", title: "Conteúdo", desc: "Cursos, módulos e aulas.", icon: "📚" },
-  { to: "/admin/moderacao", title: "Moderação", desc: "Aprovar e rejeitar comentários.", icon: "💬" },
+  { to: "/admin/moderacao", title: "Moderação Aulas", desc: "Aprovar comentários da plataforma.", icon: "💬" },
+  { to: "/admin/moderacao-blog", title: "Moderação Blog", desc: "Aprovar comentários do blog público.", icon: "📝" },
   { to: "/admin/certificados", title: "Certificados", desc: "Emitir e visualizar certificados.", icon: "🏆" },
   { to: "/admin/vendas", title: "Vendas", desc: "Produtos e compras via Hotmart.", icon: "💳" },
   { to: "/admin/igrejas", title: "Quiz de Igrejas", desc: "Cadastro e relatórios do quiz.", icon: "⛪" },

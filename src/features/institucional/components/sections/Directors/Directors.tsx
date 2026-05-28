@@ -32,7 +32,7 @@ const Directors = () => {
   return (
     <section className="directors-section">
       <div className="content-container">
-        <h2>DIRETORES DA ESCOLA FIVE ONE</h2>
+        <h2>DIRETORES DO MOVIMENTO FIVE ONE</h2>
         <div className="directors-grid">
           {directors.map((director, index) => (
             <div key={index} className="director-card">

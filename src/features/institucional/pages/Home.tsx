@@ -1,24 +1,31 @@
-import "./Home.css";
+import { useEffect } from "react";
 import Hero from "../components/sections/Hero/Hero";
-import About from "../components/sections/About/About";
-import TrilhaMinisterial from "../components/sections/TrilhaMinisterial/TrilhaMinisterial";
-import ConhecaMais from "../components/sections/ConhecaMais/ConhecaMais";
+import CourseShowcase from "../components/sections/CourseShowcase/CourseShowcase";
+import QuizBanner from "../components/sections/QuizBanner/QuizBanner";
+import HowItWorks from "../components/sections/HowItWorks/HowItWorks";
 import TrainingFormats from "../components/TrainingFormats";
-import "../components/TrainingFormats.css";
+import FinalCTA from "../components/sections/FinalCTA/FinalCTA";
 
 const Home = () => {
-  const scrollPosition = () => {
-    const element = document.getElementById("trilha");
-    element?.scrollIntoView({ behavior: "smooth" });
-  };
+  useEffect(() => {
+    document.title = "Five One — Cursos bíblicos e Teste dos 5 Ministérios";
+    const meta = document.querySelector('meta[name="description"]');
+    if (meta) {
+      meta.setAttribute(
+        "content",
+        "Cursos online sobre a Bíblia com fundamento teológico e linguagem clara. Comece pelo Curso de Apologética ou descubra gratuitamente seu dom ministerial."
+      );
+    }
+  }, []);
 
   return (
     <>
-      <Hero onScrollClick={scrollPosition} />
+      <Hero />
+      <CourseShowcase />
+      <QuizBanner />
+      <HowItWorks />
       <TrainingFormats />
-      <About />
-      <TrilhaMinisterial />
-      <ConhecaMais />
+      <FinalCTA />
     </>
   );
 };

@@ -348,7 +348,7 @@ export async function renderEscolaFiveOne(doc: jsPDFType) {
     doc.setTextColor(255, 255, 255);
     doc.text('Clique Aqui para Entender sobre a Formação Ministerial', pageWidth / 2, buttonY + 7, { align: 'center' });
   
-    doc.link(buttonX, buttonY, buttonWidth, buttonHeight, { url: 'https://fiveonemovement.com/formacao-ministerial' });
+    doc.link(buttonX, buttonY, buttonWidth, buttonHeight, { url: 'https://fiveonemovement.com/cursos' });
   
     escolaY = buttonY + buttonHeight + 10;
   

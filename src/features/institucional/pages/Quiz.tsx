@@ -465,7 +465,7 @@ const Quiz = () => {
     document.title = "Teste dos 5 Ministérios — Descubra seu Dom (Apóstolo, Profeta, Evangelista, Pastor, Mestre) | Five One";
     description?.setAttribute(
       "content",
-      "Faça o Teste dos 5 Ministérios da Five One e descubra seu dom ministerial — Apóstolo, Profeta, Evangelista, Pastor ou Mestre. Baseado em Efésios 4:11-13. Gratuito, ~10 minutos, com PDF de resultado."
+      "Faça o Teste dos 5 Ministérios do Five One e descubra seu dom ministerial — Apóstolo, Profeta, Evangelista, Pastor ou Mestre. Baseado em Efésios 4:11-13. Gratuito, ~10 minutos, com PDF de resultado."
     );
     return () => {
       document.title = previousTitle;
@@ -1346,10 +1346,10 @@ const Quiz = () => {
 
           <section className="promo-escola-section">
             <div className="promo-escola-image">
-              <img src={escolaFiveOne} alt="Escola Five One" />
+              <img src={escolaFiveOne} alt="Movimento Five One" />
             </div>
             <div className="promo-escola-content">
-              <h3>Descubra a Escola Five One</h3>
+              <h3>Descubra o Movimento Five One</h3>
               <p>
                 Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
                 ministerial e conecte-se com uma comunidade de aprendizado e propósito.
