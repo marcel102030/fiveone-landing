@@ -63,7 +63,7 @@ const Footer = () => {
               <FaInstagram />
             </a>
             <a
-              href="https://www.youtube.com/@Escola_Five_One/videos"
+              href="https://www.youtube.com/@Five_One_Movement"
               target="_blank"
               rel="noopener noreferrer"
             >

@@ -41,9 +41,9 @@ const socials: Social[] = [
   },
   {
     name: "YouTube",
-    handle: "@Escola_Five_One",
+    handle: "@Five_One_Movement",
     desc: "Aulas, pregações e conteúdos em vídeo para aprofundar a sua caminhada.",
-    href: "https://www.youtube.com/@Escola_Five_One/videos",
+    href: "https://www.youtube.com/@Five_One_Movement",
     cta: "Inscrever-se",
     Icon: FaYoutube,
     iconClass: "bg-[#FF0000] text-white",
