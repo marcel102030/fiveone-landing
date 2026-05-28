@@ -126,23 +126,27 @@ const CourseShowcase = () => {
           {/* Glow interno */}
           <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[100px] rounded-full" />
 
-          <div className="relative grid lg:grid-cols-5 gap-0 lg:gap-8">
-            {/* Capa */}
-            <div className="lg:col-span-2 p-6 lg:p-8 flex items-center justify-center">
-              <div className="relative w-full max-w-sm lg:max-w-none">
-                <div className="absolute -inset-4 bg-gradient-to-br from-mint/20 to-transparent rounded-2xl blur-xl" />
-                <img
-                  src={featured.cover}
-                  alt={`Curso de ${featured.title}`}
-                  className="relative w-full h-auto rounded-2xl shadow-card border border-slate/10"
-                  loading="lazy"
-                  draggable={false}
-                />
-              </div>
+          <div className="relative grid lg:grid-cols-5 gap-0">
+            {/* Capa — preenche a coluna inteira (flush), sem borda vazia e sem cortar.
+                O fundo é a própria capa desfocada; a capa nítida vai por cima (contain). */}
+            <div className="lg:col-span-2 relative overflow-hidden bg-navy aspect-square lg:aspect-auto">
+              <img
+                src={featured.cover}
+                aria-hidden
+                className="absolute inset-0 w-full h-full object-cover scale-110 blur-2xl opacity-50"
+              />
+              <div className="absolute inset-0 bg-navy/30" />
+              <img
+                src={featured.cover}
+                alt={`Curso de ${featured.title}`}
+                className="relative w-full h-full object-contain"
+                loading="lazy"
+                draggable={false}
+              />
             </div>
 
             {/* Conteúdo */}
-            <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 lg:pl-0 flex flex-col">
+            <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col">
               <div className="flex items-center gap-2 mb-4">
                 <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint text-navy text-xs font-bold uppercase tracking-wider">
                   {featured.badge}
