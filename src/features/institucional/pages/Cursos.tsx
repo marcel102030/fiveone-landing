@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import TrainingFormats from "../components/TrainingFormats";
-import courseCover from "../assets/images/capa_curso_apologetica.png";
+import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 
 type UpcomingCourse = {
   title: string;

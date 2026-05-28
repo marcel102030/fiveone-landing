@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import courseCover from "../assets/images/capa_curso_apologetica.png";
+import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 
 // TODO: substituir por link real do Hotmart quando o produto estiver cadastrado lá
 const HOTMART_CHECKOUT_URL =

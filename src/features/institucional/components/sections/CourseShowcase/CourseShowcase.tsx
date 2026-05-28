@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import courseCover from "../../../assets/images/capa_curso_apologetica.png";
+import courseCover from "../../../assets/images/capa_curso_apologetica.jpg";
 
 type FeaturedCourse = {
   slug: string;

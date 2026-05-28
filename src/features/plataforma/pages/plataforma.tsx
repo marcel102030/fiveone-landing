@@ -14,7 +14,7 @@ import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
 import { getEnrollments } from '../services/userAccount'
 import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
-import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.png'
+import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.jpg'
 
 // Capas locais por curso, usadas como fallback quando não há banner no banco.
 // O banner do admin (Storage) sempre tem prioridade sobre estas.
