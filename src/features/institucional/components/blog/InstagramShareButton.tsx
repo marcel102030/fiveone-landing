@@ -4,6 +4,7 @@ import { buildShareUrl } from "./blogHelpers";
 import {
   buildInstagramCaption,
   generateInstagramCard,
+  type CardFormat,
   type InstagramCardPost,
 } from "./instagramCard";
 
@@ -43,6 +44,7 @@ export default function InstagramShareButton({
 }
 
 function InstagramShareModal({ post, onClose }: { post: Post; onClose: () => void }) {
+  const [format, setFormat] = useState<CardFormat>("feed");
   const [dataUrl, setDataUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -55,14 +57,15 @@ function InstagramShareModal({ post, onClose }: { post: Post; onClose: () => voi
     let alive = true;
     setLoading(true);
     setError(false);
-    generateInstagramCard(post)
+    setDataUrl(null);
+    generateInstagramCard(post, format)
       .then((url) => alive && (setDataUrl(url), setLoading(false)))
       .catch(() => alive && (setError(true), setLoading(false)));
     return () => {
       alive = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [format]);
 
   // Fecha com ESC e trava o scroll do body
   useEffect(() => {
@@ -76,11 +79,13 @@ function InstagramShareModal({ post, onClose }: { post: Post; onClose: () => voi
     };
   }, [onClose]);
 
+  const dims = format === "story" ? "1080×1920" : "1080×1350";
+
   function download() {
     if (!dataUrl) return;
     const a = document.createElement("a");
     a.href = dataUrl;
-    a.download = `fiveone-${post.slug}-instagram.png`;
+    a.download = `fiveone-${post.slug}-${format}.png`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -124,7 +129,30 @@ function InstagramShareModal({ post, onClose }: { post: Post; onClose: () => voi
         <div className="grid sm:grid-cols-[300px_1fr] gap-5 p-5">
           {/* Preview */}
           <div className="shrink-0">
-            <div className="aspect-[1080/1350] w-full rounded-xl overflow-hidden border border-slate/15 bg-navy flex items-center justify-center">
+            {/* Tabs de formato */}
+            <div className="flex gap-1 mb-3 p-1 bg-navy rounded-lg border border-slate/15">
+              {([
+                ["feed", "Feed"],
+                ["story", "Story"],
+              ] as [CardFormat, string][]).map(([f, label]) => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => setFormat(f)}
+                  className={`flex-1 text-xs font-semibold py-2 rounded-md transition ${
+                    format === f
+                      ? "bg-mint text-navy"
+                      : "text-slate-light hover:text-mint"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div
+              className="w-full rounded-xl overflow-hidden border border-slate/15 bg-navy flex items-center justify-center"
+              style={{ aspectRatio: format === "story" ? "1080 / 1920" : "1080 / 1350" }}
+            >
               {loading ? (
                 <div className="flex flex-col items-center gap-3 text-slate text-sm">
                   <div className="w-7 h-7 border-2 border-mint border-t-transparent rounded-full animate-spin" />
@@ -144,7 +172,7 @@ function InstagramShareModal({ post, onClose }: { post: Post; onClose: () => voi
               disabled={!dataUrl}
               className="mt-3 w-full inline-flex items-center justify-center gap-2 px-4 py-3 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong transition disabled:opacity-50"
             >
-              ⬇ Baixar imagem (1080×1350)
+              ⬇ Baixar {format === "story" ? "Story" : "Feed"} ({dims})
             </button>
           </div>
 

@@ -5,7 +5,25 @@
 // Canvas 2D puro (sem html2canvas). Retorna um dataURL PNG pronto pra baixar.
 
 const CARD_W = 1080;
-const CARD_H = 1350;
+
+export type CardFormat = "feed" | "story";
+
+// Config por formato. No Story, o Instagram cobre o topo (perfil) e o rodapé
+// (responder / adesivos) com a própria interface — por isso há margens de
+// segurança maiores (topOffset / bottomReserve) pra nada importante ficar atrás.
+const FORMATS: Record<
+  CardFormat,
+  {
+    H: number;
+    padX: number;
+    topOffset: number;
+    bandH: number;
+    bottomReserve: number;
+  }
+> = {
+  feed: { H: 1350, padX: 72, topOffset: 72, bandH: 560, bottomReserve: 72 },
+  story: { H: 1920, padX: 90, topOffset: 250, bandH: 700, bottomReserve: 300 },
+};
 
 const NAVY = "#0a192f";
 const MINT = "#64ffda";
@@ -142,10 +160,14 @@ function drawSpaced(
 
 export async function generateInstagramCard(
   post: InstagramCardPost,
+  format: CardFormat = "feed",
 ): Promise<string> {
+  const cfg = FORMATS[format];
+  const { H, padX, topOffset, bandH, bottomReserve } = cfg;
+
   const canvas = document.createElement("canvas");
   canvas.width = CARD_W;
-  canvas.height = CARD_H;
+  canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas não suportado");
 
@@ -167,29 +189,28 @@ export async function generateInstagramCard(
 
   // Fundo navy + brilho mint sutil no topo
   ctx.fillStyle = NAVY;
-  ctx.fillRect(0, 0, CARD_W, CARD_H);
-  const glow = ctx.createRadialGradient(CARD_W / 2, 260, 40, CARD_W / 2, 260, 760);
+  ctx.fillRect(0, 0, CARD_W, H);
+  const glowY = topOffset + 220;
+  const glow = ctx.createRadialGradient(CARD_W / 2, glowY, 40, CARD_W / 2, glowY, 820);
   glow.addColorStop(0, "rgba(100,255,218,0.07)");
   glow.addColorStop(1, "rgba(10,25,47,0)");
   ctx.fillStyle = glow;
-  ctx.fillRect(0, 0, CARD_W, CARD_H);
+  ctx.fillRect(0, 0, CARD_W, H);
 
-  const PAD = 72;
-  const contentW = CARD_W - PAD * 2;
+  const contentW = CARD_W - padX * 2;
   ctx.textBaseline = "top";
 
-  // Rótulo da marca (topo)
-  let y = PAD + 4;
+  // Rótulo da marca (topo, dentro da zona segura)
+  let y = topOffset;
   ctx.font = "700 30px Inter, Arial, sans-serif";
   ctx.fillStyle = MINT;
-  drawSpaced(ctx, "PARA LER · FIVE ONE", PAD, y, 4);
+  drawSpaced(ctx, "PARA LER · FIVE ONE", padX, y, 4);
   y += 30 + 38;
 
   // ── Quadro da capa (imagem inteira, sem cortar) ──
-  const bandX = PAD;
+  const bandX = padX;
   const bandY = y;
   const bandW = contentW;
-  const bandH = 560;
   const radius = 28;
 
   ctx.save();
@@ -217,12 +238,12 @@ export async function generateInstagramCard(
 
   y = bandY + bandH + 52;
 
-  // ── Texto (categoria + título + resumo + CTA) ──
+  // ── Texto (categoria + título + resumo) ──
   const category = (post.category || "").toUpperCase();
   if (category) {
     ctx.font = "700 26px Inter, Arial, sans-serif";
     ctx.fillStyle = MINT;
-    drawSpaced(ctx, category, PAD, y, 3);
+    drawSpaced(ctx, category, padX, y, 3);
     y += 26 + 22;
   }
 
@@ -231,7 +252,7 @@ export async function generateInstagramCard(
   const titleLines = clampLines(ctx, wrapAll(ctx, post.title, contentW), 3, contentW);
   const titleLH = 72;
   for (const ln of titleLines) {
-    ctx.fillText(ln, PAD, y);
+    ctx.fillText(ln, padX, y);
     y += titleLH;
   }
 
@@ -243,15 +264,21 @@ export async function generateInstagramCard(
     const subLines = clampLines(ctx, wrapAll(ctx, sub, contentW), 3, contentW);
     const subLH = 44;
     for (const ln of subLines) {
-      ctx.fillText(ln, PAD, y);
+      ctx.fillText(ln, padX, y);
       y += subLH;
     }
   }
 
-  // CTA fixo no rodapé
+  // CTA fixo no rodapé (acima da zona segura). No story, dica do adesivo de link.
+  const ctaY = H - bottomReserve - 30;
+  if (format === "story") {
+    ctx.font = "400 28px Inter, Arial, sans-serif";
+    ctx.fillStyle = SLATE;
+    ctx.fillText("👆 Toque no link para ler o artigo completo", padX, ctaY - 46);
+  }
   ctx.font = "700 30px Inter, Arial, sans-serif";
   ctx.fillStyle = MINT;
-  ctx.fillText("Leia no site →  fiveonemovement.com", PAD, CARD_H - PAD - 30);
+  ctx.fillText("Leia no site →  fiveonemovement.com", padX, ctaY);
 
   return canvas.toDataURL("image/png");
 }
