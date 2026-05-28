@@ -1,0 +1,1 @@
+import{j as s,T as o}from"./index-BZn5p_Lp.js";/* empty css                        */const a=()=>s.jsx("main",{className:"solo-page",style:{minHeight:"100vh",background:"#030712"},children:s.jsx(o,{})});export{a as default};

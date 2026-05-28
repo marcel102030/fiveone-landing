@@ -275,7 +275,7 @@ function BlogList({
                     <div className="text-slate-white font-medium flex items-center gap-2">
                       {p.is_featured && (
                         <span
-                          title="Post em destaque na página de Insights"
+                          title="Post em destaque na página Para Ler"
                           className="inline-flex items-center gap-1 text-2xs uppercase tracking-wider px-2 py-0.5 rounded-full bg-golden/15 text-golden border border-golden/30"
                         >
                           ⭐ Destaque

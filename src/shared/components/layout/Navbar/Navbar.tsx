@@ -9,7 +9,7 @@ const NAV_ITEMS: NavItem[] = [
   { to: "/cursos", label: "Cursos" },
   { to: "/descubra-seu-dom", label: "Descubra seu dom" },
   { to: "/solucoes", label: "Para sua igreja" },
-  { to: "/insights", label: "Insights" },
+  { to: "/insights", label: "Para Ler" },
   { to: "/contato", label: "Contato" },
 ];
 

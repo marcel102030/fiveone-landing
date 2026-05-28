@@ -11,12 +11,12 @@ const PAGE_SIZE = 12;
 
 const BlogList = () => {
   useEffect(() => {
-    document.title = "Insights | Five One";
+    document.title = "Para Ler | Five One";
     const meta = document.querySelector('meta[name="description"]');
     if (meta) {
       meta.setAttribute(
         "content",
-        "Insights ministeriais e teológicos do Five One. Artigos sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
+        "Artigos teológicos, ministeriais e práticos do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
       );
     }
   }, []);
@@ -63,7 +63,7 @@ const BlogList = () => {
 
         <div className="relative max-w-5xl mx-auto px-6 lg:px-8 text-center">
           <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Insights ministeriais
+            Para Ler
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
             Artigos para <span className="text-mint">crescer</span> na fé

@@ -41,7 +41,7 @@ const BlogPost: React.FC<BlogPostProps> = ({ post }) => {
       <header className={styles.postHero}>
         <div className={styles.postHeroContent}>
           <a className={styles.backLink} href="/insights">
-            ← Voltar para insights
+            ← Voltar para os artigos
           </a>
           <div className={styles.heroTags}>
             {post.category && <span className={styles.chip}>{post.category}</span>}

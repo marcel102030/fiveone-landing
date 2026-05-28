@@ -220,7 +220,7 @@ const BlogPostPage = () => {
             className="mt-8 inline-flex items-center gap-1.5 px-5 py-3 bg-mint text-navy font-semibold rounded-xl hover:shadow-mint-strong transition"
           >
             <ArrowLeftIcon />
-            Voltar aos Insights
+            Voltar para os artigos
           </Link>
         </div>
       </div>
@@ -250,7 +250,7 @@ const BlogPostPage = () => {
             className="inline-flex items-center gap-1.5 text-xs text-slate hover:text-mint transition-colors mb-6"
           >
             <ArrowLeftIcon />
-            Voltar para os Insights
+            Voltar para os artigos
           </Link>
 
           <p className="text-2xs text-mint font-semibold uppercase tracking-wider">
