@@ -1,7 +1,8 @@
 // Gera uma arte 1080×1350 (feed retrato do Instagram) a partir de um post.
-// Usa Canvas 2D puro (sem html2canvas) para controle total e previsibilidade:
-// capa do post como fundo (cover-fit), gradiente navy por cima e título +
-// resumo + chamada sobrepostos. Retorna um dataURL PNG pronto pra baixar.
+// Layout: a capa do post aparece INTEIRA (sem cortar) num quadro no topo —
+// com um fundo desfocado da própria capa preenchendo as bordas (letterbox
+// elegante) — e título + resumo + chamada numa faixa navy embaixo.
+// Canvas 2D puro (sem html2canvas). Retorna um dataURL PNG pronto pra baixar.
 
 const CARD_W = 1080;
 const CARD_H = 1350;
@@ -43,18 +44,48 @@ async function loadCover(coverUrl: string): Promise<HTMLImageElement | null> {
     const proxied =
       "https://images.weserv.nl/?url=" +
       encodeURIComponent("ssl:" + noProto) +
-      `&w=${CARD_W}&h=${CARD_H}&fit=cover&a=attention&output=jpg&q=90`;
+      `&w=${CARD_W}&output=jpg&q=90`;
     return await loadImage(proxied);
   } catch {
     return null;
   }
 }
 
-function drawCover(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
-  const scale = Math.max(CARD_W / img.width, CARD_H / img.height);
-  const w = img.width * scale;
-  const h = img.height * scale;
-  ctx.drawImage(img, (CARD_W - w) / 2, (CARD_H - h) / 2, w, h);
+// Desenha a imagem dentro de um retângulo com modo "cover" (preenche cortando)
+// ou "contain" (cabe inteira, com sobra).
+function drawFit(
+  ctx: CanvasRenderingContext2D,
+  img: HTMLImageElement,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  mode: "cover" | "contain",
+) {
+  const scale =
+    mode === "cover"
+      ? Math.max(w / img.width, h / img.height)
+      : Math.min(w / img.width, h / img.height);
+  const dw = img.width * scale;
+  const dh = img.height * scale;
+  ctx.drawImage(img, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+
+function roundRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
 }
 
 function wrapAll(
@@ -94,8 +125,7 @@ function clampLines(
   return kept;
 }
 
-// Desenha texto com espaçamento entre letras (tracking), que o canvas não tem
-// nativo. Usado nos rótulos em caixa alta.
+// Texto com espaçamento entre letras (tracking), que o canvas não tem nativo.
 function drawSpaced(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -124,8 +154,8 @@ export async function generateInstagramCard(
     const f = (document as unknown as { fonts?: FontFaceSet }).fonts;
     if (f?.load) {
       await Promise.all([
-        f.load("800 68px Inter"),
-        f.load("400 34px Inter"),
+        f.load("800 60px Inter"),
+        f.load("400 32px Inter"),
         f.load("700 30px Inter"),
       ]);
     }
@@ -133,91 +163,95 @@ export async function generateInstagramCard(
     /* fallback pra fonte do sistema */
   }
 
-  // Fundo base
+  const img = post.cover_url ? await loadCover(post.cover_url) : null;
+
+  // Fundo navy + brilho mint sutil no topo
   ctx.fillStyle = NAVY;
   ctx.fillRect(0, 0, CARD_W, CARD_H);
-
-  // Capa do post (cover-fit)
-  if (post.cover_url) {
-    const img = await loadCover(post.cover_url);
-    if (img) drawCover(ctx, img);
-  }
-
-  // Gradiente navy: leve no topo, forte embaixo (legibilidade do texto)
-  const grad = ctx.createLinearGradient(0, 0, 0, CARD_H);
-  grad.addColorStop(0, "rgba(10,25,47,0.55)");
-  grad.addColorStop(0.4, "rgba(10,25,47,0.12)");
-  grad.addColorStop(0.66, "rgba(10,25,47,0.82)");
-  grad.addColorStop(1, "rgba(10,25,47,0.98)");
-  ctx.fillStyle = grad;
+  const glow = ctx.createRadialGradient(CARD_W / 2, 260, 40, CARD_W / 2, 260, 760);
+  glow.addColorStop(0, "rgba(100,255,218,0.07)");
+  glow.addColorStop(1, "rgba(10,25,47,0)");
+  ctx.fillStyle = glow;
   ctx.fillRect(0, 0, CARD_W, CARD_H);
 
-  const PAD = 84;
-  const maxW = CARD_W - PAD * 2;
+  const PAD = 72;
+  const contentW = CARD_W - PAD * 2;
   ctx.textBaseline = "top";
 
   // Rótulo da marca (topo)
+  let y = PAD + 4;
   ctx.font = "700 30px Inter, Arial, sans-serif";
   ctx.fillStyle = MINT;
-  drawSpaced(ctx, "PARA LER · FIVE ONE", PAD, PAD, 4);
+  drawSpaced(ctx, "PARA LER · FIVE ONE", PAD, y, 4);
+  y += 30 + 38;
 
-  // ── Bloco inferior (categoria + título + resumo + CTA) ──
+  // ── Quadro da capa (imagem inteira, sem cortar) ──
+  const bandX = PAD;
+  const bandY = y;
+  const bandW = contentW;
+  const bandH = 560;
+  const radius = 28;
+
+  ctx.save();
+  roundRectPath(ctx, bandX, bandY, bandW, bandH, radius);
+  ctx.clip();
+  if (img) {
+    // Fundo: a própria capa desfocada (preenche as bordas com elegância)
+    ctx.filter = "blur(34px)";
+    drawFit(ctx, img, bandX - 30, bandY - 30, bandW + 60, bandH + 60, "cover");
+    ctx.filter = "none";
+    ctx.fillStyle = "rgba(10,25,47,0.45)";
+    ctx.fillRect(bandX, bandY, bandW, bandH);
+    // Frente: a capa inteira (contain)
+    drawFit(ctx, img, bandX, bandY, bandW, bandH, "contain");
+  } else {
+    ctx.fillStyle = "#13243f";
+    ctx.fillRect(bandX, bandY, bandW, bandH);
+  }
+  ctx.restore();
+  // Borda sutil do quadro
+  roundRectPath(ctx, bandX, bandY, bandW, bandH, radius);
+  ctx.strokeStyle = "rgba(230,241,255,0.10)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  y = bandY + bandH + 52;
+
+  // ── Texto (categoria + título + resumo + CTA) ──
   const category = (post.category || "").toUpperCase();
-
-  ctx.font = "800 68px Inter, Arial, sans-serif";
-  const titleLines = clampLines(ctx, wrapAll(ctx, post.title, maxW), 4, maxW);
-  const titleLH = 82;
-
-  const sub = (post.excerpt || post.subtitle || "").replace(/\s+/g, " ").trim();
-  ctx.font = "400 34px Inter, Arial, sans-serif";
-  const subLines = sub ? clampLines(ctx, wrapAll(ctx, sub, maxW), 3, maxW) : [];
-  const subLH = 48;
-
-  const catH = category ? 38 : 0;
-  const gapCatTitle = category ? 28 : 0;
-  const gapTitleSub = subLines.length ? 30 : 0;
-  const gapSubCta = 42;
-  const ctaH = 38;
-
-  const blockH =
-    catH +
-    gapCatTitle +
-    titleLines.length * titleLH +
-    gapTitleSub +
-    subLines.length * subLH +
-    gapSubCta +
-    ctaH;
-
-  let y = CARD_H - PAD - blockH;
-
   if (category) {
     ctx.font = "700 26px Inter, Arial, sans-serif";
     ctx.fillStyle = MINT;
     drawSpaced(ctx, category, PAD, y, 3);
-    y += catH + gapCatTitle;
+    y += 26 + 22;
   }
 
-  ctx.font = "800 68px Inter, Arial, sans-serif";
+  ctx.font = "800 60px Inter, Arial, sans-serif";
   ctx.fillStyle = WHITE;
+  const titleLines = clampLines(ctx, wrapAll(ctx, post.title, contentW), 3, contentW);
+  const titleLH = 72;
   for (const ln of titleLines) {
     ctx.fillText(ln, PAD, y);
     y += titleLH;
   }
-  y += gapTitleSub;
 
-  if (subLines.length) {
-    ctx.font = "400 34px Inter, Arial, sans-serif";
+  const sub = (post.excerpt || post.subtitle || "").replace(/\s+/g, " ").trim();
+  if (sub) {
+    y += 18;
+    ctx.font = "400 32px Inter, Arial, sans-serif";
     ctx.fillStyle = SLATE;
+    const subLines = clampLines(ctx, wrapAll(ctx, sub, contentW), 3, contentW);
+    const subLH = 44;
     for (const ln of subLines) {
       ctx.fillText(ln, PAD, y);
       y += subLH;
     }
   }
-  y += gapSubCta;
 
+  // CTA fixo no rodapé
   ctx.font = "700 30px Inter, Arial, sans-serif";
   ctx.fillStyle = MINT;
-  ctx.fillText("Leia no site →  fiveonemovement.com", PAD, y);
+  ctx.fillText("Leia no site →  fiveonemovement.com", PAD, CARD_H - PAD - 30);
 
   return canvas.toDataURL("image/png");
 }
