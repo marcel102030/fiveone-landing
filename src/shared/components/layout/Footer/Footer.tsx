@@ -8,6 +8,7 @@ import {
   FaBuilding,
   FaIdCard,
 } from "react-icons/fa";
+import { SOCIAL } from "../../../config/social";
 
 const Footer = () => {
   return (
@@ -29,13 +30,13 @@ const Footer = () => {
               <span>
                 <FaPhone /> Atendimento:{" "}
               </span>
-              +55 (83) 98900-4764
+              +55 {SOCIAL.whatsapp.display}
             </p>
             <p>
               <span>
                 <FaEnvelope />{" "}
               </span>
-              escolafiveone@gmail.com
+              {SOCIAL.email}
             </p>
             <p>
               <span>
@@ -55,25 +56,13 @@ const Footer = () => {
         <div className="footer-section">
           <h3>CONECTE-SE CONOSCO</h3>
           <div className="social-links">
-            <a
-              href="https://www.instagram.com/fiveone.oficial/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={SOCIAL.instagram.url} target="_blank" rel="noopener noreferrer">
               <FaInstagram />
             </a>
-            <a
-              href="https://www.youtube.com/@Five_One_Movement"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={SOCIAL.youtube.url} target="_blank" rel="noopener noreferrer">
               <FaYoutube />
             </a>
-            <a
-              href="https://www.tiktok.com/@escola.five.one"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
+            <a href={SOCIAL.tiktok.url} target="_blank" rel="noopener noreferrer">
               <FaTiktok />
             </a>
           </div>

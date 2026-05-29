@@ -4,6 +4,7 @@ import CourseShowcase from "../components/sections/CourseShowcase/CourseShowcase
 import QuizBanner from "../components/sections/QuizBanner/QuizBanner";
 import HowItWorks from "../components/sections/HowItWorks/HowItWorks";
 import TrainingFormats from "../components/TrainingFormats";
+import FreeContent from "../components/sections/FreeContent/FreeContent";
 import FinalCTA from "../components/sections/FinalCTA/FinalCTA";
 
 const Home = () => {
@@ -25,6 +26,7 @@ const Home = () => {
       <QuizBanner />
       <HowItWorks />
       <TrainingFormats />
+      <FreeContent />
       <FinalCTA />
     </>
   );

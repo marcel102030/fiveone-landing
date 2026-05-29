@@ -6,6 +6,7 @@ import {
   formatPostDate,
   listPublishedPosts,
 } from "../services/blog";
+import PostCard from "../components/blog/PostCard";
 
 const PAGE_SIZE = 12;
 
@@ -196,46 +197,6 @@ function FeaturedPostCard({ post }: { post: BlogPost }) {
           <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
             <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
           </svg>
-        </div>
-      </div>
-    </Link>
-  );
-}
-
-function PostCard({ post }: { post: BlogPost }) {
-  return (
-    <Link
-      to={`/insights/${post.slug}`}
-      className="group flex flex-col bg-navy-light/60 border border-slate/10 rounded-2xl overflow-hidden hover:border-mint/30 hover:shadow-mint transition-all"
-    >
-      <div className="relative aspect-video overflow-hidden bg-navy">
-        {post.cover_url ? (
-          <img
-            src={post.cover_url}
-            alt={post.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-slate/30 text-5xl">📖</div>
-        )}
-      </div>
-
-      <div className="flex-1 p-5 flex flex-col">
-        <p className="text-2xs text-mint font-semibold uppercase tracking-wider">
-          {post.category}
-        </p>
-        <h3 className="mt-2 text-lg font-bold text-slate-white tracking-tight leading-snug group-hover:text-mint transition-colors line-clamp-2">
-          {post.title}
-        </h3>
-        {post.excerpt && (
-          <p className="mt-2 text-sm text-slate leading-relaxed line-clamp-3 grow">
-            {post.excerpt}
-          </p>
-        )}
-        <div className="mt-4 pt-4 border-t border-slate/10 flex items-center justify-between text-2xs text-slate">
-          <span className="truncate">{post.author_name}</span>
-          <span>{formatPostDate(post.published_at)}</span>
         </div>
       </div>
     </Link>

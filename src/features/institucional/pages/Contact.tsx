@@ -6,6 +6,9 @@ import {
   FaTiktok,
   FaEnvelope,
 } from "react-icons/fa";
+import { SOCIAL } from "../../../shared/config/social";
+
+const WA_TEXT = "?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20Five%20One.";
 
 type Social = {
   name: string;
@@ -21,9 +24,9 @@ type Social = {
 const socials: Social[] = [
   {
     name: "Instagram",
-    handle: "@fiveone.oficial",
+    handle: SOCIAL.instagram.handle,
     desc: "Reflexões diárias, bastidores e a comunidade do movimento. É por aqui que tudo acontece primeiro.",
-    href: "https://www.instagram.com/fiveone.oficial/",
+    href: SOCIAL.instagram.url,
     cta: "Seguir no Instagram",
     Icon: FaInstagram,
     iconClass:
@@ -32,27 +35,27 @@ const socials: Social[] = [
   },
   {
     name: "WhatsApp",
-    handle: "(83) 98900-4764",
+    handle: SOCIAL.whatsapp.display,
     desc: "Fale direto com a nossa equipe — dúvidas, matrículas e parcerias com igrejas.",
-    href: "https://wa.me/5583989004764?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20Five%20One.",
+    href: `${SOCIAL.whatsapp.url}${WA_TEXT}`,
     cta: "Conversar agora",
     Icon: FaWhatsapp,
     iconClass: "bg-[#25D366] text-white",
   },
   {
     name: "YouTube",
-    handle: "@Five_One_Movement",
+    handle: SOCIAL.youtube.handle,
     desc: "Aulas, pregações e conteúdos em vídeo para aprofundar a sua caminhada.",
-    href: "https://www.youtube.com/@Five_One_Movement",
+    href: SOCIAL.youtube.url,
     cta: "Inscrever-se",
     Icon: FaYoutube,
     iconClass: "bg-[#FF0000] text-white",
   },
   {
     name: "TikTok",
-    handle: "@escola.five.one",
+    handle: SOCIAL.tiktok.handle,
     desc: "Cortes rápidos e conteúdo direto ao ponto para o dia a dia.",
-    href: "https://www.tiktok.com/@escola.five.one",
+    href: SOCIAL.tiktok.url,
     cta: "Seguir",
     Icon: FaTiktok,
     iconClass: "bg-black text-white border border-white/15",
@@ -121,7 +124,7 @@ const Contact = () => {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="https://www.instagram.com/fiveone.oficial/"
+              href={SOCIAL.instagram.url}
               target="_blank"
               rel="noopener noreferrer"
               className="group inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
@@ -130,7 +133,7 @@ const Contact = () => {
               Seguir no Instagram
             </a>
             <a
-              href="https://wa.me/5583989004764?text=Ol%C3%A1!%20Vim%20pelo%20site%20do%20Five%20One."
+              href={`${SOCIAL.whatsapp.url}${WA_TEXT}`}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center justify-center gap-2 px-7 py-3.5 bg-transparent border border-mint/40 text-mint font-semibold rounded-xl hover:bg-mint/10 hover:border-mint/60 transition-all duration-200"

@@ -109,17 +109,18 @@ const TrainingFormats: React.FC = () => {
         {/* Cabeçalho */}
         <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-16">
           <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Para sua igreja
+            Treinamentos e Mentorias
           </span>
           <h2
             id="formatos-heading"
             className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight"
           >
-            Leve os 5 Ministérios para <span className="text-mint">sua igreja</span>
+            Leve os 5 Ministérios para a sua{" "}
+            <span className="text-mint">vida e a sua igreja</span>
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate">
-            Palestras, treinamentos e acompanhamento prático — formatos
-            flexíveis para presbíteros, líderes e toda a comunidade.
+            Da mentoria individual à imersão com a igreja inteira — formatos
+            flexíveis para você, presbíteros, líderes e toda a comunidade.
           </p>
         </div>
 
