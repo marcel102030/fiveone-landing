@@ -18,6 +18,7 @@ import NextPostCard from "../components/blog/NextPostCard";
 import AuthorCard from "../components/blog/AuthorCard";
 import ReaderControls from "../components/blog/ReaderControls";
 import ReadingJourney from "../components/blog/ReadingJourney";
+import NewsletterForm from "../components/blog/NewsletterForm";
 import InstagramShareButton from "../components/blog/InstagramShareButton";
 import {
   buildShareUrl,
@@ -338,6 +339,15 @@ const BlogPostPage = () => {
       />
 
       {/* Comentários */}
+      {/* Newsletter — captação antes dos comentários */}
+      <section className="max-w-3xl mx-auto px-6 lg:px-8 pb-4">
+        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl px-6 py-5">
+          <p className="text-sm font-bold text-slate-white mb-1">Gostou do artigo?</p>
+          <p className="text-sm text-slate mb-4">Receba os próximos diretamente no seu e-mail.</p>
+          <NewsletterForm source="blog_post" />
+        </div>
+      </section>
+
       <CommentsSection postId={post.id} />
     </div>
   );

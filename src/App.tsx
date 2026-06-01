@@ -79,6 +79,7 @@ const MeusCertificados = lazy(() => import("./features/plataforma/pages/MeusCert
 const CertificadoPublico = lazy(() => import("./features/plataforma/pages/CertificadoPublico"));
 const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
 const CursoApologetica = lazy(() => import("./features/institucional/pages/CursoApologetica"));
+const LpApologetica = lazy(() => import("./features/institucional/pages/LpApologetica"));
 
 function RedirectWithQuery({ to }: { to: string }) {
   const { search } = useLocation();
@@ -116,6 +117,7 @@ function AppContent() {
     location.pathname.startsWith("/rede-igrejas/");
 
   const hideLayout =
+    location.pathname.startsWith("/lp/") ||
     location.pathname === "/plataforma" ||
     location.pathname === "/login-aluno" ||
     location.pathname === "/esqueci-senha" ||
@@ -299,6 +301,7 @@ function AppContent() {
             <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
             <Route path="/solucoes" element={<Navigate to="/cursos" replace />} />
             <Route path="/cursos/apologetica" element={<CursoApologetica />} />
+            <Route path="/lp/apologetica" element={<LpApologetica />} />
             <Route
               path="/plataforma"
               element={

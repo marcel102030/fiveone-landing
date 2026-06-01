@@ -170,7 +170,7 @@ export default function AdminLogin() {
               </label>
               <a
                 className="link-ghost"
-                href="#/esqueci-senha"
+                href="/esqueci-senha"
                 onClick={(e) => { e.preventDefault(); navigate('/esqueci-senha'); }}
               >
                 Esqueceu a senha?

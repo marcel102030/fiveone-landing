@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import logoUrl from "../../../../../assets/images/logo-fiveone-white.png";
 import apostoloIcon from "../../../../../assets/images/icons/apostolo.png";
 import profetaIcon from "../../../../../assets/images/icons/profeta.png";
@@ -114,12 +115,12 @@ const Hero = ({ onScrollClick }: HeroProps) => {
               <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
             </svg>
           </button>
-          <a
-            href="#/descubra-seu-dom"
+          <Link
+            to="/descubra-seu-dom"
             className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-transparent border border-mint/40 text-mint font-semibold rounded-xl hover:bg-mint/10 hover:border-mint/60 transition-all duration-200"
           >
             Faça o teste dos dons
-          </a>
+          </Link>
         </div>
 
       </div>

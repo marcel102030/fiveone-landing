@@ -324,6 +324,27 @@ function BlogList({
                       {p.status === "published" && (
                         <InstagramShareButton post={p} variant="compact" />
                       )}
+                      {p.status === "published" && (
+                        <button
+                          onClick={async () => {
+                            if (!confirm(`Notificar assinantes sobre "${p.title}"?\n\nIsso enviará um e-mail para todos os inscritos na newsletter.`)) return;
+                            try {
+                              const res = await fetch("/api/newsletter-notify", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("adminToken") || ""}` },
+                                body: JSON.stringify({ title: p.title, excerpt: p.excerpt, slug: p.slug, category: p.category, cover_url: p.cover_url }),
+                              });
+                              const data = await res.json() as { ok: boolean; sent?: number; error?: string };
+                              if (data.ok) onToast(`E-mail enviado para ${data.sent ?? 0} assinante(s).`, true);
+                              else onToast(data.error || "Erro ao notificar.", false);
+                            } catch { onToast("Erro de conexão.", false); }
+                          }}
+                          title="Notificar assinantes da newsletter sobre este artigo"
+                          className="text-xs px-3 py-1.5 rounded-lg border border-slate/20 hover:border-golden hover:text-golden transition"
+                        >
+                          📧 Notificar
+                        </button>
+                      )}
                       <button
                         onClick={() => onEdit(p.id)}
                         className="text-xs px-3 py-1.5 rounded-lg border border-slate/20 hover:border-mint hover:text-mint transition"
