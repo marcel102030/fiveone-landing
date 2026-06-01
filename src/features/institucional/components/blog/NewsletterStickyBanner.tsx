@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import NewsletterForm from "./NewsletterForm";
 
-const LS_DISMISSED = "fiveone_newsletter_dismissed";
+// Só o estado de assinatura persiste (não incomodar quem já assinou).
+// O dismissed é por sessão de componente — assim o banner reaparece em
+// cada artigo novo que o leitor abrir.
 const LS_SUBSCRIBED = "fiveone_newsletter_subscribed";
 
 /**
@@ -15,16 +17,14 @@ export default function NewsletterStickyBanner({
   triggerSelector?: string;
 }) {
   const [visible, setVisible] = useState(false);
+  // dismissed é local ao componente — reseta quando o leitor abre outro artigo
   const [dismissed, setDismissed] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
 
   useEffect(() => {
-    // Não mostra se já dispensou ou já assinou
-    if (
-      localStorage.getItem(LS_DISMISSED) === "1" ||
-      localStorage.getItem(LS_SUBSCRIBED) === "1"
-    ) {
+    // Não mostra apenas para quem já assinou (persistido no localStorage)
+    if (localStorage.getItem(LS_SUBSCRIBED) === "1") {
       return;
     }
 
@@ -46,8 +46,8 @@ export default function NewsletterStickyBanner({
   }, [triggerSelector]);
 
   function dismiss() {
+    // Apenas fecha o banner nesta visita — vai aparecer de novo no próximo artigo
     setDismissed(true);
-    localStorage.setItem(LS_DISMISSED, "1");
   }
 
   function onSubscribed() {
