@@ -19,13 +19,13 @@ const upcoming: UpcomingCourse[] = [
   {
     title: "Cristologia",
     description:
-      "A pessoa e a obra de Cristo do Antigo ao Novo Testamento. Quem é Jesus, o que ele fez e o que isso significa.",
+      "Quem é Jesus, de verdade? Muito além do que você aprendeu no ensino fundamental — um curso que transforma a forma como você lê a Bíblia e vive a fé.",
     category: "Teologia",
   },
   {
     title: "Vida Devocional",
     description:
-      "Princípios práticos para uma vida de oração, jejum e meditação na Palavra que sustenta o ministério.",
+      "Você sente que sua vida de oração é seca ou mecânica? Aqui você aprende a cultivar uma relação viva com Deus — simples, consistente e transformadora.",
     category: "Espiritualidade",
   },
 ];

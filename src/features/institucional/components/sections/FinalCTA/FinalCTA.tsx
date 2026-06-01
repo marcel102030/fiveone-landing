@@ -45,8 +45,7 @@ const FinalCTA = () => {
         </div>
 
         <p className="mt-7 text-xs sm:text-sm text-slate/80">
-          R$ 59,90/mês · acesso enquanto a assinatura estiver ativa · cancele
-          quando quiser
+          R$ 59,90 · pagamento único · acesso por 1 ano · certificado incluído
         </p>
       </div>
     </section>
