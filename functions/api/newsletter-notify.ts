@@ -107,7 +107,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
           <p style="margin:0 0 24px;font-size:14px;color:#9fb3d1">${greeting} Publicamos uma nova leitura no <strong style="color:#e6f1ff">Para Ler</strong>.</p>
           <a href="${postUrl}"
              style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px;margin-bottom:32px">
-            Ler a leitura →
+            Ver a leitura →
           </a>
         </td></tr>
         <tr><td style="padding:20px 40px;border-top:1px solid rgba(148,163,184,0.12)">
