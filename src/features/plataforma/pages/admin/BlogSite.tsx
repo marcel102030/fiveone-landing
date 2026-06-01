@@ -19,6 +19,7 @@ import {
 } from "../../../institucional/services/blog";
 import { buildShareUrl } from "../../../institucional/components/blog/blogHelpers";
 import InstagramShareButton from "../../../institucional/components/blog/InstagramShareButton";
+import { supabase } from "../../../../shared/lib/supabaseClient";
 
 type Mode = "list" | "editor";
 
@@ -329,9 +330,13 @@ function BlogList({
                           onClick={async () => {
                             if (!confirm(`Notificar assinantes sobre "${p.title}"?\n\nIsso enviará um e-mail para todos os inscritos na newsletter.`)) return;
                             try {
+                              // Busca o JWT da sessão Supabase (necessário para autenticar como admin)
+                              const { data: sessionData } = await supabase.auth.getSession();
+                              const token = sessionData?.session?.access_token || "";
+                              if (!token) { onToast("Sessão expirada. Faça login novamente.", false); return; }
                               const res = await fetch("/api/newsletter-notify", {
                                 method: "POST",
-                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${localStorage.getItem("adminToken") || ""}` },
+                                headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
                                 body: JSON.stringify({ title: p.title, excerpt: p.excerpt, slug: p.slug, category: p.category, cover_url: p.cover_url }),
                               });
                               const data = await res.json() as { ok: boolean; sent?: number; error?: string };
