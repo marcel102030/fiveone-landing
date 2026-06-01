@@ -183,7 +183,7 @@ const CourseShowcase = () => {
                 <div>
                   <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                   <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                    R$ 59,90<span className="text-lg text-slate-light font-medium"> · 1 ano</span>
+                    R$ 59,90
                   </p>
                 </div>
                 <Link

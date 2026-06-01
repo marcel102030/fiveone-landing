@@ -594,7 +594,7 @@ const CursoApologetica = () => {
           <div className="flex-1">
             <p className="text-2xs text-slate uppercase tracking-wider">Apologética</p>
             <p className="text-base font-bold text-mint tabular-nums leading-tight">
-              R$ 59,90 <span className="text-xs text-slate-light font-normal">· 1 ano</span>
+              R$ 59,90
             </p>
           </div>
           <a
