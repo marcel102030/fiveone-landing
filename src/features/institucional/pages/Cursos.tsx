@@ -182,8 +182,8 @@ const Cursos = () => {
               Estude no seu ritmo, com profundidade
             </h2>
             <p className="mt-2 text-sm sm:text-base text-slate leading-relaxed">
-              Conteúdo 100% online, com certificado e acesso ilimitado enquanto
-              a assinatura estiver ativa.
+              Conteúdo 100% online, com certificado e acesso por 1 ano a partir
+              da sua compra.
             </p>
           </div>
 
@@ -240,7 +240,7 @@ const Cursos = () => {
                   </li>
                   <li className="flex items-start gap-2.5 text-sm text-slate-light">
                     <CheckIcon />
-                    <span>Acesso enquanto a assinatura estiver ativa</span>
+                    <span>Acesso por 1 ano a partir da compra</span>
                   </li>
                 </ul>
 
@@ -261,9 +261,9 @@ const Cursos = () => {
 
                 <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="text-2xs text-slate uppercase tracking-wider">Assinatura mensal</p>
+                    <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                     <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                      R$ 59,90<span className="text-lg text-slate-light font-medium">/mês</span>
+                      R$ 59,90
                     </p>
                   </div>
                   <Link

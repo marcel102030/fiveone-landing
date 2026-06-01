@@ -99,18 +99,14 @@ const INCLUDED = [
   "4 módulos organizados do básico ao avançado",
   "Materiais complementares em PDF",
   "Certificado de conclusão",
-  "Acesso a todos os recursos enquanto a assinatura estiver ativa",
+  "Acesso por 1 ano a todas as aulas, materiais e atualizações",
   "Assista no seu ritmo, quando e onde quiser",
 ];
 
 const FAQ_ITEMS = [
   {
     q: "Como funciona o acesso ao curso?",
-    a: "Após a assinatura, você recebe um e-mail com seus dados de acesso à plataforma. Lá, você assiste às aulas no seu ritmo, no computador ou no celular.",
-  },
-  {
-    q: "Posso cancelar quando quiser?",
-    a: "Sim. A assinatura é mensal e você pode cancelar a qualquer momento. Sem fidelidade nem taxa de cancelamento.",
+    a: "Após a compra, você recebe um e-mail com seus dados de acesso à plataforma. Lá, você assiste às aulas no seu ritmo, no computador ou no celular.",
   },
   {
     q: "Recebo certificado ao terminar?",
@@ -122,7 +118,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "Por quanto tempo tenho acesso?",
-    a: "Enquanto sua assinatura mensal estiver ativa, você tem acesso completo a todas as aulas, materiais e atualizações do curso.",
+    a: "Você tem acesso por 1 ano a partir da data da compra — tempo mais que suficiente para concluir o curso no seu ritmo.",
   },
   {
     q: "Tem suporte? Posso tirar dúvidas?",
@@ -263,7 +259,7 @@ const CursoApologetica = () => {
     if (meta) {
       meta.setAttribute(
         "content",
-        `${COURSE_SUBTITLE}. ${COURSE_TAGLINE}. ${TOTAL_LESSONS} aulas em ${TOTAL_MODULES} módulos, ${COURSE_DURATION_LABEL} de conteúdo. R$ 59,90/mês com certificado.`,
+        `${COURSE_SUBTITLE}. ${COURSE_TAGLINE}. ${TOTAL_LESSONS} aulas em ${TOTAL_MODULES} módulos, ${COURSE_DURATION_LABEL} de conteúdo. Pagamento único com 1 ano de acesso e certificado.`,
       );
     }
   }, []);
@@ -347,11 +343,11 @@ const CursoApologetica = () => {
               </div>
 
               <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
-                <p className="text-2xs text-slate uppercase tracking-wider">Assinatura mensal</p>
+                <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                 <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                  R$ 59,90<span className="text-lg text-slate-light font-medium">/mês</span>
+                  R$ 59,90
                 </p>
-                <p className="text-2xs text-slate mt-1">Cancele quando quiser · sem fidelidade</p>
+                <p className="text-2xs text-slate mt-1">Acesso por 1 ano · certificado incluído</p>
               </div>
 
               <a
@@ -360,7 +356,7 @@ const CursoApologetica = () => {
                 rel="noopener noreferrer"
                 className="group mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
               >
-                Quero assinar agora
+                Quero esse curso agora
                 <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                   <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
                 </svg>
@@ -524,7 +520,7 @@ const CursoApologetica = () => {
             Tudo incluso
           </span>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight mb-8">
-            O que está incluído na sua assinatura
+            O que está incluído no curso
           </h2>
 
           <div className="grid sm:grid-cols-2 gap-3">
@@ -573,8 +569,8 @@ const CursoApologetica = () => {
             Pronto para começar sua <span className="text-mint">jornada</span>?
           </h2>
           <p className="mt-5 text-base sm:text-lg text-slate max-w-xl mx-auto">
-            Por R$ 59,90/mês você tem acesso ao curso completo, materiais e
-            certificado. Cancele quando quiser.
+            Pagamento único de R$ 59,90 com acesso por 1 ano ao curso
+            completo, materiais e certificado.
           </p>
           <div className="mt-9">
             <a
@@ -598,7 +594,7 @@ const CursoApologetica = () => {
           <div className="flex-1">
             <p className="text-2xs text-slate uppercase tracking-wider">Apologética</p>
             <p className="text-base font-bold text-mint tabular-nums leading-tight">
-              R$ 59,90<span className="text-xs text-slate-light">/mês</span>
+              R$ 59,90 <span className="text-xs text-slate-light font-normal">· 1 ano</span>
             </p>
           </div>
           <a
@@ -607,7 +603,7 @@ const CursoApologetica = () => {
             rel="noopener noreferrer"
             className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
           >
-            Assinar
+            Comprar
           </a>
         </div>
       </div>

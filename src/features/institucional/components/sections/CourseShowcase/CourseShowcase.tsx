@@ -32,7 +32,7 @@ const featured: FeaturedCourse = {
   duration: "~8h20 de conteúdo",
   lessons: "20 aulas",
   format: "100% online",
-  priceLabel: "R$ 59,90/mês",
+  priceLabel: "R$ 59,90",
   ctaLabel: "Quero esse curso",
   cover: courseCover,
 };
@@ -181,9 +181,9 @@ const CourseShowcase = () => {
               {/* Preço + CTA */}
               <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="text-2xs text-slate uppercase tracking-wider">Assinatura mensal</p>
+                  <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                   <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                    R$ 59,90<span className="text-lg text-slate-light font-medium">/mês</span>
+                    R$ 59,90<span className="text-lg text-slate-light font-medium"> · 1 ano</span>
                   </p>
                 </div>
                 <Link
