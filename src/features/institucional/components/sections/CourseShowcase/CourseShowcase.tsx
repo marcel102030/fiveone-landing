@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import courseCover from "../../../assets/images/capa_curso_apologetica.jpg";
+import { UPCOMING_COURSES } from "../../../data/courses";
 
 type FeaturedCourse = {
   slug: string;
@@ -37,23 +38,9 @@ const featured: FeaturedCourse = {
   cover: courseCover,
 };
 
-type UpcomingCourse = {
-  title: string;
-  description: string;
-};
-
-const upcoming: UpcomingCourse[] = [
-  {
-    title: "Hermenêutica Bíblica",
-    description:
-      "Como interpretar a Bíblia corretamente — contexto, gênero literário e princípios sólidos.",
-  },
-  {
-    title: "Cristologia",
-    description:
-      "A pessoa e a obra de Cristo do Antigo ao Novo Testamento. Em produção.",
-  },
-];
+// Cursos em breve: importados da fonte única em data/courses.ts
+// Altere lá — reflete aqui e na página /cursos automaticamente.
+const upcoming = UPCOMING_COURSES;
 
 const CheckIcon = () => (
   <svg

@@ -2,33 +2,7 @@ import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import TrainingFormats from "../components/TrainingFormats";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
-
-type UpcomingCourse = {
-  title: string;
-  description: string;
-  category: string;
-};
-
-const upcoming: UpcomingCourse[] = [
-  {
-    title: "Entendes o que lês?",
-    description:
-      "Você lê a Bíblia, mas nem sempre sai com clareza do que leu? Neste curso você aprende a entender o texto bíblico do jeito certo — sem complicar.",
-    category: "Estudo Bíblico",
-  },
-  {
-    title: "Cristologia",
-    description:
-      "Quem é Jesus, de verdade? Muito além do que você aprendeu no ensino fundamental — um curso que transforma a forma como você lê a Bíblia e vive a fé.",
-    category: "Teologia",
-  },
-  {
-    title: "Vida Devocional",
-    description:
-      "Você sente que sua vida de oração é seca ou mecânica? Aqui você aprende a cultivar uma relação viva com Deus — simples, consistente e transformadora.",
-    category: "Espiritualidade",
-  },
-];
+import { UPCOMING_COURSES as upcoming } from "../data/courses";
 
 const CheckIcon = () => (
   <svg className="w-4 h-4 text-mint shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
