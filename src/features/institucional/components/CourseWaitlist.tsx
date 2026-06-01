@@ -24,11 +24,11 @@ function useCountdown(target: Date) {
 
 function Digit({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center">
-      <span className="text-4xl sm:text-5xl font-extrabold text-mint tabular-nums leading-none">
+    <div className="flex flex-col items-center min-w-[40px]">
+      <span className="text-2xl font-extrabold text-mint tabular-nums leading-none">
         {String(value).padStart(2, "0")}
       </span>
-      <span className="text-2xs text-slate uppercase tracking-wider mt-1">{label}</span>
+      <span className="text-2xs text-slate/70 uppercase tracking-wide mt-0.5">{label}</span>
     </div>
   );
 }
@@ -45,7 +45,7 @@ export default function CourseWaitlist({ compact = false }: { compact?: boolean 
   const [error, setError] = useState("");
 
   const launchStr = APOLOGETICA_LAUNCH_DATE.toLocaleDateString("pt-BR", {
-    day: "numeric", month: "long", year: "numeric",
+    day: "numeric", month: "long",
   });
 
   async function handleSubmit(e: FormEvent) {
@@ -67,54 +67,55 @@ export default function CourseWaitlist({ compact = false }: { compact?: boolean 
   }
 
   return (
-    <div className={`rounded-2xl border border-mint/25 bg-navy-light/60 ${compact ? "p-5" : "p-6 sm:p-7"}`}>
-      {/* Lançamento em */}
-      <p className="text-2xs text-slate uppercase tracking-widest mb-2">
-        {over ? "Curso disponível!" : `Lançamento em ${launchStr}`}
-      </p>
+    <div className={`rounded-xl border border-mint/20 bg-navy-light/50 ${compact ? "p-4" : "p-5"}`}>
 
-      {/* Contador */}
-      {!over && (
-        <div className="flex items-end gap-4 sm:gap-6 mb-5">
-          <Digit value={days}    label="dias" />
-          <span className="text-3xl text-mint/40 font-light mb-1">:</span>
-          <Digit value={hours}   label="horas" />
-          <span className="text-3xl text-mint/40 font-light mb-1">:</span>
-          <Digit value={minutes} label="min" />
-          <span className="text-3xl text-mint/40 font-light mb-1">:</span>
-          <Digit value={seconds} label="seg" />
+      {/* Linha: lançamento + contador */}
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <p className="text-2xs text-slate uppercase tracking-widest mb-0.5">
+            {over ? "Disponível!" : "Lançamento"}
+          </p>
+          <p className="text-sm font-bold text-slate-white">{launchStr}</p>
         </div>
-      )}
-
-      {/* Preço visível */}
-      <div className="mb-5">
-        <p className="text-2xs text-slate uppercase tracking-wider">Valor do curso</p>
-        <p className="text-3xl font-extrabold text-mint tabular-nums">R$ 59,90</p>
-        <p className="text-2xs text-slate mt-0.5">Pagamento único · acesso por 1 ano · certificado</p>
+        {!over && (
+          <div className="flex items-center gap-1.5">
+            <Digit value={days}    label="dias" />
+            <span className="text-slate/40 text-lg mb-2">:</span>
+            <Digit value={hours}   label="h" />
+            <span className="text-slate/40 text-lg mb-2">:</span>
+            <Digit value={minutes} label="min" />
+            <span className="text-slate/40 text-lg mb-2">:</span>
+            <Digit value={seconds} label="seg" />
+          </div>
+        )}
       </div>
 
-      {/* Formulário de lista de espera */}
+      {/* Preço */}
+      <div className="flex items-baseline gap-2 mb-4 pb-4 border-b border-slate/10">
+        <p className="text-2xl font-extrabold text-mint tabular-nums">R$ 59,90</p>
+        <p className="text-2xs text-slate">pagamento único · 1 ano · certificado</p>
+      </div>
+
+      {/* Formulário */}
       {state === "success" ? (
-        <div className="rounded-xl bg-mint/10 border border-mint/30 px-4 py-3 flex items-start gap-3">
-          <span className="text-xl">🎉</span>
+        <div className="flex items-center gap-2.5 text-sm">
+          <span>🎉</span>
           <div>
-            <p className="text-sm font-semibold text-slate-white">Você está na lista!</p>
-            <p className="text-xs text-slate mt-0.5">
-              Avisaremos você assim que o curso abrir. Fique de olho no e-mail.
-            </p>
+            <p className="font-semibold text-slate-white text-sm">Você está na lista!</p>
+            <p className="text-xs text-slate">Avisaremos no lançamento.</p>
           </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-2">
-          <p className="text-sm font-semibold text-slate-white mb-3">
-            Entre na lista de espera — seja avisado no lançamento
+          <p className="text-xs font-semibold text-slate-white mb-2">
+            Seja avisado no lançamento — entre na lista de espera
           </p>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Seu nome (opcional)"
-            className="w-full px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 transition"
+            className="w-full px-3 py-2 rounded-lg bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 transition"
           />
           <div className="flex gap-2">
             <input
@@ -123,12 +124,12 @@ export default function CourseWaitlist({ compact = false }: { compact?: boolean 
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu@email.com"
               required
-              className="flex-1 px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 transition"
+              className="flex-1 px-3 py-2 rounded-lg bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 transition"
             />
             <button
               type="submit"
               disabled={state === "loading"}
-              className="shrink-0 px-4 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl shadow-mint hover:shadow-mint-strong transition disabled:opacity-60"
+              className="shrink-0 px-4 py-2 bg-mint text-navy font-semibold text-sm rounded-lg shadow-mint hover:shadow-mint-strong transition disabled:opacity-60"
             >
               {state === "loading" ? "…" : "Entrar"}
             </button>
