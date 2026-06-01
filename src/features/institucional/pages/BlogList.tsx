@@ -71,8 +71,8 @@ const BlogList = () => {
             Leituras para <span className="text-mint">crescer</span> na fé
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate max-w-2xl mx-auto leading-relaxed">
-            Reflexões teológicas, ministeriais e práticas. Conteúdo profundo,
-            mas acessível, para quem leva a fé a sério.
+            Toda semana uma nova leitura para crescer no chamado — teologia,
+            ministério e vida cristã na prática. Inscreva-se e receba no e-mail.
           </p>
 
           {/* Newsletter — abaixo da descrição, compacto e centralizado */}
