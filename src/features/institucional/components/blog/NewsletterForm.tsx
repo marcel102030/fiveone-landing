@@ -72,7 +72,7 @@ export default function NewsletterForm({
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Seu nome (opcional)"
+          placeholder="Seu nome"
           className="px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/20 transition"
         />
         <div className="flex gap-2">
