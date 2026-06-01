@@ -9,9 +9,12 @@ type State = "idle" | "loading" | "success" | "error";
 export default function NewsletterForm({
   source = "blog",
   compact = false,
+  onSuccess,
 }: {
   source?: string;
   compact?: boolean;
+  /** Chamado depois que a inscrição é confirmada (além de mostrar o estado de sucesso interno). */
+  onSuccess?: () => void;
 }) {
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
@@ -31,6 +34,7 @@ export default function NewsletterForm({
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (data.ok) {
         setState("success");
+        onSuccess?.();
       } else {
         setErrorMsg(data.error || "Não foi possível cadastrar.");
         setState("error");

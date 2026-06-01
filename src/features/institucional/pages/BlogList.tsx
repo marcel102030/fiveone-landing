@@ -7,6 +7,7 @@ import {
   listPublishedPosts,
 } from "../services/blog";
 import PostCard from "../components/blog/PostCard";
+import NewsletterForm from "../components/blog/NewsletterForm";
 
 const PAGE_SIZE = 12;
 
@@ -111,8 +112,22 @@ const BlogList = () => {
           ) : (
             <>
               {featured && <FeaturedPostCard post={featured} />}
+
+              {/* Faixa de newsletter — entre o destaque e o grid */}
+              {featured && (
+                <div className="mt-8 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-navy-light/50 border border-slate/10 rounded-2xl px-6 py-5">
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-slate-white">📬 Receba os artigos no e-mail</p>
+                    <p className="text-xs text-slate mt-0.5">Sem spam — só conteúdo que edifica, quando publicarmos.</p>
+                  </div>
+                  <div className="shrink-0 w-full sm:w-80">
+                    <NewsletterForm source="blog_list" compact />
+                  </div>
+                </div>
+              )}
+
               {rest.length > 0 && (
-                <div className="mt-10 grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
+                <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-3 gap-5 lg:gap-6">
                   {rest.map((p) => (
                     <PostCard key={p.id} post={p} />
                   ))}

@@ -19,6 +19,7 @@ import AuthorCard from "../components/blog/AuthorCard";
 import ReaderControls from "../components/blog/ReaderControls";
 import ReadingJourney from "../components/blog/ReadingJourney";
 import NewsletterForm from "../components/blog/NewsletterForm";
+import NewsletterStickyBanner from "../components/blog/NewsletterStickyBanner";
 import InstagramShareButton from "../components/blog/InstagramShareButton";
 import {
   buildShareUrl,
@@ -238,6 +239,7 @@ const BlogPostPage = () => {
     <div className="bg-navy text-slate-light min-h-screen">
       <ReadingProgress targetSelector="article.post-article" />
       <ReaderControls />
+      <NewsletterStickyBanner />
       <SelectionShare title={post.title} shareUrl={shareUrl} />
 
       {/* ─────────── Hero do post ─── */}
@@ -367,7 +369,7 @@ function ArticleFooter({ post }: { post: BlogPost }) {
     : undefined;
 
   return (
-    <footer className="mt-12 pt-6 border-t border-slate/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
+    <footer className="article-footer-anchor mt-12 pt-6 border-t border-slate/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-5">
       <AuthorCard name={post.author_name} bio={authorBio} />
       <BlogReactions postId={post.id} />
     </footer>
