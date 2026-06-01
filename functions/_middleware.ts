@@ -37,7 +37,7 @@ const ROUTE_META: Record<string, RouteMeta> = {
   "/insights": {
     title: "Para Ler | Five One",
     description:
-      "Artigos teológicos, ministeriais e práticos do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
+      "Leituras teológicas, ministeriais e práticas do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
     url: `${SITE}/insights`,
   },
   "/cursos": {

@@ -216,14 +216,14 @@ const BlogPostPage = () => {
       <div className="bg-navy text-slate-light min-h-screen">
         <div className="max-w-3xl mx-auto px-6 lg:px-8 pt-16 pb-20 text-center">
           <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-mint/10 flex items-center justify-center text-mint text-3xl">🔍</div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-white">Artigo não encontrado</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-slate-white">Leitura não encontrada</h1>
           <p className="mt-3 text-sm text-slate">O link pode estar incorreto ou o post pode ter sido removido.</p>
           <Link
             to="/insights"
             className="mt-8 inline-flex items-center gap-1.5 px-5 py-3 bg-mint text-navy font-semibold rounded-xl hover:shadow-mint-strong transition"
           >
             <ArrowLeftIcon />
-            Voltar para os artigos
+            Voltar para as leituras
           </Link>
         </div>
       </div>
@@ -254,7 +254,7 @@ const BlogPostPage = () => {
             className="inline-flex items-center gap-1.5 text-xs text-slate hover:text-mint transition-colors mb-6"
           >
             <ArrowLeftIcon />
-            Voltar para os artigos
+            Voltar para as leituras
           </Link>
 
           <p className="text-2xs text-mint font-semibold uppercase tracking-wider">
@@ -344,7 +344,7 @@ const BlogPostPage = () => {
       {/* Newsletter — captação antes dos comentários */}
       <section className="max-w-3xl mx-auto px-6 lg:px-8 pb-4">
         <div className="bg-navy-light/60 border border-slate/10 rounded-2xl px-6 py-5">
-          <p className="text-sm font-bold text-slate-white mb-1">Gostou do artigo?</p>
+          <p className="text-sm font-bold text-slate-white mb-1">Gostou da leitura?</p>
           <p className="text-sm text-slate mb-4">Receba os próximos diretamente no seu e-mail.</p>
           <NewsletterForm source="blog_post" />
         </div>

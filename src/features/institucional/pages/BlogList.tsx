@@ -18,7 +18,7 @@ const BlogList = () => {
     if (meta) {
       meta.setAttribute(
         "content",
-        "Artigos teológicos, ministeriais e práticos do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
+        "Leituras teológicas, ministeriais e práticas do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
       );
     }
   }, []);
@@ -37,7 +37,7 @@ const BlogList = () => {
         if (alive) setPosts(data);
       })
       .catch((e) => {
-        if (alive) setError(e?.message || "Erro ao carregar artigos.");
+        if (alive) setError(e?.message || "Erro ao carregar leituras.");
       })
       .finally(() => {
         if (alive) setLoading(false);
@@ -68,7 +68,7 @@ const BlogList = () => {
             Para Ler
           </span>
           <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
-            Artigos para <span className="text-mint">crescer</span> na fé
+            Leituras para <span className="text-mint">crescer</span> na fé
           </h1>
           <p className="mt-4 text-base sm:text-lg text-slate max-w-2xl mx-auto leading-relaxed">
             Reflexões teológicas, ministeriais e práticas. Conteúdo profundo,
@@ -77,7 +77,7 @@ const BlogList = () => {
 
           {/* Newsletter — abaixo da descrição, compacto e centralizado */}
           <div className="mt-8 max-w-md mx-auto">
-            <p className="text-xs text-slate mb-2">Receba os próximos artigos no e-mail</p>
+            <p className="text-xs text-slate mb-2">Receba as próximas leituras no e-mail</p>
             <NewsletterForm source="blog_list" compact />
           </div>
         </div>
@@ -201,7 +201,7 @@ function FeaturedPostCard({ post }: { post: BlogPost }) {
           <span>{formatPostDate(post.published_at)}</span>
         </div>
         <div className="mt-6 inline-flex items-center gap-1.5 text-mint text-sm font-semibold">
-          Ler artigo
+          Ler leitura
           <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
             <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
           </svg>
@@ -217,8 +217,8 @@ function EmptyState({ category }: { category: string }) {
       <div className="w-16 h-16 mx-auto mb-5 rounded-full bg-mint/10 flex items-center justify-center text-mint text-3xl">📝</div>
       <h3 className="text-xl font-bold text-slate-white">
         {category === "ALL"
-          ? "Em breve, novos artigos"
-          : `Nenhum artigo em ${category} ainda`}
+          ? "Em breve, novas leituras"
+          : `Nenhuma leitura em ${category} ainda`}
       </h3>
       <p className="mt-2 text-sm text-slate max-w-md mx-auto">
         Estamos preparando conteúdos para fortalecer sua jornada na fé. Volte em

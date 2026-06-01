@@ -274,7 +274,7 @@ export async function generateInstagramCard(
   if (format === "story") {
     ctx.font = "400 28px Inter, Arial, sans-serif";
     ctx.fillStyle = SLATE;
-    ctx.fillText("👆 Toque no link para ler o artigo completo", padX, ctaY - 46);
+    ctx.fillText("👆 Toque no link para acessar a leitura completa", padX, ctaY - 46);
   }
   ctx.font = "700 30px Inter, Arial, sans-serif";
   ctx.fillStyle = MINT;
@@ -304,7 +304,7 @@ export function buildInstagramCaption(
   return [
     post.title,
     sub,
-    "📖 Leia o artigo completo no site — link na bio 👆 (ou toque no link do story)",
+    "📖 Leia a leitura completa no site — link na bio 👆 (ou toque no link do story)",
     `🔗 ${shareUrl}`,
     tags,
   ]

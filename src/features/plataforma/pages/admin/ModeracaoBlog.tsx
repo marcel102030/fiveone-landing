@@ -100,7 +100,7 @@ export default function ModeracaoBlog() {
               Moderação de comentários — Blog
             </h1>
             <p className="text-sm text-slate mt-0.5">
-              Aprove ou rejeite comentários públicos dos artigos
+              Aprove ou rejeite comentários públicos das leituras
             </p>
           </div>
           <Link

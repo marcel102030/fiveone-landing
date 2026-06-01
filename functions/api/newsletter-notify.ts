@@ -1,5 +1,5 @@
 // POST /api/newsletter-notify
-// Notifica todos os assinantes confirmados sobre um novo artigo publicado.
+// Notifica todos os assinantes confirmados sobre uma nova leitura publicada.
 // Requer autenticação de admin (Authorization: Bearer <ADMIN_SECRET>).
 
 import { createClient } from "@supabase/supabase-js";
@@ -104,10 +104,10 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
           ${categoryTag}
           <h1 style="margin:0 0 16px;font-size:26px;font-weight:800;color:#e6f1ff;line-height:1.25">${post.title}</h1>
           ${post.excerpt ? `<p style="margin:0 0 28px;font-size:15px;line-height:1.65;color:#9fb3d1">${post.excerpt}</p>` : ""}
-          <p style="margin:0 0 24px;font-size:14px;color:#9fb3d1">${greeting} Publicamos um novo artigo no <strong style="color:#e6f1ff">Para Ler</strong>.</p>
+          <p style="margin:0 0 24px;font-size:14px;color:#9fb3d1">${greeting} Publicamos uma nova leitura no <strong style="color:#e6f1ff">Para Ler</strong>.</p>
           <a href="${postUrl}"
              style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px;margin-bottom:32px">
-            Ler o artigo →
+            Ler a leitura →
           </a>
         </td></tr>
         <tr><td style="padding:20px 40px;border-top:1px solid rgba(148,163,184,0.12)">
@@ -131,7 +131,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const emails = batch.map(({ email, name }) => ({
       from,
       to: email,
-      subject: `Novo artigo: ${post.title}`,
+      subject: `Nova leitura: ${post.title}`,
       html: buildHtml(name),
       text: `${post.title}\n\n${post.excerpt || ""}\n\nLer: ${postUrl}`,
     }));

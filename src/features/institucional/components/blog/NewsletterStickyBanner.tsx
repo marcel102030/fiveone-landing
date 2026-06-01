@@ -88,16 +88,16 @@ export default function NewsletterStickyBanner({
             <span className="text-2xl">🙌</span>
             <div>
               <p className="text-sm font-semibold text-slate-white">Inscrição confirmada!</p>
-              <p className="text-xs text-slate">Você vai receber os próximos artigos.</p>
+              <p className="text-xs text-slate">Você vai receber as próximas leituras.</p>
             </div>
           </div>
         ) : (
           <div className="pr-8">
             <p className="text-sm font-bold text-slate-white mb-0.5">
-              Gostou do artigo? 👋
+              Gostou da leitura? 👋
             </p>
             <p className="text-xs text-slate mb-3">
-              Receba os próximos diretamente no seu e-mail — sem spam, só conteúdo que edifica.
+              Receba as próximas diretamente no seu e-mail — sem spam, só conteúdo que edifica.
             </p>
             <NewsletterForm
               source="blog_sticky"

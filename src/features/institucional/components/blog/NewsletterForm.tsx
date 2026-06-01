@@ -53,7 +53,7 @@ export default function NewsletterForm({
         <div>
           <p className="text-sm font-semibold text-slate-white">Inscrição confirmada!</p>
           <p className="text-xs text-slate mt-0.5">
-            Você vai receber os próximos artigos por e-mail.
+            Você vai receber as próximas leituras por e-mail.
           </p>
         </div>
       </div>
@@ -64,7 +64,7 @@ export default function NewsletterForm({
     <div>
       {!compact && (
         <p className="text-xs font-semibold uppercase tracking-wider text-slate mb-2">
-          Receba novos artigos por e-mail
+          Receba novas leituras por e-mail
         </p>
       )}
       <form onSubmit={handleSubmit} className="flex flex-col gap-2">

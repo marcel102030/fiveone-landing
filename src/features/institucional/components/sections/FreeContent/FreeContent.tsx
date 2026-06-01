@@ -18,8 +18,8 @@ type Channel = {
 const CHANNELS: Channel[] = [
   {
     name: "Para Ler",
-    desc: "Artigos teológicos e práticos que aprofundam a sua fé.",
-    cta: "Ler artigos",
+    desc: "Leituras teológicas e práticas que aprofundam a sua fé.",
+    cta: "Ler leituras",
     to: "/insights",
     Icon: FaBookOpen,
     iconClass: "bg-mint/10 border border-mint/30 text-mint",
@@ -133,12 +133,12 @@ export default function FreeContent() {
           ))}
         </div>
 
-        {/* Últimos artigos (só aparece se houver) */}
+        {/* Últimas leituras (só aparece se houver) */}
         {latest.length > 0 && (
           <div className="mt-16 lg:mt-20">
             <div className="flex items-end justify-between gap-4 mb-6 lg:mb-8">
               <h3 className="text-xl sm:text-2xl font-bold text-slate-white tracking-tight">
-                Últimos artigos
+                Últimas leituras
               </h3>
               <Link
                 to="/insights"

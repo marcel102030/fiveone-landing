@@ -301,7 +301,7 @@ function BlogList({
                               else onToast(data.error || "Erro ao notificar.", false);
                             } catch { onToast("Erro de conexão.", false); }
                           }}
-                          title="Notificar assinantes da newsletter sobre este artigo"
+                          title="Notificar assinantes da newsletter sobre esta leitura"
                           className="text-xs px-3 py-1.5 rounded-lg border border-slate/20 hover:border-golden hover:text-golden transition"
                         >
                           📧 Notificar
@@ -359,7 +359,7 @@ Este parágrafo recebe o **drop cap** automaticamente (a primeira letra fica gra
 
 ## O contexto
 
-Apresente o cenário, o problema ou a situação que motiva o artigo. Use referências bíblicas quando necessário (Ef 4:11-13), cite autores entre aspas e mantenha o tom acessível.
+Apresente o cenário, o problema ou a situação que motiva a leitura. Use referências bíblicas quando necessário (Ef 4:11-13), cite autores entre aspas e mantenha o tom acessível.
 
 Você pode usar **negrito** para destacar palavras-chave e *itálico* para títulos de livros como *Caminhos Esquecidos*.
 
@@ -844,7 +844,7 @@ const EXAMPLE_POST = {
   titulo: "Quem é Jesus? Uma resposta para os céticos",
   subtitulo: "As evidências históricas e teológicas sobre a identidade de Cristo",
   resumo:
-    "Muita gente admira Jesus como mestre moral, mas recua diante da pergunta central: ele é Deus? Este artigo reúne as evidências e mostra por que essa resposta muda tudo.",
+    "Muita gente admira Jesus como mestre moral, mas recua diante da pergunta central: ele é Deus? Esta leitura reúne as evidências e mostra por que essa resposta muda tudo.",
   categoria: "Apologética",
   tags: "jesus, cristologia, evidências, fé racional",
   conteudo: `## Uma pergunta inevitável

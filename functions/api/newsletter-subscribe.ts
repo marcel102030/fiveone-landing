@@ -88,14 +88,14 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
         </td></tr>
         <tr><td style="padding:32px 40px">
           <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#9fb3d1">
-            A partir de agora você vai receber os novos artigos do <strong style="color:#e6f1ff">Para Ler</strong> diretamente no seu e-mail — reflexões teológicas, ministeriais e práticas para crescer no seu chamado.
+            A partir de agora você vai receber as novas leituras do <strong style="color:#e6f1ff">Para Ler</strong> diretamente no seu e-mail — reflexões teológicas, ministeriais e práticas para crescer no seu chamado.
           </p>
           <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#9fb3d1">
-            Enquanto isso, explore os artigos que já publicamos:
+            Enquanto isso, explore as leituras que já publicamos:
           </p>
           <a href="https://fiveonemovement.com/insights"
              style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px">
-            Ver os artigos →
+            Ver as leituras →
           </a>
         </td></tr>
         <tr><td style="padding:24px 40px;border-top:1px solid rgba(148,163,184,0.12)">
@@ -121,7 +121,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
         to: email,
         subject: "Você assinou o Para Ler — Five One ✅",
         html,
-        text: `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse os artigos em: https://fiveonemovement.com/insights`,
+        text: `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse as leituras em: https://fiveonemovement.com/insights`,
       }),
     }).catch(() => {/* silencioso */});
   }
