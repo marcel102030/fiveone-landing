@@ -99,7 +99,7 @@ const Footer = () => (
     <div className="border-t border-slate/10">
       <div className="max-w-7xl mx-auto px-6 lg:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-2xs text-slate">
         <span>© {new Date().getFullYear()} Five One — Todos os direitos reservados</span>
-        <span>Feito com propósito 🙏</span>
+        <span>Feito com propósito</span>
       </div>
     </div>
   </footer>
