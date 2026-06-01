@@ -1,6 +1,18 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import courseCover from "../../../assets/images/capa_curso_apologetica.jpg";
-import { UPCOMING_COURSES, APOLOGETICA_LAUNCHED } from "../../../data/courses";
+import { UPCOMING_COURSES, APOLOGETICA_LAUNCHED, APOLOGETICA_LAUNCH_DATE } from "../../../data/courses";
+
+function useDaysLeft() {
+  const calc = () => Math.max(0, Math.ceil((APOLOGETICA_LAUNCH_DATE.getTime() - Date.now()) / 86400000));
+  const [days, setDays] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setDays(calc()), 60000);
+    return () => clearInterval(id);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return days;
+}
 
 type FeaturedCourse = {
   slug: string;
@@ -79,6 +91,7 @@ const GlobeIcon = () => (
 );
 
 const CourseShowcase = () => {
+  const daysLeft = useDaysLeft();
   return (
     <section
       id="cursos"
@@ -168,10 +181,13 @@ const CourseShowcase = () => {
               {/* Preço + CTA */}
               <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="text-2xs text-slate uppercase tracking-wider">
-                    {APOLOGETICA_LAUNCHED ? "Pagamento único" : "Lançamento 6 de julho"}
-                  </p>
+                  <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                   <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
+                  {!APOLOGETICA_LAUNCHED && (
+                    <p className="text-2xs text-slate/70 mt-0.5">
+                      ⏱ Lança em <span className="text-mint font-semibold">{daysLeft} dias</span>
+                    </p>
+                  )}
                 </div>
                 <Link
                   to={`/cursos/${featured.slug}`}

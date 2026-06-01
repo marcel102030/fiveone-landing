@@ -1,8 +1,15 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TrainingFormats from "../components/TrainingFormats";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
-import { UPCOMING_COURSES as upcoming, APOLOGETICA_LAUNCHED } from "../data/courses";
+import { UPCOMING_COURSES as upcoming, APOLOGETICA_LAUNCHED, APOLOGETICA_LAUNCH_DATE } from "../data/courses";
+
+function useDaysLeft() {
+  const calc = () => Math.max(0, Math.ceil((APOLOGETICA_LAUNCH_DATE.getTime() - Date.now()) / 86400000));
+  const [days, setDays] = useState(calc);
+  useEffect(() => { const id = setInterval(() => setDays(calc()), 60000); return () => clearInterval(id); }, []); // eslint-disable-line
+  return days;
+}
 
 const CheckIcon = () => (
   <svg className="w-4 h-4 text-mint shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -55,6 +62,7 @@ const ChurchIcon = () => (
 );
 
 const Cursos = () => {
+  const daysLeft = useDaysLeft();
   useEffect(() => {
     document.title = "Cursos e Treinamentos | Five One";
     const meta = document.querySelector('meta[name="description"]');
@@ -235,10 +243,13 @@ const Cursos = () => {
 
                 <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="text-2xs text-slate uppercase tracking-wider">
-                      {APOLOGETICA_LAUNCHED ? "Pagamento único" : "Lançamento 6 de julho"}
-                    </p>
+                    <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
                     <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
+                    {!APOLOGETICA_LAUNCHED && (
+                      <p className="text-2xs text-slate/70 mt-0.5">
+                        ⏱ Lança em <span className="text-mint font-semibold">{daysLeft} dias</span>
+                      </p>
+                    )}
                   </div>
                   <Link
                     to="/cursos/apologetica"

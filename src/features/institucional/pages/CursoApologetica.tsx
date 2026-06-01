@@ -344,6 +344,7 @@ const CursoApologetica = () => {
                 </div>
               </div>
 
+              <div id="waitlist" />
               {APOLOGETICA_LAUNCHED ? (
                 <>
                   <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
@@ -572,23 +573,31 @@ const CursoApologetica = () => {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight">
             Pronto para começar sua <span className="text-mint">jornada</span>?
           </h2>
-          <p className="mt-5 text-base sm:text-lg text-slate max-w-xl mx-auto">
-            Pagamento único de R$ 59,90 com acesso por 1 ano ao curso
-            completo, materiais e certificado.
-          </p>
-          <div className="mt-9">
-            <a
-              href={HOTMART_CHECKOUT_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-            >
-              Quero o curso de Apologética
-              <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-              </svg>
-            </a>
-          </div>
+          {APOLOGETICA_LAUNCHED ? (
+            <>
+              <p className="mt-5 text-base sm:text-lg text-slate max-w-xl mx-auto">
+                Pagamento único de R$ 59,90 com acesso por 1 ano ao curso
+                completo, materiais e certificado.
+              </p>
+              <div className="mt-9">
+                <a
+                  href={HOTMART_CHECKOUT_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                >
+                  Quero o curso de Apologética
+                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                    <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+                  </svg>
+                </a>
+              </div>
+            </>
+          ) : (
+            <div className="mt-8 max-w-md mx-auto">
+              <CourseWaitlist />
+            </div>
+          )}
         </div>
       </section>
 
@@ -596,19 +605,31 @@ const CursoApologetica = () => {
       <div className="lg:hidden fixed inset-x-0 bottom-0 z-40 bg-navy-light/95 backdrop-blur-md border-t border-mint/20 px-4 py-3">
         <div className="flex items-center gap-3">
           <div className="flex-1">
-            <p className="text-2xs text-slate uppercase tracking-wider">Apologética</p>
+            <p className="text-2xs text-slate uppercase tracking-wider">
+              {APOLOGETICA_LAUNCHED ? "Apologética" : "Lança 6 de julho"}
+            </p>
             <p className="text-base font-bold text-mint tabular-nums leading-tight">
               R$ 59,90
             </p>
           </div>
-          <a
-            href={HOTMART_CHECKOUT_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
-          >
-            Comprar
-          </a>
+          {APOLOGETICA_LAUNCHED ? (
+            <a
+              href={HOTMART_CHECKOUT_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
+            >
+              Comprar
+            </a>
+          ) : (
+            <Link
+              to="#waitlist"
+              onClick={() => document.querySelector("#waitlist")?.scrollIntoView({ behavior: "smooth" })}
+              className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
+            >
+              Lista de espera
+            </Link>
+          )}
         </div>
       </div>
     </div>
