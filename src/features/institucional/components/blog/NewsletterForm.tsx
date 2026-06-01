@@ -16,6 +16,7 @@ export default function NewsletterForm({
   /** Chamado depois que a inscrição é confirmada (além de mostrar o estado de sucesso interno). */
   onSuccess?: () => void;
 }) {
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [state, setState] = useState<State>("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -29,7 +30,7 @@ export default function NewsletterForm({
       const res = await fetch("/api/newsletter-subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: email.trim(), source }),
+        body: JSON.stringify({ email: email.trim(), name: name.trim() || undefined, source }),
       });
       const data = (await res.json()) as { ok: boolean; error?: string };
       if (data.ok) {
@@ -66,22 +67,33 @@ export default function NewsletterForm({
           Receba novos artigos por e-mail
         </p>
       )}
-      <form onSubmit={handleSubmit} className="flex gap-2 flex-col sm:flex-row">
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          required
-          className="flex-1 px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/20 transition"
-        />
-        <button
-          type="submit"
-          disabled={state === "loading"}
-          className="shrink-0 px-4 py-2.5 bg-mint text-navy text-sm font-semibold rounded-xl hover:shadow-mint-strong transition disabled:opacity-60"
-        >
-          {state === "loading" ? "Enviando…" : "Inscrever"}
-        </button>
+      <form onSubmit={handleSubmit} className={`flex gap-2 ${compact ? "flex-row" : "flex-col"}`}>
+        {!compact && (
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Seu nome (opcional)"
+            className="px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/20 transition"
+          />
+        )}
+        <div className={`flex gap-2 ${compact ? "" : "flex-col sm:flex-row"}`}>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="seu@email.com"
+            required
+            className="flex-1 px-3.5 py-2.5 rounded-xl bg-navy border border-slate/20 text-sm text-slate-white placeholder:text-slate/50 focus:outline-none focus:border-mint/50 focus:ring-1 focus:ring-mint/20 transition"
+          />
+          <button
+            type="submit"
+            disabled={state === "loading"}
+            className="shrink-0 px-4 py-2.5 bg-mint text-navy text-sm font-semibold rounded-xl hover:shadow-mint-strong transition disabled:opacity-60"
+          >
+            {state === "loading" ? "Enviando…" : "Inscrever"}
+          </button>
+        </div>
       </form>
       {state === "error" && (
         <p className="text-xs text-red-300 mt-1.5">{errorMsg}</p>

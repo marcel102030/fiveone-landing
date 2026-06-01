@@ -11,8 +11,6 @@ import {
   formatPostDate,
   getPostByIdAdmin,
   listAllPostsAdmin,
-  migrateLegacyPosts,
-  seedLegacyPosts,
   slugify,
   updatePost,
   uploadBlogCover,
@@ -21,7 +19,7 @@ import { buildShareUrl } from "../../../institucional/components/blog/blogHelper
 import InstagramShareButton from "../../../institucional/components/blog/InstagramShareButton";
 import { supabase } from "../../../../shared/lib/supabaseClient";
 
-type Mode = "list" | "editor";
+type Mode = "list" | "editor" | "subscribers";
 
 export default function AdminBlogSite() {
   useEffect(() => {
@@ -45,21 +43,33 @@ export default function AdminBlogSite() {
               ← Voltar à administração
             </Link>
             <h1 className="text-2xl sm:text-3xl font-bold text-slate-white mt-1">Blog do Site</h1>
-            <p className="text-sm text-slate mt-0.5">
-              {mode === "list" ? "Posts publicados e rascunhos" : editingId ? "Editando post" : "Novo post"}
-            </p>
           </div>
-          {mode === "editor" && (
-            <button
-              onClick={() => {
-                setMode("list");
-                setEditingId(null);
-              }}
-              className="px-4 py-2 rounded-xl border border-slate/20 text-slate-light text-sm hover:border-mint/40 transition"
-            >
-              ← Voltar à lista
-            </button>
-          )}
+          <div className="flex items-center gap-2">
+            {mode !== "editor" && (
+              <>
+                <button
+                  onClick={() => setMode("list")}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition ${mode === "list" ? "bg-mint text-navy" : "border border-slate/20 text-slate-light hover:border-mint/40"}`}
+                >
+                  Posts
+                </button>
+                <button
+                  onClick={() => setMode("subscribers")}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition ${mode === "subscribers" ? "bg-mint text-navy" : "border border-slate/20 text-slate-light hover:border-mint/40"}`}
+                >
+                  Assinantes
+                </button>
+              </>
+            )}
+            {mode === "editor" && (
+              <button
+                onClick={() => { setMode("list"); setEditingId(null); }}
+                className="px-4 py-2 rounded-xl border border-slate/20 text-slate-light text-sm hover:border-mint/40 transition"
+              >
+                ← Voltar à lista
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
@@ -76,6 +86,8 @@ export default function AdminBlogSite() {
             }}
             onToast={showToast}
           />
+        ) : mode === "subscribers" ? (
+          <SubscribersList />
         ) : (
           <BlogEditor
             key={editingId || "new"}
@@ -127,8 +139,6 @@ function BlogList({
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<BlogPostStatus | "ALL">("ALL");
   const [search, setSearch] = useState("");
-  const [seeding, setSeeding] = useState(false);
-  const [migrating, setMigrating] = useState(false);
 
   async function load() {
     setLoading(true);
@@ -147,43 +157,6 @@ function BlogList({
     void load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
-
-  async function handleSeed() {
-    if (!confirm("Importar os 7 posts antigos do arquivo blogPosts.ts? Posts com mesmo slug serão pulados.")) return;
-    setSeeding(true);
-    try {
-      const { inserted, skipped } = await seedLegacyPosts();
-      onToast(`${inserted} posts importados, ${skipped} já existiam.`, true);
-      await load();
-    } catch (e: any) {
-      onToast(e?.message || "Falha na importação.", false);
-    } finally {
-      setSeeding(false);
-    }
-  }
-
-  async function handleMigrate() {
-    if (
-      !confirm(
-        "Migrar posts antigos para URLs de capa estáveis em /blog/* e adicionar headings + pull quote de demo no post da Pregação? (Executável várias vezes sem efeito colateral)",
-      )
-    )
-      return;
-    setMigrating(true);
-    try {
-      const { coversUpdated, demoApplied, contentCleaned } = await migrateLegacyPosts();
-      const parts: string[] = [];
-      if (coversUpdated > 0) parts.push(`${coversUpdated} capas atualizadas`);
-      if (contentCleaned > 0) parts.push(`${contentCleaned} posts reformatados`);
-      if (demoApplied) parts.push("demo aplicada");
-      onToast(parts.length ? parts.join(" · ") : "Tudo já estava em dia.", true);
-      await load();
-    } catch (e: any) {
-      onToast(e?.message || "Falha na migração.", false);
-    } finally {
-      setMigrating(false);
-    }
-  }
 
   async function handleDelete(post: BlogPost) {
     if (!confirm(`Excluir "${post.title}"? Esta ação não pode ser desfeita.`)) return;
@@ -212,22 +185,6 @@ function BlogList({
         >
           + Novo post
         </button>
-        <button
-          onClick={handleSeed}
-          disabled={seeding}
-          className="px-4 py-2 rounded-xl border border-golden/40 text-golden text-sm hover:bg-golden/10 transition disabled:opacity-50"
-        >
-          {seeding ? "Importando…" : "📥 Importar posts antigos"}
-        </button>
-        <button
-          onClick={handleMigrate}
-          disabled={migrating}
-          className="px-4 py-2 rounded-xl border border-mint/40 text-mint text-sm hover:bg-mint/10 transition disabled:opacity-50"
-          title="Atualiza cover_url para URLs estáveis em /blog/* e enriquece 1 post como demo"
-        >
-          {migrating ? "Migrando…" : "🔧 Migrar capas + aplicar demo"}
-        </button>
-
         <div className="flex-1" />
 
         <select
@@ -1028,5 +985,102 @@ function Field({
       {children}
       {hint && <span className="block text-2xs text-slate/60 mt-1">{hint}</span>}
     </label>
+  );
+}
+
+
+// ─── Assinantes da newsletter ───────────────────────────────
+
+type Subscriber = {
+  id: string;
+  name: string | null;
+  email: string;
+  source: string;
+  confirmed: boolean;
+  subscribed_at: string;
+};
+
+function SubscribersList() {
+  const [subs, setSubs] = useState<Subscriber[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    supabase
+      .from("platform_newsletter_subscriber")
+      .select("id,name,email,source,confirmed,subscribed_at")
+      .is("unsubscribed_at", null)
+      .order("subscribed_at", { ascending: false })
+      .then(({ data }) => {
+        setSubs((data as Subscriber[]) || []);
+        setLoading(false);
+      });
+  }, []);
+
+  function copyCSV() {
+    const header = "Nome,E-mail,Origem,Data";
+    const rows = subs.map((s) =>
+      [s.name || "", s.email, s.source, new Date(s.subscribed_at).toLocaleDateString("pt-BR")].join(",")
+    );
+    navigator.clipboard.writeText([header, ...rows].join("\n"));
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold text-slate-white">Assinantes da newsletter</h2>
+          <p className="text-sm text-slate mt-0.5">
+            {loading ? "Carregando…" : `${subs.length} assinante${subs.length !== 1 ? "s" : ""} confirmado${subs.length !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+        {subs.length > 0 && (
+          <button
+            onClick={copyCSV}
+            className="px-4 py-2 text-sm rounded-xl border border-slate/20 text-slate-light hover:border-mint hover:text-mint transition"
+          >
+            📋 Copiar lista (CSV)
+          </button>
+        )}
+      </div>
+
+      {loading ? (
+        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-8 text-center text-slate text-sm">
+          Carregando…
+        </div>
+      ) : subs.length === 0 ? (
+        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-10 text-center">
+          <p className="text-3xl mb-3">📭</p>
+          <p className="text-slate-white font-medium">Nenhum assinante ainda</p>
+          <p className="text-sm text-slate mt-1">Assim que alguém se inscrever no "Para Ler", aparece aqui.</p>
+        </div>
+      ) : (
+        <div className="bg-navy-light border border-slate/10 rounded-2xl overflow-hidden">
+          <table className="w-full text-sm">
+            <thead className="bg-navy-lighter/40 text-slate text-xs uppercase tracking-wider">
+              <tr>
+                <th className="text-left px-4 py-3">Nome</th>
+                <th className="text-left px-4 py-3">E-mail</th>
+                <th className="text-left px-4 py-3 hidden sm:table-cell">Origem</th>
+                <th className="text-left px-4 py-3 hidden md:table-cell">Inscrito em</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate/10">
+              {subs.map((s) => (
+                <tr key={s.id} className="hover:bg-navy-lighter/20 transition">
+                  <td className="px-4 py-3 text-slate-white">
+                    {s.name || <span className="text-slate/40 italic">—</span>}
+                  </td>
+                  <td className="px-4 py-3 text-slate-light">{s.email}</td>
+                  <td className="px-4 py-3 text-slate text-xs hidden sm:table-cell">{s.source}</td>
+                  <td className="px-4 py-3 text-slate text-xs hidden md:table-cell">
+                    {new Date(s.subscribed_at).toLocaleDateString("pt-BR")}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
   );
 }
