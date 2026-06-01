@@ -344,7 +344,6 @@ const CursoApologetica = () => {
                 </div>
               </div>
 
-              <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
               {APOLOGETICA_LAUNCHED ? (
                 <>
                   <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
