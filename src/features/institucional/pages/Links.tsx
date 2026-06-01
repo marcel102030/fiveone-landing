@@ -4,14 +4,19 @@
 
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import { FaInstagram, FaYoutube, FaTiktok, FaWhatsapp } from "react-icons/fa";
+import {
+  FaInstagram, FaYoutube, FaTiktok, FaWhatsapp,
+  FaCompass, FaBookOpen, FaGraduationCap, FaGlobe,
+} from "react-icons/fa";
+import { IconType } from "react-icons";
 import logoUrl from "../../../assets/images/logo-fiveone-white.png";
 import { SOCIAL } from "../../../shared/config/social";
 
 type LinkItem = {
   label: string;
   sublabel?: string;
-  emoji: string;
+  Icon: IconType;
+  iconClass: string;
   to?: string;
   href?: string;
   highlight?: boolean;
@@ -19,50 +24,51 @@ type LinkItem = {
 
 const LINKS: LinkItem[] = [
   {
-    emoji: "🎁",
+    Icon: FaCompass,
+    iconClass: "text-navy",
     label: "Descubra seu Dom Ministerial",
     sublabel: "Teste gratuito dos 5 Ministérios",
     to: "/descubra-seu-dom",
     highlight: true,
   },
   {
-    emoji: "📚",
+    Icon: FaBookOpen,
+    iconClass: "text-mint",
     label: "Para Ler",
     sublabel: "Leituras semanais sobre fé e ministério",
     to: "/insights",
   },
   {
-    emoji: "🎓",
+    Icon: FaGraduationCap,
+    iconClass: "text-mint",
     label: "Curso de Apologética",
     sublabel: "Lançamento 6 de julho · R$ 59,90",
     to: "/cursos/apologetica",
   },
   {
-    emoji: "💬",
+    Icon: FaWhatsapp,
+    iconClass: "text-[#25D366]",
     label: "Lista de Espera — WhatsApp",
     sublabel: "Comunidade do curso de Apologética",
     href: "https://chat.whatsapp.com/DuYWYWMQleG897njhHUOKa?s=cl&p=i&ilr=4",
   },
   {
-    emoji: "▶️",
+    Icon: FaYoutube,
+    iconClass: "text-[#FF0000]",
     label: "YouTube Five One",
     sublabel: "Ensinos e pregações gratuitas",
     href: SOCIAL.youtube.url,
   },
   {
-    emoji: "🎵",
+    Icon: FaTiktok,
+    iconClass: "text-slate-white",
     label: "TikTok Five One",
     sublabel: SOCIAL.tiktok.handle,
     href: SOCIAL.tiktok.url,
   },
   {
-    emoji: "📸",
-    label: "Instagram Five One",
-    sublabel: SOCIAL.instagram.handle,
-    href: SOCIAL.instagram.url,
-  },
-  {
-    emoji: "🌐",
+    Icon: FaGlobe,
+    iconClass: "text-slate",
     label: "Site Five One",
     sublabel: "fiveonemovement.com",
     to: "/",
@@ -117,9 +123,12 @@ export default function Links() {
       {/* Botões de link */}
       <div className="w-full max-w-sm space-y-3">
         {LINKS.map((item) => {
+          const { Icon } = item;
           const inner = (
             <div className="flex items-center gap-4">
-              <span className="text-2xl shrink-0 w-8 text-center">{item.emoji}</span>
+              <span className={`shrink-0 w-8 flex items-center justify-center ${item.iconClass}`}>
+                <Icon className="w-5 h-5" />
+              </span>
               <div className="min-w-0">
                 <p className={`font-semibold text-sm leading-tight ${item.highlight ? "text-navy" : "text-slate-white"}`}>
                   {item.label}
