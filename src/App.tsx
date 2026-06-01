@@ -374,7 +374,8 @@ function AppContent() {
         <ScrollToTop />
         {!hideLayout && !isInviteTest && <Footer />}
       </div>
-      <PWAInstallBanner />
+      {/* Banner de instalação do app apenas na plataforma (aluno logado) */}
+      {hideLayout && <PWAInstallBanner />}
     </>
   );
 }
