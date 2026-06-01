@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
+import CourseWaitlist from "../components/CourseWaitlist";
+import { APOLOGETICA_LAUNCHED } from "../data/courses";
 
 // TODO: substituir por link real do Hotmart quando o produto estiver cadastrado lá
 const HOTMART_CHECKOUT_URL =
@@ -343,28 +345,31 @@ const CursoApologetica = () => {
               </div>
 
               <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
-                <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
-                <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                  R$ 59,90
-                </p>
-                <p className="text-2xs text-slate mt-1">Acesso por 1 ano · certificado incluído</p>
-              </div>
-
-              <a
-                href={HOTMART_CHECKOUT_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-              >
-                Quero esse curso agora
-                <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                  <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                </svg>
-              </a>
-
-              <p className="mt-3 text-2xs text-slate/80">
-                Você será direcionado ao checkout seguro do Hotmart
-              </p>
+              {APOLOGETICA_LAUNCHED ? (
+                <>
+                  <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
+                    <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
+                    <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
+                    <p className="text-2xs text-slate mt-1">Acesso por 1 ano · certificado incluído</p>
+                  </div>
+                  <a
+                    href={HOTMART_CHECKOUT_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="group mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
+                  >
+                    Quero esse curso agora
+                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                      <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+                    </svg>
+                  </a>
+                  <p className="mt-3 text-2xs text-slate/80">Você será direcionado ao checkout seguro do Hotmart</p>
+                </>
+              ) : (
+                <div className="mt-7">
+                  <CourseWaitlist />
+                </div>
+              )}
             </div>
           </div>
         </div>

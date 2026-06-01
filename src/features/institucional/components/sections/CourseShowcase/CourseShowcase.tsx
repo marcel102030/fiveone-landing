@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import courseCover from "../../../assets/images/capa_curso_apologetica.jpg";
-import { UPCOMING_COURSES } from "../../../data/courses";
+import { UPCOMING_COURSES, APOLOGETICA_LAUNCHED } from "../../../data/courses";
+import CourseWaitlist from "../../CourseWaitlist";
 
 type FeaturedCourse = {
   slug: string;
@@ -166,22 +167,21 @@ const CourseShowcase = () => {
               </div>
 
               {/* Preço + CTA */}
-              <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">
-                    R$ 59,90
-                  </p>
-                </div>
-                <Link
-                  to={`/cursos/${featured.slug}`}
-                  className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                >
-                  {featured.ctaLabel}
-                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                    <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                  </svg>
-                </Link>
+              <div className="mt-auto">
+                {APOLOGETICA_LAUNCHED ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
+                      <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
+                    </div>
+                    <Link to={`/cursos/${featured.slug}`} className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] transition-all">
+                      {featured.ctaLabel}
+                      <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" /></svg>
+                    </Link>
+                  </div>
+                ) : (
+                  <CourseWaitlist compact />
+                )}
               </div>
             </div>
           </div>

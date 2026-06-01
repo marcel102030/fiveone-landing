@@ -1,3 +1,10 @@
+// ── Configuração de lançamento ──────────────────────────────────────────────
+// Quando APOLOGETICA_LAUNCHED = false  → mostra contador + lista de espera
+// Quando APOLOGETICA_LAUNCHED = true   → mostra botão de compra normal
+// Troque para true no dia do lançamento.
+export const APOLOGETICA_LAUNCHED = false;
+export const APOLOGETICA_LAUNCH_DATE = new Date("2026-07-06T09:00:00-03:00");
+
 // Fonte única de dados dos cursos.
 // Importada pela Home (CourseShowcase) e pela página /cursos.
 // Altere aqui — reflete automaticamente em todos os lugares.

@@ -69,11 +69,39 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
 
   // E-mail de boas-vindas via Resend (silencioso se não configurado)
   if (env.RESEND_API_KEY) {
+    const isWaitlist = source.startsWith("waitlist");
     const from =
       env.RESEND_FROM_NEWSLETTER?.trim() ||
       env.RESEND_FROM?.trim() ||
       "Para Ler — Five One <paraler@fiveonemovement.com>";
     const greeting = name ? `Olá, ${name.split(" ")[0]}!` : "Olá!";
+    const subjectLine = isWaitlist
+      ? "Você está na lista de espera — Curso de Apologética Five One 🎉"
+      : "Você assinou o Para Ler — Five One ✅";
+    const bodyContent = isWaitlist
+      ? `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#9fb3d1">
+          Você está na lista de espera do <strong style="color:#e6f1ff">Curso de Apologética</strong> do Five One!
+         </p>
+         <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#9fb3d1">
+          Assim que o curso abrir, você será um dos primeiros a saber — diretamente no seu e-mail. Fique atento!
+         </p>
+         <a href="https://fiveonemovement.com/cursos/apologetica"
+            style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px">
+           Ver detalhes do curso →
+         </a>`
+      : `<p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#9fb3d1">
+          A partir de agora você vai receber as novas leituras do <strong style="color:#e6f1ff">Para Ler</strong> diretamente no seu e-mail — reflexões teológicas, ministeriais e práticas para crescer no seu chamado.
+         </p>
+         <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#9fb3d1">
+          Enquanto isso, explore as leituras que já publicamos:
+         </p>
+         <a href="https://fiveonemovement.com/insights"
+            style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px">
+           Ver as leituras →
+         </a>`;
+    const headingText = isWaitlist
+      ? `${greeting}<br>Você está na lista! 🎉`
+      : `${greeting}<br>Você está dentro 🙌`;
 
     const html = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -83,20 +111,11 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     <tr><td align="center">
       <table width="560" cellpadding="0" cellspacing="0" style="background:#112240;border-radius:16px;overflow:hidden;border:1px solid rgba(148,163,184,0.12)">
         <tr><td style="background:linear-gradient(135deg,#112240,#0a192f);padding:40px 40px 32px;border-bottom:1px solid rgba(100,255,218,0.15)">
-          <p style="margin:0 0 24px;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64ffda">FIVE ONE · PARA LER</p>
-          <h1 style="margin:0;font-size:28px;font-weight:800;color:#e6f1ff;line-height:1.25">${greeting}<br>Você está dentro 🙌</h1>
+          <p style="margin:0 0 24px;font-size:13px;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:#64ffda">FIVE ONE · ${isWaitlist ? "APOLOGÉTICA" : "PARA LER"}</p>
+          <h1 style="margin:0;font-size:28px;font-weight:800;color:#e6f1ff;line-height:1.25">${headingText}</h1>
         </td></tr>
         <tr><td style="padding:32px 40px">
-          <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#9fb3d1">
-            A partir de agora você vai receber as novas leituras do <strong style="color:#e6f1ff">Para Ler</strong> diretamente no seu e-mail — reflexões teológicas, ministeriais e práticas para crescer no seu chamado.
-          </p>
-          <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#9fb3d1">
-            Enquanto isso, explore as leituras que já publicamos:
-          </p>
-          <a href="https://fiveonemovement.com/insights"
-             style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px">
-            Ver as leituras →
-          </a>
+          ${bodyContent}
         </td></tr>
         <tr><td style="padding:24px 40px;border-top:1px solid rgba(148,163,184,0.12)">
           <p style="margin:0;font-size:12px;color:#4a6fa5;line-height:1.6">
@@ -119,9 +138,11 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       body: JSON.stringify({
         from,
         to: email,
-        subject: "Você assinou o Para Ler — Five One ✅",
+        subject: subjectLine,
         html,
-        text: `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse as leituras em: https://fiveonemovement.com/insights`,
+        text: isWaitlist
+          ? `${greeting}\n\nVocê está na lista de espera do Curso de Apologética Five One!\n\nAvisaremos quando abrir: https://fiveonemovement.com/cursos/apologetica`
+          : `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse as leituras em: https://fiveonemovement.com/insights`,
       }),
     }).catch(() => {/* silencioso */});
   }
