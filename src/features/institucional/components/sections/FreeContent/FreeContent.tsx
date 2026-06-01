@@ -19,7 +19,7 @@ const CHANNELS: Channel[] = [
   {
     name: "Para Ler",
     desc: "Leituras teológicas e práticas que aprofundam a sua fé.",
-    cta: "Ler leituras",
+    cta: "Explorar",
     to: "/insights",
     Icon: FaBookOpen,
     iconClass: "bg-mint/10 border border-mint/30 text-mint",

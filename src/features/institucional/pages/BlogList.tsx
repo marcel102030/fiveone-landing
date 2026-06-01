@@ -201,7 +201,7 @@ function FeaturedPostCard({ post }: { post: BlogPost }) {
           <span>{formatPostDate(post.published_at)}</span>
         </div>
         <div className="mt-6 inline-flex items-center gap-1.5 text-mint text-sm font-semibold">
-          Ler leitura
+          Ler →
           <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
             <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
           </svg>
