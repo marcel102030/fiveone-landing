@@ -72,7 +72,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const from =
       env.RESEND_FROM_NEWSLETTER?.trim() ||
       env.RESEND_FROM?.trim() ||
-      "Para Ler — Five One <newsletter@fiveonemovement.com>";
+      "Para Ler — Five One <paraler@fiveonemovement.com>";
     const greeting = name ? `Olá, ${name.split(" ")[0]}!` : "Olá!";
 
     const html = `<!DOCTYPE html>

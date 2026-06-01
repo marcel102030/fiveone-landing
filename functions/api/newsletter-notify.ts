@@ -78,7 +78,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   const from =
     env.RESEND_FROM_NEWSLETTER?.trim() ||
     env.RESEND_FROM?.trim() ||
-    "Para Ler — Five One <newsletter@fiveonemovement.com>";
+    "Para Ler — Five One <paraler@fiveonemovement.com>";
   const postUrl = `${SITE}/insights/${post.slug}`;
   const coverImg = post.cover_url
     ? `<img src="${post.cover_url}" alt="${post.title}" style="width:100%;border-radius:10px;margin-bottom:24px;display:block">`
