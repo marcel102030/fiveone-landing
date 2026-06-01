@@ -9,7 +9,8 @@ type Env = AdminAuthEnv & {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   RESEND_API_KEY?: string;
-  RESEND_FROM?: string;
+  RESEND_FROM_NEWSLETTER?: string; // endereço específico da newsletter
+  RESEND_FROM?: string;            // fallback geral
 };
 
 type PostPayload = {
@@ -75,7 +76,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   }
 
   const from =
-    env.RESEND_FROM?.trim() || "Para Ler — Five One <no-reply@fiveonemovement.com>";
+    env.RESEND_FROM_NEWSLETTER?.trim() ||
+    env.RESEND_FROM?.trim() ||
+    "Para Ler — Five One <newsletter@fiveonemovement.com>";
   const postUrl = `${SITE}/insights/${post.slug}`;
   const coverImg = post.cover_url
     ? `<img src="${post.cover_url}" alt="${post.title}" style="width:100%;border-radius:10px;margin-bottom:24px;display:block">`

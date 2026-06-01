@@ -7,7 +7,8 @@ interface Env {
   SUPABASE_URL: string;
   SUPABASE_SERVICE_ROLE_KEY: string;
   RESEND_API_KEY?: string;
-  RESEND_FROM?: string;
+  RESEND_FROM_NEWSLETTER?: string; // endereço específico da newsletter (ex: newsletter@fiveonemovement.com)
+  RESEND_FROM?: string;            // fallback geral
 }
 
 const CORS = {
@@ -69,7 +70,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   // E-mail de boas-vindas via Resend (silencioso se não configurado)
   if (env.RESEND_API_KEY) {
     const from =
-      env.RESEND_FROM?.trim() || "Para Ler — Five One <no-reply@fiveonemovement.com>";
+      env.RESEND_FROM_NEWSLETTER?.trim() ||
+      env.RESEND_FROM?.trim() ||
+      "Para Ler — Five One <newsletter@fiveonemovement.com>";
     const greeting = name ? `Olá, ${name.split(" ")[0]}!` : "Olá!";
 
     const html = `<!DOCTYPE html>
