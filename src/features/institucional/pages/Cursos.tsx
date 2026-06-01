@@ -11,9 +11,9 @@ type UpcomingCourse = {
 
 const upcoming: UpcomingCourse[] = [
   {
-    title: "Hermenêutica Bíblica",
+    title: "Entendes o que lês?",
     description:
-      "Como interpretar a Bíblia corretamente — contexto, gênero literário e princípios sólidos de interpretação.",
+      "Você lê a Bíblia, mas nem sempre sai com clareza do que leu? Neste curso você aprende a entender o texto bíblico do jeito certo — sem complicar.",
     category: "Estudo Bíblico",
   },
   {
