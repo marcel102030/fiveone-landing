@@ -234,7 +234,7 @@ export default function CertificadoPublico() {
             flexDirection: 'column',
             alignItems: 'center',
             justifyContent: 'space-between',
-            padding: '28px 68px 22px',
+            padding: '28px 68px 42px',
             textAlign: 'center',
             boxSizing: 'border-box',
           }}>
