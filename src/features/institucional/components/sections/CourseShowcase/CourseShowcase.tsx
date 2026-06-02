@@ -101,6 +101,8 @@ const CourseShowcase = () => {
       {/* Gradient sutil de fundo */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-mint/[0.04] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[300px] bg-golden/[0.03] blur-[120px] rounded-full" />
+        <div className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-mint/[0.03] blur-[100px] rounded-full" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8">

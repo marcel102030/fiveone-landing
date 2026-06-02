@@ -9,6 +9,8 @@ const FinalCTA = () => {
       {/* Decorative glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[900px] h-[500px] bg-mint/[0.08] blur-[150px] rounded-full" />
+        <div className="absolute top-0 left-0 w-[350px] h-[350px] bg-mint/[0.04] blur-[100px] rounded-full" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[300px] bg-golden/[0.04] blur-[100px] rounded-full" />
       </div>
 
       <div className="relative max-w-4xl mx-auto px-6 lg:px-8 text-center">

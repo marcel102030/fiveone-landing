@@ -42,6 +42,19 @@ const Hero = ({ onScrollClick }: HeroProps) => {
         <div className="absolute bottom-1/4 right-0 w-[600px] h-[600px] rounded-full bg-golden/[0.025] blur-[120px]" />
       </div>
 
+      {/* Grid de pontos sutil */}
+      <div className="pointer-events-none absolute inset-0 opacity-[0.025]"
+        style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+
+      {/* Ícones dos 5 ministérios nas laterais — só desktop */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden hidden lg:block">
+        <img src={apostoloIcon}    alt="" className="absolute top-[12%]   left-[2.5%]  w-20 opacity-[0.08] grayscale" />
+        <img src={evangelistaIcon} alt="" className="absolute top-[48%]   left-[1.5%]  w-16 opacity-[0.06] grayscale" />
+        <img src={mestreIcon}      alt="" className="absolute bottom-[14%] left-[3%]   w-14 opacity-[0.07] grayscale" />
+        <img src={profetaIcon}     alt="" className="absolute top-[18%]   right-[2.5%] w-18 opacity-[0.08] grayscale" />
+        <img src={pastorIcon}      alt="" className="absolute bottom-[22%] right-[1.5%] w-16 opacity-[0.06] grayscale" />
+      </div>
+
       <div className="relative w-full max-w-5xl mx-auto px-6 lg:px-8 pt-8 pb-4 text-center flex-1 flex flex-col items-center justify-center">
         {/* Logo Five One em destaque */}
         <div className="flex justify-center mb-3 lg:mb-4 animate-fade-in-up">

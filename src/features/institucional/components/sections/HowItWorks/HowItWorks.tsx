@@ -61,9 +61,15 @@ const steps: Step[] = [
 const HowItWorks = () => {
   return (
     <section
-      className="relative bg-navy py-20 lg:py-28"
+      className="relative bg-navy py-20 lg:py-28 overflow-hidden"
       aria-labelledby="how-it-works-heading"
     >
+      {/* Orbs decorativos */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-20 right-0 w-[450px] h-[350px] rounded-full bg-mint/[0.04] blur-[100px]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[300px] rounded-full bg-blue-500/[0.04] blur-[100px]" />
+      </div>
+
       <div className="max-w-7xl mx-auto px-6 lg:px-8">
         {/* Cabeçalho */}
         <div className="max-w-2xl mx-auto text-center mb-12 lg:mb-16">
