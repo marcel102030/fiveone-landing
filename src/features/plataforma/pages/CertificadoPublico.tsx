@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import logoInstagram from "../../../assets/images/Logo (Perfil Instagram- fundo branco).png";
+import logoBlue from "../../../assets/images/logo-fiveone-blue.png";
 
 interface CertData {
   id: string;
@@ -184,13 +184,27 @@ export default function CertificadoPublico() {
             textAlign: 'center',
           }}>
 
-            {/* Logo — mix-blend-mode multiply: fundo branco desaparece, só os elementos escuros aparecem */}
-            <img
-              src={logoInstagram}
-              alt="Five One"
-              style={{ height: 80, marginBottom: 6, objectFit: 'contain', mixBlendMode: 'multiply' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
+            {/* Logo — medalha circular estilo selo de certificado */}
+            <div style={{
+              width: 88,
+              height: 88,
+              borderRadius: '50%',
+              background: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              marginBottom: 10,
+              boxShadow: '0 2px 16px rgba(13,32,64,0.18), 0 0 0 1px rgba(201,168,76,0.5)',
+              border: `2px solid ${GOLD}`,
+              flexShrink: 0,
+            }}>
+              <img
+                src={logoBlue}
+                alt="Five One"
+                style={{ height: 62, objectFit: 'contain' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+            </div>
 
             {/* Título principal */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0 4px' }}>
