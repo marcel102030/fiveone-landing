@@ -1,32 +1,14 @@
 import { Link } from "react-router-dom";
-import apostoloIcon from "../../../../../assets/images/icons/apostolo.png";
-import profetaIcon from "../../../../../assets/images/icons/profeta.png";
-import evangelistaIcon from "../../../../../assets/images/icons/evangelista.png";
-import pastorIcon from "../../../../../assets/images/icons/pastor.png";
-import mestreIcon from "../../../../../assets/images/icons/mestre.png";
-
-const ministries = [
-  { name: "Apóstolo", icon: apostoloIcon },
-  { name: "Profeta", icon: profetaIcon },
-  { name: "Evangelista", icon: evangelistaIcon },
-  { name: "Pastor", icon: pastorIcon },
-  { name: "Mestre", icon: mestreIcon },
-];
+import testeImg from "../../../assets/images/Teste5Ministerios.png";
 
 const ClockIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <circle cx="12" cy="12" r="10" />
-    <polyline points="12 6 12 12 16 14" />
+    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
   </svg>
 );
-
 const GiftIcon = () => (
   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <polyline points="20 12 20 22 4 22 4 12" />
-    <rect x="2" y="7" width="20" height="5" />
-    <line x1="12" y1="22" x2="12" y2="7" />
-    <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
-    <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+    <polyline points="20 12 20 22 4 22 4 12" /><rect x="2" y="7" width="20" height="5" /><line x1="12" y1="22" x2="12" y2="7" /><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" /><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
   </svg>
 );
 
@@ -99,27 +81,16 @@ const QuizBanner = () => {
               </div>
             </div>
 
-            {/* Visual com os 5 ícones */}
-            <div className="relative">
-              <div className="grid grid-cols-5 gap-2 sm:gap-3 lg:gap-4 max-w-md mx-auto">
-                {ministries.map((m, i) => (
-                  <div
-                    key={m.name}
-                    className="group flex flex-col items-center gap-2 p-3 sm:p-4 bg-navy/60 border border-slate/10 rounded-xl hover:border-mint/40 hover:bg-navy/80 transition-all duration-300"
-                    style={{ animationDelay: `${i * 50}ms` }}
-                  >
-                    <img
-                      src={m.icon}
-                      alt={m.name}
-                      className="w-8 h-8 sm:w-10 sm:h-10 lg:w-12 lg:h-12 opacity-70 group-hover:opacity-100 group-hover:scale-110 transition-all duration-300"
-                      style={{ filter: "brightness(0) invert(1)" }}
-                      draggable={false}
-                    />
-                    <span className="text-2xs sm:text-xs text-slate-light text-center font-medium">
-                      {m.name}
-                    </span>
-                  </div>
-                ))}
+            {/* Visual — imagem Teste dos 5 Ministérios */}
+            <div className="relative hidden lg:block">
+              <div className="relative rounded-2xl overflow-hidden shadow-[0_8px_40px_rgba(0,0,0,0.4)] border border-mint/15">
+                <img
+                  src={testeImg}
+                  alt="Teste dos 5 Ministérios"
+                  className="w-full h-auto object-cover"
+                  draggable={false}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-navy/30 to-transparent pointer-events-none" />
               </div>
             </div>
           </div>
