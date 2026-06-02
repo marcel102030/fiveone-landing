@@ -551,7 +551,7 @@ const PaginaInicial = () => {
                       </div>
                       <span className="text-mint text-lg group-hover:translate-x-1 transition-transform flex-shrink-0">→</span>
                     </button>
-                  ) /* fim pronto para começar */ )}
+                  )}
                 </div>
               )}
             </div>
