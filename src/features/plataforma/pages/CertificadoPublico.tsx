@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import logoUrl from "../../../assets/images/logo-fiveone-white-small.png";
+import logoBlue from "../../../assets/images/logo-fiveone-blue.png";
 
 interface CertData {
   id: string;
@@ -47,19 +47,19 @@ export default function CertificadoPublico() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-navy flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-mint border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#0a192f] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#64ffda] border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   if (notFound || !cert) {
     return (
-      <div className="min-h-screen bg-navy text-slate-white flex flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="min-h-screen bg-[#0a192f] text-white flex flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-5xl">🔍</p>
         <h1 className="text-2xl font-bold">Certificado não encontrado</h1>
-        <p className="text-slate max-w-sm">O código de verificação informado não corresponde a nenhum certificado emitido.</p>
-        <Link to="/" className="mt-2 text-mint hover:underline text-sm">Voltar ao início</Link>
+        <p className="text-gray-400 max-w-sm">O código de verificação informado não corresponde a nenhum certificado emitido.</p>
+        <Link to="/" className="mt-2 text-[#64ffda] hover:underline text-sm">Voltar ao início</Link>
       </div>
     );
   }
@@ -69,199 +69,261 @@ export default function CertificadoPublico() {
   const issuedDate = new Date(cert.issued_at).toLocaleDateString("pt-BR", { day: "2-digit", month: "long", year: "numeric" });
   const verifyUrl = typeof window !== "undefined" ? window.location.href : "";
 
+  // Cores do certificado
+  const NAVY   = '#0d2040';
+  const GOLD   = '#c9a84c';
+  const CREAM  = '#f7f3eb';
+
   return (
-    <div className="min-h-screen bg-[#060e1a] text-slate-white">
+    <div style={{ minHeight: '100vh', background: '#1a1a2e', fontFamily: 'Georgia, "Times New Roman", serif' }}>
 
       {/* Barra de ações — oculta no print */}
-      <div className="print:hidden border-b border-white/5 px-6 py-4 flex items-center justify-between bg-navy/80 backdrop-blur-sm">
-        <Link to="/" className="text-slate hover:text-mint transition-colors text-sm flex items-center gap-1.5">
+      <div className="print:hidden" style={{
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        padding: '14px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        background: 'rgba(13,32,64,0.9)',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <Link to="/" style={{ color: '#9fb3d1', textDecoration: 'none', fontSize: 14, fontFamily: 'Inter, sans-serif' }}>
           ← Five One
         </Link>
         <button
           onClick={() => window.print()}
-          className="flex items-center gap-2 px-5 py-2 rounded-xl bg-mint text-navy text-sm font-bold hover:bg-mint/90 transition-colors shadow-mint"
+          style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 20px', borderRadius: 10,
+            background: '#64ffda', color: '#0a192f',
+            fontWeight: 700, fontSize: 14, border: 'none', cursor: 'pointer',
+            fontFamily: 'Inter, sans-serif',
+            boxShadow: '0 0 20px rgba(100,255,218,0.3)',
+          }}
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
           Imprimir / Salvar PDF
         </button>
       </div>
 
-      {/* Certificado principal */}
-      <div className="flex items-center justify-center px-4 py-12 print:p-0">
+      {/* Wrapper do certificado */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px 20px' }} className="print:p-0">
         <div
           ref={printRef}
-          className="relative w-full max-w-4xl print:max-w-none print:w-full overflow-hidden"
           style={{
-            background: 'linear-gradient(135deg, #0a192f 0%, #0d2040 40%, #081628 100%)',
+            width: '100%',
+            maxWidth: 900,
             aspectRatio: '1.414 / 1',
-            boxShadow: '0 0 80px rgba(100,255,218,0.08), 0 0 0 1px rgba(100,255,218,0.1)',
-            borderRadius: 16,
+            background: CREAM,
+            position: 'relative',
+            overflow: 'hidden',
+            boxShadow: '0 20px 80px rgba(0,0,0,0.5)',
           }}
         >
-          {/* ── Decoração de fundo ──────────────────────────────── */}
-
-          {/* Grades diagonais sutis */}
-          <div className="absolute inset-0 opacity-[0.03]" style={{
-            backgroundImage: 'linear-gradient(45deg, #64ffda 1px, transparent 1px), linear-gradient(-45deg, #64ffda 1px, transparent 1px)',
-            backgroundSize: '40px 40px',
+          {/* ── Triângulos decorativos nos cantos ── */}
+          {/* Top-left */}
+          <div style={{
+            position: 'absolute', top: 0, left: 0,
+            width: 0, height: 0,
+            borderStyle: 'solid',
+            borderWidth: '100px 100px 0 0',
+            borderColor: `${NAVY} transparent transparent transparent`,
+          }} />
+          {/* Top-right */}
+          <div style={{
+            position: 'absolute', top: 0, right: 0,
+            width: 0, height: 0,
+            borderStyle: 'solid',
+            borderWidth: '0 100px 100px 0',
+            borderColor: `transparent ${NAVY} transparent transparent`,
+          }} />
+          {/* Bottom-left */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0,
+            width: 0, height: 0,
+            borderStyle: 'solid',
+            borderWidth: '0 0 80px 80px',
+            borderColor: `transparent transparent ${NAVY} transparent`,
+          }} />
+          {/* Bottom-right */}
+          <div style={{
+            position: 'absolute', bottom: 0, right: 0,
+            width: 0, height: 0,
+            borderStyle: 'solid',
+            borderWidth: '0 80px 80px 0',
+            borderColor: `transparent transparent transparent ${NAVY}`,
           }} />
 
-          {/* Brilho radial central */}
-          <div className="absolute inset-0 pointer-events-none" style={{
-            background: 'radial-gradient(ellipse 70% 60% at 50% 45%, rgba(100,255,218,0.07) 0%, transparent 70%)',
+          {/* ── Borda dourada ── */}
+          <div style={{
+            position: 'absolute', inset: 14,
+            border: `2px solid ${GOLD}`,
+            pointerEvents: 'none',
+          }} />
+          <div style={{
+            position: 'absolute', inset: 20,
+            border: `0.5px solid rgba(201,168,76,0.4)`,
+            pointerEvents: 'none',
           }} />
 
-          {/* ── Bordas ornamentais em SVG ───────────────────────── */}
-          <svg className="absolute inset-0 w-full h-full pointer-events-none" preserveAspectRatio="none">
-            {/* Borda externa */}
-            <rect x="12" y="12" width="calc(100% - 24)" height="calc(100% - 24)"
-              rx="8" fill="none" stroke="rgba(100,255,218,0.25)" strokeWidth="1.5"
-              vectorEffect="non-scaling-stroke"/>
-            {/* Borda interna */}
-            <rect x="22" y="22" width="calc(100% - 44)" height="calc(100% - 44)"
-              rx="4" fill="none" stroke="rgba(100,255,218,0.10)" strokeWidth="1"
-              vectorEffect="non-scaling-stroke"/>
-          </svg>
+          {/* ── Conteúdo ── */}
+          <div style={{
+            position: 'relative',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '60px 80px 50px',
+            textAlign: 'center',
+          }}>
 
-          {/* Ornamentos nos cantos (SVG) */}
-          {/* Canto superior esquerdo */}
-          <svg className="absolute top-3 left-3 w-14 h-14 pointer-events-none" viewBox="0 0 56 56">
-            <path d="M2 20 L2 2 L20 2" fill="none" stroke="rgba(100,255,218,0.5)" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M2 28 L2 2 L28 2" fill="none" stroke="rgba(100,255,218,0.15)" strokeWidth="1" strokeLinecap="round"/>
-            <circle cx="2" cy="2" r="2" fill="rgba(100,255,218,0.5)"/>
-          </svg>
-          {/* Canto superior direito */}
-          <svg className="absolute top-3 right-3 w-14 h-14 pointer-events-none" viewBox="0 0 56 56">
-            <path d="M54 20 L54 2 L36 2" fill="none" stroke="rgba(100,255,218,0.5)" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M54 28 L54 2 L28 2" fill="none" stroke="rgba(100,255,218,0.15)" strokeWidth="1" strokeLinecap="round"/>
-            <circle cx="54" cy="2" r="2" fill="rgba(100,255,218,0.5)"/>
-          </svg>
-          {/* Canto inferior esquerdo */}
-          <svg className="absolute bottom-3 left-3 w-14 h-14 pointer-events-none" viewBox="0 0 56 56">
-            <path d="M2 36 L2 54 L20 54" fill="none" stroke="rgba(100,255,218,0.5)" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M2 28 L2 54 L28 54" fill="none" stroke="rgba(100,255,218,0.15)" strokeWidth="1" strokeLinecap="round"/>
-            <circle cx="2" cy="54" r="2" fill="rgba(100,255,218,0.5)"/>
-          </svg>
-          {/* Canto inferior direito */}
-          <svg className="absolute bottom-3 right-3 w-14 h-14 pointer-events-none" viewBox="0 0 56 56">
-            <path d="M54 36 L54 54 L36 54" fill="none" stroke="rgba(100,255,218,0.5)" strokeWidth="2" strokeLinecap="round"/>
-            <path d="M54 28 L54 54 L28 54" fill="none" stroke="rgba(100,255,218,0.15)" strokeWidth="1" strokeLinecap="round"/>
-            <circle cx="54" cy="54" r="2" fill="rgba(100,255,218,0.5)"/>
-          </svg>
+            {/* Logo */}
+            <img
+              src={logoBlue}
+              alt="Five One"
+              style={{ height: 48, marginBottom: 8, objectFit: 'contain' }}
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
 
-          {/* ── Conteúdo ────────────────────────────────────────── */}
-          <div className="relative h-full flex flex-col items-center justify-center px-16 py-8 text-center">
-
-            {/* Logo + título da instituição */}
-            <div className="flex items-center gap-3 mb-1">
-              <img src={logoUrl} alt="Five One" className="h-7 w-auto opacity-90" />
+            {/* Título principal */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0 4px' }}>
+              <div style={{ flex: 1, height: 2, background: `linear-gradient(to right, transparent, ${GOLD})` }} />
+              <h1 style={{
+                fontSize: 'clamp(1.6rem, 5vw, 2.6rem)',
+                fontWeight: 700,
+                color: NAVY,
+                letterSpacing: '0.08em',
+                margin: 0,
+                fontFamily: 'Georgia, serif',
+              }}>
+                CERTIFICADO
+              </h1>
+              <div style={{ flex: 1, height: 2, background: `linear-gradient(to left, transparent, ${GOLD})` }} />
             </div>
-            <p className="text-[10px] font-semibold text-mint/60 uppercase tracking-[0.35em] mb-5">
-              Movimento dos 5 Ministérios
+            <p style={{
+              fontSize: 'clamp(0.7rem, 1.8vw, 1rem)',
+              color: NAVY,
+              letterSpacing: '0.2em',
+              margin: '0 0 16px',
+              fontFamily: 'Georgia, serif',
+              fontWeight: 400,
+            }}>
+              DE CONCLUSÃO DE CURSO
             </p>
-
-            {/* Linha decorativa superior */}
-            <div className="flex items-center gap-3 w-full max-w-xs mb-5">
-              <div className="flex-1 h-px" style={{ background: 'linear-gradient(to right, transparent, rgba(100,255,218,0.3))' }} />
-              <svg className="w-4 h-4 text-mint/50 flex-shrink-0" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-              </svg>
-              <div className="flex-1 h-px" style={{ background: 'linear-gradient(to left, transparent, rgba(100,255,218,0.3))' }} />
-            </div>
-
-            {/* Texto do certificado */}
-            <p className="text-[11px] text-slate/70 uppercase tracking-[0.2em] mb-2">
-              Certificado de Conclusão
-            </p>
-            <p className="text-xs text-slate/60 mb-2">Este certificado é conferido a</p>
 
             {/* Nome do aluno */}
-            <h1
-              className="font-bold text-slate-white mb-2 tracking-tight leading-tight"
-              style={{
-                fontSize: 'clamp(1.4rem, 4vw, 2.2rem)',
-                textShadow: '0 0 30px rgba(100,255,218,0.15)',
-              }}
-            >
-              {displayName}
-            </h1>
-
-            {/* Linha abaixo do nome */}
-            <div className="w-48 h-px bg-mint/30 mb-3" />
-
-            <p className="text-xs text-slate/60 mb-1">por haver concluído com êxito o curso de</p>
-
-            {/* Nome do curso */}
-            <h2
-              className="font-bold text-mint mb-4 tracking-wide"
-              style={{ fontSize: 'clamp(1rem, 3vw, 1.5rem)' }}
-            >
-              {formation}
-            </h2>
-
-            {/* Data + linha ornamental */}
-            <div className="flex items-center gap-3 mb-5">
-              <div className="flex-1 h-px bg-white/5" />
-              <p className="text-[10px] text-slate/50 tracking-wider px-2">
-                Emitido em {issuedDate}
-              </p>
-              <div className="flex-1 h-px bg-white/5" />
+            <div style={{ margin: '6px 0 4px', width: '60%' }}>
+              <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginBottom: 6 }} />
+              <h2 style={{
+                fontSize: 'clamp(1.2rem, 3.5vw, 1.9rem)',
+                fontWeight: 700,
+                color: NAVY,
+                margin: 0,
+                fontFamily: 'Georgia, serif',
+              }}>
+                {displayName}
+              </h2>
+              <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginTop: 6 }} />
             </div>
 
-            {/* QR + área de verificação */}
-            <div className="flex items-end justify-center gap-10">
+            {/* Texto descritivo */}
+            <p style={{
+              fontSize: 'clamp(0.6rem, 1.4vw, 0.82rem)',
+              color: `rgba(13,32,64,0.7)`,
+              margin: '10px 0 6px',
+              lineHeight: 1.7,
+              maxWidth: '72%',
+              fontFamily: 'Georgia, serif',
+            }}>
+              O Five One certifica que o(a) aluno(a) acima identificado(a) concluiu com êxito
+              o curso de <strong style={{ color: NAVY }}>{formation}</strong>, demonstrando dedicação
+              ao crescimento no seu chamado ministerial.
+            </p>
 
-              {/* Assinatura / lacre */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-16 h-px bg-slate/30" />
-                <p className="text-[9px] text-slate/40 uppercase tracking-widest">Direção</p>
-                <p className="text-[9px] text-slate/50 font-medium">Five One</p>
+            {/* Data */}
+            <p style={{
+              fontSize: 'clamp(0.55rem, 1.2vw, 0.72rem)',
+              color: `rgba(13,32,64,0.5)`,
+              margin: '4px 0 14px',
+              letterSpacing: '0.05em',
+              fontFamily: 'Georgia, serif',
+            }}>
+              Emitido em {issuedDate}
+            </p>
+
+            {/* Rodapé: assinatura + QR + referência */}
+            <div style={{
+              width: '100%',
+              display: 'flex',
+              alignItems: 'flex-end',
+              justifyContent: 'space-between',
+              marginTop: 'auto',
+              paddingTop: 8,
+            }}>
+              {/* Assinatura esquerda */}
+              <div style={{ textAlign: 'center', minWidth: 120 }}>
+                <div style={{ width: 120, height: 1, background: `rgba(13,32,64,0.35)`, marginBottom: 4 }} />
+                <p style={{ fontSize: '0.6rem', color: `rgba(13,32,64,0.6)`, margin: 0, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>FIVE ONE</p>
               </div>
 
               {/* QR Code central */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="bg-white p-2 rounded-md shadow-mint" style={{ boxShadow: '0 0 12px rgba(100,255,218,0.2)' }}>
-                  <QRCodeSVG value={verifyUrl} size={60} level="M" bgColor="#ffffff" fgColor="#0a192f" />
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                <div style={{ background: 'white', padding: 6, border: `1px solid rgba(201,168,76,0.4)` }}>
+                  <QRCodeSVG value={verifyUrl} size={56} level="M" bgColor="#ffffff" fgColor={NAVY} />
                 </div>
-                <p className="text-[9px] text-slate/40 uppercase tracking-wider">Verificar</p>
-                <p className="text-[9px] font-mono text-mint/60">{cert.verify_code.slice(0, 8).toUpperCase()}…</p>
+                <p style={{ fontSize: '0.5rem', color: `rgba(13,32,64,0.4)`, margin: 0, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>
+                  VERIFICAR AUTENTICIDADE
+                </p>
+                <p style={{ fontSize: '0.5rem', fontFamily: 'monospace', color: `rgba(13,32,64,0.5)`, margin: 0 }}>
+                  {cert.verify_code.slice(0, 8).toUpperCase()}
+                </p>
               </div>
 
-              {/* Efésios */}
-              <div className="flex flex-col items-center gap-1.5">
-                <div className="w-16 h-px bg-slate/30" />
-                <p className="text-[9px] text-slate/40 uppercase tracking-widest">Referência</p>
-                <p className="text-[9px] text-slate/50 font-medium">Ef 4:11–16</p>
+              {/* Assinatura direita */}
+              <div style={{ textAlign: 'center', minWidth: 120 }}>
+                <div style={{ width: 120, height: 1, background: `rgba(13,32,64,0.35)`, marginBottom: 4 }} />
+                <p style={{ fontSize: '0.6rem', color: `rgba(13,32,64,0.6)`, margin: 0, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>DIRETOR</p>
               </div>
             </div>
           </div>
+
+          {/* ── Faixa inferior navy ── */}
+          <div style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            height: 28,
+            background: NAVY,
+          }} />
         </div>
       </div>
 
       {/* Seção de autenticidade — oculta no print */}
-      <div className="print:hidden max-w-4xl mx-auto px-6 pb-12">
-        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-5 backdrop-blur-sm">
-          <h3 className="font-semibold text-sm text-slate-white mb-4 flex items-center gap-2">
-            <svg className="w-4 h-4 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+      <div className="print:hidden" style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px 48px' }}>
+        <div style={{
+          background: 'rgba(13,32,64,0.6)',
+          border: '1px solid rgba(100,255,218,0.1)',
+          borderRadius: 16,
+          padding: 20,
+          fontFamily: 'Inter, sans-serif',
+        }}>
+          <h3 style={{ color: '#e6f1ff', fontSize: 14, fontWeight: 600, margin: '0 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#64ffda" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
             Informações de autenticidade
           </h3>
-          <div className="grid sm:grid-cols-2 gap-4 text-sm">
-            <div>
-              <p className="text-slate/60 text-xs mb-0.5 uppercase tracking-wider">Titular</p>
-              <p className="text-slate-white font-medium">{displayName}</p>
-            </div>
-            <div>
-              <p className="text-slate/60 text-xs mb-0.5 uppercase tracking-wider">Curso</p>
-              <p className="text-slate-white font-medium">{formation}</p>
-            </div>
-            <div>
-              <p className="text-slate/60 text-xs mb-0.5 uppercase tracking-wider">Data de emissão</p>
-              <p className="text-slate-white font-medium">{issuedDate}</p>
-            </div>
-            <div>
-              <p className="text-slate/60 text-xs mb-0.5 uppercase tracking-wider">Código de verificação</p>
-              <p className="text-mint font-mono text-xs break-all">{cert.verify_code}</p>
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+            {[
+              ['Titular', displayName],
+              ['Curso', formation],
+              ['Data de emissão', issuedDate],
+              ['Código de verificação', cert.verify_code],
+            ].map(([label, value]) => (
+              <div key={label}>
+                <p style={{ color: 'rgba(159,179,209,0.6)', fontSize: 11, margin: '0 0 2px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</p>
+                <p style={{ color: label === 'Código de verificação' ? '#64ffda' : '#e6f1ff', fontSize: 13, margin: 0, fontFamily: label === 'Código de verificação' ? 'monospace' : 'Inter, sans-serif', wordBreak: 'break-all' }}>{value}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
