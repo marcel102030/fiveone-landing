@@ -14,7 +14,16 @@ import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
 import { getEnrollments } from '../services/userAccount'
 import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
+import { useEffect as useEffectBlog, useState as useStateBlog } from 'react'
 import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.jpg'
+import { FaBookOpen, FaCompass, FaGraduationCap, FaUsers } from 'react-icons/fa'
+import iconApostolo from '../../../assets/images/icons/apostolo.png'
+import iconProfeta from '../../../assets/images/icons/profeta.png'
+import iconEvangelista from '../../../assets/images/icons/evangelista.png'
+import iconPastor from '../../../assets/images/icons/pastor.png'
+import iconMestre from '../../../assets/images/icons/mestre.png'
+import { listPublishedPosts } from '../../institucional/services/blog'
+import type { BlogPost } from '../../institucional/services/blog'
 
 // Capas locais por curso, usadas como fallback quando não há banner no banco.
 // O banner do admin (Storage) sempre tem prioridade sobre estas.
@@ -44,30 +53,8 @@ const ChevronRightIcon = () => (
   </svg>
 )
 
-const BookOpenIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
-    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-    <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-  </svg>
-)
 
-const CheckCircleIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
-    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-    <polyline points="22 4 12 14.01 9 11.01" />
-  </svg>
-)
 
-const LayersIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24"
-    fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <polygon points="12 2 2 7 12 12 22 7 12 2" />
-    <polyline points="2 17 12 22 22 17" />
-    <polyline points="2 12 12 17 22 12" />
-  </svg>
-)
 
 const TrashIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24"
@@ -386,6 +373,12 @@ const PaginaInicial = () => {
     }
   }
 
+  // ── Última leitura do blog ────────────────────────────────────────────────
+  const [latestPost, setLatestPost] = useStateBlog<BlogPost | null>(null)
+  useEffectBlog(() => {
+    listPublishedPosts({ limit: 1 }).then(posts => setLatestPost(posts[0] || null)).catch(() => {})
+  }, [])
+
   // ── Saudação ──────────────────────────────────────────────────────────────
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
 
@@ -398,188 +391,233 @@ const PaginaInicial = () => {
     })),
   [enrolledCourseIds, platformContent.ministries])
 
-  // Stats por curso — para o hero adaptativo multi-curso
-  const courseStats = useMemo(() =>
-    enrolledCourses.map(({ id, ministry }) => {
-      const courseLessons = allLessons.filter(l => l.ministryId === id)
-      const total = courseLessons.length
-      const completed = courseLessons.filter(
-        l => completedIds.has(l.videoId) || completedIds.has(l.id)
-      ).length
-      const pct = total > 0 ? Math.round((completed / total) * 100) : 0
-      const lastItem = lastWatchedArray.find(item => {
-        const key = item.id || item.videoId || item.video_id
-        const lesson = key ? lessonByVideoId.get(key) : null
-        return lesson?.ministryId === id
-      })
-      const hasProgress = completed > 0 || !!lastItem
-      return { id, name: ministry?.name || id, total, completed, pct, hasProgress, lastItem }
-    }),
-  [enrolledCourses, allLessons, completedIds, lastWatchedArray, lessonByVideoId])
+  // enrolledCourses já calculado acima — courseStats removido (multi-curso futuro)
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <>
       <Header />
 
-      <main id="inicio" className="min-h-screen bg-navy">
+      <main id="inicio" className="min-h-screen bg-navy relative overflow-x-hidden">
+        {/* ── FUNDO DECORATIVO GLOBAL ─────────────────────────────────────── */}
+        <div aria-hidden className="pointer-events-none fixed inset-0 z-0 overflow-hidden select-none">
 
-        {/* ── HERO ────────────────────────────────────────────────────────── */}
-        <section className="relative overflow-hidden bg-gradient-to-br from-navy to-navy-light border-b border-slate/10">
-          {/* Foto de fundo — desktop e mobile diferentes via <picture>.
-              Para trocar, substitua os arquivos em /public/assets/images/. */}
-          <picture aria-hidden="true">
-            <source media="(min-width: 768px)" srcSet="/assets/images/banner-login-fiveone.png" />
-            <img
-              src="/assets/images/BemVindo.png"
-              alt=""
-              className="absolute inset-0 w-full h-full object-cover object-center select-none pointer-events-none"
-              draggable={false}
-              loading="eager"
-            />
-          </picture>
+          {/* Grid de pontos — padrão profissional */}
+          <div className="absolute inset-0 opacity-[0.07]" style={{
+            backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)',
+            backgroundSize: '32px 32px'
+          }} />
 
-          {/* Overlay escurecedor para garantir legibilidade do texto */}
-          <div
-            aria-hidden="true"
-            className="absolute inset-0 bg-gradient-to-b from-navy/85 via-navy/70 to-navy/95 sm:bg-gradient-to-r sm:from-navy/90 sm:via-navy/65 sm:to-navy/40"
-          />
+          {/* Glows coloridos */}
+          <div className="absolute top-[10%] -right-32 w-[700px] h-[700px] rounded-full bg-mint/[0.08] blur-[150px]" />
+          <div className="absolute top-[50%] -left-32 w-[600px] h-[600px] rounded-full bg-mint/[0.06] blur-[130px]" />
+          <div className="absolute bottom-[5%] left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full bg-indigo-500/[0.08] blur-[150px]" />
 
-          {/* Decoração de fundo (manchas mint sutis) */}
-          <div className="absolute inset-0 pointer-events-none">
-            <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-mint/5 blur-3xl" />
-            <div className="absolute -bottom-16 -left-16 w-64 h-64 rounded-full bg-mint/5 blur-3xl" />
+          {/* Ícones dos 5 Ministérios — decoração faded nos cantos */}
+          <img src={iconApostolo}    alt="" className="absolute top-[8%]   left-[3%]   w-16 opacity-[0.06] grayscale" />
+          <img src={iconProfeta}     alt="" className="absolute top-[8%]   right-[3%]  w-14 opacity-[0.06] grayscale" />
+          <img src={iconEvangelista} alt="" className="absolute top-[38%]  left-[2%]   w-14 opacity-[0.06] grayscale" />
+          <img src={iconPastor}      alt="" className="absolute top-[62%]  right-[2%]  w-16 opacity-[0.06] grayscale" />
+          <img src={iconMestre}      alt="" className="absolute bottom-[8%] left-[3%]  w-14 opacity-[0.06] grayscale" />
+        </div>
+
+        {/* ── HERO REDESENHADO ─────────────────────────────────────────────── */}
+        <section className="relative overflow-hidden border-b border-slate/10">
+          {/* Fundo decorativo do hero (sem foto — consistente com o resto) */}
+          <div aria-hidden className="absolute inset-0 pointer-events-none overflow-hidden select-none">
+            {/* Gradiente base */}
+            <div className="absolute inset-0 bg-gradient-to-br from-navy via-navy to-navy-light/60" />
+            {/* Glow central mint */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[400px] rounded-full bg-mint/[0.09] blur-[120px]" />
+            {/* Glow azul canto direito */}
+            <div className="absolute -top-20 right-0 w-[500px] h-[500px] rounded-full bg-indigo-500/[0.10] blur-[120px]" />
+            {/* Referência bíblica discreta */}
+            <span className="absolute top-5 left-6 text-2xs font-medium text-mint/[0.18] tracking-[0.35em] uppercase select-none">
+              Efésios 4:11–16
+            </span>
           </div>
 
-          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-10 sm:py-14">
-            {/* Saudação */}
-            <div className="mb-8">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-white mb-1">
-                Olá, {firstName} 👋
-              </h1>
-            </div>
+          {/* ── NOVO HERO: saudação + progresso + próxima aula ────────────── */}
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+            <div className="flex flex-col lg:flex-row lg:items-center gap-8 lg:gap-12">
 
-            {/* Stats / Cards — adaptativo por nº de cursos */}
-            {enrolledCourseIds.length > 1 ? (
-              <>
-                {/* ── Multi-curso: card por curso ─────────────────────────── */}
-                <div className="space-y-3 mb-8 max-w-xl">
-                  {courseStats.map(course => (
-                    <div
-                      key={course.id}
-                      className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-4 flex items-center gap-4"
+              {/* Esquerda: saudação + anel de progresso */}
+              <div className="flex items-center gap-6 flex-shrink-0">
+                {/* Anel SVG de progresso */}
+                <div className="relative w-20 h-20 flex-shrink-0">
+                  <svg className="w-20 h-20 -rotate-90" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(100,255,218,0.12)" strokeWidth="6" />
+                    <circle
+                      cx="40" cy="40" r="34" fill="none"
+                      stroke="#64ffda" strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 34}`}
+                      strokeDashoffset={`${2 * Math.PI * 34 * (1 - progressPercent / 100)}`}
+                      style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <span className="text-lg font-extrabold text-mint leading-none">{progressPercent}%</span>
+                    <span className="text-2xs text-slate leading-none mt-0.5">concluído</span>
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl sm:text-3xl font-bold text-slate-white">
+                    Olá, {firstName}!
+                  </h1>
+                  <p className="text-sm text-slate mt-1">
+                    {totalCompleted === 0
+                      ? 'Sua jornada começa agora.'
+                      : `${totalCompleted} de ${totalLessons} aulas concluídas.`}
+                  </p>
+                  {/* Nome do curso que está estudando */}
+                  {enrolledCourses.length > 0 && (
+                    <p className="text-2xs text-mint/70 mt-1.5 uppercase tracking-wider font-semibold">
+                      {enrolledCourses[0].ministry?.name || 'Apologética'}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* Direita: próxima aula em destaque */}
+              {progressLoaded && primaryCourseId && (
+                <div className="flex-1">
+                  {visibleLastWatched.length > 0 ? (
+                    /* Tem aula em andamento → botão grande de retomar */
+                    <button
+                      onClick={handleResumeLesson}
+                      className="group w-full flex items-center gap-4 bg-navy-lighter/80 border border-mint/25 hover:border-mint/60 rounded-2xl p-4 sm:p-5 transition-all hover:shadow-mint text-left"
                     >
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-semibold text-slate-white truncate">{course.name}</p>
-                        <div className="flex items-center gap-2 mt-2">
-                          <div className="flex-1 h-1.5 bg-navy rounded-full overflow-hidden">
-                            <div
-                              className="h-1.5 bg-mint rounded-full transition-all duration-700"
-                              style={{ width: `${course.pct}%` }}
-                            />
+                      {/* Thumbnail da última aula */}
+                      <div className="relative w-20 h-14 sm:w-24 sm:h-16 rounded-xl overflow-hidden bg-navy flex-shrink-0">
+                        {visibleLastWatched[0]?.thumbnail
+                          ? <img src={visibleLastWatched[0].thumbnail} alt="" className="w-full h-full object-cover" />
+                          : <div className="w-full h-full bg-gradient-to-br from-indigo-900 to-navy-light" />
+                        }
+                        <div className="absolute inset-0 bg-navy/40 flex items-center justify-center">
+                          <div className="w-8 h-8 rounded-full bg-mint flex items-center justify-center text-navy shadow-mint">
+                            <PlayIcon />
                           </div>
-                          <span className="text-xs text-mint font-semibold tabular-nums flex-shrink-0 w-8 text-right">
-                            {course.pct}%
-                          </span>
                         </div>
-                        <p className="text-xs text-slate mt-1">
-                          {course.completed} de {course.total} aula{course.total !== 1 ? 's' : ''} concluída{course.completed !== 1 ? 's' : ''}
+                        {/* Barra de progresso na thumbnail */}
+                        {(() => {
+                          const v = visibleLastWatched[0]
+                          const pct = v?.durationSeconds > 0 ? Math.min(100, Math.round((v.watchedSeconds / v.durationSeconds) * 100)) : 0
+                          return pct > 0 ? (
+                            <div className="absolute bottom-0 left-0 right-0 h-1 bg-navy/60">
+                              <div className="h-full bg-mint" style={{ width: `${pct}%` }} />
+                            </div>
+                          ) : null
+                        })()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-0.5">Continuar onde parou</p>
+                        <p className="text-slate-white font-semibold text-sm sm:text-base line-clamp-2 leading-snug">
+                          {visibleLastWatched[0]?.title}
                         </p>
+                        {visibleLastWatched[0]?.subjectName && (
+                          <p className="text-xs text-slate mt-0.5">{visibleLastWatched[0].subjectName}</p>
+                        )}
                       </div>
-                      <button
-                        onClick={() => {
-                          if (course.lastItem) goToLesson(course.lastItem)
-                          else navigate(`/curso/${course.id}/modulos`)
-                        }}
-                        className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2.5 min-h-[44px] bg-mint text-navy text-xs font-bold rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
-                      >
-                        {course.hasProgress ? 'Continuar' : 'Começar'} →
-                      </button>
-                    </div>
-                  ))}
-                </div>
-                {/* Atalho para retomar a última aula assistida (qualquer curso) */}
-                {visibleLastWatched.length > 0 && (
-                  <div className="flex flex-wrap gap-3">
-                    <button
-                      onClick={handleResumeLesson}
-                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
-                    >
-                      <PlayIcon />
-                      Retomar última aula
+                      <span className="text-mint text-lg group-hover:translate-x-1 transition-transform flex-shrink-0">→</span>
                     </button>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                {/* ── Curso único: stats + CTAs originais ─────────────────── */}
-                <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-8 max-w-lg">
-                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                    <div className="flex items-center justify-center mb-1 text-mint">
-                      <CheckCircleIcon />
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalCompleted}</p>
-                    <p className="text-xs text-slate mt-0.5">
-                      {totalCompleted === 1 ? 'Aula concluída' : 'Aulas concluídas'}
-                    </p>
-                  </div>
-                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                    <div className="flex items-center justify-center mb-1 text-mint">
-                      <LayersIcon />
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{totalLessons}</p>
-                    <p className="text-xs text-slate mt-0.5">
-                      {totalLessons === 1 ? 'Aula disponível' : 'Aulas disponíveis'}
-                    </p>
-                  </div>
-                  <div className="bg-navy-lighter/60 border border-slate/10 rounded-xl p-3 sm:p-4 text-center">
-                    <div className="flex items-center justify-center mb-1 text-mint">
-                      <BookOpenIcon />
-                    </div>
-                    <p className="text-xl sm:text-2xl font-bold text-slate-white">{progressPercent}%</p>
-                    <p className="text-xs text-slate mt-0.5">Concluído</p>
-                    {totalLessons > 0 && (
-                      <div className="mt-2 h-1 bg-navy-lighter rounded-full overflow-hidden">
-                        <div
-                          className="h-full bg-mint rounded-full transition-all duration-700"
-                          style={{ width: `${progressPercent}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  {visibleLastWatched.length > 0 && (
+                  ) : (
+                    /* Nunca assistiu → CTA para começar */
                     <button
-                      onClick={handleResumeLesson}
-                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
+                      onClick={() => navigate(`/curso/${primaryCourseId}/modulos`)}
+                      className="group w-full flex items-center gap-4 bg-mint/10 border border-mint/30 hover:border-mint/60 hover:bg-mint/15 rounded-2xl p-4 sm:p-5 transition-all text-left"
                     >
-                      <PlayIcon />
-                      Retomar aula
+                      <div className="w-12 h-12 rounded-xl bg-mint/20 border border-mint/30 flex items-center justify-center text-mint flex-shrink-0">
+                        <PlayIcon />
+                      </div>
+                      <div className="flex-1">
+                        <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-0.5">Pronto para começar?</p>
+                        <p className="text-slate-white font-semibold text-sm sm:text-base">Acessar a primeira aula do curso</p>
+                      </div>
+                      <span className="text-mint text-lg group-hover:translate-x-1 transition-transform flex-shrink-0">→</span>
                     </button>
                   )}
-                  {primaryCourseId && (
-                    <Link
-                      to={`/curso/${primaryCourseId}/modulos`}
-                      className="flex items-center gap-2 px-5 py-2.5 min-h-[44px] bg-transparent border border-mint/40 text-mint font-medium text-sm rounded-xl hover:bg-mint/10 hover:border-mint/60 active:scale-95 transition-all"
-                    >
-                      Explorar módulos
-                    </Link>
-                  )}
                 </div>
-              </>
-            )}
+              )}
+            </div>
           </div>
         </section>
 
+        {/* ── JORNADA — progresso por módulo ───────────────────────────────── */}
+        {primaryCourseId && progressLoaded && allLessons.length > 0 && (() => { // eslint-disable-line
+          // Agrupa aulas por subject (módulo)
+          const subjects = new Map<string, { name: string; lessons: LessonRef[] }>()
+          allLessons.filter(l => l.ministryId === primaryCourseId).forEach(l => {
+            // Agrupa por subjectName (nome visível do módulo) para evitar duplicatas
+            // quando algumas aulas têm subjectId e outras não
+            const key = l.subjectName || l.subjectId || 'Módulo'
+            if (!subjects.has(key)) subjects.set(key, { name: l.subjectName || l.subjectId || key, lessons: [] })
+            subjects.get(key)!.lessons.push(l)
+          })
+          const modules = Array.from(subjects.values())
+          if (modules.length < 2) return null
+          return (
+            <section className="relative z-10 py-8 sm:py-10 border-b border-slate/10 bg-navy-light/50 overflow-hidden">
+              <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden select-none">
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[800px] h-[200px] rounded-full bg-mint/[0.10] blur-[80px]" />
+                {/* Referência bíblica discreta — canto superior direito */}
+                <span className="absolute top-4 right-8 text-2xs font-medium text-mint/[0.18] tracking-[0.35em] uppercase select-none">
+                  Ef 4:11–16
+                </span>
+              </div>
+              <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+                <h2 className="text-base font-bold text-slate-white mb-5">Sua jornada no curso</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {modules.map((mod, idx) => {
+                    const done = mod.lessons.filter(l => completedIds.has(l.videoId) || completedIds.has(l.id)).length
+                    const total = mod.lessons.length
+                    const pct = total > 0 ? Math.round((done / total) * 100) : 0
+                    const isComplete = pct === 100
+                    const hasStarted = done > 0
+                    return (
+                      <div
+                        key={idx}
+                        className={`relative rounded-xl border p-4 transition-all ${
+                          isComplete
+                            ? 'border-mint/40 bg-mint/5'
+                            : hasStarted
+                            ? 'border-mint/20 bg-navy-lighter/60'
+                            : 'border-slate/10 bg-navy-lighter/40'
+                        }`}
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className={`text-2xs font-bold uppercase tracking-wider ${isComplete ? 'text-mint' : 'text-slate'}`}>
+                            Módulo {idx + 1}
+                          </span>
+                          {isComplete && <span className="text-mint text-sm">✓</span>}
+                        </div>
+                        <p className="text-xs text-slate-white font-medium leading-tight line-clamp-2 mb-3">{mod.name}</p>
+                        <div className="h-1.5 bg-navy rounded-full overflow-hidden mb-1">
+                          <div
+                            className="h-full bg-mint rounded-full transition-all duration-700"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                        <p className="text-2xs text-slate tabular-nums">{done}/{total} aulas</p>
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            </section>
+          )
+        })()}
+
         {/* ── CONTINUAR ASSISTINDO ─────────────────────────────────────────── */}
         {visibleLastWatched.length > 0 && (
-          <section className="py-8 sm:py-10 border-b border-slate/10">
+          <section className="relative z-10 py-8 sm:py-10 border-b border-slate/10">
             <div className="max-w-7xl mx-auto px-4 sm:px-6">
               <div className="flex items-center justify-between mb-5">
                 <div>
-                  <h2 className="text-lg font-bold text-slate-white">Continuar Assistindo</h2>
+                  <h2 className="text-base font-bold text-slate-white">
+                    {visibleLastWatched.length === 1 ? 'Em andamento' : 'Continuar Assistindo'}
+                  </h2>
+
                   <p className="text-sm text-slate mt-0.5">{visibleLastWatched.length} aula{visibleLastWatched.length !== 1 ? 's' : ''} em andamento</p>
                 </div>
                 <button
@@ -590,165 +628,51 @@ const PaginaInicial = () => {
                   Limpar histórico
                 </button>
               </div>
-
-              {/* Carrossel */}
               <div className="relative">
-                <button
-                  onClick={() => scrollCarousel(-1)}
-                  className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex"
-                  aria-label="Anterior"
-                >
-                  <ChevronLeftIcon />
-                </button>
-
-                <div
-                  ref={carouselRef}
-                  className="flex gap-4 overflow-x-auto pb-2 scroll-smooth"
-                  style={{ scrollbarWidth: 'none' }}
-                >
+                <button onClick={() => scrollCarousel(-1)} className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex" aria-label="Anterior"><ChevronLeftIcon /></button>
+                <div ref={carouselRef} className="flex gap-4 overflow-x-auto pb-2 scroll-smooth" style={{ scrollbarWidth: 'none' }}>
                   {visibleLastWatched.map((video: any, index: number) => {
-                    const desktopImg = video.thumbnail || video.bannerContinue || video.bannerMobile || null
-                    const mobileImg = video.bannerMobile || video.bannerContinue || video.thumbnail || null
-                    const img = isMobile ? mobileImg : desktopImg
+                    const img = isMobile ? (video.bannerMobile || video.bannerContinue || video.thumbnail) : (video.thumbnail || video.bannerContinue || video.bannerMobile)
                     const watchedSec = Number(video.watchedSeconds || 0)
                     const durationSec = Number(video.durationSeconds || 0)
                     const hasDuration = durationSec > 0
                     const pct = hasDuration ? Math.min(100, Math.round((watchedSec / durationSec) * 100)) : 0
                     const remainingMin = hasDuration ? Math.max(1, Math.ceil((durationSec - watchedSec) / 60)) : 0
-
                     return (
-                      <button
-                        key={video.id || video.videoId || video.video_id || video.url || index}
-                        onClick={() => goToLesson(video)}
-                        className="flex-none w-40 sm:w-52 lg:w-64 group relative rounded-xl overflow-hidden bg-navy-lighter border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 hover:shadow-card-hover transition-all"
-                        title={video.title}
-                      >
-                        {/* Imagem */}
+                      <button key={video.id || video.videoId || video.video_id || video.url || index} onClick={() => goToLesson(video)} className="flex-none w-40 sm:w-52 lg:w-64 group relative rounded-xl overflow-hidden bg-navy-lighter border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 hover:shadow-card-hover transition-all" title={video.title}>
                         <div className="relative h-28 sm:h-36 bg-navy-lighter">
-                          {img ? (
-                            <img src={img} alt={video.title} className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-navy-lighter to-navy-light flex items-end p-3">
-                              <p className="text-xs font-semibold text-slate-white/90 line-clamp-3 leading-tight">{video.title}</p>
-                            </div>
-                          )}
-                          {/* Overlay play */}
-                          <div className="absolute inset-0 bg-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-mint/90 flex items-center justify-center text-navy shadow-mint">
-                              <PlayIcon />
-                            </div>
-                          </div>
+                          {img ? <img src={img} alt={video.title} className="w-full h-full object-cover" /> : <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-navy-lighter to-navy-light flex items-end p-3"><p className="text-xs font-semibold text-slate-white/90 line-clamp-3 leading-tight">{video.title}</p></div>}
+                          <div className="absolute inset-0 bg-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"><div className="w-10 h-10 rounded-full bg-mint/90 flex items-center justify-center text-navy shadow-mint"><PlayIcon /></div></div>
                         </div>
-                        {/* Info */}
                         <div className="p-3">
                           <p className="text-xs font-medium text-slate-white line-clamp-2 text-left">{video.title}</p>
-                          {video.subjectName && (
-                            <p className="text-xs text-mint/80 mt-1 truncate text-left">{video.subjectName}</p>
-                          )}
-                          {/* Barra de progresso */}
-                          <div className="mt-2 h-1 bg-navy rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-mint rounded-full transition-all"
-                              style={{ width: `${pct}%` }}
-                            />
-                          </div>
+                          {video.subjectName && <p className="text-xs text-mint/80 mt-1 truncate text-left">{video.subjectName}</p>}
+                          <div className="mt-2 h-1 bg-navy rounded-full overflow-hidden"><div className="h-full bg-mint rounded-full transition-all" style={{ width: `${pct}%` }} /></div>
                           <div className="flex items-center justify-between mt-1">
-                            <p className="text-xs text-slate/60 text-left">
-                              {hasDuration
-                                ? pct >= 90
-                                  ? 'Quase concluída'
-                                  : `${remainingMin} min restantes`
-                                : 'Em andamento'}
-                            </p>
-                            {hasDuration && pct < 90 && (
-                              <p className="text-xs text-slate/40 tabular-nums">{pct}%</p>
-                            )}
+                            <p className="text-xs text-slate/60 text-left">{hasDuration ? pct >= 90 ? 'Quase concluída' : `${remainingMin} min restantes` : 'Em andamento'}</p>
+                            {hasDuration && pct < 90 && <p className="text-xs text-slate/40 tabular-nums">{pct}%</p>}
                           </div>
                         </div>
                       </button>
                     )
                   })}
                 </div>
-
-                <button
-                  onClick={() => scrollCarousel(1)}
-                  className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex"
-                  aria-label="Próximo"
-                >
-                  <ChevronRightIcon />
-                </button>
+                <button onClick={() => scrollCarousel(1)} className="absolute -right-3 top-1/2 -translate-y-1/2 z-10 w-8 h-8 bg-navy-light border border-slate/20 rounded-full flex items-center justify-center text-slate hover:text-mint hover:border-mint/30 transition-colors shadow-card hidden sm:flex" aria-label="Próximo"><ChevronRightIcon /></button>
               </div>
             </div>
           </section>
         )}
 
-        {/* ── CTA "Comece agora" — nunca assistiu nenhuma aula ─────────────── */}
-        {!visibleLastWatched.length && progressLoaded && allLessons.length > 0 && totalCompleted === 0 && (
-          <section className="py-8 sm:py-10 border-b border-slate/10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-mint/20 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-mint/10 border border-mint/20 flex items-center justify-center flex-shrink-0">
-                  <div className="text-mint">
-                    <PlayIcon />
-                  </div>
-                </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="text-lg font-bold text-slate-white">Sua jornada começa agora</h3>
-                  <p className="text-sm text-slate mt-1">
-                    Você ainda não assistiu nenhuma aula. Acesse o primeiro módulo e comece agora.
-                  </p>
-                </div>
-                <button
-                  onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
-                  className="flex-shrink-0 px-5 py-2.5 bg-mint text-navy font-semibold text-sm rounded-xl hover:bg-mint/90 active:scale-95 transition-all shadow-mint"
-                >
-                  Começar o curso →
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── CTA "Sem histórico" — tem aulas concluídas mas histórico foi limpo ── */}
-        {!visibleLastWatched.length && progressLoaded && allLessons.length > 0 && totalCompleted > 0 && (
-          <section className="py-8 sm:py-10 border-b border-slate/10">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6">
-              <div className="bg-gradient-to-r from-navy-lighter to-navy-light border border-slate/10 rounded-2xl p-4 sm:p-6 lg:p-8 flex flex-col sm:flex-row items-center gap-4 sm:gap-5">
-                <div className="w-14 h-14 rounded-2xl bg-slate/10 border border-slate/20 flex items-center justify-center flex-shrink-0">
-                  <div className="text-slate">
-                    <BookOpenIcon />
-                  </div>
-                </div>
-                <div className="flex-1 text-center sm:text-left">
-                  <h3 className="text-lg font-bold text-slate-white">Nenhuma aula em andamento</h3>
-                  <p className="text-sm text-slate mt-1">
-                    Seu histórico de reprodução está vazio. Continue aprendendo acessando os módulos disponíveis.
-                  </p>
-                </div>
-                <button
-                  onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
-                  className="flex-shrink-0 px-5 py-2.5 bg-transparent border border-slate/30 text-slate-white font-medium text-sm rounded-xl hover:bg-slate/10 hover:border-slate/50 active:scale-95 transition-all"
-                >
-                  Explorar módulos →
-                </button>
-              </div>
-            </div>
-          </section>
-        )}
-
-        {/* ── SEUS CURSOS ──────────────────────────────────────────────────── */}
-        <section className="py-10 sm:py-14">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="mb-8 sm:mb-10 text-center max-w-3xl mx-auto">
-              <span className="inline-flex items-center rounded-full border border-mint/20 bg-mint/5 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-mint">
-                Five One
-              </span>
-              <h2 className="mt-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white leading-tight">
-                Seus Cursos
-              </h2>
-              <p className="text-sm sm:text-base text-slate mt-3 leading-relaxed">
-                Acesse seus cursos e continue aprendendo.
-              </p>
+        {/* ── EXPLORE TAMBÉM (cursos + leituras) ───────────────────────────── */}
+        <section className="relative z-10 py-10 sm:py-14 border-t border-slate/10 bg-navy-light/40">
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+            <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-mint/[0.10] blur-[100px]" />
+          </div>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="mb-8">
+              <p className="text-2xs text-mint font-semibold uppercase tracking-widest mb-1">Explore também</p>
+              <h2 className="text-lg font-bold text-slate-white">Seus Cursos</h2>
+              <p className="text-sm text-slate mt-0.5">Todos os cursos disponíveis para você.</p>
             </div>
 
             {!enrollmentsLoaded ? (
@@ -793,7 +717,7 @@ const PaginaInicial = () => {
                             <div className="absolute -bottom-12 -left-12 w-44 h-44 rounded-full bg-mint/10 blur-3xl" />
                           </div>
                           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-[120px] sm:text-[140px] font-black text-mint/15 leading-none select-none">
+                            <span className="text-[120px] sm:text-[72px] font-black text-mint/15 leading-none select-none">
                               {initials || '★'}
                             </span>
                           </div>
@@ -825,6 +749,116 @@ const PaginaInicial = () => {
                 })}
               </div>
             )}
+          </div>
+        </section>
+
+        {/* ── DESCUBRA MAIS NO FIVE ONE ────────────────────────────────────── */}
+        <section className="relative z-10 py-10 sm:py-14 border-t border-slate/10 overflow-hidden">
+          <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden select-none">
+            <div className="absolute top-0 left-0 w-[500px] h-[300px] rounded-full bg-indigo-500/[0.10] blur-[100px]" />
+            <div className="absolute bottom-0 right-1/4 w-[400px] h-[300px] rounded-full bg-mint/[0.10] blur-[100px]" />
+            {/* Ícones dos 5 ministérios — fileira discreta no topo */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 flex items-center gap-10 opacity-[0.06] grayscale">
+              <img src={iconApostolo}    alt="" className="w-9" />
+              <img src={iconProfeta}     alt="" className="w-9" />
+              <img src={iconEvangelista} alt="" className="w-9" />
+              <img src={iconPastor}      alt="" className="w-9" />
+              <img src={iconMestre}      alt="" className="w-9" />
+            </div>
+          </div>
+          <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+            <div className="mb-6 sm:mb-8">
+              <p className="text-2xs text-mint font-semibold uppercase tracking-widest mb-1">Five One</p>
+              <h2 className="text-lg font-bold text-slate-white">Descubra mais</h2>
+              <p className="text-sm text-slate mt-0.5">Tudo o que o Five One oferece para o seu crescimento.</p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+              {/* Para Ler — último post */}
+              {latestPost ? (
+                <a
+                  href={`/insights/${latestPost.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
+                >
+                  {latestPost.cover_url && (
+                    <div className="h-32 overflow-hidden flex-shrink-0">
+                      <img src={latestPost.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                    </div>
+                  )}
+                  <div className="flex flex-col flex-1 p-4">
+                    <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
+                    <p className="text-slate-white font-semibold text-sm leading-snug line-clamp-3 grow group-hover:text-mint transition-colors">{latestPost.title}</p>
+                    <span className="mt-3 text-xs text-mint font-semibold">Ler leitura →</span>
+                  </div>
+                </a>
+              ) : (
+                <a
+                  href="/insights"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
+                    <FaBookOpen className="w-4 h-4" />
+                  </div>
+                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
+                  <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
+                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
+                </a>
+              )}
+
+              {/* Teste dos 5 Ministérios */}
+              <a
+                href="/descubra-seu-dom"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+              >
+                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
+                  <FaCompass className="w-4 h-4" />
+                </div>
+                <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Gratuito</p>
+                <p className="text-slate-white font-semibold text-sm leading-snug">Teste dos 5 Ministérios</p>
+                <p className="text-xs text-slate mt-1.5 grow">Descubra qual dos 5 ministérios bíblicos está mais presente na sua vida.</p>
+                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Fazer o teste →</span>
+              </a>
+
+              {/* Novos cursos (em breve) */}
+              <a
+                href="/cursos"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+              >
+                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
+                  <FaGraduationCap className="w-4 h-4" />
+                </div>
+                <p className="text-2xs text-golden font-semibold uppercase tracking-wider mb-1">Em breve</p>
+                <p className="text-slate-white font-semibold text-sm leading-snug">Próximos Cursos</p>
+                <p className="text-xs text-slate mt-1.5 grow">Hermenêutica, Cristologia, Vida Devocional — novos cursos chegando.</p>
+                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver catálogo →</span>
+              </a>
+
+              {/* Leve para sua Igreja */}
+              <a
+                href="/cursos#formatos-treinamento"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+              >
+                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
+                  <FaUsers className="w-4 h-4" />
+                </div>
+                <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para sua Igreja</p>
+                <p className="text-slate-white font-semibold text-sm leading-snug">Leve os 5 Ministérios</p>
+                <p className="text-xs text-slate mt-1.5 grow">Palestras, treinamentos e imersão ministerial para sua comunidade.</p>
+                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Saiba mais →</span>
+              </a>
+
+            </div>
           </div>
         </section>
 
