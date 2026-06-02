@@ -869,42 +869,22 @@ const PaginaInicial = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-              {/* Para Ler — último post */}
-              {latestPost ? (
-                <a
-                  href={`/insights/${latestPost.slug}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-                >
-                  {latestPost.cover_url && (
-                    <div className="h-32 overflow-hidden flex-shrink-0">
-                      <img src={latestPost.cover_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                    </div>
-                  )}
-                  <div className="flex flex-col flex-1 p-4">
-                    <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
-                    <p className="text-slate-white font-semibold text-sm leading-snug line-clamp-3 grow group-hover:text-mint transition-colors">{latestPost.title}</p>
-                    <span className="mt-3 text-xs text-mint font-semibold">Ler leitura →</span>
-                  </div>
-                </a>
-              ) : (
-                <a
-                  href="/insights"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-                >
-                  <div className="h-32 overflow-hidden flex-shrink-0">
-                    <img src={imgParaLer} alt="Para Ler" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  </div>
-                  <div className="flex flex-col flex-1 p-4">
-                    <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
-                    <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
-                    <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
-                  </div>
-                </a>
-              )}
+              {/* Para Ler — sempre aponta para /insights com imagem fixa */}
+              <a
+                href="/insights"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
+              >
+                <div className="h-32 overflow-hidden flex-shrink-0">
+                  <img src={imgParaLer} alt="Para Ler" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                </div>
+                <div className="flex flex-col flex-1 p-4">
+                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
+                  <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
+                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
+                </div>
+              </a>
 
               {/* Teste dos 5 Ministérios */}
               <a
