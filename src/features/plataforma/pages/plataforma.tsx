@@ -16,7 +16,11 @@ import { getEnrollments } from '../services/userAccount'
 import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
 import { useEffect as useEffectBlog, useState as useStateBlog } from 'react'
 import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.jpg'
-import { FaBookOpen, FaCompass, FaGraduationCap, FaUsers } from 'react-icons/fa'
+import imgParaLer from '../../institucional/assets/images/ParaLer.png'
+import imgTeste from '../../institucional/assets/images/Teste5Ministerios.png'
+import imgProximosCursos from '../../institucional/assets/images/ProximosCursos.png'
+import imgLeveOs5 from '../../institucional/assets/images/LeveOs5ministerios.png'
+// react-icons removidos: cards agora usam imagens de capa
 import iconApostolo from '../../../assets/images/icons/apostolo.png'
 import iconProfeta from '../../../assets/images/icons/profeta.png'
 import iconEvangelista from '../../../assets/images/icons/evangelista.png'
@@ -889,14 +893,16 @@ const PaginaInicial = () => {
                   href="/insights"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+                  className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
-                    <FaBookOpen className="w-4 h-4" />
+                  <div className="h-32 overflow-hidden flex-shrink-0">
+                    <img src={imgParaLer} alt="Para Ler" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                   </div>
-                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
-                  <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
-                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
+                  <div className="flex flex-col flex-1 p-4">
+                    <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
+                    <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
+                    <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
+                  </div>
                 </a>
               )}
 
@@ -905,15 +911,17 @@ const PaginaInicial = () => {
                 href="/descubra-seu-dom"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
               >
-                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
-                  <FaCompass className="w-4 h-4" />
+                <div className="h-32 overflow-hidden flex-shrink-0">
+                  <img src={imgTeste} alt="Teste dos 5 Ministérios" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
-                <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Gratuito</p>
-                <p className="text-slate-white font-semibold text-sm leading-snug">Teste dos 5 Ministérios</p>
-                <p className="text-xs text-slate mt-1.5 grow">Descubra qual dos 5 ministérios bíblicos está mais presente na sua vida.</p>
-                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Fazer o teste →</span>
+                <div className="flex flex-col flex-1 p-4">
+                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Gratuito</p>
+                  <p className="text-slate-white font-semibold text-sm leading-snug">Teste dos 5 Ministérios</p>
+                  <p className="text-xs text-slate mt-1.5 grow">Descubra qual dos 5 ministérios bíblicos está mais presente na sua vida.</p>
+                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Fazer o teste →</span>
+                </div>
               </a>
 
               {/* Novos cursos (em breve) */}
@@ -921,15 +929,17 @@ const PaginaInicial = () => {
                 href="/cursos"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
               >
-                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
-                  <FaGraduationCap className="w-4 h-4" />
+                <div className="h-32 overflow-hidden flex-shrink-0">
+                  <img src={imgProximosCursos} alt="Próximos Cursos" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
-                <p className="text-2xs text-golden font-semibold uppercase tracking-wider mb-1">Em breve</p>
-                <p className="text-slate-white font-semibold text-sm leading-snug">Próximos Cursos</p>
-                <p className="text-xs text-slate mt-1.5 grow">Hermenêutica, Cristologia, Vida Devocional — novos cursos chegando.</p>
-                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver catálogo →</span>
+                <div className="flex flex-col flex-1 p-4">
+                  <p className="text-2xs text-golden font-semibold uppercase tracking-wider mb-1">Em breve</p>
+                  <p className="text-slate-white font-semibold text-sm leading-snug">Próximos Cursos</p>
+                  <p className="text-xs text-slate mt-1.5 grow">Hermenêutica, Cristologia, Vida Devocional — novos cursos chegando.</p>
+                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver catálogo →</span>
+                </div>
               </a>
 
               {/* Leve para sua Igreja */}
@@ -937,15 +947,17 @@ const PaginaInicial = () => {
                 href="/cursos#formatos-treinamento"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all p-4"
+                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
               >
-                <div className="w-10 h-10 rounded-xl bg-mint/10 border border-mint/20 flex items-center justify-center text-mint mb-3">
-                  <FaUsers className="w-4 h-4" />
+                <div className="h-32 overflow-hidden flex-shrink-0">
+                  <img src={imgLeveOs5} alt="Leve os 5 Ministérios" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
-                <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para sua Igreja</p>
-                <p className="text-slate-white font-semibold text-sm leading-snug">Leve os 5 Ministérios</p>
-                <p className="text-xs text-slate mt-1.5 grow">Palestras, treinamentos e imersão ministerial para sua comunidade.</p>
-                <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Saiba mais →</span>
+                <div className="flex flex-col flex-1 p-4">
+                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para sua Igreja</p>
+                  <p className="text-slate-white font-semibold text-sm leading-snug">Leve os 5 Ministérios</p>
+                  <p className="text-xs text-slate mt-1.5 grow">Palestras, treinamentos e imersão ministerial para sua comunidade.</p>
+                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Saiba mais →</span>
+                </div>
               </a>
 
             </div>

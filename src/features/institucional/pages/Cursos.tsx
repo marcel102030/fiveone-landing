@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import TrainingFormats from "../components/TrainingFormats";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
+import imgProximosCursos from "../assets/images/ProximosCursos.png";
+import imgLeveOs5 from "../assets/images/LeveOs5ministerios.png";
 import { UPCOMING_COURSES as upcoming, APOLOGETICA_LAUNCHED, APOLOGETICA_LAUNCH_DATE } from "../data/courses";
 
 function useDaysLeft() {
@@ -52,14 +54,7 @@ const BookIcon = () => (
   </svg>
 );
 
-const ChurchIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M12 2v6" />
-    <path d="M9 5h6" />
-    <path d="M12 8l6 4v10H6V12l6-4z" />
-    <path d="M10 22v-4a2 2 0 0 1 4 0v4" />
-  </svg>
-);
+// ChurchIcon removido — card de treinamentos agora usa imagem de capa
 
 const Cursos = () => {
   const daysLeft = useDaysLeft();
@@ -127,27 +122,29 @@ const Cursos = () => {
 
             <a
               href="#formatos-treinamento"
-              className="group relative flex flex-col p-6 lg:p-7 rounded-2xl bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
+              className="group relative flex flex-col rounded-2xl overflow-hidden bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
             >
-              <span className="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-mint/10 border border-mint/30 text-mint mb-4">
-                <ChurchIcon />
-              </span>
-              <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
-                Para sua igreja
-              </span>
-              <h2 className="text-xl font-bold text-slate-white mb-2">
-                Treinamentos para igrejas
-              </h2>
-              <p className="text-sm text-slate leading-relaxed grow">
-                Leve os 5 Ministérios para a sua igreja — palestras,
-                treinamento de liderança, mentoria e imersão ministerial.
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
-                Ver treinamentos
-                <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
-                </svg>
-              </span>
+              <div className="h-40 overflow-hidden flex-shrink-0">
+                <img src={imgLeveOs5} alt="Leve os 5 Ministérios para sua Igreja" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              </div>
+              <div className="flex flex-col flex-1 p-6 lg:p-7">
+                <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
+                  Para sua igreja
+                </span>
+                <h2 className="text-xl font-bold text-slate-white mb-2">
+                  Treinamentos para igrejas
+                </h2>
+                <p className="text-sm text-slate leading-relaxed grow">
+                  Leve os 5 Ministérios para a sua igreja — palestras,
+                  treinamento de liderança, mentoria e imersão ministerial.
+                </p>
+                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
+                  Ver treinamentos
+                  <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                    <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
+                  </svg>
+                </span>
+              </div>
             </a>
           </div>
         </div>
@@ -268,17 +265,20 @@ const Cursos = () => {
       {/* ──────────────────────────────────── Próximos cursos ─── */}
       <section className="py-16 lg:py-20 bg-navy-light/30">
         <div className="max-w-7xl mx-auto px-6 lg:px-8">
-          <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-12">
-            <span className="inline-block px-3 py-1 rounded-full bg-golden/10 border border-golden/30 text-golden text-xs font-medium uppercase tracking-wider mb-4">
-              Em breve
-            </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight">
-              Próximos cursos no catálogo
-            </h2>
-            <p className="mt-3 text-sm sm:text-base text-slate">
-              Estamos preparando novos conteúdos para fortalecer ainda mais sua
-              jornada bíblica.
-            </p>
+          {/* Banner visual da seção */}
+          <div className="relative rounded-2xl overflow-hidden mb-10 lg:mb-12 max-w-4xl mx-auto">
+            <img src={imgProximosCursos} alt="Próximos Cursos Five One" className="w-full h-48 sm:h-56 object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-t from-navy/80 via-navy/30 to-transparent flex flex-col justify-end p-6 sm:p-8">
+              <span className="inline-block self-start px-3 py-1 rounded-full bg-golden/20 border border-golden/40 text-golden text-xs font-medium uppercase tracking-wider mb-3">
+                Em breve
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white tracking-tight">
+                Próximos cursos no catálogo
+              </h2>
+              <p className="mt-2 text-sm sm:text-base text-slate-light/80">
+                Estamos preparando novos conteúdos para fortalecer ainda mais sua jornada bíblica.
+              </p>
+            </div>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-5">

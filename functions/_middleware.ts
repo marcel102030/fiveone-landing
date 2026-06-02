@@ -39,6 +39,7 @@ const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Leituras teológicas, ministeriais e práticas do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
     url: `${SITE}/insights`,
+    image: `${SITE}/assets/og-para-ler.png`,
   },
   "/cursos": {
     title: "Cursos e Treinamentos | Five One",
@@ -65,6 +66,7 @@ const ROUTE_META: Record<string, RouteMeta> = {
     description:
       "Faça o teste e descubra qual dos 5 ministérios está mais presente na sua vida: Apóstolo, Profeta, Evangelista, Pastor ou Mestre.",
     url: `${SITE}/descubra-seu-dom`,
+    image: `${SITE}/assets/og-teste-ministerios.png`,
   },
 };
 
