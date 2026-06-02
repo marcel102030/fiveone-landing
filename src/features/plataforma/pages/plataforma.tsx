@@ -14,7 +14,7 @@ import { ConfirmModal } from '../../../shared/components/ui'
 import { useAuth } from '../../../shared/contexts/AuthContext'
 import { getEnrollments } from '../services/userAccount'
 import { useStudentProgress, recoverLocalProgress } from '../hooks/useStudentProgress'
-import { useEffect as useEffectBlog, useState as useStateBlog } from 'react'
+// useEffectBlog/useStateBlog removidos: card Para Ler agora usa imagem fixa
 import apologeticaCover from '../../institucional/assets/images/capa_curso_apologetica.jpg'
 import imgParaLer from '../../institucional/assets/images/ParaLer.png'
 import imgTeste from '../../institucional/assets/images/Teste5Ministerios.png'
@@ -26,8 +26,7 @@ import iconProfeta from '../../../assets/images/icons/profeta.png'
 import iconEvangelista from '../../../assets/images/icons/evangelista.png'
 import iconPastor from '../../../assets/images/icons/pastor.png'
 import iconMestre from '../../../assets/images/icons/mestre.png'
-import { listPublishedPosts } from '../../institucional/services/blog'
-import type { BlogPost } from '../../institucional/services/blog'
+// listPublishedPosts removido: card Para Ler agora usa imagem fixa sem fetch
 
 // Capas locais por curso, usadas como fallback quando não há banner no banco.
 // O banner do admin (Storage) sempre tem prioridade sobre estas.
@@ -377,11 +376,6 @@ const PaginaInicial = () => {
     }
   }
 
-  // ── Última leitura do blog ────────────────────────────────────────────────
-  const [latestPost, setLatestPost] = useStateBlog<BlogPost | null>(null)
-  useEffectBlog(() => {
-    listPublishedPosts({ limit: 1 }).then(posts => setLatestPost(posts[0] || null)).catch(() => {})
-  }, [])
 
   // ── Saudação ──────────────────────────────────────────────────────────────
   const firstName = profile?.displayName?.split(' ')[0] || profile?.name?.split(' ')[0] || 'Aluno'
