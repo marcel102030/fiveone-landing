@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import logoBlue from "../../../assets/images/logo-fiveone-blue.png";
+import logoInstagram from "../../../assets/images/Logo (Perfil Instagram- fundo branco).png";
 
 interface CertData {
   id: string;
@@ -184,11 +184,11 @@ export default function CertificadoPublico() {
             textAlign: 'center',
           }}>
 
-            {/* Logo azul navy — contraste perfeito no fundo creme */}
+            {/* Logo — mix-blend-mode multiply: fundo branco desaparece, só os elementos escuros aparecem */}
             <img
-              src={logoBlue}
+              src={logoInstagram}
               alt="Five One"
-              style={{ height: 72, marginBottom: 6, objectFit: 'contain', filter: 'saturate(1.3) contrast(1.2) brightness(0.85)' }}
+              style={{ height: 80, marginBottom: 6, objectFit: 'contain', mixBlendMode: 'multiply' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
 
