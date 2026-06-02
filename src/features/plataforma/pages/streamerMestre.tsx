@@ -100,10 +100,19 @@ const extractEmbedSrc = (raw?: string | null): string | null => {
 const normaliseVimeoUrl = (raw: string): string => {
   try {
     const url = new URL(raw);
-    if (!url.searchParams.has('badge')) url.searchParams.set('badge', '0');
-    if (!url.searchParams.has('autopause')) url.searchParams.set('autopause', '0');
-    if (!url.searchParams.has('player_id')) url.searchParams.set('player_id', '0');
-    if (!url.searchParams.has('app_id')) url.searchParams.set('app_id', '58479');
+    // Sem branding Vimeo
+    url.searchParams.set('badge', '0');
+    url.searchParams.set('autopause', '0');
+    url.searchParams.set('player_id', '0');
+    url.searchParams.set('app_id', '58479');
+    // Esconde título, autor e avatar do Vimeo
+    url.searchParams.set('title', '0');
+    url.searchParams.set('byline', '0');
+    url.searchParams.set('portrait', '0');
+    // Cor mint da plataforma Five One (sem o #)
+    url.searchParams.set('color', '64ffda');
+    // Fundo transparente para fundir com o tema navy
+    url.searchParams.set('transparent', '1');
     return url.toString();
   } catch {
     return raw;

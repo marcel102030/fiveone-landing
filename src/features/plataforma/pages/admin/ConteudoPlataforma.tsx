@@ -666,6 +666,23 @@ export default function AdminConteudoPlataforma() {
     return out;
   };
 
+  /** Adiciona parâmetros que removem branding do Vimeo e aplicam a cor da marca. */
+  const normaliseVimeoUrl = (raw: string): string => {
+    try {
+      const url = new URL(raw);
+      if (!url.hostname.includes('vimeo')) return raw;
+      url.searchParams.set('badge', '0');
+      url.searchParams.set('title', '0');
+      url.searchParams.set('byline', '0');
+      url.searchParams.set('portrait', '0');
+      url.searchParams.set('color', '64ffda');
+      url.searchParams.set('transparent', '1');
+      url.searchParams.set('autopause', '0');
+      url.searchParams.set('player_id', '0');
+      return url.toString();
+    } catch { return raw; }
+  };
+
   const extractVimeoEmbedSrc = (value: string): string | null => {
     const trimmed = value.trim();
     if (!trimmed) return null;
@@ -699,7 +716,8 @@ export default function AdminConteudoPlataforma() {
       const prevExtracted = extractVimeoEmbedSrc(prev.embedCode);
       const shouldSyncVideoUrl = !prevVideoUrl || (prevExtracted && prevVideoUrl === prevExtracted);
       if (shouldSyncVideoUrl) {
-        next.videoUrl = extractVimeoEmbedSrc(value) || "";
+        const extracted = extractVimeoEmbedSrc(value);
+        next.videoUrl = extracted ? normaliseVimeoUrl(extracted) : "";
       }
       return next;
     });
