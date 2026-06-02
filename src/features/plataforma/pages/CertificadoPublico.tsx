@@ -97,6 +97,10 @@ export default function CertificadoPublico() {
             min-height: auto !important;
             background: transparent !important;
           }
+          #cert-action-bar,
+          #cert-info-section {
+            display: none !important;
+          }
           #cert-wrapper {
             padding: 0 !important;
             display: block !important;
@@ -120,7 +124,7 @@ export default function CertificadoPublico() {
       `}</style>
 
       {/* Barra de ações — oculta no print */}
-      <div className="print:hidden" style={{
+      <div id="cert-action-bar" className="print:hidden" style={{
         borderBottom: '1px solid rgba(255,255,255,0.08)',
         padding: '14px 24px',
         display: 'flex',
@@ -212,91 +216,95 @@ export default function CertificadoPublico() {
             pointerEvents: 'none',
           }} />
 
-          {/* ── Conteúdo ── */}
+          {/* ── Conteúdo — space-between: corpo no topo, rodapé embaixo ── */}
           <div style={{
             position: 'relative',
             height: '100%',
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
-            justifyContent: 'center',
-            padding: '60px 80px 50px',
+            justifyContent: 'space-between',
+            padding: '28px 72px 24px',
             textAlign: 'center',
           }}>
 
-            {/* Logo — fundo branco com multiply: integra perfeitamente no creme */}
-            <img
-              src={logoFundo}
-              alt="Five One"
-              style={{ height: 130, marginBottom: 8, objectFit: 'contain', mixBlendMode: 'multiply' }}
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-            />
+            {/* ── Corpo principal (logo + título + nome + texto + data) ── */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
 
-            {/* Título principal */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '10px 0 4px' }}>
-              <div style={{ flex: 1, height: 2, background: `linear-gradient(to right, transparent, ${GOLD})` }} />
-              <h1 style={{
-                fontSize: 'clamp(1.6rem, 5vw, 2.6rem)',
-                fontWeight: 700,
+              {/* Logo */}
+              <img
+                src={logoFundo}
+                alt="Five One"
+                style={{ height: 100, marginBottom: 4, objectFit: 'contain', mixBlendMode: 'multiply' }}
+                onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+              />
+
+              {/* Título principal */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '8px 0 2px', width: '100%' }}>
+                <div style={{ flex: 1, height: 2, background: `linear-gradient(to right, transparent, ${GOLD})` }} />
+                <h1 style={{
+                  fontSize: 'clamp(1.8rem, 5.5vw, 2.8rem)',
+                  fontWeight: 700,
+                  color: NAVY,
+                  letterSpacing: '0.08em',
+                  margin: 0,
+                  fontFamily: 'Georgia, serif',
+                }}>
+                  CERTIFICADO
+                </h1>
+                <div style={{ flex: 1, height: 2, background: `linear-gradient(to left, transparent, ${GOLD})` }} />
+              </div>
+              <p style={{
+                fontSize: 'clamp(0.75rem, 1.9vw, 1.05rem)',
                 color: NAVY,
-                letterSpacing: '0.08em',
-                margin: 0,
+                letterSpacing: '0.22em',
+                margin: '0 0 12px',
+                fontFamily: 'Georgia, serif',
+                fontWeight: 400,
+              }}>
+                DE CONCLUSÃO DE CURSO
+              </p>
+
+              {/* Nome do aluno */}
+              <div style={{ margin: '4px 0 2px', width: '65%' }}>
+                <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginBottom: 5 }} />
+                <h2 style={{
+                  fontSize: 'clamp(1.3rem, 3.8vw, 2rem)',
+                  fontWeight: 700,
+                  color: NAVY,
+                  margin: 0,
+                  fontFamily: 'Georgia, serif',
+                }}>
+                  {displayName}
+                </h2>
+                <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginTop: 5 }} />
+              </div>
+
+              {/* Texto descritivo */}
+              <p style={{
+                fontSize: 'clamp(0.65rem, 1.5vw, 0.88rem)',
+                color: `rgba(13,32,64,0.7)`,
+                margin: '10px 0 4px',
+                lineHeight: 1.75,
+                maxWidth: '74%',
                 fontFamily: 'Georgia, serif',
               }}>
-                CERTIFICADO
-              </h1>
-              <div style={{ flex: 1, height: 2, background: `linear-gradient(to left, transparent, ${GOLD})` }} />
-            </div>
-            <p style={{
-              fontSize: 'clamp(0.7rem, 1.8vw, 1rem)',
-              color: NAVY,
-              letterSpacing: '0.2em',
-              margin: '0 0 16px',
-              fontFamily: 'Georgia, serif',
-              fontWeight: 400,
-            }}>
-              DE CONCLUSÃO DE CURSO
-            </p>
+                O Five One certifica que o(a) aluno(a) acima identificado(a) concluiu com êxito
+                o curso de <strong style={{ color: NAVY }}>{formation}</strong>, demonstrando dedicação
+                ao crescimento no seu chamado ministerial.
+              </p>
 
-            {/* Nome do aluno */}
-            <div style={{ margin: '6px 0 4px', width: '60%' }}>
-              <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginBottom: 6 }} />
-              <h2 style={{
-                fontSize: 'clamp(1.2rem, 3.5vw, 1.9rem)',
-                fontWeight: 700,
-                color: NAVY,
-                margin: 0,
+              {/* Data */}
+              <p style={{
+                fontSize: 'clamp(0.58rem, 1.2vw, 0.74rem)',
+                color: `rgba(13,32,64,0.5)`,
+                margin: '3px 0 0',
+                letterSpacing: '0.05em',
                 fontFamily: 'Georgia, serif',
               }}>
-                {displayName}
-              </h2>
-              <div style={{ width: '100%', height: 1, background: `rgba(13,32,64,0.25)`, marginTop: 6 }} />
-            </div>
-
-            {/* Texto descritivo */}
-            <p style={{
-              fontSize: 'clamp(0.6rem, 1.4vw, 0.82rem)',
-              color: `rgba(13,32,64,0.7)`,
-              margin: '10px 0 6px',
-              lineHeight: 1.7,
-              maxWidth: '72%',
-              fontFamily: 'Georgia, serif',
-            }}>
-              O Five One certifica que o(a) aluno(a) acima identificado(a) concluiu com êxito
-              o curso de <strong style={{ color: NAVY }}>{formation}</strong>, demonstrando dedicação
-              ao crescimento no seu chamado ministerial.
-            </p>
-
-            {/* Data */}
-            <p style={{
-              fontSize: 'clamp(0.55rem, 1.2vw, 0.72rem)',
-              color: `rgba(13,32,64,0.5)`,
-              margin: '4px 0 14px',
-              letterSpacing: '0.05em',
-              fontFamily: 'Georgia, serif',
-            }}>
-              Emitido em {issuedDate}
-            </p>
+                Emitido em {issuedDate}
+              </p>
+            </div>{/* fim corpo principal */}
 
             {/* Rodapé: assinatura + QR + referência */}
             <div style={{
@@ -304,8 +312,6 @@ export default function CertificadoPublico() {
               display: 'flex',
               alignItems: 'flex-end',
               justifyContent: 'space-between',
-              marginTop: 'auto',
-              paddingTop: 8,
             }}>
               {/* Assinatura esquerda */}
               <div style={{ textAlign: 'center', minWidth: 120 }}>
@@ -357,7 +363,7 @@ export default function CertificadoPublico() {
       </div>
 
       {/* Seção de autenticidade — oculta no print */}
-      <div className="print:hidden" style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px 48px' }}>
+      <div id="cert-info-section" className="print:hidden" style={{ maxWidth: 900, margin: '0 auto', padding: '0 16px 48px' }}>
         <div style={{
           background: 'rgba(13,32,64,0.6)',
           border: '1px solid rgba(100,255,218,0.1)',
