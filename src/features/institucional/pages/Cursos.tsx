@@ -47,12 +47,7 @@ const AwardIcon = () => (
   </svg>
 );
 
-const BookIcon = () => (
-  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-    <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-    <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-  </svg>
-);
+// BookIcon removido — card Cursos online agora usa imagem de capa
 
 // ChurchIcon removido — card de treinamentos agora usa imagem de capa
 
@@ -95,56 +90,30 @@ const Cursos = () => {
         {/* ───────────── Resumo do que oferecemos (cursos + treinamentos) ─── */}
         <div className="relative max-w-5xl mx-auto px-6 lg:px-8 mt-10 lg:mt-12">
           <div className="grid sm:grid-cols-2 gap-4 lg:gap-5">
-            <a
-              href="#cursos"
-              className="group relative flex flex-col p-6 lg:p-7 rounded-2xl bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
-            >
-              <span className="inline-flex w-11 h-11 items-center justify-center rounded-xl bg-mint/10 border border-mint/30 text-mint mb-4">
-                <BookIcon />
-              </span>
-              <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
-                Para você
-              </span>
-              <h2 className="text-xl font-bold text-slate-white mb-2">
-                Cursos online
-              </h2>
-              <p className="text-sm text-slate leading-relaxed grow">
-                Estude no seu ritmo, 100% online, com certificado. Comece pelo
-                Curso de Apologética — e novos cursos a caminho.
-              </p>
-              <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
+            {/* Cursos online — full-image */}
+            <a href="#cursos"
+              className="group relative rounded-2xl overflow-hidden aspect-[16/9] border border-slate/10 hover:border-mint/40 hover:-translate-y-0.5 transition-all">
+              <img src={imgProximosCursos} alt="Cursos online Five One" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+              <span className="absolute bottom-5 left-6 inline-flex items-center gap-1.5 text-sm font-semibold text-mint drop-shadow">
                 Ver cursos
-                <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                   <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
                 </svg>
               </span>
             </a>
 
-            <a
-              href="#formatos-treinamento"
-              className="group relative flex flex-col rounded-2xl overflow-hidden bg-navy-light/60 border border-slate/10 hover:border-mint/40 hover:bg-navy-light transition-all duration-200"
-            >
-              <div className="h-40 overflow-hidden flex-shrink-0">
-                <img src={imgLeveOs5} alt="Leve os 5 Ministérios para sua Igreja" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              </div>
-              <div className="flex flex-col flex-1 p-6 lg:p-7">
-                <span className="text-2xs uppercase tracking-wider text-slate font-semibold mb-1">
-                  Para sua igreja
-                </span>
-                <h2 className="text-xl font-bold text-slate-white mb-2">
-                  Treinamentos para igrejas
-                </h2>
-                <p className="text-sm text-slate leading-relaxed grow">
-                  Leve os 5 Ministérios para a sua igreja — palestras,
-                  treinamento de liderança, mentoria e imersão ministerial.
-                </p>
-                <span className="mt-4 inline-flex items-center gap-1.5 text-sm font-semibold text-mint">
-                  Ver treinamentos
-                  <svg className="w-4 h-4 group-hover:translate-y-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                    <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
-                  </svg>
-                </span>
-              </div>
+            {/* Treinamentos para igrejas — full-image */}
+            <a href="#formatos-treinamento"
+              className="group relative rounded-2xl overflow-hidden aspect-[16/9] border border-slate/10 hover:border-mint/40 hover:-translate-y-0.5 transition-all">
+              <img src={imgLeveOs5} alt="Leve os 5 Ministérios para sua Igreja" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
+              <span className="absolute bottom-5 left-6 inline-flex items-center gap-1.5 text-sm font-semibold text-mint drop-shadow">
+                Ver treinamentos
+                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
+                </svg>
+              </span>
             </a>
           </div>
         </div>

@@ -863,75 +863,36 @@ const PaginaInicial = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-              {/* Para Ler — sempre aponta para /insights com imagem fixa */}
-              <a
-                href="/insights"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-              >
-                <div className="h-32 overflow-hidden flex-shrink-0">
-                  <img src={imgParaLer} alt="Para Ler" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="flex flex-col flex-1 p-4">
-                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para Ler</p>
-                  <p className="text-slate-white font-semibold text-sm grow">Leituras semanais sobre fé, teologia e ministério.</p>
-                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver leituras →</span>
-                </div>
+              {/* Para Ler */}
+              <a href="/insights" target="_blank" rel="noopener noreferrer"
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3] border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
+                <img src={imgParaLer} alt="Para Ler" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver leituras →</span>
               </a>
 
               {/* Teste dos 5 Ministérios */}
-              <a
-                href="/descubra-seu-dom"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-              >
-                <div className="h-32 overflow-hidden flex-shrink-0">
-                  <img src={imgTeste} alt="Teste dos 5 Ministérios" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="flex flex-col flex-1 p-4">
-                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Gratuito</p>
-                  <p className="text-slate-white font-semibold text-sm leading-snug">Teste dos 5 Ministérios</p>
-                  <p className="text-xs text-slate mt-1.5 grow">Descubra qual dos 5 ministérios bíblicos está mais presente na sua vida.</p>
-                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Fazer o teste →</span>
-                </div>
+              <a href="/descubra-seu-dom" target="_blank" rel="noopener noreferrer"
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3] border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
+                <img src={imgTeste} alt="Teste dos 5 Ministérios" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Fazer o teste →</span>
               </a>
 
-              {/* Novos cursos (em breve) */}
-              <a
-                href="/cursos"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-              >
-                <div className="h-32 overflow-hidden flex-shrink-0">
-                  <img src={imgProximosCursos} alt="Próximos Cursos" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="flex flex-col flex-1 p-4">
-                  <p className="text-2xs text-golden font-semibold uppercase tracking-wider mb-1">Em breve</p>
-                  <p className="text-slate-white font-semibold text-sm leading-snug">Próximos Cursos</p>
-                  <p className="text-xs text-slate mt-1.5 grow">Hermenêutica, Cristologia, Vida Devocional — novos cursos chegando.</p>
-                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Ver catálogo →</span>
-                </div>
+              {/* Próximos Cursos */}
+              <a href="/cursos" target="_blank" rel="noopener noreferrer"
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3] border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
+                <img src={imgProximosCursos} alt="Próximos Cursos" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver catálogo →</span>
               </a>
 
-              {/* Leve para sua Igreja */}
-              <a
-                href="/cursos#formatos-treinamento"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex flex-col rounded-2xl overflow-hidden bg-navy-lighter/60 border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint"
-              >
-                <div className="h-32 overflow-hidden flex-shrink-0">
-                  <img src={imgLeveOs5} alt="Leve os 5 Ministérios" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                </div>
-                <div className="flex flex-col flex-1 p-4">
-                  <p className="text-2xs text-mint font-semibold uppercase tracking-wider mb-1">Para sua Igreja</p>
-                  <p className="text-slate-white font-semibold text-sm leading-snug">Leve os 5 Ministérios</p>
-                  <p className="text-xs text-slate mt-1.5 grow">Palestras, treinamentos e imersão ministerial para sua comunidade.</p>
-                  <span className="mt-3 text-xs text-mint font-semibold group-hover:underline">Saiba mais →</span>
-                </div>
+              {/* Leve os 5 Ministérios */}
+              <a href="/cursos#formatos-treinamento" target="_blank" rel="noopener noreferrer"
+                className="group relative rounded-2xl overflow-hidden aspect-[4/3] border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
+                <img src={imgLeveOs5} alt="Leve os 5 Ministérios" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Saiba mais →</span>
               </a>
 
             </div>
