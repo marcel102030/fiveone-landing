@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import logoPreta from "../../../assets/images/logo preta redonda.png";
+import logoBlue from "../../../assets/images/logo-fiveone-blue.png";
 
 interface CertData {
   id: string;
@@ -184,11 +184,11 @@ export default function CertificadoPublico() {
             textAlign: 'center',
           }}>
 
-            {/* Logo — versão preta (contraste perfeito no creme) */}
+            {/* Logo azul navy — contraste perfeito no fundo creme */}
             <img
-              src={logoPreta}
+              src={logoBlue}
               alt="Five One"
-              style={{ height: 64, marginBottom: 6, objectFit: 'contain', filter: 'brightness(0) saturate(100%)' }}
+              style={{ height: 72, marginBottom: 6, objectFit: 'contain', filter: 'saturate(1.3) contrast(1.2) brightness(0.85)' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
 
