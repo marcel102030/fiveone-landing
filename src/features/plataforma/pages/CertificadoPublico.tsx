@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { QRCodeSVG } from "qrcode.react";
 import { supabase } from "../../../shared/lib/supabaseClient";
-import logoBlue from "../../../assets/images/logo-fiveone-blue.png";
+import logoPreta from "../../../assets/images/logo preta redonda.png";
 
 interface CertData {
   id: string;
@@ -76,6 +76,10 @@ export default function CertificadoPublico() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#1a1a2e', fontFamily: 'Georgia, "Times New Roman", serif' }}>
+      {/* Fonte de assinatura */}
+      <link rel="preconnect" href="https://fonts.googleapis.com" />
+      <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+      <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet" />
 
       {/* Barra de ações — oculta no print */}
       <div className="print:hidden" style={{
@@ -180,11 +184,11 @@ export default function CertificadoPublico() {
             textAlign: 'center',
           }}>
 
-            {/* Logo */}
+            {/* Logo — versão preta (contraste perfeito no creme) */}
             <img
-              src={logoBlue}
+              src={logoPreta}
               alt="Five One"
-              style={{ height: 48, marginBottom: 8, objectFit: 'contain' }}
+              style={{ height: 64, marginBottom: 6, objectFit: 'contain', filter: 'brightness(0) saturate(100%)' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
 
@@ -282,10 +286,23 @@ export default function CertificadoPublico() {
                 </p>
               </div>
 
-              {/* Assinatura direita */}
-              <div style={{ textAlign: 'center', minWidth: 120 }}>
-                <div style={{ width: 120, height: 1, background: `rgba(13,32,64,0.35)`, marginBottom: 4 }} />
-                <p style={{ fontSize: '0.6rem', color: `rgba(13,32,64,0.6)`, margin: 0, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>DIRETOR</p>
+              {/* Assinatura direita — Marcelo Junior */}
+              <div style={{ textAlign: 'center', minWidth: 140 }}>
+                {/* Nome em cursiva simulando assinatura */}
+                <p style={{
+                  fontFamily: "'Dancing Script', cursive",
+                  fontSize: 'clamp(0.9rem, 2.2vw, 1.3rem)',
+                  color: NAVY,
+                  margin: '0 0 2px',
+                  lineHeight: 1.1,
+                  letterSpacing: '0.02em',
+                }}>
+                  Marcelo Junior
+                </p>
+                <div style={{ width: 140, height: 1, background: `rgba(13,32,64,0.35)`, marginBottom: 3 }} />
+                <p style={{ fontSize: '0.55rem', color: `rgba(13,32,64,0.55)`, margin: 0, letterSpacing: '0.1em', fontFamily: 'Inter, sans-serif' }}>
+                  MARCELO JÚNIOR DA SILVA · DIRETOR
+                </p>
               </div>
             </div>
           </div>
