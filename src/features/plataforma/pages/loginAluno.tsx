@@ -135,142 +135,171 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
   const remainingAttempts = Math.max(0, MAX_ATTEMPTS - attempts);
 
   return (
-    <div className="min-h-screen flex bg-navy">
+    <div className="min-h-screen flex bg-[#07101f] relative overflow-hidden">
+
+      {/* ── Orbs decorativos de fundo (visíveis mobile + desktop) ── */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div className="absolute -top-40 -left-40 w-[500px] h-[500px] rounded-full bg-mint/8 blur-[100px]" />
+        <div className="absolute top-1/3 -right-48 w-[560px] h-[560px] rounded-full bg-blue-500/10 blur-[120px]" />
+        <div className="absolute -bottom-48 left-1/3 w-[400px] h-[400px] rounded-full bg-[#1a3a6b]/50 blur-[80px]" />
+        {/* Grid sutil de pontos — só mobile */}
+        <div className="lg:hidden absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+      </div>
+
       {/* ── Painel do formulário ── */}
-      <div className="flex-1 flex flex-col justify-center px-6 py-12 lg:px-16 xl:px-24 max-w-xl w-full mx-auto lg:mx-0">
+      <div className="flex-1 flex flex-col justify-center px-5 py-10 lg:px-16 xl:px-24 max-w-xl w-full mx-auto lg:mx-0 relative z-10">
 
         {/* Brand */}
-        <div className="mb-10">
-          <div className="flex items-center gap-3 mb-8">
-            <img src={logoSmall} alt="Five One" className="h-9 w-9 object-contain" />
+        <div className="mb-7 lg:mb-10">
+
+          {/* Logo + nome — centralizado no mobile, esquerda no desktop */}
+          <div className="flex items-center gap-3 mb-6 lg:mb-8 justify-center lg:justify-start">
+            <div className="relative shrink-0">
+              <div className="absolute inset-0 rounded-full bg-mint/25 blur-md scale-[2]" />
+              <img src={logoSmall} alt="Five One" className="relative h-9 w-9 object-contain" />
+            </div>
             <span className="text-sm font-semibold text-slate-light tracking-widest uppercase">
               Plataforma Five One
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-slate-white leading-tight mb-2">
-            Entre na sua conta
-          </h1>
-          <p className="text-slate text-sm leading-relaxed">
-            Acesse seus cursos, continue suas aulas e acompanhe o seu progresso na plataforma Five One.
-          </p>
+
+          {/* Badge + título — visual extra no mobile */}
+          <div className="text-center lg:text-left">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mint/10 border border-mint/20 mb-4 lg:hidden">
+              <span className="w-1.5 h-1.5 rounded-full bg-mint animate-pulse" />
+              <span className="text-xs text-mint font-medium tracking-wide">Cursos · Progresso · Certificados</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+              Entre na sua conta
+            </h1>
+            <p className="text-slate text-sm leading-relaxed">
+              Acesse seus cursos, continue suas aulas e acompanhe o seu progresso na plataforma Five One.
+            </p>
+          </div>
         </div>
 
-        {/* Feedback de erro */}
-        {erro && (
-          <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 animate-fade-in" role="alert">
-            <div className="flex items-start gap-2">
-              <svg className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-              </svg>
-              <div>
-                {erro}
-                {attempts > 0 && remainingAttempts > 0 && (
-                  <p className="mt-0.5 text-xs opacity-80">Tentativas restantes: {remainingAttempts}</p>
-                )}
+        {/* Card glass — envolve o form no mobile */}
+        <div className="bg-white/[0.04] lg:bg-transparent border border-white/[0.07] lg:border-0 rounded-2xl lg:rounded-none p-6 lg:p-0 backdrop-blur-sm lg:backdrop-blur-none shadow-[0_8px_32px_rgba(0,0,0,0.3)] lg:shadow-none">
+
+          {/* Feedback de erro */}
+          {erro && (
+            <div className="mb-5 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400 animate-fade-in" role="alert">
+              <div className="flex items-start gap-2">
+                <svg className="w-4 h-4 mt-0.5 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                <div>
+                  {erro}
+                  {attempts > 0 && remainingAttempts > 0 && (
+                    <p className="mt-0.5 text-xs opacity-80">Tentativas restantes: {remainingAttempts}</p>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Feedback de sucesso */}
-        {sucesso && (
-          <div className="mb-5 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint flex items-center gap-2 animate-fade-in" role="status">
-            <svg className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-            </svg>
-            {sucesso}
-          </div>
-        )}
+          {/* Feedback de sucesso */}
+          {sucesso && (
+            <div className="mb-5 rounded-xl border border-mint/30 bg-mint/10 px-4 py-3 text-sm text-mint flex items-center gap-2 animate-fade-in" role="status">
+              <svg className="w-4 h-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+              </svg>
+              {sucesso}
+            </div>
+          )}
 
-        {/* Form */}
-        <form onSubmit={handleSubmit} noValidate className="space-y-4">
-          <FormField label="E-mail" htmlFor="email" error={tocado.email && !email ? "Campo obrigatório" : undefined}>
-            <Input
-              id="email" type="email" placeholder="seuemail@exemplo.com"
-              value={email} onChange={e => setEmail(e.target.value)}
-              onBlur={() => setTocado(t => ({ ...t, email: true }))}
-              autoComplete="username" disabled={loading}
-              error={tocado.email && !email ? " " : undefined}
-            />
-          </FormField>
+          {/* Form */}
+          <form onSubmit={handleSubmit} noValidate className="space-y-4">
+            <FormField label="E-mail" htmlFor="email" error={tocado.email && !email ? "Campo obrigatório" : undefined}>
+              <Input
+                id="email" type="email" placeholder="seuemail@exemplo.com"
+                value={email} onChange={e => setEmail(e.target.value)}
+                onBlur={() => setTocado(t => ({ ...t, email: true }))}
+                autoComplete="username" disabled={loading}
+                error={tocado.email && !email ? " " : undefined}
+              />
+            </FormField>
 
-          <FormField label="Senha" htmlFor="senha" error={tocado.senha && !senha ? "Campo obrigatório" : undefined}>
-            <Input
-              id="senha" type={showPwd ? "text" : "password"} placeholder="Digite sua senha"
-              value={senha} onChange={e => setSenha(e.target.value)}
-              onBlur={() => setTocado(t => ({ ...t, senha: true }))}
-              autoComplete="current-password" disabled={loading}
-              error={tocado.senha && !senha ? " " : undefined}
-              rightIcon={
-                <button type="button" onClick={() => setShowPwd(v => !v)}
-                  className="text-slate hover:text-mint transition-colors" tabIndex={-1}
-                  aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}>
-                  <EyeIcon open={showPwd} />
-                </button>
-              }
-            />
-          </FormField>
+            <FormField label="Senha" htmlFor="senha" error={tocado.senha && !senha ? "Campo obrigatório" : undefined}>
+              <Input
+                id="senha" type={showPwd ? "text" : "password"} placeholder="Digite sua senha"
+                value={senha} onChange={e => setSenha(e.target.value)}
+                onBlur={() => setTocado(t => ({ ...t, senha: true }))}
+                autoComplete="current-password" disabled={loading}
+                error={tocado.senha && !senha ? " " : undefined}
+                rightIcon={
+                  <button type="button" onClick={() => setShowPwd(v => !v)}
+                    className="text-slate hover:text-mint transition-colors" tabIndex={-1}
+                    aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}>
+                    <EyeIcon open={showPwd} />
+                  </button>
+                }
+              />
+            </FormField>
 
-          {/* Opções */}
-          <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
-            <label className="flex items-center gap-2.5 cursor-pointer group select-none">
-              <div
-                className={["relative w-10 h-6 rounded-full transition-colors duration-200",
-                  rememberMe ? "bg-mint/80" : "bg-slate/20 border border-slate/30"].join(" ")}
-                onClick={() => setRememberMe(v => !v)}
-                role="checkbox" aria-checked={rememberMe} tabIndex={0}
-                onKeyDown={e => e.key === ' ' && setRememberMe(v => !v)}
-              >
-                <span className={["absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200",
-                  rememberMe ? "left-5" : "left-1"].join(" ")} />
-              </div>
-              <span className="text-sm text-slate group-hover:text-slate-light transition-colors">
-                Permanecer logado
-              </span>
-            </label>
+            {/* Opções */}
+            <div className="flex items-center justify-between gap-2 pt-1">
+              <label className="flex items-center gap-2.5 cursor-pointer group select-none">
+                <div
+                  className={["relative w-10 h-6 rounded-full transition-colors duration-200",
+                    rememberMe ? "bg-mint/80" : "bg-slate/20 border border-slate/30"].join(" ")}
+                  onClick={() => setRememberMe(v => !v)}
+                  role="checkbox" aria-checked={rememberMe} tabIndex={0}
+                  onKeyDown={e => e.key === ' ' && setRememberMe(v => !v)}
+                >
+                  <span className={["absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200",
+                    rememberMe ? "left-5" : "left-1"].join(" ")} />
+                </div>
+                <span className="text-sm text-slate group-hover:text-slate-light transition-colors">
+                  Permanecer logado
+                </span>
+              </label>
 
-            <button type="button" onClick={() => navigate("/esqueci-senha")}
-              className="text-sm text-mint/80 hover:text-mint transition-colors">
-              Esqueceu a senha?
-            </button>
-          </div>
+              <button type="button" onClick={() => navigate("/esqueci-senha")}
+                className="text-sm text-mint/80 hover:text-mint transition-colors">
+                Esqueceu a senha?
+              </button>
+            </div>
 
-          {/* Botões */}
-          <div className="pt-2 space-y-3">
-            <Button type="submit" variant="primary" size="lg" fullWidth loading={loading} disabled={isLocked}>
-              {isLocked ? "Tentativas esgotadas" : "Entrar"}
-            </Button>
-            <Button type="button" variant="ghost" size="lg" fullWidth onClick={() => navigate("/")}>
-              Ir para o site Five One
-            </Button>
-          </div>
-        </form>
+            {/* Botões */}
+            <div className="pt-2 space-y-3">
+              <Button type="submit" variant="primary" size="lg" fullWidth loading={loading} disabled={isLocked}>
+                {isLocked ? "Tentativas esgotadas" : "Entrar"}
+              </Button>
+              <Button type="button" variant="ghost" size="lg" fullWidth onClick={() => navigate("/")}>
+                Ir para o site Five One
+              </Button>
+            </div>
+          </form>
 
-        <p className="mt-8 text-xs text-slate/60 text-center">
+        </div>{/* fim card glass */}
+
+        <p className="mt-6 text-xs text-slate/50 text-center">
           Ao acessar você concorda com os{" "}
-          <a href="/contato" className="text-slate/80 hover:text-mint transition-colors underline underline-offset-2">
+          <a href="/contato" className="text-slate/70 hover:text-mint transition-colors underline underline-offset-2">
             termos de uso e privacidade
           </a>{" "}
           da Five One.
         </p>
       </div>
 
-      {/* ── Hero lateral ── */}
+      {/* ── Hero lateral (desktop) ── */}
       <aside className="hidden lg:flex flex-1 relative overflow-hidden" aria-hidden="true">
         <img src={heroBanner} alt="" className="absolute inset-0 w-full h-full object-cover object-center" loading="eager" draggable={false} />
-        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-navy/20 to-navy/60" />
+        <div className="absolute inset-0 bg-gradient-to-l from-transparent via-navy/20 to-[#07101f]/70" />
         <div className="relative z-10 mt-auto p-10 pb-14">
-          <div className="bg-navy/60 backdrop-blur-sm rounded-2xl border border-slate/10 p-6 max-w-sm shadow-card">
-            <h2 className="text-xl font-bold text-slate-white mb-3 leading-snug">
+          <div className="bg-navy/70 backdrop-blur-md rounded-2xl border border-white/10 p-6 max-w-sm shadow-[0_8px_40px_rgba(0,0,0,0.4)]">
+            <h2 className="text-xl font-bold text-white mb-3 leading-snug">
               Desenvolva o seu chamado
             </h2>
-            <ul className="space-y-2">
+            <ul className="space-y-2.5">
               {[
                 "Aulas, trilhas e materiais atualizados continuamente",
                 "Suporte dedicado em cada curso",
                 "Acompanhe seu progresso em cada módulo",
               ].map(item => (
-                <li key={item} className="flex items-start gap-2 text-sm text-slate-light/90">
+                <li key={item} className="flex items-start gap-2.5 text-sm text-slate-light/90">
                   <svg className="w-4 h-4 text-mint shrink-0 mt-0.5" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                   </svg>
