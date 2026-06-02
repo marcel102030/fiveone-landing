@@ -543,65 +543,140 @@ const PaginaInicial = () => {
           </div>
         </section>
 
-        {/* ── JORNADA — progresso por módulo ───────────────────────────────── */}
+        {/* ── JORNADA — steps de progresso ────────────────────────────────── */}
         {primaryCourseId && progressLoaded && allLessons.length > 0 && (() => { // eslint-disable-line
-          // Agrupa aulas por subject (módulo)
           const subjects = new Map<string, { name: string; lessons: LessonRef[] }>()
           allLessons.filter(l => l.ministryId === primaryCourseId).forEach(l => {
-            // Agrupa por subjectName (nome visível do módulo) para evitar duplicatas
-            // quando algumas aulas têm subjectId e outras não
             const key = l.subjectName || l.subjectId || 'Módulo'
             if (!subjects.has(key)) subjects.set(key, { name: l.subjectName || l.subjectId || key, lessons: [] })
             subjects.get(key)!.lessons.push(l)
           })
           const modules = Array.from(subjects.values())
           if (modules.length < 2) return null
+
+          // Calcula progresso por módulo
+          const mods = modules.map((mod, idx) => {
+            const done = mod.lessons.filter(l => completedIds.has(l.videoId) || completedIds.has(l.id)).length
+            const total = mod.lessons.length
+            const pct = total > 0 ? Math.round((done / total) * 100) : 0
+            const isComplete = pct === 100
+            const isCurrent = done > 0 && pct < 100
+            const isNext = !isComplete && !isCurrent && idx === modules.findIndex((_, i) => {
+              const d2 = modules[i].lessons.filter(l => completedIds.has(l.videoId) || completedIds.has(l.id)).length
+              return d2 === 0
+            })
+            return { ...mod, done, total, pct, isComplete, isCurrent, isNext }
+          })
+
           return (
-            <section className="relative z-10 py-8 sm:py-10 border-b border-slate/10 bg-navy-light/50 overflow-hidden">
+            <section className="relative z-10 py-8 sm:py-12 border-b border-slate/10 bg-navy-light/50 overflow-hidden">
+              <style>{`
+                @keyframes pulse-ring {
+                  0%, 100% { box-shadow: 0 0 0 0 rgba(100,255,218,0.4); }
+                  50% { box-shadow: 0 0 0 8px rgba(100,255,218,0); }
+                }
+                .step-pulse { animation: pulse-ring 2s ease-in-out infinite; }
+              `}</style>
               <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden select-none">
-                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[800px] h-[200px] rounded-full bg-mint/[0.10] blur-[80px]" />
-                {/* Referência bíblica discreta — canto superior direito */}
-                <span className="absolute top-4 right-8 text-2xs font-medium text-mint/[0.18] tracking-[0.35em] uppercase select-none">
-                  Ef 4:11–16
-                </span>
+                <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-[900px] h-[220px] rounded-full bg-mint/[0.08] blur-[80px]" />
+                <span className="absolute top-4 right-8 text-2xs font-medium text-mint/[0.18] tracking-[0.35em] uppercase select-none">Ef 4:11–16</span>
               </div>
+
               <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
-                <h2 className="text-base font-bold text-slate-white mb-5">Sua jornada no curso</h2>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {modules.map((mod, idx) => {
-                    const done = mod.lessons.filter(l => completedIds.has(l.videoId) || completedIds.has(l.id)).length
-                    const total = mod.lessons.length
-                    const pct = total > 0 ? Math.round((done / total) * 100) : 0
-                    const isComplete = pct === 100
-                    const hasStarted = done > 0
-                    return (
-                      <div
-                        key={idx}
-                        className={`relative rounded-xl border p-4 transition-all ${
-                          isComplete
-                            ? 'border-mint/40 bg-mint/5'
-                            : hasStarted
-                            ? 'border-mint/20 bg-navy-lighter/60'
-                            : 'border-slate/10 bg-navy-lighter/40'
-                        }`}
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className={`text-2xs font-bold uppercase tracking-wider ${isComplete ? 'text-mint' : 'text-slate'}`}>
-                            Módulo {idx + 1}
-                          </span>
-                          {isComplete && <span className="text-mint text-sm">✓</span>}
-                        </div>
-                        <p className="text-xs text-slate-white font-medium leading-tight line-clamp-2 mb-3">{mod.name}</p>
-                        <div className="h-1.5 bg-navy rounded-full overflow-hidden mb-1">
+                <div className="flex items-center justify-between mb-8">
+                  <h2 className="text-base font-bold text-slate-white">Sua jornada no curso</h2>
+                  <span className="text-2xs text-slate tabular-nums">
+                    {mods.filter(m => m.isComplete).length}/{mods.length} módulos concluídos
+                  </span>
+                </div>
+
+                {/* Steps — horizontalmente scrollável em mobile */}
+                <div className="overflow-x-auto pb-4 -mx-4 px-4 sm:mx-0 sm:px-0" style={{ scrollbarWidth: 'none' }}>
+                  <div className="flex items-start" style={{ minWidth: `${mods.length * 160}px` }}>
+                    {mods.map((mod, idx) => {
+                      const isLast = idx === mods.length - 1
+                      const lineFilledPct = mod.isComplete ? 100 : mod.isCurrent ? mod.pct : 0
+
+                      return (
+                        <div key={idx} className="flex items-start flex-1 min-w-0">
+                          {/* Step + label */}
                           <div
-                            className="h-full bg-mint rounded-full transition-all duration-700"
-                            style={{ width: `${pct}%` }}
-                          />
+                            className="flex flex-col items-center flex-shrink-0 cursor-pointer group/step"
+                            style={{ width: 100 }}
+                            onClick={() => primaryCourseId && navigate(`/curso/${primaryCourseId}/modulos`)}
+                            title={mod.name}
+                          >
+                            {/* Círculo */}
+                            <div className="relative mb-3">
+                              {/* Anel externo animado (só no atual) */}
+                              {mod.isCurrent && (
+                                <div className="absolute -inset-1.5 rounded-full border-2 border-mint/40 step-pulse" />
+                              )}
+                              <div className={`relative w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-300 ${
+                                mod.isComplete
+                                  ? 'bg-mint text-navy shadow-[0_0_16px_rgba(100,255,218,0.4)]'
+                                  : mod.isCurrent
+                                  ? 'bg-navy border-2 border-mint text-mint shadow-[0_0_12px_rgba(100,255,218,0.25)]'
+                                  : mod.isNext
+                                  ? 'bg-navy-lighter border-2 border-slate/40 text-slate-light'
+                                  : 'bg-navy-lighter border border-slate/20 text-slate/60'
+                              }`}>
+                                {mod.isComplete ? (
+                                  <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd"/>
+                                  </svg>
+                                ) : (
+                                  <span>{idx + 1}</span>
+                                )}
+                              </div>
+
+                              {/* Mini progresso no círculo (arco SVG) se em andamento */}
+                              {mod.isCurrent && mod.pct > 0 && (
+                                <svg className="absolute inset-0 w-10 h-10 -rotate-90" viewBox="0 0 40 40">
+                                  <circle cx="20" cy="20" r="17" fill="none" stroke="rgba(100,255,218,0.15)" strokeWidth="3"/>
+                                  <circle
+                                    cx="20" cy="20" r="17" fill="none"
+                                    stroke="#64ffda" strokeWidth="3"
+                                    strokeLinecap="round"
+                                    strokeDasharray={`${2 * Math.PI * 17}`}
+                                    strokeDashoffset={`${2 * Math.PI * 17 * (1 - mod.pct / 100)}`}
+                                    style={{ transition: 'stroke-dashoffset 1s ease-out' }}
+                                  />
+                                </svg>
+                              )}
+                            </div>
+
+                            {/* Nome do módulo */}
+                            <p className={`text-center text-2xs leading-tight px-1 line-clamp-2 transition-colors ${
+                              mod.isComplete ? 'text-mint/80 font-semibold'
+                              : mod.isCurrent ? 'text-slate-white font-semibold'
+                              : 'text-slate/70'
+                            }`} style={{ maxWidth: 100 }}>
+                              {mod.name}
+                            </p>
+
+                            {/* Aulas */}
+                            <span className={`text-2xs tabular-nums mt-1 ${mod.isComplete ? 'text-mint/60' : 'text-slate/50'}`}>
+                              {mod.done}/{mod.total}
+                            </span>
+                          </div>
+
+                          {/* Linha conectora (entre steps) */}
+                          {!isLast && (
+                            <div className="flex-1 relative mt-5 mx-1" style={{ height: 2 }}>
+                              {/* Trilha base */}
+                              <div className="absolute inset-0 bg-slate/15 rounded-full" />
+                              {/* Preenchimento de progresso */}
+                              <div
+                                className="absolute inset-y-0 left-0 bg-mint rounded-full transition-all duration-700"
+                                style={{ width: `${lineFilledPct}%` }}
+                              />
+                            </div>
+                          )}
                         </div>
-                        <p className="text-2xs text-slate tabular-nums">{done}/{total} aulas</p>
-                      </div>
-                    )
-                  })}
+                      )
+                    })}
+                  </div>
                 </div>
               </div>
             </section>
