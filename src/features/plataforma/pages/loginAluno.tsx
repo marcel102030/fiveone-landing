@@ -153,28 +153,35 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
         {/* Brand */}
         <div className="mb-7 lg:mb-10">
 
-          {/* Logo + nome — centralizado no mobile, esquerda no desktop */}
-          <div className="flex items-center gap-3 mb-6 lg:mb-8 justify-center lg:justify-start">
-            <div className="relative shrink-0">
-              <div className="absolute inset-0 rounded-full bg-mint/25 blur-md scale-[2]" />
-              <img src={logoSmall} alt="Five One" className="relative h-9 w-9 object-contain" />
+          {/* ── Identidade da plataforma — herói da tela ── */}
+          <div className="flex flex-col items-center mb-7 lg:mb-8 lg:items-start">
+            {/* Logo grande */}
+            <div className="relative shrink-0 mb-4">
+              <div className="absolute inset-0 rounded-full bg-mint/25 blur-2xl scale-[3]" />
+              <div className="absolute inset-0 rounded-full bg-blue-400/15 blur-3xl scale-[4]" />
+              <img src={logoSmall} alt="Five One" className="relative h-24 w-24 lg:h-14 lg:w-14 object-contain drop-shadow-2xl" />
             </div>
-            <span className="text-sm font-semibold text-slate-light tracking-widest uppercase">
-              Plataforma Five One
-            </span>
+
+            {/* Label pequeno */}
+            <p className="text-mint/70 text-[10px] tracking-[0.35em] uppercase font-semibold text-center lg:text-left mb-1">
+              Plataforma
+            </p>
+            {/* "FIVE ONE" — hero text máximo */}
+            <h1 className="text-5xl sm:text-6xl lg:text-3xl font-black text-white tracking-[0.12em] uppercase leading-none text-center lg:text-left mb-2">
+              Five One
+            </h1>
+            <p className="text-mint/60 text-[10px] tracking-[0.25em] uppercase font-medium text-center lg:text-left mb-5 lg:mb-0">
+              Cursos · Progresso · Certificados
+            </p>
           </div>
 
-          {/* Badge + título — visual extra no mobile */}
-          <div className="text-center lg:text-left">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-mint/10 border border-mint/20 mb-4 lg:hidden">
-              <span className="w-1.5 h-1.5 rounded-full bg-mint animate-pulse" />
-              <span className="text-xs text-mint font-medium tracking-wide">Cursos · Progresso · Certificados</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight mb-2">
+          {/* Subtítulo de ação — discreto */}
+          <div className="text-center lg:text-left mb-1">
+            <p className="text-base font-semibold text-slate-light/80 mb-1">
               Entre na sua conta
-            </h1>
-            <p className="text-slate text-sm leading-relaxed">
-              Acesse seus cursos, continue suas aulas e acompanhe o seu progresso na plataforma Five One.
+            </p>
+            <p className="text-slate/60 text-xs leading-relaxed">
+              Acesse seus cursos e acompanhe o progresso na plataforma Five One.
             </p>
           </div>
         </div>
@@ -251,13 +258,13 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
                   <span className={["absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-all duration-200",
                     rememberMe ? "left-5" : "left-1"].join(" ")} />
                 </div>
-                <span className="text-sm text-slate group-hover:text-slate-light transition-colors">
+                <span className="text-xs sm:text-sm text-slate group-hover:text-slate-light transition-colors whitespace-nowrap">
                   Permanecer logado
                 </span>
               </label>
 
               <button type="button" onClick={() => navigate("/esqueci-senha")}
-                className="text-sm text-mint/80 hover:text-mint transition-colors">
+                className="text-xs sm:text-sm text-mint/80 hover:text-mint transition-colors whitespace-nowrap">
                 Esqueceu a senha?
               </button>
             </div>
