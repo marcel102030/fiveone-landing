@@ -188,7 +188,7 @@ export default function CertificadoPublico() {
             <img
               src={logoFundo}
               alt="Five One"
-              style={{ height: 90, marginBottom: 8, objectFit: 'contain', mixBlendMode: 'multiply' }}
+              style={{ height: 130, marginBottom: 8, objectFit: 'contain', mixBlendMode: 'multiply' }}
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
 
