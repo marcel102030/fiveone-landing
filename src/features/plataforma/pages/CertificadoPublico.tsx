@@ -75,11 +75,49 @@ export default function CertificadoPublico() {
   const CREAM  = '#f7f3eb';
 
   return (
-    <div style={{ minHeight: '100vh', background: '#1a1a2e', fontFamily: 'Georgia, "Times New Roman", serif' }}>
+    <div id="cert-outer" style={{ minHeight: '100vh', background: '#1a1a2e', fontFamily: 'Georgia, "Times New Roman", serif' }}>
       {/* Fonte de assinatura */}
       <link rel="preconnect" href="https://fonts.googleapis.com" />
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
       <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&display=swap" rel="stylesheet" />
+
+      {/* ── CSS de impressão: A4 Paisagem 297×210mm ── */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 landscape;
+            margin: 0;
+          }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            background: white !important;
+          }
+          #cert-outer {
+            min-height: auto !important;
+            background: transparent !important;
+          }
+          #cert-wrapper {
+            padding: 0 !important;
+            display: block !important;
+          }
+          #cert-card {
+            width: 297mm !important;
+            height: 210mm !important;
+            max-width: none !important;
+            aspect-ratio: auto !important;
+            box-shadow: none !important;
+            margin: 0 !important;
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+          }
+          #cert-card, #cert-card * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+        }
+      `}</style>
 
       {/* Barra de ações — oculta no print */}
       <div className="print:hidden" style={{
@@ -109,12 +147,14 @@ export default function CertificadoPublico() {
             <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
           </svg>
           Imprimir / Salvar PDF
+          <span style={{ fontSize: 10, opacity: 0.7, marginLeft: 4 }}>(A4 paisagem)</span>
         </button>
       </div>
 
       {/* Wrapper do certificado */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px 20px' }} className="print:p-0">
+      <div id="cert-wrapper" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 16px 20px' }} className="print:p-0">
         <div
+          id="cert-card"
           ref={printRef}
           style={{
             width: '100%',
