@@ -51,7 +51,7 @@ const Hero = ({ onScrollClick }: HeroProps) => {
         <img src={apostoloIcon}    alt="" className="absolute top-[12%]   left-[2.5%]  w-20 opacity-[0.08] grayscale" />
         <img src={evangelistaIcon} alt="" className="absolute top-[48%]   left-[1.5%]  w-16 opacity-[0.06] grayscale" />
         <img src={mestreIcon}      alt="" className="absolute bottom-[14%] left-[3%]   w-14 opacity-[0.07] grayscale" />
-        <img src={profetaIcon}     alt="" className="absolute top-[18%]   right-[2.5%] w-18 opacity-[0.08] grayscale" />
+        <img src={profetaIcon}     alt="" className="absolute top-[18%]   right-[2.5%] w-16 opacity-[0.08] grayscale" />
         <img src={pastorIcon}      alt="" className="absolute bottom-[22%] right-[1.5%] w-16 opacity-[0.06] grayscale" />
       </div>
 
