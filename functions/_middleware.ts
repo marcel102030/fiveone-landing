@@ -82,25 +82,44 @@ export const onRequest = async (ctx: {
   let path = url.pathname.replace(/\/+$/, "");
   if (path === "") path = "/";
 
-  // ── escolafiveone.com → redireciona para a plataforma ──────────────────────
-  // Qualquer rota que não seja da plataforma vai para /plataforma
+  // ── fiveonemovement.com: rotas da plataforma → redirect para escolafiveone.com ──
+  if (url.hostname === "fiveonemovement.com") {
+    const isPlatformOnlyPath =
+      path === "/login-aluno" ||
+      path === "/esqueci-senha" ||
+      path === "/redefinir-senha" ||
+      path.startsWith("/plataforma");
+    if (isPlatformOnlyPath) {
+      return Response.redirect("https://escolafiveone.com" + path + url.search, 302);
+    }
+  }
+
+  // ── escolafiveone.com → só serve rotas da plataforma ──────────────────────
   if (url.hostname === "escolafiveone.com") {
     const isPlataformaPath =
       path.startsWith("/plataforma") ||
       path.startsWith("/login-aluno") ||
+      path.startsWith("/esqueci-senha") ||
+      path.startsWith("/redefinir-senha") ||
       path.startsWith("/certificado") ||
+      path.startsWith("/certificados") ||
       path.startsWith("/resultado") ||
       path.startsWith("/perfil") ||
       path.startsWith("/meu-progresso") ||
       path.startsWith("/favoritos") ||
-      path.startsWith("/certificados") ||
+      path.startsWith("/curso/") ||
+      path.startsWith("/streamer") ||
+      path.startsWith("/modulos") ||
+      path.startsWith("/admin") ||
       path.startsWith("/c/") ||
       path.startsWith("/api/") ||
-      path.startsWith("/assets/");
+      path.startsWith("/assets/") ||
+      path.startsWith("/blog/") ||
+      path.startsWith("/rede/");
     if (!isPlataformaPath) {
       return Response.redirect(new URL("/plataforma", request.url).toString(), 302);
     }
-    return next(); // já é rota da plataforma — serve normalmente
+    return next();
   }
 
   const meta = ROUTE_META[path];

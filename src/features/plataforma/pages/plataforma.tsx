@@ -483,7 +483,7 @@ const PaginaInicial = () => {
                   {progressPercent === 100 ? (
                     /* Curso 100% concluído → parabéns + ir para certificado */
                     <Link
-                      to="/meus-certificados"
+                      to="/certificados"
                       className="group w-full flex items-center gap-4 bg-mint/10 border border-mint/40 hover:border-mint/70 hover:bg-mint/15 rounded-2xl p-4 sm:p-5 transition-all text-left"
                     >
                       <div className="w-12 h-12 rounded-xl bg-mint flex items-center justify-center text-navy shadow-mint flex-shrink-0 text-xl">
@@ -495,7 +495,7 @@ const PaginaInicial = () => {
                       </div>
                       <span className="text-mint text-lg group-hover:translate-x-1 transition-transform flex-shrink-0">→</span>
                     </Link>
-                  ) : visibleLastWatched.length > 0 ? (
+                  ) : visibleLastWatched.length > 0 || progress.length > 0 ? (
                     /* Tem aula em andamento → botão grande de retomar */
                     <button
                       onClick={handleResumeLesson}

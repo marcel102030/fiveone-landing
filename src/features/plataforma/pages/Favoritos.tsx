@@ -207,14 +207,14 @@ const Favoritos = () => {
                             alt={lesson.title}
                             className="w-full h-full object-cover"
                             loading="lazy"
+                            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                           />
-                        ) : (
-                          <div className="w-full h-full flex items-center justify-center bg-mint/5">
-                            <span className="text-slate/30">
-                              <PlayIcon />
-                            </span>
-                          </div>
-                        )}
+                        ) : null}
+                        {/* Fallback sempre visível atrás da imagem */}
+                        <div className="absolute inset-0 bg-gradient-to-br from-navy-light to-navy flex flex-col items-center justify-center gap-2 px-3">
+                          <span className="text-mint/40"><PlayIcon /></span>
+                          <p className="text-slate/50 text-xs text-center line-clamp-2">{lesson.title}</p>
+                        </div>
                         {/* Overlay play */}
                         <div className="absolute inset-0 bg-navy/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <div className="w-12 h-12 rounded-full bg-mint/90 flex items-center justify-center text-navy shadow-mint">
