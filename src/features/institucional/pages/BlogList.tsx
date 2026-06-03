@@ -83,10 +83,6 @@ const BlogList = () => {
         </picture>
         {/* Gradiente sutil só na base — transição para o navy */}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy to-transparent pointer-events-none" />
-        {/* CTA mínimo sobreposto */}
-        <span className="absolute bottom-5 left-6 sm:bottom-7 sm:left-8 text-sm sm:text-base text-mint font-semibold drop-shadow">
-          Ver leituras →
-        </span>
       </section>
 
       {/* Título + subtítulo + newsletter — abaixo da imagem */}
