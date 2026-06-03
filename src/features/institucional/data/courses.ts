@@ -13,6 +13,7 @@ export type UpcomingCourse = {
   title: string;
   description: string;
   category: string;
+  coverUrl?: string; // imagem de capa 1200×630px — quando disponível, aparece no topo do card
 };
 
 export const UPCOMING_COURSES: UpcomingCourse[] = [
@@ -21,17 +22,20 @@ export const UPCOMING_COURSES: UpcomingCourse[] = [
     description:
       "Você lê a Bíblia, mas nem sempre sai com clareza do que leu? Neste curso você aprende a entender o texto bíblico do jeito certo — sem complicar.",
     category: "Estudo Bíblico",
+    // coverUrl: "/assets/covers/entendes-o-que-les.jpg", // adicionar quando disponível
   },
   {
-    title: "Cristologia",
+    title: "Introdução ao Fim dos Tempos",
     description:
-      "Quem é Jesus, de verdade? Muito além do que você aprendeu no ensino fundamental — um curso que transforma a forma como você lê a Bíblia e vive a fé.",
+      "O que a Bíblia realmente diz sobre os últimos dias? Um curso baseado nas Escrituras para entender a escatologia sem sensacionalismo e com fundamento sólido.",
     category: "Teologia",
+    // coverUrl: "/assets/covers/fim-dos-tempos.jpg", // adicionar quando disponível
   },
   {
-    title: "Vida Devocional",
+    title: "Viva o seu Chamado",
     description:
-      "Você sente que sua vida de oração é seca ou mecânica? Aqui você aprende a cultivar uma relação viva com Deus — simples, consistente e transformadora.",
-    category: "Espiritualidade",
+      "Descubra como identificar, desenvolver e viver o seu dom ministerial no dia a dia — na sua família, na sua igreja e no mundo ao seu redor.",
+    category: "Ministério",
+    // coverUrl: "/assets/covers/viva-o-seu-chamado.jpg", // adicionar quando disponível
   },
 ];

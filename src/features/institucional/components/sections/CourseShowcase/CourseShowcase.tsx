@@ -212,15 +212,26 @@ const CourseShowcase = () => {
             {upcoming.map((c) => (
               <div
                 key={c.title}
-                className="relative bg-navy-light/60 border border-slate/10 rounded-2xl p-6 backdrop-blur-sm"
+                className="relative bg-navy-light/60 border border-slate/10 rounded-2xl overflow-hidden backdrop-blur-sm"
               >
-                <div className="flex items-start justify-between gap-3 mb-2">
-                  <h4 className="text-lg font-semibold text-slate-light">{c.title}</h4>
-                  <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-golden/15 border border-golden/30 text-golden text-2xs font-medium uppercase tracking-wider">
-                    Em breve
-                  </span>
+                {/* Área de capa 1200×630 — aspect-ratio 40/21 */}
+                {c.coverUrl ? (
+                  <img src={c.coverUrl} alt={c.title} className="w-full aspect-[40/21] object-cover" />
+                ) : (
+                  <div className="w-full aspect-[40/21] bg-gradient-to-br from-navy-light via-navy to-navy-light flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-mint/5 to-golden/5" />
+                    <span className="relative text-slate/25 text-xs tracking-widest uppercase">Imagem em breve</span>
+                  </div>
+                )}
+                <div className="p-5">
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h4 className="text-base font-semibold text-slate-light">{c.title}</h4>
+                    <span className="shrink-0 px-2.5 py-0.5 rounded-full bg-golden/15 border border-golden/30 text-golden text-2xs font-medium uppercase tracking-wider">
+                      Em breve
+                    </span>
+                  </div>
+                  <p className="text-sm text-slate leading-relaxed">{c.description}</p>
                 </div>
-                <p className="text-sm text-slate leading-relaxed">{c.description}</p>
               </div>
             ))}
           </div>

@@ -273,23 +273,39 @@ const Cursos = () => {
             {upcoming.map((c) => (
               <div
                 key={c.title}
-                className="relative bg-navy-light/60 border border-slate/10 rounded-2xl p-6 backdrop-blur-sm hover:border-slate/20 transition-colors"
+                className="relative bg-navy-light/60 border border-slate/10 rounded-2xl overflow-hidden backdrop-blur-sm hover:border-slate/20 transition-colors"
               >
-                <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate/10 border border-slate/20 text-slate text-2xs font-medium uppercase tracking-wider mb-3">
-                  {c.category}
-                </span>
-                <h3 className="text-lg lg:text-xl font-semibold text-slate-light mb-2">
-                  {c.title}
-                </h3>
-                <p className="text-sm text-slate leading-relaxed">{c.description}</p>
-                <div className="mt-4 pt-4 border-t border-slate/10">
-                  <span className="inline-flex items-center gap-1.5 text-2xs text-golden uppercase tracking-wider font-semibold">
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
-                    Em produção
+                {/* Área de capa 1200×630 — aspect-ratio 40/21 ≈ 1200/630 */}
+                {c.coverUrl ? (
+                  <img
+                    src={c.coverUrl}
+                    alt={c.title}
+                    className="w-full aspect-[40/21] object-cover"
+                  />
+                ) : (
+                  <div className="w-full aspect-[40/21] bg-gradient-to-br from-navy-light via-navy to-navy-light flex items-center justify-center relative overflow-hidden">
+                    <div className="absolute inset-0 bg-gradient-to-br from-mint/5 to-golden/5" />
+                    <span className="relative text-slate/30 text-xs font-medium tracking-widest uppercase">Imagem 1200×630 em breve</span>
+                  </div>
+                )}
+                {/* Conteúdo */}
+                <div className="p-6">
+                  <span className="inline-block px-2.5 py-0.5 rounded-full bg-slate/10 border border-slate/20 text-slate text-2xs font-medium uppercase tracking-wider mb-3">
+                    {c.category}
                   </span>
+                  <h3 className="text-lg lg:text-xl font-semibold text-slate-light mb-2">
+                    {c.title}
+                  </h3>
+                  <p className="text-sm text-slate leading-relaxed">{c.description}</p>
+                  <div className="mt-4 pt-4 border-t border-slate/10">
+                    <span className="inline-flex items-center gap-1.5 text-2xs text-golden uppercase tracking-wider font-semibold">
+                      <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                        <circle cx="12" cy="12" r="10" />
+                        <polyline points="12 6 12 12 16 14" />
+                      </svg>
+                      Em produção
+                    </span>
+                  </div>
                 </div>
               </div>
             ))}
