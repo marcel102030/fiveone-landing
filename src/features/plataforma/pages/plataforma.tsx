@@ -864,7 +864,7 @@ const PaginaInicial = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
               {/* Para Ler */}
-              <a href="/insights" target="_blank" rel="noopener noreferrer"
+              <a href="https://fiveonemovement.com/insights" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
                 <img src={imgParaLer} alt="Para Ler" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -872,7 +872,7 @@ const PaginaInicial = () => {
               </a>
 
               {/* Teste dos 5 Ministérios */}
-              <a href="/descubra-seu-dom" target="_blank" rel="noopener noreferrer"
+              <a href="https://fiveonemovement.com/descubra-seu-dom" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
                 <img src={imgTeste} alt="Teste dos 5 Ministérios" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -880,7 +880,7 @@ const PaginaInicial = () => {
               </a>
 
               {/* Próximos Cursos */}
-              <a href="/cursos" target="_blank" rel="noopener noreferrer"
+              <a href="https://fiveonemovement.com/cursos" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
                 <img src={imgProximosCursos} alt="Próximos Cursos" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
@@ -888,7 +888,7 @@ const PaginaInicial = () => {
               </a>
 
               {/* Leve os 5 Ministérios */}
-              <a href="/treinamentos" target="_blank" rel="noopener noreferrer"
+              <a href="https://fiveonemovement.com/treinamentos" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
                 <img src={imgLeveOs5} alt="Leve os 5 Ministérios" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
