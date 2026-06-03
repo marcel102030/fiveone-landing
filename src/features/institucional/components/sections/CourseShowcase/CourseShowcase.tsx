@@ -31,7 +31,7 @@ type FeaturedCourse = {
 
 const featured: FeaturedCourse = {
   slug: "apologetica",
-  title: "Apologética",
+  title: "Defenda a sua Fé",
   badge: "Lançamento",
   tagline: "Introdução à Apologética Cristã · 20 aulas",
   description:
@@ -118,7 +118,7 @@ const CourseShowcase = () => {
             Conhecimento bíblico que <span className="text-mint">transforma</span> a sua vida
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate">
-            Comece pelo curso de Apologética. Em breve novos temas para aprofundar
+            Comece pelo curso Defenda a sua Fé. Em breve novos temas para aprofundar
             sua jornada.
           </p>
         </div>
@@ -150,7 +150,7 @@ const CourseShowcase = () => {
               </div>
 
               <h3 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white mb-3">
-                Curso de {featured.title}
+                {featured.title}
               </h3>
 
               <p className="text-sm sm:text-base text-slate leading-relaxed mb-5">

@@ -178,7 +178,7 @@ const Cursos = () => {
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white mb-3">
-                  Curso de Apologética
+                  Defenda a sua Fé
                 </h2>
 
                 <p className="text-sm sm:text-base text-mint font-medium mb-2">

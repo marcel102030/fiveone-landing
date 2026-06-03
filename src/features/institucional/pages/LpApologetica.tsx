@@ -44,10 +44,10 @@ const OBJECTIONS = [
 
 export default function LpApologetica() {
   useEffect(() => {
-    document.title = "Curso de Apologética | Five One";
+    document.title = "Defenda a sua Fé | Five One";
     const meta = document.querySelector('meta[name="description"]');
     if (meta)
-      meta.setAttribute("content", "Aprenda a defender a fé com solidez bíblica e racional. 20 aulas, do básico ao avançado. Pagamento único, acesso por 1 ano, certificado incluído.");
+      meta.setAttribute("content", "Defenda a sua Fé te equipa para defender a fé com solidez bíblica e racional. 20 aulas, do básico ao avançado. Pagamento único, acesso por 1 ano, certificado incluído.");
   }, []);
 
   return (
@@ -82,7 +82,7 @@ export default function LpApologetica() {
             <span className="text-mint">inteligência</span> e respeito
           </h1>
           <p className="text-lg sm:text-xl text-slate max-w-2xl mx-auto mb-10 leading-relaxed">
-            O Curso de Apologética do Five One te equipa para responder dúvidas, conversar
+            O curso Defenda a sua Fé do Five One te equipa para responder dúvidas, conversar
             com céticos e crescer na sua própria fé — sem precisar ser teólogo.
           </p>
           <a

@@ -15,7 +15,7 @@ const HOTMART_CHECKOUT_URL =
 
 // ── Metadados do curso ────────────────────────────────────────────────────────
 
-const COURSE_TITLE = "Curso de Apologética";
+const COURSE_TITLE = "Defenda a sua Fé";
 const COURSE_SUBTITLE = "Introdução à Apologética Cristã";
 const COURSE_TAGLINE = "Fundamentos para defender a fé com inteligência e respeito";
 const COURSE_DURATION_LABEL = "~8h20";
@@ -338,7 +338,7 @@ const CursoApologetica = () => {
               </span>
 
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
-                Curso de <span className="text-mint">Apologética</span>
+                Defenda a <span className="text-mint">sua Fé</span>
               </h1>
 
               <p className="mt-3 text-sm sm:text-base text-mint font-medium">

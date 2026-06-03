@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useBlocker } from "react-router-dom";
 import InputMask from "react-input-mask";
 import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 // @ts-ignore
@@ -296,8 +297,6 @@ const ACCORDION_ITEMS = [
 ];
 
 const Quiz = () => {
-  const [showLeaveModal, setShowLeaveModal] = useState(false);
-  const pendingLeaveAction = useRef<(() => void) | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [categoryScores, setCategoryScores] = useState<
     Record<CategoryEnum, number>
@@ -358,7 +357,10 @@ const Quiz = () => {
   const churchCtx = getChurchFromURL();
   const isInviteLink = Boolean(churchCtx.churchSlug);
 
-  const lastUrlRef = useRef(window.location.pathname + window.location.search);
+  const blocker = useBlocker(
+    ({ currentLocation, nextLocation }) =>
+      quizStarted && !showResults && currentLocation.pathname !== nextLocation.pathname
+  );
 
   const [churchInfo, setChurchInfo] = useState<{ id?: string; name?: string; slug?: string } | null>(null);
 
@@ -388,57 +390,8 @@ const Quiz = () => {
     return () => { aborted = true; };
   }, [isInviteLink, churchCtx.churchSlug, churchCtx.churchId]);
 
-  useEffect(() => {
-    const originalPushState = window.history.pushState;
-
-    window.history.pushState = function (...args) {
-      const result = originalPushState.apply(this, args as any);
-      const newUrl = window.location.pathname + window.location.search;
-      if (lastUrlRef.current !== newUrl) {
-        const event = new PopStateEvent("popstate");
-        window.dispatchEvent(event);
-      }
-      return result;
-    };
-
-    const handlePopState = () => {
-      if (quizStarted && !showResults) {
-        const currentUrl = window.location.pathname + window.location.search;
-        const previousUrl = lastUrlRef.current;
-
-        if (currentUrl !== previousUrl) {
-          window.history.pushState(null, "", previousUrl);
-          pendingLeaveAction.current = () => {
-            lastUrlRef.current = currentUrl;
-            window.history.pushState(null, "", currentUrl);
-            window.dispatchEvent(new PopStateEvent("popstate"));
-          };
-          setShowLeaveModal(true);
-        }
-      } else {
-        lastUrlRef.current = window.location.pathname + window.location.search;
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-
-    return () => {
-      window.removeEventListener("popstate", handlePopState);
-      window.history.pushState = originalPushState;
-    };
-  }, [quizStarted, showResults]);
-
-  const confirmLeave = () => {
-    pendingLeaveAction.current?.();
-    pendingLeaveAction.current = null;
-    setShowLeaveModal(false);
-  };
-
-  const cancelLeave = () => {
-    window.history.pushState(null, "", lastUrlRef.current);
-    pendingLeaveAction.current = null;
-    setShowLeaveModal(false);
-  };
+  const confirmLeave = () => blocker.proceed?.();
+  const cancelLeave = () => blocker.reset?.();
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -1617,7 +1570,7 @@ const Quiz = () => {
               </div>
             )}
         </div>
-        {showLeaveModal && (
+        {blocker.state === "blocked" && (
           <div className="modal-backdrop">
             <div className="modal">
               <h3>Deseja sair do teste?</h3>
