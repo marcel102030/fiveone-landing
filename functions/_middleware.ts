@@ -82,6 +82,27 @@ export const onRequest = async (ctx: {
   let path = url.pathname.replace(/\/+$/, "");
   if (path === "") path = "/";
 
+  // ── escolafiveone.com → redireciona para a plataforma ──────────────────────
+  // Qualquer rota que não seja da plataforma vai para /plataforma
+  if (url.hostname === "escolafiveone.com") {
+    const isPlataformaPath =
+      path.startsWith("/plataforma") ||
+      path.startsWith("/login-aluno") ||
+      path.startsWith("/certificado") ||
+      path.startsWith("/resultado") ||
+      path.startsWith("/perfil") ||
+      path.startsWith("/meu-progresso") ||
+      path.startsWith("/favoritos") ||
+      path.startsWith("/certificados") ||
+      path.startsWith("/c/") ||
+      path.startsWith("/api/") ||
+      path.startsWith("/assets/");
+    if (!isPlataformaPath) {
+      return Response.redirect(new URL("/plataforma", request.url).toString(), 302);
+    }
+    return next(); // já é rota da plataforma — serve normalmente
+  }
+
   const meta = ROUTE_META[path];
   if (!meta) return next(); // assets, /api/*, /c/*, /insights/:post, etc.
 

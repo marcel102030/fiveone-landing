@@ -88,6 +88,30 @@ function RedirectWithQuery({ to }: { to: string }) {
   return <Navigate to={`${to}${search}`} replace />;
 }
 
+// Fallback client-side: escolafiveone.com → sempre vai para /plataforma
+function EscolaFiveOneDomainGuard() {
+  const location = useLocation();
+  const isPlataformaPath =
+    location.pathname.startsWith("/plataforma") ||
+    location.pathname.startsWith("/login-aluno") ||
+    location.pathname.startsWith("/certificado") ||
+    location.pathname.startsWith("/resultado") ||
+    location.pathname.startsWith("/perfil") ||
+    location.pathname.startsWith("/meu-progresso") ||
+    location.pathname.startsWith("/favoritos") ||
+    location.pathname.startsWith("/certificados") ||
+    location.pathname.startsWith("/c/");
+
+  if (
+    typeof window !== "undefined" &&
+    window.location.hostname === "escolafiveone.com" &&
+    !isPlataformaPath
+  ) {
+    return <Navigate to="/plataforma" replace />;
+  }
+  return null;
+}
+
 function AppContent() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
@@ -148,6 +172,7 @@ function AppContent() {
   return (
     <>
       <ScrollToTopOnMount />
+      <EscolaFiveOneDomainGuard />
       <div className={`app ${hideLayout ? "plataforma-mode no-navbar-padding" : ""}`}>
         {!hideLayout && <Navbar />}
         <main>
