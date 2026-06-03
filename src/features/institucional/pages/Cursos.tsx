@@ -1,9 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import TrainingFormats from "../components/TrainingFormats";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 import imgProximosCursos from "../assets/images/ProximosCursos.png";
-import imgLeveOs5 from "../assets/images/LeveOs5ministerios.png";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import profetaIcon  from "../../../assets/images/icons/profeta.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
@@ -106,36 +104,6 @@ const Cursos = () => {
           </p>
         </div>
 
-        {/* ───────────── Resumo do que oferecemos (cursos + treinamentos) ─── */}
-        <div className="relative max-w-5xl mx-auto px-6 lg:px-8 mt-10 lg:mt-12">
-          <div className="grid sm:grid-cols-2 gap-4 lg:gap-5">
-            {/* Cursos online — full-image */}
-            <a href="#cursos"
-              className="group relative rounded-2xl overflow-hidden aspect-[16/9] border border-slate/10 hover:border-mint/40 hover:-translate-y-0.5 transition-all">
-              <img src={imgProximosCursos} alt="Cursos online Five One" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-              <span className="absolute bottom-5 left-6 inline-flex items-center gap-1.5 text-sm font-semibold text-mint drop-shadow">
-                Ver cursos
-                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
-                </svg>
-              </span>
-            </a>
-
-            {/* Treinamentos para igrejas — full-image */}
-            <a href="#formatos-treinamento"
-              className="group relative rounded-2xl overflow-hidden aspect-[16/9] border border-slate/10 hover:border-mint/40 hover:-translate-y-0.5 transition-all">
-              <img src={imgLeveOs5} alt="Leve os 5 Ministérios para sua Igreja" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/10 to-transparent" />
-              <span className="absolute bottom-5 left-6 inline-flex items-center gap-1.5 text-sm font-semibold text-mint drop-shadow">
-                Ver treinamentos
-                <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                  <path d="M10 3a1 1 0 011 1v9.586l3.293-3.293a1 1 0 111.414 1.414l-5 5a1 1 0 01-1.414 0l-5-5a1 1 0 111.414-1.414L9 13.586V4a1 1 0 011-1z" />
-                </svg>
-              </span>
-            </a>
-          </div>
-        </div>
       </section>
 
       {/* ───────────────────────────── Card destaque Apologética ─── */}
@@ -312,9 +280,6 @@ const Cursos = () => {
           </div>
         </div>
       </section>
-
-      {/* ──────────────────────────────────── Treinamentos B2B ─── */}
-      <TrainingFormats />
 
       {/* ──────────────────────────────────── CTA final ─── */}
       <section className="relative py-20 lg:py-28 overflow-hidden">
