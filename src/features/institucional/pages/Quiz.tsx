@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from "react";
-import { useBlocker } from "react-router-dom";
+// useBlocker removido — incompatível com BrowserRouter (requer Data Router)
 import InputMask from "react-input-mask";
 import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
 // @ts-ignore
@@ -357,10 +357,7 @@ const Quiz = () => {
   const churchCtx = getChurchFromURL();
   const isInviteLink = Boolean(churchCtx.churchSlug);
 
-  const blocker = useBlocker(
-    ({ currentLocation, nextLocation }) =>
-      quizStarted && !showResults && currentLocation.pathname !== nextLocation.pathname
-  );
+  // Blocker removido — useBlocker requer Data Router (incompatível com BrowserRouter)
 
   const [churchInfo, setChurchInfo] = useState<{ id?: string; name?: string; slug?: string } | null>(null);
 
@@ -390,8 +387,8 @@ const Quiz = () => {
     return () => { aborted = true; };
   }, [isInviteLink, churchCtx.churchSlug, churchCtx.churchId]);
 
-  const confirmLeave = () => blocker.proceed?.();
-  const cancelLeave = () => blocker.reset?.();
+  const confirmLeave = () => {};
+  const cancelLeave = () => {};
 
   useEffect(() => {
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
@@ -1570,7 +1567,7 @@ const Quiz = () => {
               </div>
             )}
         </div>
-        {blocker.state === "blocked" && (
+        {false && (
           <div className="modal-backdrop">
             <div className="modal">
               <h3>Deseja sair do teste?</h3>
