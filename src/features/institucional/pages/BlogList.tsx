@@ -8,6 +8,8 @@ import {
 } from "../services/blog";
 import PostCard from "../components/blog/PostCard";
 import NewsletterForm from "../components/blog/NewsletterForm";
+import paraLerDesktop from "../assets/images/ParaLer1920.png";
+import paraLerMobile  from "../assets/images/ParaLer800.png";
 
 const PAGE_SIZE = 12;
 
@@ -66,32 +68,40 @@ const BlogList = () => {
       <div className="pointer-events-none absolute inset-0 opacity-[0.035]"
         style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
 
-      {/* ─────────── Hero ─── */}
-      <section className="relative pt-8 sm:pt-10 pb-10 lg:pb-14 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-mint/[0.06] blur-[120px] rounded-full" />
-        </div>
-
-        <div className="relative max-w-5xl mx-auto px-6 lg:px-8 text-center">
-          <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Para Ler
-          </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
-            Leituras para <span className="text-mint">crescer</span> na fé
-          </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate max-w-2xl mx-auto leading-relaxed">
-            Bem-vindo ao seu espaço de reflexão. Pega um café e fica um pouco
-            — toda semana uma nova leitura sobre fé, teologia e ministério para
-            te ajudar a crescer no seu chamado.
-          </p>
-
-          {/* Newsletter — abaixo da descrição, compacto e centralizado */}
-          <div className="mt-8 max-w-md mx-auto">
-            <p className="text-xs text-slate mb-2">Receba as próximas leituras no e-mail</p>
-            <NewsletterForm source="blog_list" compact />
-          </div>
-        </div>
+      {/* ─────────── Hero — imagem principal 1920×480 ─── */}
+      <section className="relative overflow-hidden">
+        <picture>
+          {/* Mobile: imagem 800px (mais alta, melhor proporção em telas pequenas) */}
+          <source media="(max-width: 639px)" srcSet={paraLerMobile} />
+          {/* Desktop/tablet: imagem 1920px panorâmica */}
+          <source media="(min-width: 640px)" srcSet={paraLerDesktop} />
+          <img
+            src={paraLerDesktop}
+            alt="Para Ler — Five One"
+            className="w-full h-auto block"
+          />
+        </picture>
+        {/* Gradiente sutil só na base — transição para o navy */}
+        <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy to-transparent pointer-events-none" />
+        {/* CTA mínimo sobreposto */}
+        <span className="absolute bottom-5 left-6 sm:bottom-7 sm:left-8 text-sm sm:text-base text-mint font-semibold drop-shadow">
+          Ver leituras →
+        </span>
       </section>
+
+      {/* Título + subtítulo + newsletter — abaixo da imagem */}
+      <div className="max-w-3xl mx-auto px-6 py-8 text-center">
+        <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight leading-tight">
+          Leituras para <span className="text-mint">crescer</span> na fé
+        </h1>
+        <p className="mt-3 text-sm sm:text-base text-slate max-w-xl mx-auto leading-relaxed">
+          Toda semana uma nova leitura sobre fé, teologia e ministério para te ajudar a crescer no seu chamado.
+        </p>
+        <div className="mt-6 max-w-md mx-auto">
+          <p className="text-xs text-slate mb-2">Receba as próximas leituras no e-mail</p>
+          <NewsletterForm source="blog_list" compact />
+        </div>
+      </div>
 
       {/* ─────────── Filtros de categoria ─── */}
       <section className="pb-10">
