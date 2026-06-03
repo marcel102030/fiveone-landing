@@ -821,8 +821,40 @@ const Quiz = () => {
   // ===== INTRO SCREEN =====
   if (!quizStarted) {
     return (
-      <section className="quiz-section">
-        <div className="content-container">
+      <section className="quiz-section" style={{ position: 'relative', overflow: 'hidden' }}>
+
+        {/* ── Camada decorativa: ícones dos 5 ministérios no fundo ── */}
+        <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+
+          {/* Orbs de glow mais intensos */}
+          <div style={{ position: 'absolute', top: '-10%', right: '-5%', width: 700, height: 600, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(100,255,218,0.10) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+          <div style={{ position: 'absolute', bottom: '10%', left: '-5%', width: 650, height: 550, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(59,130,246,0.09) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+          <div style={{ position: 'absolute', top: '40%', left: '30%', width: 800, height: 500, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(100,255,218,0.06) 0%, transparent 70%)', filter: 'blur(80px)' }} />
+          <div style={{ position: 'absolute', top: '20%', right: '30%', width: 500, height: 400, borderRadius: '50%', background: 'radial-gradient(ellipse, rgba(201,168,76,0.06) 0%, transparent 70%)', filter: 'blur(60px)' }} />
+
+          {/* Lateral esquerda — ícones empilhados */}
+          <img src={apostoloIcon}    alt="" style={{ position: 'absolute', top: '6%',    left: '2%',   width: 110, opacity: 0.10, filter: 'brightness(0) invert(1)', transform: 'rotate(-12deg)' }} />
+          <img src={evangelistaIcon} alt="" style={{ position: 'absolute', top: '30%',   left: '1%',   width: 90,  opacity: 0.08, filter: 'brightness(0) invert(1)', transform: 'rotate(8deg)'  }} />
+          <img src={mestreIcon}      alt="" style={{ position: 'absolute', top: '58%',   left: '2.5%', width: 100, opacity: 0.09, filter: 'brightness(0) invert(1)', transform: 'rotate(-6deg)' }} />
+          <img src={pastorIcon}      alt="" style={{ position: 'absolute', bottom: '6%', left: '1.5%', width: 85,  opacity: 0.07, filter: 'brightness(0) invert(1)', transform: 'rotate(14deg)' }} />
+
+          {/* Lateral direita — ícones empilhados */}
+          <img src={profetaIcon}     alt="" style={{ position: 'absolute', top: '8%',    right: '2%',   width: 115, opacity: 0.10, filter: 'brightness(0) invert(1)', transform: 'rotate(14deg)'  }} />
+          <img src={pastorIcon}      alt="" style={{ position: 'absolute', top: '34%',   right: '1%',   width: 95,  opacity: 0.08, filter: 'brightness(0) invert(1)', transform: 'rotate(-10deg)' }} />
+          <img src={apostoloIcon}    alt="" style={{ position: 'absolute', top: '62%',   right: '2.5%', width: 100, opacity: 0.09, filter: 'brightness(0) invert(1)', transform: 'rotate(7deg)'   }} />
+          <img src={evangelistaIcon} alt="" style={{ position: 'absolute', bottom: '8%', right: '1.5%', width: 80,  opacity: 0.07, filter: 'brightness(0) invert(1)', transform: 'rotate(-15deg)' }} />
+
+          {/* Centro do fundo — ícones grandes e muito sutis como wallpaper */}
+          <img src={mestreIcon}      alt="" style={{ position: 'absolute', top: '5%',    left: '12%',  width: 220, opacity: 0.035, filter: 'brightness(0) invert(1)', transform: 'rotate(-25deg)' }} />
+          <img src={profetaIcon}     alt="" style={{ position: 'absolute', top: '5%',    right: '12%', width: 200, opacity: 0.03,  filter: 'brightness(0) invert(1)', transform: 'rotate(20deg)'  }} />
+          <img src={evangelistaIcon} alt="" style={{ position: 'absolute', bottom: '5%', left: '14%',  width: 210, opacity: 0.035, filter: 'brightness(0) invert(1)', transform: 'rotate(18deg)'  }} />
+          <img src={apostoloIcon}    alt="" style={{ position: 'absolute', bottom: '5%', right: '13%', width: 200, opacity: 0.03,  filter: 'brightness(0) invert(1)', transform: 'rotate(-22deg)' }} />
+
+          {/* Grid de pontos */}
+          <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle, rgba(100,255,218,0.04) 1px, transparent 1px)', backgroundSize: '40px 40px' }} />
+        </div>
+
+        <div className="content-container" style={{ position: 'relative', zIndex: 1 }}>
           {(churchCtx.churchSlug || churchCtx.churchId) && (
             <div className="church-banner-wrapper">
               <div className="church-banner" role="status" aria-live="polite">
