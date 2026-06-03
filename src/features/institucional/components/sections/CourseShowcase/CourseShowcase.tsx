@@ -100,9 +100,9 @@ const CourseShowcase = () => {
     >
       {/* Gradient sutil de fundo */}
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-mint/[0.04] blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 left-0 w-[500px] h-[300px] bg-golden/[0.03] blur-[120px] rounded-full" />
-        <div className="absolute top-1/2 right-0 w-[350px] h-[350px] bg-mint/[0.03] blur-[100px] rounded-full" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-mint/[0.08] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 left-0 w-[700px] h-[400px] bg-golden/[0.06] blur-[120px] rounded-full" />
+        <div className="absolute top-1/2 right-0 w-[550px] h-[450px] bg-mint/[0.07] blur-[80px] rounded-full" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
@@ -126,7 +126,7 @@ const CourseShowcase = () => {
         {/* Card destaque do curso de Apologética */}
         <article className="relative bg-gradient-to-br from-navy-light to-navy border border-mint/20 rounded-3xl overflow-hidden shadow-card-hover">
           {/* Glow interno */}
-          <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[100px] rounded-full" />
+          <div className="pointer-events-none absolute -top-32 -right-32 w-[400px] h-[400px] bg-mint/10 blur-[80px] rounded-full" />
 
           <div className="relative grid lg:grid-cols-5 gap-0">
             {/* Capa — preenche a coluna inteira (flush), nítida, sem borda vazia. */}

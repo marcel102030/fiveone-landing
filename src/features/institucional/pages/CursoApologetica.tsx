@@ -294,11 +294,11 @@ const CursoApologetica = () => {
         <img src={mestreIcon}      alt="" className="absolute bottom-[15%] right-[2%]  w-12 opacity-[0.06] grayscale" />
       </div>
       <div className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-mint/[0.03] blur-[100px] rounded-full" />
-        <div className="absolute top-2/3 left-0 w-[450px] h-[350px] bg-golden/[0.03] blur-[120px] rounded-full" />
-        <div className="absolute bottom-0 right-1/3 w-[500px] h-[300px] bg-mint/[0.03] blur-[100px] rounded-full" />
+        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-mint/[0.07] blur-[80px] rounded-full" />
+        <div className="absolute top-2/3 left-0 w-[650px] h-[450px] bg-golden/[0.06] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/3 w-[700px] h-[400px] bg-mint/[0.07] blur-[80px] rounded-full" />
       </div>
-      <div className="pointer-events-none absolute inset-0 opacity-[0.02]"
+      <div className="pointer-events-none absolute inset-0 opacity-[0.035]"
         style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
 
       {/* ─────────────────────────────────────────── Hero ─── */}

@@ -108,9 +108,9 @@ export default function FreeContent() {
   return (
     <section className="relative bg-navy py-20 lg:py-28 overflow-hidden">
       <div className="pointer-events-none absolute inset-0">
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-mint/[0.04] blur-[120px] rounded-full" />
-        <div className="absolute -top-10 left-0 w-[450px] h-[300px] bg-mint/[0.03] blur-[100px] rounded-full" />
-        <div className="absolute top-1/3 right-0 w-[350px] h-[350px] bg-blue-500/[0.04] blur-[100px] rounded-full" />
+        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-mint/[0.08] blur-[120px] rounded-full" />
+        <div className="absolute -top-10 left-0 w-[450px] h-[300px] bg-mint/[0.07] blur-[80px] rounded-full" />
+        <div className="absolute top-1/3 right-0 w-[550px] h-[450px] bg-blue-500/[0.07] blur-[80px] rounded-full" />
       </div>
 
       <div className="relative max-w-7xl mx-auto px-6 lg:px-8">
