@@ -40,53 +40,56 @@ const Navbar = () => {
   return (
     <>
       <nav
-        className={`fixed top-0 inset-x-0 z-50 h-[72px] transition-all duration-500 ${
+        className={`fixed top-0 inset-x-0 z-50 h-[76px] transition-all duration-500 ${
           isScrolled
-            ? "bg-[#07101f]/98 backdrop-blur-xl shadow-[0_1px_0_rgba(100,255,218,0.12),0_8px_32px_rgba(0,0,0,0.5)]"
-            : "bg-[#07101f]/80 backdrop-blur-md"
+            ? "bg-[#06101e]/97 backdrop-blur-2xl shadow-[0_8px_40px_rgba(0,0,0,0.45)]"
+            : "bg-[#06101e]/85 backdrop-blur-lg"
         }`}
       >
-        {/* Linha degradê na borda inferior — sempre visível, mais intensa ao rolar */}
+        {/* Linha mint na base — sempre presente, intensifica ao rolar */}
         <div
-          className="absolute inset-x-0 bottom-0 h-px"
-          style={{ background: `linear-gradient(90deg, transparent, rgba(100,255,218,${isScrolled ? '0.3' : '0.12'}), transparent)`, transition: 'opacity 0.5s' }}
+          className="absolute inset-x-0 bottom-0 h-[1.5px] transition-opacity duration-500"
+          style={{
+            background: "linear-gradient(90deg, transparent 0%, rgba(100,255,218,0.4) 30%, rgba(100,255,218,0.7) 50%, rgba(100,255,218,0.4) 70%, transparent 100%)",
+            opacity: isScrolled ? 1 : 0.45,
+          }}
         />
 
-        <div className="relative max-w-7xl mx-auto h-full px-5 lg:px-8 flex items-center">
+        <div className="relative max-w-7xl mx-auto h-full px-6 lg:px-10 flex items-center">
 
-          {/* Logo */}
+          {/* Logo — maior e com glow permanente sutil */}
           <Link
             to="/"
-            className="shrink-0 flex items-center mr-8 xl:mr-12 group"
+            className="shrink-0 flex items-center group"
             onClick={() => setIsMenuOpen(false)}
             aria-label="Ir para a home"
           >
             <img
               src={logoUrl}
               alt="Five One"
-              className="h-10 sm:h-11 w-auto transition-all duration-300 drop-shadow-[0_0_6px_rgba(100,255,218,0.15)] group-hover:drop-shadow-[0_0_12px_rgba(100,255,218,0.45)]"
+              className="h-11 sm:h-12 w-auto transition-all duration-300 drop-shadow-[0_0_8px_rgba(100,255,218,0.2)] group-hover:drop-shadow-[0_0_16px_rgba(100,255,218,0.5)] group-hover:scale-105"
               draggable={false}
             />
           </Link>
 
-          {/* Desktop nav */}
-          <div className="hidden lg:flex items-center gap-0.5 flex-1">
+          {/* Nav items — centralizados absolutamente */}
+          <div className="hidden lg:flex items-center gap-1 absolute left-1/2 -translate-x-1/2">
             {NAV_ITEMS.map((item) => {
               const active = isActive(item.to);
               return (
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`relative px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  className={`relative px-4 py-2 rounded-lg text-sm font-medium tracking-wide transition-all duration-200 ${
                     active
-                      ? "text-mint bg-mint/10"
-                      : "text-slate/80 hover:text-white hover:bg-white/5"
+                      ? "text-mint bg-mint/[0.12] shadow-[inset_0_0_0_1px_rgba(100,255,218,0.15)]"
+                      : "text-slate-light/70 hover:text-white hover:bg-white/[0.06]"
                   }`}
                 >
                   {item.label}
                   {active && (
                     <span
-                      className="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-mint"
+                      className="absolute -bottom-px left-1/2 -translate-x-1/2 w-6 h-px bg-mint rounded-full"
                       aria-hidden
                     />
                   )}
@@ -95,13 +98,15 @@ const Navbar = () => {
             })}
           </div>
 
-          {/* CTA — empurrado para direita */}
-          <div className="hidden lg:flex items-center ml-auto">
+          {/* CTA — fixo à direita */}
+          <div className="hidden lg:flex items-center gap-3 ml-auto">
+            {/* Divider sutil */}
+            <span className="h-5 w-px bg-white/10" aria-hidden />
             <Link
               to="/login-aluno"
-              className="inline-flex items-center gap-2 px-5 py-2.5 bg-mint text-navy text-sm font-bold rounded-full shadow-[0_0_16px_rgba(100,255,218,0.2)] hover:shadow-[0_0_24px_rgba(100,255,218,0.4)] hover:scale-[1.04] active:scale-[0.97] transition-all duration-200"
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-mint text-navy text-sm font-bold rounded-full shadow-[0_0_20px_rgba(100,255,218,0.25)] hover:shadow-[0_0_32px_rgba(100,255,218,0.5)] hover:scale-[1.04] active:scale-[0.97] transition-all duration-200 whitespace-nowrap"
             >
-              <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+              <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
               </svg>
               Alunos Five One
