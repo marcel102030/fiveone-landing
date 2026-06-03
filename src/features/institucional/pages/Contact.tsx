@@ -102,7 +102,17 @@ const Contact = () => {
   };
 
   return (
-    <div className="bg-navy text-slate-light min-h-screen">
+    <div className="bg-navy text-slate-light min-h-screen relative overflow-hidden">
+      {/* Decorações globais */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-mint/[0.04] blur-[120px] rounded-full" />
+        <div className="absolute top-1/3 left-0 w-[400px] h-[350px] bg-blue-500/[0.04] blur-[100px] rounded-full" />
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[300px] bg-golden/[0.03] blur-[120px] rounded-full" />
+        <div className="absolute bottom-1/3 left-0 w-[300px] h-[300px] bg-mint/[0.03] blur-[100px] rounded-full" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]"
+        style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+
       {/* ──────────────────────────────── Hero ─── */}
       <section className="relative pt-8 sm:pt-10 pb-10 lg:pb-12 overflow-hidden">
         <div className="pointer-events-none absolute inset-0">

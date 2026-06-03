@@ -3,6 +3,11 @@ import { Link } from "react-router-dom";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 import CourseWaitlist from "../components/CourseWaitlist";
 import { APOLOGETICA_LAUNCHED } from "../data/courses";
+import apostoloIcon from "../../../assets/images/icons/apostolo.png";
+import profetaIcon from "../../../assets/images/icons/profeta.png";
+import mestreIcon from "../../../assets/images/icons/mestre.png";
+import pastorIcon from "../../../assets/images/icons/pastor.png";
+import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 
 // TODO: substituir por link real do Hotmart quando o produto estiver cadastrado lá
 const HOTMART_CHECKOUT_URL =
@@ -277,7 +282,25 @@ const CursoApologetica = () => {
   };
 
   return (
-    <div className="bg-navy text-slate-light min-h-screen pb-24 lg:pb-0">
+    <div className="bg-navy text-slate-light min-h-screen pb-24 lg:pb-0 relative overflow-hidden">
+      {/* Decorações globais */}
+      <div className="pointer-events-none absolute inset-0 overflow-hidden hidden lg:block">
+        <img src={apostoloIcon}    alt="" className="absolute top-[4%]    left-[1.5%] w-16 opacity-[0.07] grayscale" />
+        <img src={mestreIcon}      alt="" className="absolute top-[28%]   left-[1%]   w-14 opacity-[0.05] grayscale" />
+        <img src={evangelistaIcon} alt="" className="absolute top-[55%]   left-[2%]   w-12 opacity-[0.06] grayscale" />
+        <img src={pastorIcon}      alt="" className="absolute bottom-[10%] left-[1.5%] w-14 opacity-[0.05] grayscale" />
+        <img src={profetaIcon}     alt="" className="absolute top-[10%]   right-[1.5%] w-16 opacity-[0.07] grayscale" />
+        <img src={apostoloIcon}    alt="" className="absolute top-[40%]   right-[1%]   w-14 opacity-[0.05] grayscale" />
+        <img src={mestreIcon}      alt="" className="absolute bottom-[15%] right-[2%]  w-12 opacity-[0.06] grayscale" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute top-1/3 right-0 w-[400px] h-[400px] bg-mint/[0.03] blur-[100px] rounded-full" />
+        <div className="absolute top-2/3 left-0 w-[450px] h-[350px] bg-golden/[0.03] blur-[120px] rounded-full" />
+        <div className="absolute bottom-0 right-1/3 w-[500px] h-[300px] bg-mint/[0.03] blur-[100px] rounded-full" />
+      </div>
+      <div className="pointer-events-none absolute inset-0 opacity-[0.02]"
+        style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
+
       {/* ─────────────────────────────────────────── Hero ─── */}
       <section className="relative pt-8 sm:pt-10 pb-10 lg:pb-14 overflow-hidden">
         <div className="pointer-events-none absolute inset-0">
