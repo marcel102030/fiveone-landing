@@ -113,7 +113,7 @@ const HowItWorks = () => {
                 {step.ctaLabel && step.ctaTo && (
                   <Link
                     to={step.ctaTo}
-                    className="inline-flex items-center gap-1.5 text-sm text-mint font-semibold hover:gap-2.5 transition-all"
+                    className="inline-flex items-center gap-1.5 text-sm text-mint font-semibold hover:gap-2.5 transition-all min-h-[44px] py-2 -my-2"
                   >
                     {step.ctaLabel}
                     <svg className="w-4 h-4" viewBox="0 0 20 20" fill="currentColor" aria-hidden>

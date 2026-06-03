@@ -40,7 +40,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <input
             ref={ref}
             className={[
-              'w-full bg-navy-light border rounded-xl py-2.5 text-slate-white placeholder-slate/60',
+              'w-full bg-navy-light border rounded-xl py-3 text-slate-white placeholder-slate/60',
               'transition-all duration-200 outline-none',
               'focus:border-mint/60 focus:shadow-mint focus:bg-navy-light/80',
               'disabled:opacity-50 disabled:cursor-not-allowed',

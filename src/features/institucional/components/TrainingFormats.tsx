@@ -175,7 +175,7 @@ const TrainingFormats: React.FC = () => {
                 <Link
                   to={card.ctaTo}
                   aria-label={`${card.ctaLabel} – ${card.title}`}
-                  className={`group inline-flex items-center justify-center gap-1.5 w-full px-4 py-2.5 text-sm font-semibold rounded-xl transition-all duration-200 ${
+                  className={`group inline-flex items-center justify-center gap-1.5 w-full px-4 py-3 text-sm font-semibold rounded-xl transition-all duration-200 ${
                     card.featured
                       ? "bg-mint text-navy hover:shadow-mint-strong"
                       : "border border-slate/20 text-slate-light hover:border-mint hover:text-mint"

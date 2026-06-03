@@ -1408,7 +1408,7 @@ const Quiz = () => {
                 <span className="tooltip-share">Instagram</span>
               </a>
               <a
-                href="https://www.tiktok.com/@escola.five.one"
+                href="https://www.tiktok.com/@fiveonemovement"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="tiktok"

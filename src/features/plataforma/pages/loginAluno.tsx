@@ -237,7 +237,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
                 error={tocado.senha && !senha ? " " : undefined}
                 rightIcon={
                   <button type="button" onClick={() => setShowPwd(v => !v)}
-                    className="text-slate hover:text-mint transition-colors" tabIndex={-1}
+                    className="text-slate hover:text-mint transition-colors p-3 -m-3" tabIndex={-1}
                     aria-label={showPwd ? "Ocultar senha" : "Mostrar senha"}>
                     <EyeIcon open={showPwd} />
                   </button>
@@ -264,7 +264,7 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
               </label>
 
               <button type="button" onClick={() => navigate("/esqueci-senha")}
-                className="text-xs sm:text-sm text-mint/80 hover:text-mint transition-colors whitespace-nowrap">
+                className="text-xs sm:text-sm text-mint/80 hover:text-mint transition-colors whitespace-nowrap min-h-[44px] px-1">
                 Esqueceu a senha?
               </button>
             </div>

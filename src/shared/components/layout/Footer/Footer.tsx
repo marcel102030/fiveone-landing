@@ -37,7 +37,7 @@ const Footer = () => (
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={label}
-                className="w-9 h-9 rounded-full bg-slate/10 flex items-center justify-center text-slate hover:bg-mint/15 hover:text-mint transition-colors"
+                className="w-11 h-11 rounded-full bg-slate/10 flex items-center justify-center text-slate hover:bg-mint/15 hover:text-mint transition-colors"
               >
                 <Icon className="w-4 h-4" />
               </a>

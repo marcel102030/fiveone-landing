@@ -658,7 +658,7 @@
   .quiz-section .reset-button {
     width: 100%;
     font-size: 1rem;
-    padding: 0.85rem;
+    padding: 1rem;
     margin-top: 1rem;
   }
 
@@ -1536,7 +1536,7 @@
   .quiz-section .reset-button {
     width: 100%;
     font-size: 1rem;
-    padding: 0.85rem;
+    padding: 1rem;
     margin-top: 1rem;
   }
 
@@ -2516,7 +2516,7 @@
   flex-direction: column;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.85rem 0.6rem;
+  padding: 1rem 0.6rem;
   border-radius: 14px;
   border: 1px solid rgba(100, 255, 218, 0.15);
   background: rgba(17, 34, 64, 0.6);
