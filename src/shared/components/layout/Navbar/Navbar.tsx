@@ -42,33 +42,34 @@ const Navbar = () => {
       <nav
         className={`fixed top-0 inset-x-0 z-50 h-[72px] transition-all duration-500 ${
           isScrolled
-            ? "bg-navy/95 backdrop-blur-xl shadow-[0_1px_0_rgba(100,255,218,0.08),0_4px_24px_rgba(0,0,0,0.4)]"
-            : "bg-navy/60 backdrop-blur-md"
+            ? "bg-[#07101f]/98 backdrop-blur-xl shadow-[0_1px_0_rgba(100,255,218,0.12),0_8px_32px_rgba(0,0,0,0.5)]"
+            : "bg-[#07101f]/80 backdrop-blur-md"
         }`}
       >
-        {/* Linha mint sutil na borda inferior ao rolar */}
+        {/* Linha degradê na borda inferior — sempre visível, mais intensa ao rolar */}
         <div
-          className={`absolute inset-x-0 bottom-0 h-px transition-opacity duration-500 ${
-            isScrolled ? "opacity-100" : "opacity-0"
-          }`}
-          style={{ background: "linear-gradient(90deg, transparent, rgba(100,255,218,0.25), transparent)" }}
+          className="absolute inset-x-0 bottom-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, rgba(100,255,218,${isScrolled ? '0.3' : '0.12'}), transparent)`, transition: 'opacity 0.5s' }}
         />
 
         <div className="relative max-w-7xl mx-auto h-full px-5 lg:px-8 flex items-center">
 
-          {/* Logo com glow sutil */}
+          {/* Logo + nome */}
           <Link
             to="/"
-            className="shrink-0 flex items-center mr-8 xl:mr-12 group"
+            className="shrink-0 flex items-center gap-3 mr-8 xl:mr-12 group"
             onClick={() => setIsMenuOpen(false)}
             aria-label="Ir para a home"
           >
             <img
               src={logoUrl}
               alt="Five One"
-              className="h-9 sm:h-10 w-auto transition-all duration-300 group-hover:drop-shadow-[0_0_8px_rgba(100,255,218,0.4)]"
+              className="h-10 sm:h-11 w-auto transition-all duration-300 drop-shadow-[0_0_6px_rgba(100,255,218,0.15)] group-hover:drop-shadow-[0_0_12px_rgba(100,255,218,0.45)]"
               draggable={false}
             />
+            <span className="hidden sm:block text-white font-bold text-base tracking-tight leading-none">
+              Five One
+            </span>
           </Link>
 
           {/* Desktop nav */}
