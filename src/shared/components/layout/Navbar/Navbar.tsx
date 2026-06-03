@@ -54,10 +54,10 @@ const Navbar = () => {
 
         <div className="relative max-w-7xl mx-auto h-full px-5 lg:px-8 flex items-center">
 
-          {/* Logo + nome */}
+          {/* Logo */}
           <Link
             to="/"
-            className="shrink-0 flex items-center gap-3 mr-8 xl:mr-12 group"
+            className="shrink-0 flex items-center mr-8 xl:mr-12 group"
             onClick={() => setIsMenuOpen(false)}
             aria-label="Ir para a home"
           >
@@ -67,9 +67,6 @@ const Navbar = () => {
               className="h-10 sm:h-11 w-auto transition-all duration-300 drop-shadow-[0_0_6px_rgba(100,255,218,0.15)] group-hover:drop-shadow-[0_0_12px_rgba(100,255,218,0.45)]"
               draggable={false}
             />
-            <span className="hidden sm:block text-white font-bold text-base tracking-tight leading-none">
-              Five One
-            </span>
           </Link>
 
           {/* Desktop nav */}
