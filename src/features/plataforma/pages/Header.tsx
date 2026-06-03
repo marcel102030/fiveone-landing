@@ -139,54 +139,64 @@ const Header = () => {
       {/* safe-area-top: no iPhone PWA (standalone) a status bar sobrepõe o header.
           padding-top com env(safe-area-inset-top) empurra o conteúdo para baixo da notch. */}
       <header
-        className="sticky top-0 z-50 bg-navy/95 backdrop-blur-sm border-b border-slate/10 shadow-card"
+        className="sticky top-0 z-50 bg-[#06101e]/95 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.4)] relative"
         style={{ paddingTop: 'env(safe-area-inset-top)' }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16">
+        {/* Linha mint na base */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-[1.5px] pointer-events-none"
+          style={{ background: "linear-gradient(90deg, transparent 0%, rgba(100,255,218,0.35) 30%, rgba(100,255,218,0.6) 50%, rgba(100,255,218,0.35) 70%, transparent 100%)" }}
+        />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between h-[72px]">
 
           {/* ── Logo ── */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-4">
             <button
               onClick={onLogoClick}
-              className="flex-shrink-0 transition-opacity hover:opacity-80"
+              className="flex-shrink-0 group"
               aria-label="Ir para o início"
             >
-              <img src={logoSmall} alt="Logo Five One" className="h-8 w-auto" />
+              <img
+                src={logoSmall}
+                alt="Logo Five One"
+                className="h-9 w-auto transition-all duration-300 drop-shadow-[0_0_6px_rgba(100,255,218,0.15)] group-hover:drop-shadow-[0_0_14px_rgba(100,255,218,0.5)] group-hover:scale-105"
+              />
             </button>
 
+            {/* Divisor sutil */}
+            <span className="hidden md:block h-5 w-px bg-white/10" aria-hidden />
+
             {/* ── Navegação desktop ── */}
-            <nav className="hidden md:flex items-center gap-1 ml-4">
-              {navLinks.map((link) =>
-                link.internal ? (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    className="px-3 py-2 text-sm text-slate hover:text-mint rounded-lg transition-colors"
-                  >
+            <nav className="hidden md:flex items-center gap-0.5">
+              {navLinks.map((link) => {
+                const isActive = link.internal && location.pathname === link.to
+                const cls = `relative px-3.5 py-2 rounded-lg text-sm font-medium tracking-wide transition-all duration-200 ${
+                  isActive
+                    ? "text-mint bg-mint/[0.12] shadow-[inset_0_0_0_1px_rgba(100,255,218,0.15)]"
+                    : "text-slate-light/70 hover:text-white hover:bg-white/[0.06]"
+                }`
+                return link.internal ? (
+                  <Link key={link.to} to={link.to} className={cls}>
                     {link.label}
+                    {isActive && <span className="absolute -bottom-px left-1/2 -translate-x-1/2 w-5 h-px bg-mint rounded-full" aria-hidden />}
                   </Link>
                 ) : (
-                  <a
-                    key={link.to}
-                    href={link.to}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-2 text-sm text-slate hover:text-mint rounded-lg transition-colors"
-                  >
+                  <a key={link.to} href={link.to} target="_blank" rel="noopener noreferrer" className={cls}>
                     {link.label}
                   </a>
                 )
-              )}
+              })}
             </nav>
           </div>
 
           {/* ── Ações direita ── */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
 
             {/* Botão busca */}
             <button
               onClick={() => setSearchOpen(true)}
-              className="p-2 text-slate hover:text-mint hover:bg-mint/10 rounded-lg transition-colors"
+              className="p-2.5 text-slate-light/60 hover:text-mint hover:bg-mint/10 rounded-lg transition-all duration-200"
               aria-label="Buscar aulas"
               title="Buscar aulas (Ctrl+K)"
             >
@@ -196,24 +206,27 @@ const Header = () => {
             {/* Favoritos */}
             <Link
               to="/favoritos"
-              className="hidden sm:flex p-2 text-slate hover:text-mint hover:bg-mint/10 rounded-lg transition-colors"
+              className="hidden sm:flex p-2.5 text-slate-light/60 hover:text-mint hover:bg-mint/10 rounded-lg transition-all duration-200"
               aria-label="Minhas aulas favoritas"
               title="Favoritos"
             >
               <HeartIcon />
             </Link>
 
+            {/* Divisor */}
+            <span className="hidden sm:block h-5 w-px bg-white/10 mx-1" aria-hidden />
+
             {/* ── Dropdown de perfil ── */}
             <div className="relative" ref={dropdownRef}>
               <button
                 onClick={() => setDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:bg-navy-lighter transition-colors"
+                className="flex items-center gap-2 px-2 py-1.5 rounded-xl hover:bg-white/[0.06] transition-all duration-200 group"
                 aria-haspopup="true"
                 aria-expanded={isDropdownOpen}
                 aria-label="Abrir menu do perfil"
               >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full overflow-hidden bg-mint/20 border border-mint/30 flex items-center justify-center flex-shrink-0">
+                <div className="w-8 h-8 rounded-full overflow-hidden bg-mint/20 border border-mint/40 flex items-center justify-center flex-shrink-0 shadow-[0_0_8px_rgba(100,255,218,0.2)] group-hover:border-mint/60 transition-all duration-200">
                   {avatarUrl ? (
                     <img src={avatarUrl} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
@@ -296,14 +309,16 @@ const Header = () => {
 
             {/* ── Hamburger mobile ── */}
             <button
-              className="md:hidden flex flex-col gap-1.5 p-2 rounded-lg hover:bg-navy-lighter transition-colors"
+              className="md:hidden w-10 h-10 flex items-center justify-center rounded-lg hover:bg-mint/10 transition-colors"
               aria-label={isMenuOpen ? 'Fechar menu' : 'Abrir menu'}
               aria-expanded={isMenuOpen}
               onClick={() => setMenuOpen((v) => !v)}
             >
-              <span className={`block w-5 h-0.5 bg-slate-light transition-all duration-300 ${isMenuOpen ? 'rotate-45 translate-y-2' : ''}`} />
-              <span className={`block w-5 h-0.5 bg-slate-light transition-all duration-300 ${isMenuOpen ? 'opacity-0' : ''}`} />
-              <span className={`block w-5 h-0.5 bg-slate-light transition-all duration-300 ${isMenuOpen ? '-rotate-45 -translate-y-2' : ''}`} />
+              <span className="flex flex-col gap-[5px]">
+                <span className={`block w-5 h-0.5 bg-mint transition-all duration-300 origin-center ${isMenuOpen ? 'translate-y-[7px] rotate-45' : ''}`} />
+                <span className={`block w-5 h-0.5 bg-mint transition-opacity duration-300 ${isMenuOpen ? 'opacity-0' : 'opacity-100'}`} />
+                <span className={`block w-5 h-0.5 bg-mint transition-all duration-300 origin-center ${isMenuOpen ? '-translate-y-[7px] -rotate-45' : ''}`} />
+              </span>
             </button>
           </div>
         </div>
