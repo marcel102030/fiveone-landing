@@ -134,17 +134,20 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
 
   const remainingAttempts = Math.max(0, MAX_ATTEMPTS - attempts);
 
-  // Detecta browser interno (Gmail, WebView, etc.) — sem suporte a PWA
+  // Detecta quando o usuário veio por link de email (from_email=1)
+  // OU está em browser interno sem suporte a PWA
   const isInAppBrowser = typeof window !== 'undefined' && (() => {
+    // Veio pelo link do email — CCT do Gmail tem Chrome no UA mas não instala PWA
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('from_email') === '1') return true;
+    // Outros browsers internos detectáveis por UA
     const ua = navigator.userAgent;
     return (
-      ua.includes('wv') ||           // Android WebView
-      ua.includes('GSA') ||          // Gmail no Android/iOS
-      ua.includes('FBAN') ||         // Facebook
-      ua.includes('FBAV') ||         // Facebook
-      ua.includes('Instagram') ||
-      ua.includes('Line') ||
-      (ua.includes('Android') && !ua.includes('Chrome/') && !ua.includes('Firefox'))
+      ua.includes('wv') ||       // Android WebView puro
+      ua.includes('GSA') ||      // Gmail Search App (iOS)
+      ua.includes('FBAN') ||     // Facebook
+      ua.includes('FBAV') ||     // Facebook
+      ua.includes('Instagram')
     );
   })();
 
