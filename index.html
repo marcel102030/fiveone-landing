@@ -18,7 +18,17 @@
   <link rel="manifest" href="/site.webmanifest?v=3" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- PWA -->
+  <!-- PWA: captura beforeinstallprompt globalmente e suprime o banner nativo.
+       O prompt é guardado em window.__pwaPrompt e só ativado pela plataforma
+       quando o usuário estiver logado em escolafiveone.com -->
+  <script>
+    window.__pwaPrompt = null;
+    window.addEventListener('beforeinstallprompt', function(e) {
+      e.preventDefault(); // impede o banner nativo do browser
+      window.__pwaPrompt = e; // guarda para uso posterior pela plataforma
+    });
+  </script>
+
   <meta name="theme-color" content="#0a192f" />
   <meta name="application-name" content="Five One" />
   <meta name="description" content="Movimento Five One — cursos bíblicos com fundamento teológico, treinamentos dos 5 Ministérios e o Teste dos 5 Ministérios." />

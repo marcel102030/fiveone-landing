@@ -21,11 +21,9 @@ function detectDevice(): DeviceType {
   const ua = navigator.userAgent;
   const isIOS = /iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream;
   if (isIOS) {
-    const isChrome = /CriOS/.test(ua);
-    return isChrome ? 'ios-chrome' : 'ios-safari';
+    return /CriOS/.test(ua) ? 'ios-chrome' : 'ios-safari';
   }
-  const isAndroid = /Android/.test(ua);
-  return isAndroid ? 'android' : 'desktop';
+  return /Android/.test(ua) ? 'android' : 'desktop';
 }
 
 function isAlreadyInstalled(): boolean {
@@ -42,9 +40,7 @@ function wasDismissedRecently(): boolean {
     if (!stored) return false;
     const days = (Date.now() - parseInt(stored, 10)) / (1000 * 60 * 60 * 24);
     return days < DISMISS_DAYS;
-  } catch {
-    return false;
-  }
+  } catch { return false; }
 }
 
 export function usePWAInstall(): PWAInstallResult {
@@ -57,33 +53,40 @@ export function usePWAInstall(): PWAInstallResult {
     typeof window !== 'undefined' && window.location.hostname === 'escolafiveone.com';
 
   useEffect(() => {
-    if (isInstalled) {
-      setInstallState('installed');
-      return;
-    }
+    if (isInstalled) { setInstallState('installed'); return; }
+    if (wasDismissedRecently()) { setInstallState('dismissed'); return; }
 
-    if (wasDismissedRecently()) {
-      setInstallState('dismissed');
-      return;
-    }
-
-    // iOS: não tem beforeinstallprompt, mas pode mostrar instrução manual
+    // iOS não tem beforeinstallprompt — instrução manual
     if (deviceType === 'ios-safari' || deviceType === 'ios-chrome') {
       setInstallState('available');
       return;
     }
 
+    // Lê o prompt capturado globalmente no index.html (antes do React carregar)
+    // Isso garante que o banner nativo do browser NÃO apareceu
+    const checkPrompt = () => {
+      const globalPrompt = (window as any).__pwaPrompt;
+      if (globalPrompt) {
+        setDeferredPrompt(globalPrompt);
+        setInstallState('available');
+      }
+    };
+
+    checkPrompt();
+
+    // Também ouve novos eventos (caso a página recarregue)
     const handler = (e: Event) => {
       e.preventDefault();
+      (window as any).__pwaPrompt = e;
       setDeferredPrompt(e);
       setInstallState('available');
     };
-
     window.addEventListener('beforeinstallprompt', handler);
 
     window.addEventListener('appinstalled', () => {
       setInstallState('installed');
       setDeferredPrompt(null);
+      (window as any).__pwaPrompt = null;
     });
 
     return () => window.removeEventListener('beforeinstallprompt', handler);
@@ -94,34 +97,21 @@ export function usePWAInstall(): PWAInstallResult {
     setInstallState('installing');
     deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setInstallState('installed');
-    } else {
-      setInstallState('available');
-    }
+    setInstallState(outcome === 'accepted' ? 'installed' : 'available');
     setDeferredPrompt(null);
+    (window as any).__pwaPrompt = null;
   };
 
   const dismissBanner = () => {
-    try {
-      localStorage.setItem(DISMISS_KEY, String(Date.now()));
-    } catch {}
+    try { localStorage.setItem(DISMISS_KEY, String(Date.now())); } catch {}
     setInstallState('dismissed');
   };
 
   const canShowBanner =
     isEscolaFiveOne &&
     !isInstalled &&
-    (installState === 'available') &&
+    installState === 'available' &&
     !wasDismissedRecently();
 
-  return {
-    installState,
-    deviceType,
-    isInstalled,
-    isEscolaFiveOne,
-    canShowBanner,
-    triggerInstall,
-    dismissBanner,
-  };
+  return { installState, deviceType, isInstalled, isEscolaFiveOne, canShowBanner, triggerInstall, dismissBanner };
 }
