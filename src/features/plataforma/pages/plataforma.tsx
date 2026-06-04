@@ -1,4 +1,5 @@
 import Header from './Header'
+import { PWAInstallBanner } from '../components/PWAInstallBanner'
 import { Link, useNavigate } from 'react-router-dom'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { getCurrentUserId } from '../../../shared/utils/user'
@@ -395,6 +396,8 @@ const PaginaInicial = () => {
   return (
     <>
       <Header />
+      {/* Banner de instalação PWA — só aparece em escolafiveone.com para usuários logados */}
+      <PWAInstallBanner />
 
       <main id="inicio" className="min-h-screen bg-navy relative overflow-x-hidden">
         {/* ── FUNDO DECORATIVO GLOBAL ─────────────────────────────────────── */}

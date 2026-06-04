@@ -2,6 +2,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useState, useEffect, useRef, lazy, Suspense } from 'react'
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile'
 import { useAuth } from '../../../shared/contexts/AuthContext'
+import { PWAInstallMenuItem } from '../components/PWAInstallBanner'
 
 const logoSmall = '/assets/images/logo-fiveone-white-small.png'
 
@@ -293,6 +294,9 @@ const Header = () => {
                       <AwardIcon />
                       Meus certificados
                     </Link>
+                    {/* Instalar app PWA — só aparece em escolafiveone.com */}
+                    <PWAInstallMenuItem onClose={() => setDropdownOpen(false)} />
+
                     <div className="border-t border-slate/10 mt-1 pt-1">
                       <button
                         onClick={() => void handleSignOut()}
