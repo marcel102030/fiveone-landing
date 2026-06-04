@@ -96,7 +96,25 @@ export const onRequest = async (ctx: {
 
   // ── escolafiveone.com → só serve rotas da plataforma ──────────────────────
   if (url.hostname === "escolafiveone.com") {
+    // Arquivos estáticos na raiz — sempre permitidos (ícones, manifest, favicons, etc.)
+    const isStaticFile =
+      path === "/" ||
+      path.endsWith(".png") ||
+      path.endsWith(".jpg") ||
+      path.endsWith(".ico") ||
+      path.endsWith(".svg") ||
+      path.endsWith(".webmanifest") ||
+      path.endsWith(".json") ||
+      path.endsWith(".txt") ||
+      path.endsWith(".xml") ||
+      path.endsWith(".js") ||
+      path.endsWith(".css") ||
+      path.endsWith(".woff") ||
+      path.endsWith(".woff2") ||
+      path.endsWith(".ttf");
+
     const isPlataformaPath =
+      isStaticFile ||
       path.startsWith("/plataforma") ||
       path.startsWith("/login-aluno") ||
       path.startsWith("/esqueci-senha") ||
@@ -116,6 +134,7 @@ export const onRequest = async (ctx: {
       path.startsWith("/assets/") ||
       path.startsWith("/blog/") ||
       path.startsWith("/rede/");
+
     if (!isPlataformaPath) {
       return Response.redirect(new URL("/plataforma", request.url).toString(), 302);
     }
