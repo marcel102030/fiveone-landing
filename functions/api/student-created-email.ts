@@ -60,9 +60,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       return new Response(JSON.stringify({ ok: false, error: "Missing RESEND_API_KEY env" }), { status: 500, headers: { "content-type": "application/json", ...CORS } });
     }
 
-    // from_email=1 detectado na página de login para mostrar aviso
-    // de abrir no Chrome (CCT do Gmail tem Chrome no UA mas não suporta PWA install)
-    const loginUrl = withUtm(`https://escolafiveone.com/login-aluno`) + '&from_email=1';
+    const loginUrl = withUtm(`https://escolafiveone.com/login-aluno`);
 
     const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Escola Five One <no-reply@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
