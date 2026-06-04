@@ -13,10 +13,11 @@ type Env = AdminAuthEnv & {
 };
 
 type Payload = {
-  to: string; // e-mail do aluno
+  to: string;
   name?: string | null;
-  user: string; // normalmente o próprio e-mail
-  password: string; // senha inicial
+  user: string;
+  password: string;
+  course?: string | null; // nome do curso matriculado
 };
 
 const CORS = {
@@ -49,6 +50,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     const user = String(body?.user || "").trim();
     const password = String(body?.password || "").trim();
     const name = (body?.name || "").toString().trim();
+    const course = (body?.course || "Defenda a sua Fé").toString().trim();
 
     if (!to || !user || !password) {
       return new Response(JSON.stringify({ ok: false, error: "Missing to, user or password" }), { status: 400, headers: { "content-type": "application/json", ...CORS } });
@@ -58,15 +60,18 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       return new Response(JSON.stringify({ ok: false, error: "Missing RESEND_API_KEY env" }), { status: 500, headers: { "content-type": "application/json", ...CORS } });
     }
 
-    const site = env.SITE_URL || `https://${request.headers.get("host")}`;
-    const loginUrl = withUtm(`${site}/login-aluno`);
+    // Sempre aponta para escolafiveone.com — link definitivo da plataforma
+    const loginUrl = withUtm(`https://escolafiveone.com/login-aluno`);
 
-    const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Five One <no-reply@fiveonemovement.com>";
+    const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Escola Five One <no-reply@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
 
-    const subject = "Bem-vindo à plataforma Five One — suas credenciais";
-    const html = renderHtml({ name, user, password, loginUrl, site });
-    const text = renderText({ name, user, password, loginUrl });
+    const firstName = name.split(" ")[0] || name;
+    const subject = firstName
+      ? `${firstName}, sua jornada em "${course}" começa agora — Escola Five One`
+      : `Sua jornada em "${course}" começa agora — Escola Five One`;
+    const html = renderHtml({ name, user, password, loginUrl, course });
+    const text = renderText({ name, user, password, loginUrl, course });
 
     const r = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -83,64 +88,143 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   }
 };
 
-function renderHtml({ name, user, password, loginUrl, site }: { name?: string | null; user: string; password: string; loginUrl: string; site: string }) {
-  const preheader = "Seu acesso à plataforma Five One";
-  const greeting = name && name.trim() ? `Olá, ${escapeHtml(name.trim())}!` : "Olá!";
-  const logo = `${site.replace(/\/$/, "")}/favicon.svg`;
-  return `
-  <div style="font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, Helvetica, sans-serif; max-width:640px; margin:0 auto; color:#0f172a;">
-    <div style="display:none; visibility:hidden; opacity:0; height:0; overflow:hidden; color:transparent; line-height:0; max-height:0;">${escapeHtml(preheader)}</div>
-    <div style="text-align:center; padding:18px 0 6px;">
-      <img src="${logo}" alt="Five One" style="height:48px; width:auto;" />
-    </div>
-    <div style="background:#0b1220; padding:22px 18px; border-radius:14px; color:#e7f2f9;">
-      <h1 style="margin:0 0 4px; font-size:22px;">Bem-vindo à Five One</h1>
-      <p style="margin:0; color:#a8c5db;">${greeting} Seu acesso foi criado com sucesso.</p>
-    </div>
+function renderHtml({ name, user, password, loginUrl, course }: { name?: string | null; user: string; password: string; loginUrl: string; course: string }) {
+  const preheader = `Seu acesso à Escola Five One — ${course} está pronto!`;
+  const firstName = (name || "").trim().split(" ")[0];
+  const greeting = firstName ? escapeHtml(firstName) : "Aluno(a)";
+  const NAVY = "#07101f";
+  const NAVY2 = "#0d1f3c";
+  const MINT = "#64ffda";
+  const yr = new Date().getFullYear();
 
-    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px; border-collapse:separate; border:1px solid #e2e8f0; border-radius:12px;">
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Bem-vindo à Escola Five One</title></head>
+<body style="margin:0;padding:0;background:#f0f4f8;font-family:Inter,system-ui,-apple-system,Arial,sans-serif;">
+
+<!-- Preheader oculto -->
+<div style="display:none;max-height:0;overflow:hidden;color:transparent;">${escapeHtml(preheader)}</div>
+
+<!-- Wrapper -->
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f0f4f8;padding:32px 16px;">
+<tr><td align="center">
+<table role="presentation" width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
+
+  <!-- HEADER — dark com logo -->
+  <tr><td style="background:${NAVY};border-radius:16px 16px 0 0;padding:32px 40px 24px;text-align:center;">
+    <img src="https://escolafiveone.com/assets/images/logo-fiveone-white.png"
+         alt="Five One" height="48" style="height:48px;width:auto;display:inline-block;" />
+    <p style="margin:12px 0 0;color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">Escola Five One</p>
+  </td></tr>
+
+  <!-- HERO — gradiente com boas-vindas -->
+  <tr><td style="background:linear-gradient(135deg,${NAVY2} 0%,#0a1628 100%);padding:40px 40px 32px;text-align:center;border-left:1px solid rgba(100,255,218,0.08);border-right:1px solid rgba(100,255,218,0.08);">
+    <div style="display:inline-block;background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.25);border-radius:100px;padding:6px 16px;margin-bottom:20px;">
+      <span style="color:${MINT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">Acesso criado com sucesso</span>
+    </div>
+    <h1 style="margin:0 0 12px;color:#ffffff;font-size:28px;font-weight:800;line-height:1.2;">
+      Bem-vindo(a),<br/><span style="color:${MINT};">${greeting}!</span>
+    </h1>
+    <p style="margin:0;color:rgba(255,255,255,0.65);font-size:15px;line-height:1.6;max-width:420px;display:inline-block;">
+      Sua conta na Escola Five One foi criada e você já está matriculado(a) no curso
+    </p>
+    <!-- Curso destaque -->
+    <div style="margin:20px auto 0;background:rgba(100,255,218,0.07);border:1px solid rgba(100,255,218,0.2);border-radius:12px;padding:14px 20px;max-width:340px;">
+      <p style="margin:0;color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;">Seu curso</p>
+      <p style="margin:0;color:${MINT};font-size:18px;font-weight:700;">${escapeHtml(course)}</p>
+    </div>
+  </td></tr>
+
+  <!-- CREDENCIAIS -->
+  <tr><td style="background:#ffffff;padding:32px 40px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
+    <p style="margin:0 0 20px;color:#374151;font-size:15px;font-weight:600;">Suas credenciais de acesso:</p>
+
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
       <tr>
-        <td style="padding:14px 16px;">
-          <div style="font-weight:700; margin-bottom:6px;">Suas credenciais</div>
-          <div style="display:grid; gap:6px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;">
-            <div><span style="color:#64748b">Usuário:</span> ${escapeHtml(user)}</div>
-            <div><span style="color:#64748b">Senha:</span> ${escapeHtml(password)}</div>
-          </div>
-          <p style="margin-top:10px; color:#475569; font-size:14px;">Guarde estas informações com segurança. Você pode alterar a senha após o primeiro acesso.</p>
-          <div style="margin-top:12px;">
-            <a href="${loginUrl}" style="background:#64ffda; color:#0a192f; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; font-weight:600; display:inline-block; min-height:44px; line-height:20px;">Acessar a plataforma</a>
-          </div>
+        <td style="padding:14px 20px;border-bottom:1px solid #e5e7eb;">
+          <p style="margin:0;color:#6b7280;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">Usuário</p>
+          <p style="margin:0;color:#111827;font-size:15px;font-family:ui-monospace,monospace;">${escapeHtml(user)}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:14px 20px;">
+          <p style="margin:0;color:#6b7280;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">Senha inicial</p>
+          <p style="margin:0;color:#111827;font-size:15px;font-family:ui-monospace,monospace;letter-spacing:0.05em;">${escapeHtml(password)}</p>
         </td>
       </tr>
     </table>
 
-    <div style="margin-top:16px;">
-      <div style="font-weight:700; margin-bottom:6px;">Dicas</div>
-      <ul style="margin:0; padding-left:18px; color:#475569; line-height:1.6;">
-        <li>Depois de entrar, procure a opção de alterar a senha.</li>
-        <li>Se não reconhece este e-mail, ignore esta mensagem.</li>
-      </ul>
-    </div>
+    <p style="margin:16px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">
+      🔒 Guarde com segurança. Recomendamos alterar sua senha após o primeiro acesso.
+    </p>
 
-    <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© ${new Date().getFullYear()} Five One — Todos os direitos reservados</p>
-  </div>`;
+    <!-- CTA -->
+    <div style="text-align:center;margin-top:28px;">
+      <a href="${loginUrl}"
+         style="display:inline-block;background:${MINT};color:${NAVY};text-decoration:none;padding:15px 36px;border-radius:100px;font-size:15px;font-weight:800;letter-spacing:0.02em;min-width:200px;">
+        Acessar a Escola Five One →
+      </a>
+      <p style="margin:12px 0 0;color:#9ca3af;font-size:12px;">escolafiveone.com</p>
+    </div>
+  </td></tr>
+
+  <!-- PRÓXIMOS PASSOS -->
+  <tr><td style="background:#f9fafb;padding:28px 40px;border:1px solid #e5e7eb;">
+    <p style="margin:0 0 16px;color:#374151;font-size:14px;font-weight:700;">O que fazer agora:</p>
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">1.</span>Acesse <strong>escolafiveone.com</strong> e faça seu login
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">2.</span>Vá em <strong>Perfil</strong> e altere sua senha
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">3.</span>Acesse o curso <strong>${escapeHtml(course)}</strong> e comece sua jornada
+        </td>
+      </tr>
+    </table>
+  </td></tr>
+
+  <!-- FOOTER -->
+  <tr><td style="background:${NAVY};border-radius:0 0 16px 16px;padding:24px 40px;text-align:center;">
+    <p style="margin:0 0 8px;color:rgba(255,255,255,0.4);font-size:12px;">Se não reconhece este e-mail, ignore esta mensagem.</p>
+    <p style="margin:0;color:rgba(255,255,255,0.25);font-size:11px;">© ${yr} Five One — Todos os direitos reservados</p>
+  </td></tr>
+
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
 }
 
-function renderText({ name, user, password, loginUrl }: { name?: string | null; user: string; password: string; loginUrl: string }) {
-  const head = "Bem-vindo à plataforma Five One — suas credenciais";
-  const hello = name && name.trim() ? `Olá, ${name.trim()}!` : "Olá!";
+function renderText({ name, user, password, loginUrl, course }: { name?: string | null; user: string; password: string; loginUrl: string; course: string }) {
+  const firstName = (name || "").trim().split(" ")[0] || "Aluno(a)";
   return [
-    head,
+    `Bem-vindo(a) à Escola Five One, ${firstName}!`,
     "",
-    hello,
-    "Seu acesso foi criado com sucesso.",
+    `Seu acesso ao curso "${course}" foi criado com sucesso.`,
     "",
+    "SUAS CREDENCIAIS:",
     `Usuário: ${user}`,
     `Senha: ${password}`,
     "",
     `Acessar: ${loginUrl}`,
     "",
-    "Guarde estas informações e altere a senha após o primeiro login.",
+    "PRÓXIMOS PASSOS:",
+    "1. Acesse escolafiveone.com e faça seu login",
+    "2. Vá em Perfil e altere sua senha",
+    `3. Acesse o curso "${course}" e comece sua jornada`,
+    "",
+    "Guarde suas credenciais com segurança.",
+    "Se não reconhece este e-mail, ignore esta mensagem.",
+    "",
+    `© ${new Date().getFullYear()} Five One — Todos os direitos reservados`,
   ].join("\n");
 }
 

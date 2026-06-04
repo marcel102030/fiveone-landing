@@ -145,10 +145,21 @@ export default function AdminAlunos() {
         const { data: { session } } = await supabase.auth.getSession();
         const headers: Record<string, string> = { 'content-type': 'application/json' };
         if (session?.access_token) headers['Authorization'] = `Bearer ${session.access_token}`;
+        // Monta nome legível do curso para o email
+        const courseLabels: Record<string, string> = {
+          APOSTOLO: 'Defenda a sua Fé',
+          PROFETA: 'Defenda a sua Fé',
+          EVANGELISTA: 'Defenda a sua Fé',
+          PASTOR: 'Defenda a sua Fé',
+          MESTRE: 'Defenda a sua Fé',
+        };
+        const courseId = (newCourseIds[0] || form.formation || '') as string;
+        const courseLabel = courseLabels[courseId?.toUpperCase()] || 'Defenda a sua Fé';
+
         await fetch('/api/student-created-email', {
           method: 'POST',
           headers,
-          body: JSON.stringify({ to: form.email, name: form.name, user: form.email, password: form.password }),
+          body: JSON.stringify({ to: form.email, name: form.name, user: form.email, password: form.password, course: courseLabel }),
         });
       } catch (e) {
         console.error('Falha ao enviar e-mail de credenciais', e);
