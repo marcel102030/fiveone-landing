@@ -112,7 +112,7 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
 
   <!-- HEADER — dark com logo -->
   <tr><td style="background:${NAVY};border-radius:16px 16px 0 0;padding:32px 40px 24px;text-align:center;">
-    <img src="https://escolafiveone.com/assets/images/logo-fiveone-white.png"
+    <img src="https://fiveonemovement.com/pwa-icon-192.png"
          alt="Five One" height="48" style="height:48px;width:auto;display:inline-block;" />
     <p style="margin:12px 0 0;color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">Escola Five One</p>
   </td></tr>
