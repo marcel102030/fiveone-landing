@@ -110,62 +110,69 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
 <tr><td align="center">
 <table role="presentation" width="100%" style="max-width:600px;" cellpadding="0" cellspacing="0">
 
-  <!-- HEADER — dark com logo -->
-  <tr><td style="background:${NAVY};border-radius:16px 16px 0 0;padding:32px 40px 24px;text-align:center;">
+  <!-- HEADER — bgcolor attribute garante cor em todos os clientes de email -->
+  <tr><td bgcolor="${NAVY}" style="background:${NAVY};border-radius:16px 16px 0 0;padding:28px 40px 20px;text-align:center;">
     <img src="https://fiveonemovement.com/pwa-icon-192.png"
-         alt="Five One" height="48" style="height:48px;width:auto;display:inline-block;" />
-    <p style="margin:12px 0 0;color:rgba(255,255,255,0.5);font-size:11px;letter-spacing:0.18em;text-transform:uppercase;">Escola Five One</p>
+         alt="Five One" height="52" style="height:52px;width:52px;display:inline-block;border-radius:10px;" />
+    <p style="margin:10px 0 0;color:#9ecfeb;font-size:11px;letter-spacing:0.2em;text-transform:uppercase;font-weight:600;">Escola Five One</p>
   </td></tr>
 
-  <!-- HERO — gradiente com boas-vindas -->
-  <tr><td style="background:linear-gradient(135deg,${NAVY2} 0%,#0a1628 100%);padding:40px 40px 32px;text-align:center;border-left:1px solid rgba(100,255,218,0.08);border-right:1px solid rgba(100,255,218,0.08);">
-    <div style="display:inline-block;background:rgba(100,255,218,0.1);border:1px solid rgba(100,255,218,0.25);border-radius:100px;padding:6px 16px;margin-bottom:20px;">
-      <span style="color:${MINT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">Acesso criado com sucesso</span>
-    </div>
-    <h1 style="margin:0 0 12px;color:#ffffff;font-size:28px;font-weight:800;line-height:1.2;">
-      Bem-vindo(a),<br/><span style="color:${MINT};">${greeting}!</span>
+  <!-- HERO — bgcolor sólido como fallback (gradiente não funciona em todos os clientes) -->
+  <tr><td bgcolor="${NAVY2}" style="background:${NAVY2};padding:36px 32px 28px;text-align:center;">
+    <!-- Badge -->
+    <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
+      <tr><td bgcolor="#0d2a3a" style="background:#0d2a3a;border:1px solid #1a5a6e;border-radius:100px;padding:6px 18px;">
+        <span style="color:${MINT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">✓ Acesso criado com sucesso</span>
+      </td></tr>
+    </table>
+    <!-- Título -->
+    <h1 style="margin:0 0 8px;color:#ffffff;font-size:26px;font-weight:800;line-height:1.3;">
+      Bem-vindo(a),
     </h1>
-    <p style="margin:0;color:rgba(255,255,255,0.65);font-size:15px;line-height:1.6;max-width:420px;display:inline-block;">
-      Sua conta na Escola Five One foi criada e você já está matriculado(a) no curso
+    <h1 style="margin:0 0 16px;color:${MINT};font-size:30px;font-weight:800;line-height:1.2;">
+      ${greeting}!
+    </h1>
+    <p style="margin:0 0 20px;color:#b0cee0;font-size:14px;line-height:1.6;">
+      Sua conta na Escola Five One foi criada<br/>e você já está matriculado(a) no curso:
     </p>
-    <!-- Curso destaque -->
-    <div style="margin:20px auto 0;background:rgba(100,255,218,0.07);border:1px solid rgba(100,255,218,0.2);border-radius:12px;padding:14px 20px;max-width:340px;">
-      <p style="margin:0;color:rgba(255,255,255,0.5);font-size:10px;letter-spacing:0.15em;text-transform:uppercase;margin-bottom:4px;">Seu curso</p>
-      <p style="margin:0;color:${MINT};font-size:18px;font-weight:700;">${escapeHtml(course)}</p>
-    </div>
+    <!-- Curso destaque — fundo sólido garantido -->
+    <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
+      <tr><td bgcolor="#0b2235" style="background:#0b2235;border:1px solid #1d4a60;border-radius:12px;padding:14px 28px;text-align:center;">
+        <p style="margin:0 0 4px;color:#7ab8d4;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;font-weight:600;">Seu curso</p>
+        <p style="margin:0;color:${MINT};font-size:20px;font-weight:800;">${escapeHtml(course)}</p>
+      </td></tr>
+    </table>
   </td></tr>
 
-  <!-- CREDENCIAIS -->
-  <tr><td style="background:#ffffff;padding:32px 40px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
-    <p style="margin:0 0 20px;color:#374151;font-size:15px;font-weight:600;">Suas credenciais de acesso:</p>
+  <!-- CREDENCIAIS — fundo branco com bgcolor -->
+  <tr><td bgcolor="#ffffff" style="background:#ffffff;padding:28px 32px;border-left:1px solid #e5e7eb;border-right:1px solid #e5e7eb;">
+    <p style="margin:0 0 16px;color:#111827;font-size:15px;font-weight:700;">Suas credenciais de acesso:</p>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;">
-      <tr>
-        <td style="padding:14px 20px;border-bottom:1px solid #e5e7eb;">
-          <p style="margin:0;color:#6b7280;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">Usuário</p>
-          <p style="margin:0;color:#111827;font-size:15px;font-family:ui-monospace,monospace;">${escapeHtml(user)}</p>
-        </td>
-      </tr>
-      <tr>
-        <td style="padding:14px 20px;">
-          <p style="margin:0;color:#6b7280;font-size:11px;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:4px;">Senha inicial</p>
-          <p style="margin:0;color:#111827;font-size:15px;font-family:ui-monospace,monospace;letter-spacing:0.05em;">${escapeHtml(password)}</p>
-        </td>
-      </tr>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td bgcolor="#f1f5f9" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:10px 10px 0 0;padding:12px 18px;border-bottom:1px solid #e2e8f0;">
+        <p style="margin:0 0 3px;color:#64748b;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Usuário</p>
+        <p style="margin:0;color:#0f172a;font-size:14px;font-family:ui-monospace,Courier New,monospace;">${escapeHtml(user)}</p>
+      </td></tr>
+      <tr><td bgcolor="#f1f5f9" style="background:#f1f5f9;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 10px 10px;padding:12px 18px;">
+        <p style="margin:0 0 3px;color:#64748b;font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;">Senha inicial</p>
+        <p style="margin:0;color:#0f172a;font-size:14px;font-family:ui-monospace,Courier New,monospace;font-weight:700;letter-spacing:0.05em;">${escapeHtml(password)}</p>
+      </td></tr>
     </table>
 
-    <p style="margin:16px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">
-      🔒 Guarde com segurança. Recomendamos alterar sua senha após o primeiro acesso.
+    <p style="margin:14px 0 0;color:#6b7280;font-size:13px;line-height:1.5;">
+      🔒 Guarde com segurança e altere sua senha após o primeiro acesso.
     </p>
 
     <!-- CTA -->
-    <div style="text-align:center;margin-top:28px;">
-      <a href="${loginUrl}"
-         style="display:inline-block;background:${MINT};color:${NAVY};text-decoration:none;padding:15px 36px;border-radius:100px;font-size:15px;font-weight:800;letter-spacing:0.02em;min-width:200px;">
-        Acessar a Escola Five One →
-      </a>
-      <p style="margin:12px 0 0;color:#9ca3af;font-size:12px;">escolafiveone.com</p>
-    </div>
+    <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:24px auto 0;">
+      <tr><td bgcolor="${MINT}" style="background:${MINT};border-radius:100px;">
+        <a href="${loginUrl}"
+           style="display:inline-block;background:${MINT};color:${NAVY};text-decoration:none;padding:15px 36px;border-radius:100px;font-size:15px;font-weight:800;letter-spacing:0.02em;">
+          Acessar a Escola Five One →
+        </a>
+      </td></tr>
+    </table>
+    <p style="margin:10px 0 0;color:#9ca3af;font-size:12px;text-align:center;">escolafiveone.com</p>
   </td></tr>
 
   <!-- PRÓXIMOS PASSOS -->
