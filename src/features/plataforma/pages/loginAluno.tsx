@@ -134,6 +134,20 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
 
   const remainingAttempts = Math.max(0, MAX_ATTEMPTS - attempts);
 
+  // Detecta browser interno (Gmail, WebView, etc.) — sem suporte a PWA
+  const isInAppBrowser = typeof window !== 'undefined' && (() => {
+    const ua = navigator.userAgent;
+    return (
+      ua.includes('wv') ||           // Android WebView
+      ua.includes('GSA') ||          // Gmail no Android/iOS
+      ua.includes('FBAN') ||         // Facebook
+      ua.includes('FBAV') ||         // Facebook
+      ua.includes('Instagram') ||
+      ua.includes('Line') ||
+      (ua.includes('Android') && !ua.includes('Chrome/') && !ua.includes('Firefox'))
+    );
+  })();
+
   return (
     <div className="min-h-screen flex bg-[#07101f] relative overflow-hidden">
 
@@ -185,6 +199,30 @@ const LoginAluno = ({ onLogin }: { onLogin: () => void }) => {
             </p>
           </div>
         </div>
+
+        {/* Aviso de browser interno — Gmail/WebView não suporta instalação do app */}
+        {isInAppBrowser && (
+          <div className="mb-5 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-4">
+            <div className="flex items-start gap-3">
+              <span className="text-amber-400 text-lg flex-shrink-0 mt-0.5">⚠️</span>
+              <div>
+                <p className="text-amber-300 text-sm font-semibold mb-1">Você está em um browser interno</p>
+                <p className="text-amber-200/80 text-xs leading-relaxed mb-3">
+                  Para instalar o aplicativo e ter a melhor experiência, abra este link no <strong>Google Chrome</strong>.
+                </p>
+                <a
+                  href="https://escolafiveone.com/login-aluno"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-400 text-[#07101f] text-xs font-bold rounded-xl"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+                  Abrir no Chrome
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Card glass — envolve o form no mobile */}
         <div className="bg-white/[0.04] lg:bg-transparent border border-white/[0.07] lg:border-0 rounded-2xl lg:rounded-none p-6 lg:p-0 backdrop-blur-sm lg:backdrop-blur-none shadow-[0_8px_32px_rgba(0,0,0,0.3)] lg:shadow-none">

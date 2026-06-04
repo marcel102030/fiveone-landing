@@ -60,8 +60,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       return new Response(JSON.stringify({ ok: false, error: "Missing RESEND_API_KEY env" }), { status: 500, headers: { "content-type": "application/json", ...CORS } });
     }
 
-    // Sempre aponta para escolafiveone.com — link definitivo da plataforma
-    const loginUrl = withUtm(`https://escolafiveone.com/login-aluno`);
+    // Link que força abertura no Chrome (não no browser interno do Gmail)
+    // O parâmetro openExternalBrowser=1 é reconhecido por muitos apps de email
+    const loginUrl = withUtm(`https://escolafiveone.com/login-aluno`) + '&openExternalBrowser=1';
 
     const from = env.RESEND_FROM_ALUNO?.trim() || env.RESEND_FROM?.trim() || "Escola Five One <no-reply@fiveonemovement.com>";
     const reply_to = env.RESEND_REPLY_TO_ALUNO?.trim() || env.RESEND_REPLY_TO?.trim() || "escolafiveone@gmail.com";
