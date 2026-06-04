@@ -15,27 +15,71 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
   <link rel="shortcut icon" href="/favicon.ico?v=3" />
   <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png" />
-  <link rel="manifest" href="/site.webmanifest?v=3" />
+  <!-- manifest NÃO é incluído estaticamente — adicionado só nas páginas da plataforma -->
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- PWA: captura beforeinstallprompt globalmente e suprime o banner nativo.
-       O prompt é guardado em window.__pwaPrompt e só ativado pela plataforma
-       quando o usuário estiver logado em escolafiveone.com -->
+  <!--
+    PWA STRATEGY: manifest e service worker só existem nas páginas da plataforma.
+    Na página de login e no site público, o Chrome não detecta nenhum critério de PWA
+    → banner de instalar nunca aparece antes do login.
+  -->
   <script>
-    window.__pwaPrompt = null;
-    window.addEventListener('beforeinstallprompt', function(e) {
-      e.preventDefault(); // impede o banner nativo do browser
-      window.__pwaPrompt = e; // guarda para uso posterior pela plataforma
-    });
+  (function() {
+    var path = window.location.pathname;
+    var isPlatformPage =
+      path.startsWith('/plataforma') ||
+      path.startsWith('/curso/') ||
+      path.startsWith('/perfil') ||
+      path.startsWith('/meu-progresso') ||
+      path.startsWith('/favoritos') ||
+      path.startsWith('/certificados') ||
+      path.startsWith('/admin');
+
+    if (isPlatformPage) {
+      // ── Plataforma (logado): ativar PWA ────────────────────────────────
+      var link = document.createElement('link');
+      link.rel = 'manifest';
+      link.href = '/site.webmanifest?v=3';
+      document.head.appendChild(link);
+
+      var metaCap = document.createElement('meta');
+      metaCap.name = 'mobile-web-app-capable';
+      metaCap.content = 'yes';
+      document.head.appendChild(metaCap);
+
+      var metaApple = document.createElement('meta');
+      metaApple.name = 'apple-mobile-web-app-capable';
+      metaApple.content = 'yes';
+      document.head.appendChild(metaApple);
+
+      // Captura prompt para mostrar DENTRO da plataforma
+      window.__pwaPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault();
+        window.__pwaPrompt = e;
+      });
+    } else {
+      // ── Login / site público: suprimir TODO critério de PWA ─────────────
+      // 1. Bloquear qualquer prompt que escape
+      window.__pwaPrompt = null;
+      window.addEventListener('beforeinstallprompt', function(e) {
+        e.preventDefault(); // descarta — não guarda
+      });
+      // 2. Desregistrar SW existente
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          regs.forEach(function(r) { r.unregister(); });
+        });
+      }
+    }
+  })();
   </script>
 
   <meta name="theme-color" content="#0a192f" />
   <meta name="application-name" content="Five One" />
   <meta name="description" content="Movimento Five One — cursos bíblicos com fundamento teológico, treinamentos dos 5 Ministérios e o Teste dos 5 Ministérios." />
-  <meta name="mobile-web-app-capable" content="yes" />
 
-  <!-- iOS PWA -->
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <!-- iOS PWA status bar (só estético, não afeta install prompt) -->
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="Five One" />
 
