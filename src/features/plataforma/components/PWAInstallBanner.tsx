@@ -160,7 +160,7 @@ export function PWAInstallBanner() {
 // ── Botão no menu do avatar ───────────────────────────────────────────────────
 
 export function PWAInstallMenuItem({ onClose }: { onClose?: () => void }) {
-  const { canShowBanner, installState, deviceType, triggerInstall, isInstalled } = usePWAInstall();
+  const { installState, deviceType, triggerInstall, isInstalled } = usePWAInstall();
   const [showModal, setShowModal] = useState(false);
 
   if (isInstalled) return null;
