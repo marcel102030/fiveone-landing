@@ -82,7 +82,7 @@ export function usePWAInstall(): PWAInstall {
       e.preventDefault();
       (window as any).__pwaPrompt = e;
       setPrompt(e);
-      setState('available');
+      setState('available'); // atualiza mesmo se o timer já disparou
     };
     const onInstalled = () => {
       setState('installed');
@@ -93,13 +93,18 @@ export function usePWAInstall(): PWAInstall {
     window.addEventListener('beforeinstallprompt', onPrompt);
     window.addEventListener('appinstalled', onInstalled);
 
-    // Nota: NÃO há fallback de timer para Android.
-    // Se o prompt não chegar, o usuário usa o menu do Chrome (3 pontos > Instalar).
-    // Mostrar modal de instruções genéricas sem o prompt causava confusão.
+    // Timer de fallback para Android sem prompt nativo (Chrome Custom Tabs do Gmail,
+    // Samsung Internet, etc.). O timer muda o estado para 'available' sem prompt,
+    // mostrando o banner com instruções manuais (3 pontos > Instalar app).
+    // Chrome Custom Tabs TEM o menu de 3 pontos com "Instalar app" — funciona!
+    const fallback = setTimeout(() => {
+      setState(prev => prev === 'checking' ? 'available' : prev);
+    }, 5000);
 
     return () => {
       window.removeEventListener('beforeinstallprompt', onPrompt);
       window.removeEventListener('appinstalled', onInstalled);
+      clearTimeout(fallback);
     };
   }, [os, standalone]);
 
