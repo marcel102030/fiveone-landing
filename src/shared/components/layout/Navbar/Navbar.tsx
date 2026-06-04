@@ -102,15 +102,15 @@ const Navbar = () => {
           <div className="hidden lg:flex items-center gap-3 ml-auto">
             {/* Divider sutil */}
             <span className="h-5 w-px bg-white/10" aria-hidden />
-            <Link
-              to="/login-aluno"
+            <a
+              href="https://escolafiveone.com/login-aluno"
               className="inline-flex items-center gap-2 px-5 py-2.5 bg-mint text-navy text-sm font-bold rounded-full shadow-[0_0_20px_rgba(100,255,218,0.25)] hover:shadow-[0_0_32px_rgba(100,255,218,0.5)] hover:scale-[1.04] active:scale-[0.97] transition-all duration-200 whitespace-nowrap"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
               </svg>
               Alunos Five One
-            </Link>
+            </a>
           </div>
 
           {/* Mobile hamburger */}
@@ -159,8 +159,8 @@ const Navbar = () => {
           })}
 
           <div className="mt-5 pt-5 border-t border-white/8">
-            <Link
-              to="/login-aluno"
+            <a
+              href="https://escolafiveone.com/login-aluno"
               onClick={() => setIsMenuOpen(false)}
               className="flex items-center justify-center gap-2 w-full py-4 bg-mint text-navy font-bold rounded-2xl shadow-[0_0_20px_rgba(100,255,218,0.25)] hover:shadow-[0_0_32px_rgba(100,255,218,0.4)] transition-all duration-200"
             >
@@ -168,7 +168,7 @@ const Navbar = () => {
                 <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd"/>
               </svg>
               Alunos Five One
-            </Link>
+            </a>
           </div>
         </div>
       </div>

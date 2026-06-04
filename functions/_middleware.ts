@@ -97,8 +97,8 @@ export const onRequest = async (ctx: {
   // ── escolafiveone.com → só serve rotas da plataforma ──────────────────────
   if (url.hostname === "escolafiveone.com") {
     // Arquivos estáticos na raiz — sempre permitidos (ícones, manifest, favicons, etc.)
+    // NOTA: path === "/" NÃO está aqui — a raiz redireciona para /plataforma
     const isStaticFile =
-      path === "/" ||
       path.endsWith(".png") ||
       path.endsWith(".jpg") ||
       path.endsWith(".ico") ||
