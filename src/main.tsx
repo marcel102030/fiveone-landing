@@ -55,14 +55,35 @@ createRoot(rootElement as HTMLElement).render(
 );
 
 // ── Registro do Service Worker (PWA) ─────────────────────────────────────
+// Registra SOMENTE em escolafiveone.com E apenas em rotas da plataforma.
+// Na página de login e no site público, o SW não é registrado — isso garante
+// que o Chrome não exiba o banner de instalação antes do login.
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker
-      .register('/sw.js', { scope: '/' })
-      .then((reg) => {
-        // Verifica atualização a cada 60 minutos
-        setInterval(() => reg.update(), 60 * 60 * 1000);
-      })
-      .catch((err) => console.warn('[SW] Falha ao registrar:', err));
+    const host = window.location.hostname;
+    const path = window.location.pathname;
+    const isEscolaFiveOne = host === 'escolafiveone.com' || host === 'localhost';
+    const isPlatformPage =
+      path.startsWith('/plataforma') ||
+      path.startsWith('/perfil') ||
+      path.startsWith('/meu-progresso') ||
+      path.startsWith('/favoritos') ||
+      path.startsWith('/certificados') ||
+      path.startsWith('/curso/');
+
+    if (isEscolaFiveOne && isPlatformPage) {
+      // Usuário está logado na plataforma → registrar SW e ativar PWA
+      navigator.serviceWorker
+        .register('/sw.js', { scope: '/' })
+        .then((reg) => {
+          setInterval(() => reg.update(), 60 * 60 * 1000);
+        })
+        .catch((err) => console.warn('[SW] Falha ao registrar:', err));
+    } else {
+      // Fora da plataforma → desregistrar SW para não mostrar banner de instalação
+      navigator.serviceWorker.getRegistrations().then((regs) => {
+        regs.forEach((reg) => reg.unregister());
+      });
+    }
   });
 }
