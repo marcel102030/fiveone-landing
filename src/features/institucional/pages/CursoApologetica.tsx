@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
+import instrutorFoto from "../assets/images/Marcelo.jpeg";
 import CourseWaitlist from "../components/CourseWaitlist";
 import { APOLOGETICA_LAUNCHED } from "../data/courses";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
@@ -516,9 +517,14 @@ const CursoApologetica = () => {
           </h2>
 
           <div className="bg-navy-light/60 border border-slate/10 rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col sm:flex-row gap-6 lg:gap-8 items-center sm:items-start">
-            {/* Placeholder de foto — substituir por foto real depois */}
-            <div className="shrink-0 w-32 h-32 lg:w-40 lg:h-40 rounded-2xl bg-gradient-to-br from-mint/20 to-mint/5 border border-mint/20 flex items-center justify-center text-mint text-4xl lg:text-5xl font-bold">
-              MJ
+            <div className="shrink-0 w-32 h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden border border-mint/20">
+              <img
+                src={instrutorFoto}
+                alt="Marcelo Junior"
+                className="w-full h-full object-cover"
+                loading="lazy"
+                draggable={false}
+              />
             </div>
             <div className="flex-1 text-center sm:text-left">
               <h3 className="text-xl sm:text-2xl font-bold text-slate-white">
