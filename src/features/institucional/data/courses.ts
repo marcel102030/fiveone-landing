@@ -9,6 +9,10 @@ export const APOLOGETICA_LAUNCH_DATE = new Date("2026-07-06T09:00:00-03:00");
 // Importada pela Home (CourseShowcase) e pela página /cursos.
 // Altere aqui — reflete automaticamente em todos os lugares.
 
+import coverEntendes from "../assets/images/EntendesOqueler.png";
+import coverFimDosTempos from "../assets/images/IntroducaoAoFimDostempos.png";
+import coverVivaChamado from "../assets/images/VivaOSeuChamado.png";
+
 export type UpcomingCourse = {
   title: string;
   description: string;
@@ -22,20 +26,20 @@ export const UPCOMING_COURSES: UpcomingCourse[] = [
     description:
       "Você lê a Bíblia, mas nem sempre sai com clareza do que leu? Neste curso você aprende a entender o texto bíblico do jeito certo — sem complicar.",
     category: "Estudo Bíblico",
-    // coverUrl: "/assets/covers/entendes-o-que-les.jpg", // adicionar quando disponível
+    coverUrl: coverEntendes,
   },
   {
     title: "Introdução ao Fim dos Tempos",
     description:
       "O que a Bíblia realmente diz sobre os últimos dias? Um curso baseado nas Escrituras para entender a escatologia sem sensacionalismo e com fundamento sólido.",
     category: "Teologia",
-    // coverUrl: "/assets/covers/fim-dos-tempos.jpg", // adicionar quando disponível
+    coverUrl: coverFimDosTempos,
   },
   {
     title: "Viva o seu Chamado",
     description:
       "Descubra como identificar, desenvolver e viver o seu dom ministerial no dia a dia — na sua família, na sua igreja e no mundo ao seu redor.",
     category: "Ministério",
-    // coverUrl: "/assets/covers/viva-o-seu-chamado.jpg", // adicionar quando disponível
+    coverUrl: coverVivaChamado,
   },
 ];
