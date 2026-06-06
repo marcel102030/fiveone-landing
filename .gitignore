@@ -1,4 +1,8 @@
 .claude/
+
+# Dependencies (regeneradas com npm install — não vão para o repo)
+node_modules/
+
 # Cypress
 cypress/
 cypress.config.ts
