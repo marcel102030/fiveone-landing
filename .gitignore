@@ -1,24 +1,9 @@
-# Dependencies
-node_modules/
-
-# Build outputs (regenerados pelo Cloudflare no deploy)
-dist/
-dist-temp/
-out-build/
-
-# Claude Code
 .claude/
-
 # Cypress
 cypress/
 cypress.config.ts
 cypress.config.js
 cypress.json
-
-# Env
-.env
-.env.local
-.env.*.local
 
 # macOS
 .DS_Store
