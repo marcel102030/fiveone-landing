@@ -516,12 +516,12 @@ const CursoApologetica = () => {
             Conheça o instrutor
           </h2>
 
-          <div className="bg-navy-light/60 border border-slate/10 rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col sm:flex-row gap-6 lg:gap-8 items-center sm:items-start">
-            <div className="shrink-0 w-32 h-32 lg:w-40 lg:h-40 rounded-2xl overflow-hidden border border-mint/20">
+          <div className="bg-navy-light/60 border border-slate/10 rounded-3xl p-6 sm:p-8 lg:p-10 flex flex-col sm:flex-row gap-6 lg:gap-8 items-center sm:items-center">
+            <div className="shrink-0 w-44 lg:w-52 aspect-[3/4] rounded-2xl overflow-hidden border border-mint/20">
               <img
                 src={instrutorFoto}
                 alt="Marcelo Junior"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover object-top"
                 loading="lazy"
                 draggable={false}
               />
