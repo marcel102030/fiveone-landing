@@ -83,23 +83,17 @@ const Cursos = () => {
       <div className="pointer-events-none absolute inset-0 opacity-[0.035]"
         style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
 
-      {/* ──────────────────────────────────── Hero da página ─── */}
-      <section className="relative pt-8 sm:pt-10 pb-10 lg:pb-14 overflow-hidden">
-        <div className="pointer-events-none absolute inset-0">
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[900px] h-[500px] bg-mint/[0.06] blur-[120px] rounded-full" />
-          <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-golden/[0.06] blur-[80px] rounded-full" />
-        </div>
-
-        <div className="relative max-w-4xl mx-auto px-6 lg:px-8">
-          <img
-            src={imgNossosCursos}
-            alt="Cursos e Treinamentos Five One — conhecimento bíblico que transforma você e a sua igreja"
-            className="w-full h-auto rounded-2xl lg:rounded-3xl border border-slate/10 shadow-card-hover"
-            loading="eager"
-            draggable={false}
-          />
-        </div>
-
+      {/* ──────────────────────────────────── Hero da página — banner full-bleed ─── */}
+      <section className="relative overflow-hidden">
+        <img
+          src={imgNossosCursos}
+          alt="Nossos cursos — conhecimento bíblico que transforma você e a sua igreja"
+          className="block w-full h-[200px] sm:h-[280px] lg:h-[360px] object-cover object-center"
+          loading="eager"
+          draggable={false}
+        />
+        {/* Gradiente na base — funde suavemente no fundo navy da página */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy to-transparent" />
       </section>
 
       {/* ───────────────────────────── Card destaque Apologética ─── */}
