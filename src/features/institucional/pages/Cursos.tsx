@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 import imgProximosCursos from "../assets/images/ProximosCursos.png";
+import imgNossosCursos from "../assets/images/NossosCursos.png";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import profetaIcon  from "../../../assets/images/icons/profeta.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
@@ -89,19 +90,14 @@ const Cursos = () => {
           <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-golden/[0.06] blur-[80px] rounded-full" />
         </div>
 
-        <div className="relative max-w-5xl mx-auto px-6 lg:px-8 text-center">
-          <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Cursos e Treinamentos
-          </span>
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight leading-[1.1]">
-            Conhecimento bíblico que <span className="text-mint">transforma</span>
-            <br className="hidden sm:block" /> você e a sua igreja
-          </h1>
-          <p className="mt-4 text-base sm:text-lg text-slate max-w-2xl mx-auto leading-relaxed">
-            Cursos online sob demanda para a sua jornada e treinamentos dos 5
-            Ministérios para a sua comunidade. Fundamento teológico, linguagem
-            clara e aplicação prática.
-          </p>
+        <div className="relative max-w-4xl mx-auto px-6 lg:px-8">
+          <img
+            src={imgNossosCursos}
+            alt="Cursos e Treinamentos Five One — conhecimento bíblico que transforma você e a sua igreja"
+            className="w-full h-auto rounded-2xl lg:rounded-3xl border border-slate/10 shadow-card-hover"
+            loading="eager"
+            draggable={false}
+          />
         </div>
 
       </section>
