@@ -84,16 +84,19 @@ const Cursos = () => {
         style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
 
       {/* ──────────────────────────────────── Hero da página — banner full-bleed ─── */}
-      <section className="relative overflow-hidden">
+      {/* bg = mesma cor do fundo da imagem (#2e2e2e) → laterais sem emenda.
+          object-contain mantém a imagem inteira (sem corte) e nunca a estica
+          além do tamanho nativo (sem perda de qualidade). */}
+      <section className="relative overflow-hidden bg-[#2e2e2e]">
         <img
           src={imgNossosCursos}
           alt="Nossos cursos — conhecimento bíblico que transforma você e a sua igreja"
-          className="block w-full h-[200px] sm:h-[280px] lg:h-[360px] object-cover object-center"
+          className="block w-full h-[160px] sm:h-[230px] lg:h-[300px] object-contain object-center"
           loading="eager"
           draggable={false}
         />
         {/* Gradiente na base — funde suavemente no fundo navy da página */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy to-transparent" />
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-navy to-transparent" />
       </section>
 
       {/* ───────────────────────────── Card destaque Apologética ─── */}
