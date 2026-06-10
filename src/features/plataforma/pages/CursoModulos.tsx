@@ -8,17 +8,40 @@ import { fetchCompletionsForUser } from '../services/completions';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
 import { listCompletedLessonIds, mergeCompletedLessons } from '../../../shared/utils/completedLessons';
 
-type ModuleCard = {
-  id: number;
-  moduleId: string;
-  image: string;
+type LessonView = LessonRef & { completed: boolean };
+
+type ModuleView = {
+  id: string;
+  order: number;
   title: string;
-  topics: string[];
-  soon?: boolean;
-  banner?: string | null;
-  totalLessons: number;
-  completedCount: number;
+  lessons: LessonView[];
+  total: number;
+  completed: number;
+  percent: number;
+  soon: boolean;
 };
+
+// ── Ícones (inline, sem dependências) ───────────────────────────────────────
+const CheckIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="9" /><polyline points="8.5 12.5 11 15 15.5 9.5" />
+  </svg>
+);
+const PlayIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M8 5v14l11-7z" />
+  </svg>
+);
+const ChevronIcon = ({ open }: { open: boolean }) => (
+  <svg className={`w-5 h-5 transition-transform duration-300 ${open ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <polyline points="6 9 12 15 18 9" />
+  </svg>
+);
+const ClockIcon = () => (
+  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+  </svg>
+);
 
 interface Props {
   courseId?: string;
@@ -34,6 +57,11 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true })
   );
   const [completedIds, setCompletedIds] = useState<Set<string>>(() => new Set(listCompletedLessonIds()));
+  // Mapa lessonId → timestamp (ms) da última vez assistida — usado p/ "continuar"
+  const [lastAtById, setLastAtById] = useState<Map<string, number>>(() => new Map());
+  const [expanded, setExpanded] = useState<Set<string>>(() => new Set());
+  // Garante que o auto-expand do módulo em andamento só rode uma vez
+  const [autoExpanded, setAutoExpanded] = useState(false);
 
   useEffect(() => {
     const sync = () => setLessons(listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true }));
@@ -49,212 +77,255 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     return () => window.removeEventListener('storage', refresh);
   }, []);
 
-  // Busca completions do servidor quando o usuário é identificado.
-  // Garante que o progresso cross-device apareça mesmo sem ter aberto o dashboard.
+  // Busca completions + progresso do servidor quando o usuário é identificado.
   useEffect(() => {
     const uid = getCurrentUserId() || authEmail;
     if (!uid) return;
     fetchCompletionsForUser(uid)
-      .then(list => {
-        const merged = mergeCompletedLessons(list);
-        setCompletedIds(new Set(merged.keys()));
+      .then((list) => setCompletedIds(new Set(mergeCompletedLessons(list).keys())))
+      .catch(() => {});
+    fetchUserProgress(uid, 200)
+      .then((rows) => {
+        const map = new Map<string, number>();
+        rows.forEach((r) => map.set(r.lesson_id, new Date(r.last_at).getTime()));
+        setLastAtById(map);
       })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [authEmail]);
 
-  const abrirModulo = async (module: ModuleCard) => {
-    const moduleLessons = lessons.filter((lesson) => lesson.moduleId === module.moduleId);
-    if (!moduleLessons.length) return;
-    const completedIds = new Set(listCompletedLessonIds());
-    const idSet = new Set(moduleLessons.map((lesson) => lesson.videoId));
-    const urlSet = new Set(moduleLessons.map((lesson) => lesson.videoUrl).filter(Boolean) as string[]);
-    const lessonById = new Map(moduleLessons.map((lesson) => [lesson.videoId, lesson] as const));
-    const lessonByUrl = new Map(moduleLessons.filter((lesson) => !!lesson.videoUrl).map((lesson) => [lesson.videoUrl as string, lesson] as const));
-    const firstLesson = moduleLessons[0];
+  const isCompleted = (l: LessonRef) => completedIds.has(l.videoId) || completedIds.has(l.id);
+  const lastAtOf = (l: LessonRef) => lastAtById.get(l.videoId) ?? lastAtById.get(l.id) ?? 0;
 
-    const goTo = (vid: string, byUrl = false) => {
-      const base = `/curso/${courseId}/aula`;
-      const param = byUrl ? 'v' : 'vid';
-      navigate(`${base}?${param}=${encodeURIComponent(vid)}&mod=${encodeURIComponent(module.moduleId)}`);
-    };
-
-    // 1) caminho rápido: localStorage
-    let localBest: string | null = null;
-    let localAt = 0;
-    try {
-      const raw = localStorage.getItem('videos_assistidos');
-      const arr = raw ? JSON.parse(raw) : [];
-      (arr as any[]).forEach((v) => {
-        const key = v.id || v.videoId || v.video_id || v.url;
-        const lesson = lessonById.get(key) || lessonByUrl.get(key);
-        if (lesson && completedIds.has(lesson.videoId)) return;
-        const at = v.lastAt || 0;
-        if ((idSet.has(key) || urlSet.has(key)) && at > localAt) {
-          localAt = at; localBest = key;
-        }
-      });
-    } catch {}
-    if (localBest) {
-      if (idSet.has(localBest)) return goTo(localBest);
-      if (urlSet.has(localBest)) return goTo(localBest, true);
-    }
-
-    // 2) background: remoto com timeout
-    let navigated = false;
-    const timer = setTimeout(() => {
-      if (!navigated) { navigated = true; goTo(firstLesson.videoId); }
-    }, 800);
-
-    try {
-      const uid = getCurrentUserId();
-      if (uid) {
-        const rows = await fetchUserProgress(uid, 100);
-        let best: string | null = null; let bestAt = 0;
-        rows.forEach((r) => {
-          if (completedIds.has(r.lesson_id)) return;
-          if (idSet.has(r.lesson_id) || urlSet.has(r.lesson_id)) {
-            const at = new Date(r.last_at).getTime();
-            if (at > bestAt) { bestAt = at; best = r.lesson_id; }
-          }
-        });
-        if (!navigated) {
-          clearTimeout(timer);
-          navigated = true;
-          if (best) {
-            if (idSet.has(best)) return goTo(best);
-            if (urlSet.has(best)) return goTo(best, true);
-          }
-          goTo(firstLesson.videoId);
-        }
-      }
-    } catch {
-      if (!navigated) { clearTimeout(timer); navigated = true; goTo(firstLesson.videoId); }
-    }
-  };
-
-  const modules: ModuleCard[] = useMemo(() => {
+  // ── Monta a estrutura de módulos + aulas ──────────────────────────────────
+  const modules: ModuleView[] = useMemo(() => {
     const ministry = getMinistry(courseId);
     if (!ministry) return [];
     return ministry.modules.map((module) => {
-      const publishedLessons = lessons.filter((lesson) => lesson.moduleId === module.id);
-      const topics = publishedLessons
-        .map((lesson) => lesson.subjectName || lesson.title)
-        .filter((value, index, array) => !!value && array.indexOf(value) === index)
-        .slice(0, 4);
-      const order = module.order + 1;
-      // Prioridade: bannerModule (portrait 3:4, campo próprio do módulo)
-      // → bannerPlayer da primeira aula (fallback landscape)
-      // → imagem estática modulo01.png
-      const bannerModule =
-        module.bannerModule?.url || module.bannerModule?.dataUrl || null;
-      const lessonBanner =
-        publishedLessons.find((l) => l.bannerPlayer?.url || l.bannerPlayer?.dataUrl)?.bannerPlayer?.url ||
-        publishedLessons.find((l) => l.bannerPlayer?.dataUrl)?.bannerPlayer?.dataUrl ||
-        null;
-      const banner = bannerModule || lessonBanner || null;
-      const image = banner || `/assets/images/modulo${String(order).padStart(2, '0')}.png`;
-      const totalLessons = publishedLessons.length;
-      const completedCount = publishedLessons.filter(
-        (l) => completedIds.has(l.videoId) || completedIds.has(l.id)
-      ).length;
-      return { id: order, moduleId: module.id, image, title: module.title, topics, soon: module.status !== 'published' || !publishedLessons.length, banner, totalLessons, completedCount };
+      const list = lessons
+        .filter((l) => l.moduleId === module.id)
+        .sort((a, b) => a.order - b.order)
+        .map((l) => ({ ...l, completed: isCompleted(l) }));
+      const completed = list.filter((l) => l.completed).length;
+      const total = list.length;
+      return {
+        id: module.id,
+        order: module.order + 1,
+        title: module.title,
+        lessons: list,
+        total,
+        completed,
+        percent: total ? Math.round((completed / total) * 100) : 0,
+        soon: module.status !== 'published' || total === 0,
+      };
     });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [lessons, courseId, completedIds]);
+
+  // ── Métricas do curso inteiro ─────────────────────────────────────────────
+  const courseStats = useMemo(() => {
+    const all = modules.flatMap((m) => m.lessons);
+    const total = all.length;
+    const done = all.filter((l) => l.completed).length;
+    return { total, done, percent: total ? Math.round((done / total) * 100) : 0 };
+  }, [modules]);
+
+  // ── Aula para "continuar de onde parou" ───────────────────────────────────
+  // 1) aula não-concluída mais recentemente assistida
+  // 2) primeira aula não-concluída do curso (próxima a assistir)
+  const continueLesson = useMemo(() => {
+    const all = modules.flatMap((m) => m.lessons);
+    let best: LessonView | null = null;
+    let bestAt = 0;
+    all.forEach((l) => {
+      if (l.completed) return;
+      const at = lastAtOf(l);
+      if (at > bestAt) { bestAt = at; best = l; }
+    });
+    if (best) return best;
+    return all.find((l) => !l.completed) || null;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [modules, lastAtById]);
+
+  // Abre automaticamente o módulo da aula "continuar" (uma vez)
+  useEffect(() => {
+    if (autoExpanded || !modules.length) return;
+    const target = continueLesson?.moduleId || modules.find((m) => !m.soon)?.id;
+    if (target) {
+      setExpanded(new Set([target]));
+      setAutoExpanded(true);
+    }
+  }, [modules, continueLesson, autoExpanded]);
+
+  // ── Navegação ─────────────────────────────────────────────────────────────
+  const goToLesson = (moduleId: string, videoId: string) => {
+    navigate(`/curso/${courseId}/aula?vid=${encodeURIComponent(videoId)}&mod=${encodeURIComponent(moduleId)}`);
+  };
+  const resumeModule = (m: ModuleView) => {
+    if (!m.lessons.length) return;
+    let best: LessonView | null = null;
+    let bestAt = 0;
+    m.lessons.forEach((l) => {
+      if (l.completed) return;
+      const at = lastAtOf(l);
+      if (at > bestAt) { bestAt = at; best = l; }
+    });
+    const target = best || m.lessons.find((l) => !l.completed) || m.lessons[0];
+    goToLesson(m.id, target.videoId);
+  };
+
+  const toggle = (id: string) =>
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
 
   const ministry = getMinistry(courseId);
   const courseName = ministry?.name || courseId;
+  const tagline = ministry?.tagline || '';
+  const started = courseStats.done > 0;
 
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-navy pt-6 pb-12 px-4 overflow-x-hidden">
-        <div className="max-w-screen-xl mx-auto w-full">
-          {courseName && (
+      <div className="min-h-screen bg-navy pt-6 pb-16 px-4 overflow-x-hidden">
+        <div className="max-w-3xl mx-auto w-full">
+          <button
+            onClick={() => navigate('/plataforma')}
+            className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors mb-6"
+          >
+            ← Voltar aos cursos
+          </button>
+
+          {/* ── Cabeçalho do curso ── */}
+          <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-slate-white tracking-tight">{courseName}</h1>
+              {tagline && <p className="text-sm text-slate mt-1">{tagline}</p>}
+            </div>
+            <div className="flex gap-2.5">
+              <div className="bg-navy-light rounded-xl px-4 py-2.5 text-center min-w-[78px]">
+                <div className="text-xl font-bold text-mint tabular-nums">{courseStats.percent}%</div>
+                <div className="text-[11px] text-slate">concluído</div>
+              </div>
+              <div className="bg-navy-light rounded-xl px-4 py-2.5 text-center min-w-[78px]">
+                <div className="text-xl font-bold text-slate-white tabular-nums">{courseStats.done}/{courseStats.total}</div>
+                <div className="text-[11px] text-slate">aulas</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Barra de progresso do curso */}
+          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-6">
+            <div className="h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${courseStats.percent}%` }} />
+          </div>
+
+          {/* ── Continuar de onde parou ── */}
+          {continueLesson && (
             <button
-              onClick={() => navigate('/plataforma')}
-              className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors mb-6"
+              onClick={() => goToLesson(continueLesson.moduleId, continueLesson.videoId)}
+              className="group w-full flex items-center gap-3.5 bg-navy-light border border-mint/25 hover:border-mint/50 rounded-2xl p-3.5 mb-7 text-left transition-colors"
             >
-              ← Voltar aos cursos
+              <span className="w-10 h-10 rounded-full bg-mint text-navy flex items-center justify-center shrink-0">
+                <PlayIcon />
+              </span>
+              <span className="flex-1 min-w-0">
+                <span className="block text-[11px] text-mint uppercase tracking-wider">
+                  {started ? 'Continuar de onde parou' : 'Começar o curso'}
+                </span>
+                <span className="block text-sm text-slate-white truncate">
+                  M{continueLesson.moduleOrder + 1} · {continueLesson.title}
+                </span>
+              </span>
+              <span className="bg-mint text-navy text-sm font-semibold px-4 py-2 rounded-lg shrink-0 group-hover:bg-mint/90 transition-colors">
+                {started ? 'Retomar' : 'Começar'}
+              </span>
             </button>
           )}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+
+          {/* ── Lista de módulos (accordion) ── */}
+          <div className="flex flex-col gap-3">
             {modules.map((m) => {
-              const clickable = !m.soon;
-              const handle = () => { if (clickable) abrirModulo(m); };
+              const open = expanded.has(m.id);
+              const accent = open && !m.soon;
               return (
                 <div
                   key={m.id}
-                  className={`group relative rounded-2xl overflow-hidden aspect-[3/4] transition-all duration-300 ${
-                    clickable ? 'cursor-pointer hover:scale-[1.02] hover:shadow-2xl' : 'cursor-default opacity-80'
+                  className={`bg-navy-light rounded-2xl overflow-hidden border transition-colors ${
+                    accent ? 'border-mint/35' : 'border-white/10'
                   }`}
-                  role={clickable ? 'button' : undefined}
-                  tabIndex={clickable ? 0 : -1}
-                  onClick={handle}
-                  onKeyDown={(e) => {
-                    if (!clickable) return;
-                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handle(); }
-                  }}
-                  aria-label={`${m.title}${clickable ? '' : ' (em breve)'}`}
                 >
-                  {m.banner ? (
-                    <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: `url(${m.banner})` }} />
-                  ) : (
-                    <img src={m.image} alt={m.title} className="absolute inset-0 w-full h-full object-cover" loading="lazy" />
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                  {m.soon && (
-                    <div className="absolute top-3 right-3 bg-pink-500 text-white text-xs font-bold px-2 py-1 rounded-full z-10">
-                      Em Breve
-                    </div>
-                  )}
-                  <div className="absolute bottom-3 left-3 right-3 z-10 group-hover:[@media(hover:hover)]:opacity-0 transition-opacity duration-200">
-                    <p className="text-white font-semibold text-xs sm:text-sm">{m.title}</p>
-                    {!m.soon && m.totalLessons > 0 && (
-                      <div className="mt-1.5">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-white/60 text-[10px]">
-                            {m.completedCount}/{m.totalLessons} aulas
+                  {/* Cabeçalho do módulo */}
+                  <button
+                    onClick={() => !m.soon && toggle(m.id)}
+                    className={`w-full flex items-center gap-3.5 p-3.5 text-left ${m.soon ? 'cursor-default opacity-70' : ''}`}
+                    aria-expanded={open}
+                  >
+                    <span className={`w-11 h-11 rounded-xl bg-navy flex flex-col items-center justify-center shrink-0 border ${
+                      accent ? 'border-mint/40' : 'border-white/10'
+                    }`}>
+                      <span className="text-[9px] text-slate leading-none">MÓD</span>
+                      <span className={`text-lg font-bold leading-none ${accent ? 'text-mint' : 'text-slate-light'}`}>
+                        {String(m.order).padStart(2, '0')}
+                      </span>
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[15px] font-semibold text-slate-white">{m.title}</span>
+                      {m.soon ? (
+                        <span className="text-[11px] text-golden">Em breve</span>
+                      ) : (
+                        <span className="flex items-center gap-2 mt-1.5">
+                          <span className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden max-w-[180px]">
+                            <span className="block h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${m.percent}%` }} />
                           </span>
-                          {m.completedCount > 0 && (
-                            <span className="text-mint text-[10px] font-semibold">
-                              {Math.round((m.completedCount / m.totalLessons) * 100)}%
-                            </span>
-                          )}
-                        </div>
-                        <div className="h-1 bg-white/20 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-mint rounded-full transition-all duration-500"
-                            style={{ width: `${Math.round((m.completedCount / m.totalLessons) * 100)}%` }}
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  {clickable && (
-                    <div className="absolute inset-0 bg-navy/90 flex flex-col justify-center items-center p-3 sm:p-4 opacity-0 [@media(hover:hover)]:group-hover:opacity-100 transition-opacity duration-200 z-20">
-                      <p className="text-mint text-xs font-semibold uppercase tracking-wider mb-2 sm:mb-3">O que você vai ver</p>
-                      <ul className="space-y-1 mb-3 sm:mb-4 w-full">
-                        {m.topics.map((t, i) => (
-                          <li key={i} className="text-slate-300 text-xs flex items-start gap-1.5">
-                            <span className="text-mint mt-0.5">›</span>
-                            <span className="line-clamp-2">{t}</span>
-                          </li>
-                        ))}
-                      </ul>
-                      {m.totalLessons > 0 && (
-                        <p className="text-slate/60 text-[10px] mb-2">
-                          {m.completedCount} de {m.totalLessons} aulas concluídas
-                        </p>
+                          <span className="text-[11px] text-slate shrink-0">{m.completed}/{m.total} aulas</span>
+                        </span>
                       )}
-                      <button className="bg-mint text-navy text-xs font-bold px-4 py-2 rounded-full hover:bg-mint/90 transition-colors">
-                        Entrar →
+                    </span>
+                    {!m.soon && <span className="text-mint shrink-0"><ChevronIcon open={open} /></span>}
+                  </button>
+
+                  {/* Lista de aulas */}
+                  {open && !m.soon && (
+                    <div className="border-t border-white/8 px-2.5 pb-2.5 pt-1">
+                      {m.lessons.map((l) => {
+                        const current = continueLesson?.id === l.id;
+                        return (
+                          <button
+                            key={l.id}
+                            onClick={() => goToLesson(m.id, l.videoId)}
+                            className={`w-full flex items-center gap-3 px-2.5 py-2.5 rounded-lg text-left transition-colors ${
+                              current ? 'bg-mint/10 border border-mint/30' : 'hover:bg-white/5 border border-transparent'
+                            }`}
+                          >
+                            <span className={`shrink-0 ${l.completed ? 'text-mint' : current ? 'text-mint' : 'text-slate/50'}`}>
+                              {l.completed ? <CheckIcon /> : <PlayIcon />}
+                            </span>
+                            <span
+                              className={`flex-1 text-[13px] ${
+                                l.completed ? 'text-slate line-through' : current ? 'text-slate-white' : 'text-slate-light'
+                              }`}
+                            >
+                              {l.title}
+                            </span>
+                            {current ? (
+                              <span className="text-[11px] text-mint shrink-0">em andamento</span>
+                            ) : l.durationMinutes ? (
+                              <span className="flex items-center gap-1 text-[11px] text-slate shrink-0">
+                                <ClockIcon /> {l.durationMinutes} min
+                              </span>
+                            ) : null}
+                          </button>
+                        );
+                      })}
+
+                      <button
+                        onClick={() => resumeModule(m)}
+                        className="w-full mt-1.5 bg-mint text-navy text-[13px] font-semibold py-2.5 rounded-lg hover:bg-mint/90 transition-colors"
+                      >
+                        {m.completed === 0 ? 'Começar módulo →' : m.completed >= m.total ? 'Revisar módulo →' : 'Continuar módulo →'}
                       </button>
-                    </div>
-                  )}
-                  {clickable && (
-                    <div className="absolute bottom-2 right-2 z-10 [@media(hover:hover)]:hidden">
-                      <span className="bg-mint/90 text-navy text-[10px] font-bold px-2 py-1 rounded-full">Entrar →</span>
                     </div>
                   )}
                 </div>
