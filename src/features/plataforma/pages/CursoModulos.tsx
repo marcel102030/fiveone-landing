@@ -6,7 +6,7 @@ import { useAuth } from '../../../shared/contexts/AuthContext';
 import { fetchUserProgress } from '../services/progress';
 import { fetchCompletionsForUser } from '../services/completions';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
-import { listCompletedLessonIds, mergeCompletedLessons } from '../../../shared/utils/completedLessons';
+import { listCompletedLessonIds, reconcileCompletedLessons } from '../../../shared/utils/completedLessons';
 
 type LessonView = LessonRef & { completed: boolean };
 
@@ -82,7 +82,9 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     const uid = getCurrentUserId() || authEmail;
     if (!uid) return;
     fetchCompletionsForUser(uid)
-      .then((list) => setCompletedIds(new Set(mergeCompletedLessons(list).keys())))
+      // Banco = fonte de verdade: reconcilia (remove conclusões órfãs do local
+      // que não existem no servidor), em vez de só fazer merge/união.
+      .then((list) => setCompletedIds(new Set(reconcileCompletedLessons(list).keys())))
       .catch(() => {});
     fetchUserProgress(uid, 200)
       .then((rows) => {

@@ -116,6 +116,24 @@ export function mergeCompletedLessons(ids: Iterable<string>): CompletedMap {
   return map;
 }
 
+/**
+ * Reconcilia o cache local com a fonte de verdade (banco): o conjunto local
+ * passa a ser EXATAMENTE o `serverIds`. Remove conclusões que existem só no
+ * localStorage (órfãs) — ex.: após zerar o progresso de um usuário no banco.
+ * Preserva o `completedAt` quando já conhecido localmente.
+ * Use somente com a lista do servidor de um usuário identificado.
+ */
+export function reconcileCompletedLessons(serverIds: Iterable<string>): CompletedMap {
+  const existing = readMap();
+  const next: CompletedMap = new Map();
+  for (const id of serverIds) {
+    if (!id) continue;
+    next.set(id, existing.get(id) || { completedAt: Date.now() });
+  }
+  writeMap(next);
+  return next;
+}
+
 export function clearCompletedLessons(): void {
   if (!isBrowser()) return;
   try {
