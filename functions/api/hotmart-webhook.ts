@@ -33,6 +33,7 @@ type Env = {
 type HotmartBuyer = {
   email: string;
   name?: string;
+  checkout_phone?: string;
 };
 
 type HotmartProduct = {
@@ -48,6 +49,9 @@ type HotmartPurchase = {
   offer?: HotmartOffer;
   product?: HotmartProduct;
   status?: string;
+  transaction?: string;
+  price?: { value?: number; currency_value?: string };
+  payment?: { type?: string };
 };
 
 type HotmartPayload = {
@@ -77,130 +81,174 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
   }
 
   try {
-    // Verificar token secreto do Hotmart
+    // ── 1) Hottok — FAIL-CLOSED ────────────────────────────────────────────
+    // Sem o segredo configurado no servidor, NÃO processa nada (antes era
+    // fail-open: se a env var faltasse, qualquer um forjava compras).
     const hottok =
       request.headers.get('X-Hotmart-Hottok') ||
       request.headers.get('x-hotmart-hottok') ||
       new URL(request.url).searchParams.get('hottok');
 
-    if (env.HOTMART_HOTTOK && hottok !== env.HOTMART_HOTTOK) {
+    if (!env.HOTMART_HOTTOK) {
+      return new Response(JSON.stringify({ ok: false, error: 'HOTMART_HOTTOK nao configurado no servidor' }), {
+        status: 500, headers: { 'content-type': 'application/json', ...CORS },
+      });
+    }
+    if (hottok !== env.HOTMART_HOTTOK) {
       return new Response(JSON.stringify({ ok: false, error: 'Unauthorized' }), {
-        status: 401,
-        headers: { 'content-type': 'application/json', ...CORS },
+        status: 401, headers: { 'content-type': 'application/json', ...CORS },
       });
     }
 
     const payload = (await request.json().catch(() => null)) as HotmartPayload | null;
-
     if (!payload) {
       return new Response(JSON.stringify({ ok: false, error: 'Invalid JSON' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json', ...CORS },
+        status: 400, headers: { 'content-type': 'application/json', ...CORS },
       });
     }
 
-    // Só processar PURCHASE_APPROVED
     const event = String(payload.event || '').toUpperCase();
-    if (event !== 'PURCHASE_APPROVED' && event !== 'PURCHASE_COMPLETE') {
-      return new Response(JSON.stringify({ ok: true, skipped: true, event }), {
-        status: 200,
-        headers: { 'content-type': 'application/json', ...CORS },
-      });
-    }
-
-    const buyer = payload.data?.buyer;
-    if (!buyer?.email) {
-      return new Response(JSON.stringify({ ok: false, error: 'Missing buyer email' }), {
-        status: 400,
-        headers: { 'content-type': 'application/json', ...CORS },
-      });
-    }
-
-    const email = buyer.email.trim().toLowerCase();
-    const name = (buyer.name || '').trim() || null;
-
-    // Resolver formação a partir do mapa de produtos
-    const formationKey = resolveFormation(payload, env);
-
-    // Gerar senha inicial segura
-    const password = generatePassword();
-
-    // Admin Supabase
     const admin = createClient(env.SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY, {
       auth: { persistSession: false },
     });
 
-    // Verificar se o usuário já existe no platform_user
-    const { data: existing } = await admin
-      .from('platform_user')
-      .select('email')
-      .eq('email', email)
-      .maybeSingle();
+    // Dados comuns
+    const buyer = payload.data?.buyer;
+    const email = (buyer?.email || '').trim().toLowerCase();
+    const name = (buyer?.name || '').trim() || null;
+    const phone = (buyer?.checkout_phone || '').trim() || null;
+    const purchase = payload.data?.purchase;
+    const transaction = (purchase?.transaction || '').trim() || null;
+    const productId = String(payload.data?.product?.id || purchase?.product?.id || '');
+    const amountCents =
+      purchase?.price?.value != null ? Math.round(Number(purchase.price.value) * 100) : null;
+    const paymentMethod = purchase?.payment?.type || null;
 
-    if (existing) {
-      // Usuário já existe — apenas logar e retornar OK
-      return new Response(
-        JSON.stringify({ ok: true, created: false, message: 'User already exists', email }),
-        { status: 200, headers: { 'content-type': 'application/json', ...CORS } }
-      );
+    // Resolve o curso a partir do produto Hotmart (platform_product.hotmart_product_id)
+    let courseId: string | null = null;
+    if (productId) {
+      const { data: product } = await admin
+        .from('platform_product')
+        .select('ministry_id')
+        .eq('hotmart_product_id', productId)
+        .eq('is_active', true)
+        .maybeSingle();
+      courseId = (product?.ministry_id as string | undefined) ?? null;
     }
 
-    // Criar usuário no Supabase Auth
-    const { data: authData, error: authError } = await admin.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-
-    if (authError && !authError.message.includes('already been registered')) {
-      return new Response(
-        JSON.stringify({ ok: false, error: 'Auth creation failed', detail: authError.message }),
-        { status: 500, headers: { 'content-type': 'application/json', ...CORS } }
-      );
+    // ── 2) Eventos de REVOGAÇÃO (reembolso/chargeback/cancelamento) ─────────
+    const REVOKE_EVENTS = [
+      'PURCHASE_REFUNDED', 'PURCHASE_CHARGEBACK', 'PURCHASE_PROTEST',
+      'PURCHASE_CANCELED', 'PURCHASE_CANCELLATION', 'SUBSCRIPTION_CANCELLATION',
+    ];
+    if (REVOKE_EVENTS.includes(event)) {
+      if (email && courseId) {
+        await admin.from('platform_enrollment')
+          .delete().eq('user_email', email).eq('course_id', courseId);
+      }
+      if (transaction) {
+        await admin.from('platform_purchase')
+          .update({ status: event, hotmart_event: event, refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .eq('hotmart_transaction', transaction);
+      }
+      return new Response(JSON.stringify({ ok: true, revoked: true, event, course: courseId }), {
+        status: 200, headers: { 'content-type': 'application/json', ...CORS },
+      });
     }
 
-    // Criar platform_user
-    const { error: userError } = await admin.from('platform_user').insert({
-      email,
-      name,
-      formation: formationKey,
-      is_active: true,
-      created_at: new Date().toISOString(),
-    });
+    // ── 3) Daqui pra frente, só compras aprovadas ──────────────────────────
+    if (event !== 'PURCHASE_APPROVED' && event !== 'PURCHASE_COMPLETE') {
+      return new Response(JSON.stringify({ ok: true, skipped: true, event }), {
+        status: 200, headers: { 'content-type': 'application/json', ...CORS },
+      });
+    }
+    if (!email) {
+      return new Response(JSON.stringify({ ok: false, error: 'Missing buyer email' }), {
+        status: 400, headers: { 'content-type': 'application/json', ...CORS },
+      });
+    }
+    if (!courseId) {
+      return new Response(JSON.stringify({ ok: false, error: 'Produto Hotmart nao mapeado para um curso', productId }), {
+        status: 422, headers: { 'content-type': 'application/json', ...CORS },
+      });
+    }
 
-    if (userError) {
-      // Se foi por conflito (upsert race condition), não é erro crítico
-      if (!userError.message.includes('duplicate') && !userError.message.includes('unique')) {
-        return new Response(
-          JSON.stringify({ ok: false, error: 'platform_user insert failed', detail: userError.message }),
-          { status: 500, headers: { 'content-type': 'application/json', ...CORS } }
-        );
+    // ── 4) Idempotência: grava a compra. hotmart_transaction é UNIQUE → um
+    //    webhook duplicado falha aqui; nesse caso garante a matrícula e sai.
+    if (transaction) {
+      const { error: purchaseErr } = await admin.from('platform_purchase').insert({
+        user_email: email,
+        product_id: productId || null,
+        status: event,
+        hotmart_transaction: transaction,
+        hotmart_event: event,
+        payment_method: paymentMethod,
+        amount_cents: amountCents,
+        buyer_name: name,
+        buyer_phone: phone,
+        raw_payload: payload,
+        approved_at: new Date().toISOString(),
+      });
+      if (purchaseErr) {
+        const dup =
+          (purchaseErr as { code?: string }).code === '23505' ||
+          /duplicate|unique/i.test(purchaseErr.message);
+        if (dup) {
+          await admin.from('platform_enrollment')
+            .upsert({ user_email: email, course_id: courseId }, { onConflict: 'user_email,course_id' });
+          return new Response(JSON.stringify({ ok: true, alreadyProcessed: true, course: courseId }), {
+            status: 200, headers: { 'content-type': 'application/json', ...CORS },
+          });
+        }
+        // Outro erro ao gravar a compra: não bloqueia o acesso, segue.
       }
     }
 
-    // Enviar email de boas-vindas
-    let emailSent = false;
-    if (env.RESEND_API_KEY) {
-      const site = env.SITE_URL || `https://${new URL(request.url).host}`;
-      const emailResult = await sendWelcomeEmail({
-        env,
-        to: email,
-        name,
-        user: email,
-        password,
-        site,
+    // ── 5) Garante a conta do aluno (cria se não existir) ──────────────────
+    const { data: existing } = await admin
+      .from('platform_user').select('email').eq('email', email).maybeSingle();
+
+    let createdAccount = false;
+    let password = '';
+    if (!existing) {
+      password = generatePassword();
+      const { data: authData, error: authError } = await admin.auth.admin.createUser({
+        email, password, email_confirm: true,
       });
-      emailSent = emailResult;
+      if (authError && !authError.message.includes('already been registered')) {
+        return new Response(JSON.stringify({ ok: false, error: 'Auth creation failed', detail: authError.message }), {
+          status: 500, headers: { 'content-type': 'application/json', ...CORS },
+        });
+      }
+      const { error: userError } = await admin.from('platform_user').insert({
+        email, name, formation: resolveFormation(payload, env), is_active: true,
+        created_at: new Date().toISOString(),
+      });
+      if (userError && !/duplicate|unique/i.test(userError.message)) {
+        // Rollback do Auth para não deixar usuário órfão.
+        if (authData?.user?.id) {
+          await admin.auth.admin.deleteUser(authData.user.id).catch(() => {});
+        }
+        return new Response(JSON.stringify({ ok: false, error: 'platform_user insert failed', detail: userError.message }), {
+          status: 500, headers: { 'content-type': 'application/json', ...CORS },
+        });
+      }
+      createdAccount = true;
+    }
+
+    // ── 6) Matrícula no curso comprado (idempotente — cobre 2ª compra) ──────
+    await admin.from('platform_enrollment')
+      .upsert({ user_email: email, course_id: courseId }, { onConflict: 'user_email,course_id' });
+
+    // ── 7) E-mail: só envia credenciais quando a conta foi criada agora ─────
+    let emailSent = false;
+    if (createdAccount && env.RESEND_API_KEY) {
+      const site = env.SITE_URL || `https://${new URL(request.url).host}`;
+      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, site });
     }
 
     return new Response(
-      JSON.stringify({
-        ok: true,
-        created: true,
-        email,
-        formation: formationKey,
-        emailSent,
-      }),
+      JSON.stringify({ ok: true, created: createdAccount, enrolled: courseId, emailSent }),
       { status: 200, headers: { 'content-type': 'application/json', ...CORS } }
     );
   } catch (e: any) {
@@ -251,10 +299,12 @@ function resolveFormation(payload: HotmartPayload, env: Env): string {
 
 function generatePassword(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#';
+  // crypto.getRandomValues está disponível no runtime do Cloudflare Pages Functions.
+  const bytes = new Uint32Array(12);
+  crypto.getRandomValues(bytes);
   let pass = '';
-  // Simples — sem crypto.getRandomValues (pode não estar disponível em todos os Workers)
-  for (let i = 0; i < 10; i++) {
-    pass += chars[Math.floor(Math.random() * chars.length)];
+  for (let i = 0; i < bytes.length; i++) {
+    pass += chars[bytes[i] % chars.length];
   }
   return pass;
 }
