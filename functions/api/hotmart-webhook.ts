@@ -124,16 +124,20 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       purchase?.price?.value != null ? Math.round(Number(purchase.price.value) * 100) : null;
     const paymentMethod = purchase?.payment?.type || null;
 
-    // Resolve o curso a partir do produto Hotmart (platform_product.hotmart_product_id)
+    // Resolve o curso a partir do produto Hotmart (platform_product.hotmart_product_id).
+    // productUuid é a PK interna de platform_product — é ela que vai em
+    // platform_purchase.product_id (FK), NÃO o productId da Hotmart.
     let courseId: string | null = null;
+    let productUuid: string | null = null;
     if (productId) {
       const { data: product } = await admin
         .from('platform_product')
-        .select('ministry_id')
+        .select('id, ministry_id')
         .eq('hotmart_product_id', productId)
         .eq('is_active', true)
         .maybeSingle();
       courseId = (product?.ministry_id as string | undefined) ?? null;
+      productUuid = (product?.id as string | undefined) ?? null;
     }
 
     // ── 2) Eventos de REVOGAÇÃO (reembolso/chargeback/cancelamento) ─────────
@@ -147,8 +151,13 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
           .delete().eq('user_email', email).eq('course_id', courseId);
       }
       if (transaction) {
+        // status precisa respeitar o CHECK da tabela (approved/refunded/chargeback/…)
+        const revokeStatus =
+          event === 'PURCHASE_CHARGEBACK' || event === 'PURCHASE_PROTEST' ? 'chargeback'
+          : event === 'PURCHASE_REFUNDED' ? 'refunded'
+          : 'canceled';
         await admin.from('platform_purchase')
-          .update({ status: event, hotmart_event: event, refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+          .update({ status: revokeStatus, hotmart_event: event, refunded_at: new Date().toISOString(), updated_at: new Date().toISOString() })
           .eq('hotmart_transaction', transaction);
       }
       return new Response(JSON.stringify({ ok: true, revoked: true, event, course: courseId }), {
@@ -178,8 +187,8 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     if (transaction) {
       const { error: purchaseErr } = await admin.from('platform_purchase').insert({
         user_email: email,
-        product_id: productId || null,
-        status: event,
+        product_id: productUuid,
+        status: 'approved',
         hotmart_transaction: transaction,
         hotmart_event: event,
         payment_method: paymentMethod,
