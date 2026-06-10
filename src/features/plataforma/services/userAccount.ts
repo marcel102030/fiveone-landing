@@ -255,6 +255,18 @@ export async function updateUserName(email: string, name: string | null): Promis
 }
 
 /**
+ * Notifica o aluno, por e-mail, que a senha dele foi alterada (best-effort).
+ * O endpoint envia SOMENTE para o e-mail do JWT — não bloqueia o fluxo se falhar.
+ */
+export async function sendPasswordChangedEmail(): Promise<void> {
+  try {
+    await adminFetch('/api/password-changed-email', { method: 'POST', body: JSON.stringify({}) });
+  } catch {
+    /* o e-mail é só uma notificação — não impede a troca de senha */
+  }
+}
+
+/**
  * Self-service: altera a senha do PRÓPRIO usuário logado.
  * Usa supabase.auth.updateUser — NÃO precisa de admin (ao contrário de
  * resetUserPassword, que é para um admin redefinir a senha de outro aluno e

@@ -5,7 +5,7 @@ import PlatformUserProfile from "../components/PlatformUserProfile/PlatformUserP
 import "./perfilAluno.css";
 import { getCurrentUserId } from "../../../shared/utils/user";
 import { usePlatformUserProfile, storePlatformProfile } from "../hooks/usePlatformUserProfile";
-import { getUserByEmail, updateUserName, verifyUser, updateOwnPassword, getEnrolledCourses } from "../services/userAccount";
+import { getUserByEmail, updateUserName, verifyUser, updateOwnPassword, sendPasswordChangedEmail, getEnrolledCourses } from "../services/userAccount";
 import { FormationKey, EnrolledCourse } from "../services/userAccount";
 import { getUserProfileDetails, upsertUserProfileDetails, uploadUserAvatar } from "../services/userProfile";
 
@@ -324,7 +324,8 @@ const PerfilAluno = () => {
       }
 
       await updateOwnPassword(next);
-      setPasswordFeedback({ type: 'success', text: 'Senha atualizada com sucesso.' });
+      void sendPasswordChangedEmail(); // notificação de segurança (não bloqueia)
+      setPasswordFeedback({ type: 'success', text: 'Senha atualizada com sucesso. Enviamos um e-mail confirmando a alteração.' });
       setPasswordForm({ current: '', next: '', confirm: '' });
     } catch (error: any) {
       setPasswordFeedback({ type: 'error', text: error?.message || 'Não foi possível atualizar a senha agora.' });
