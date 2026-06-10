@@ -17,6 +17,9 @@ export type WelcomeEmail = {
   text: string;
 };
 
+// Grupo do WhatsApp da comunidade — incluído no e-mail de boas-vindas.
+const WHATSAPP_GROUP_URL = 'https://chat.whatsapp.com/HM8rzV4WIK6CAqcxBwCbUn';
+
 export function buildWelcomeEmail(p: WelcomeEmailParams): WelcomeEmail {
   const course = (p.course || 'Defenda a sua Fé').toString().trim();
   const name = (p.name || '').toString().trim();
@@ -129,17 +132,22 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
     <table role="presentation" cellpadding="0" cellspacing="0">
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">1.</span>Acesse <strong>escolafiveone.com</strong> e faça seu login
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">1.</span>Entre no nosso <a href="${WHATSAPP_GROUP_URL}" style="color:#25D366;font-weight:700;text-decoration:none;">grupo do WhatsApp</a> para avisos e novidades
         </td>
       </tr>
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">2.</span>Vá em <strong>Perfil</strong> e altere sua senha
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">2.</span>Acesse <strong>escolafiveone.com</strong> e faça seu login
         </td>
       </tr>
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">3.</span>Acesse o curso <strong>${escapeHtml(course)}</strong> e comece sua jornada
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">3.</span>Vá em <strong>Perfil</strong> e altere sua senha
+        </td>
+      </tr>
+      <tr>
+        <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">4.</span>Acesse o curso <strong>${escapeHtml(course)}</strong> e comece sua jornada
         </td>
       </tr>
     </table>
@@ -172,9 +180,10 @@ function renderText({ name, user, password, loginUrl, course }: { name?: string 
     `Acessar: ${loginUrl}`,
     '',
     'PRÓXIMOS PASSOS:',
-    '1. Acesse escolafiveone.com e faça seu login',
-    '2. Vá em Perfil e altere sua senha',
-    `3. Acesse o curso "${course}" e comece sua jornada`,
+    `1. Entre no nosso grupo do WhatsApp: ${WHATSAPP_GROUP_URL}`,
+    '2. Acesse escolafiveone.com e faça seu login',
+    '3. Vá em Perfil e altere sua senha',
+    `4. Acesse o curso "${course}" e comece sua jornada`,
     '',
     'Guarde suas credenciais com segurança.',
     'Se não reconhece este e-mail, ignore esta mensagem.',
