@@ -1199,18 +1199,12 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
       if (uid && lesson.videoId) {
         const stored = getStoredProgress(lesson);
         const localWatched = Number(stored?.watchedSeconds || 0);
-        if (localWatched > 0) {
-          // Tem progresso local → sync normal
-          upsertProgress({
-            user_id: uid,
-            lesson_id: lesson.videoId,
-            last_at: new Date(now).toISOString(),
-            watched_seconds: localWatched,
-            duration_seconds: stored?.durationSeconds || null,
-            title: lesson.title,
-            thumbnail: thumb,
-          }).catch(() => {});
-        } else {
+        // IMPORTANTE: abrir a aula NÃO empurra progresso para o banco. Antes, o
+        // ramo localWatched>0 fazia upsert ao abrir, recriando "aulas fantasma"
+        // no Continuar Assistindo a partir do localStorage (mesmo sem play). O
+        // save agora só acontece com play real (efeito do player). Aqui apenas
+        // PUXAMOS do banco quando não há progresso local (resume cross-device).
+        if (localWatched <= 0) {
           // Sem progresso local → busca do Supabase e popula localStorage
           // (cenário: celular abrindo aula que foi assistida no PC)
           import('../services/progress').then(({ fetchUserProgress }) => {
@@ -1533,12 +1527,15 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
 
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
-        // Só persiste progresso depois que o usuário REALMENTE deu play nesta
-        // aula. Evita que apenas ABRIR a aula (que restaura a posição salva e
-        // dispara um 'seeked'/'loaded') recrie progresso no "Continuar
-        // Assistindo" e, quando a posição salva é ~100%, marque como concluída
-        // e dispare o auto-avanço em cascata pelas aulas.
+        // Só persiste progresso durante playback REAL. Evita que apenas ABRIR a
+        // aula (que restaura a posição salva e dispara 'loaded'/'seeked') recrie
+        // progresso "fantasma" no "Continuar Assistindo" e, quando a posição é
+        // ~100%, marque como concluída e dispare auto-avanço em cascata.
+        // - isPlaying: estado ATUAL (true só enquanto tocando) → o seek de
+        //   auto-resume acontece pausado, então é ignorado.
+        // - hasPlayed: já tocou ao menos uma vez (para o evento 'ended').
         let hasPlayed = false;
+        let isPlaying = false;
 
         const tryResume = async (durationHint?: number) => {
           if (!pendingResume || pendingResume <= 5) return;
@@ -1549,8 +1546,9 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           pendingResume = 0;
         };
 
-        player.on('play', () => { hasPlayed = true; });
-        player.on('playing', () => { hasPlayed = true; });
+        player.on('play', () => { hasPlayed = true; isPlaying = true; });
+        player.on('playing', () => { hasPlayed = true; isPlaying = true; });
+        player.on('pause', () => { isPlaying = false; });
 
         player.on('loaded', (data: any) => {
           lastProgressFlushRef.current = 0;
@@ -1566,22 +1564,33 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         });
 
         player.on('durationchange', (data: any) => { tryResume(Number(data?.duration)).catch(() => {}); });
+        // Exige playback GENUÍNO antes de salvar: acumula só avanços pequenos e
+        // positivos do tempo (o timeupdate de playback normal dispara ~4x/s).
+        // Um blip de auto-play no load, ou o seek de auto-resume, NÃO acumulam
+        // → apenas ABRIR a aula nunca cria progresso. Só salva após ~3s reais.
+        let lastTuTime = -1;
+        let realPlayMs = 0;
+        const PLAY_GATE_MS = 3000;
         player.on('timeupdate', (data: any) => {
-          if (!hasPlayed) return; // só salva durante playback real
+          const t = Number(data?.seconds || 0);
+          if (isPlaying && lastTuTime >= 0) {
+            const delta = t - lastTuTime;
+            if (delta > 0 && delta < 1.5) realPlayMs += delta * 1000;
+          }
+          lastTuTime = t;
+          if (!isPlaying || realPlayMs < PLAY_GATE_MS) return;
           const now = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (now - lastProgressFlushRef.current >= 5000) {
             lastProgressFlushRef.current = now;
-            persistProgressRef.current?.(Number(data?.seconds || 0), duration);
+            persistProgressRef.current?.(t, duration);
           }
         });
-        player.on('seeked', (data: any) => {
-          if (!hasPlayed) return; // ignora o seek do auto-resume
-          lastProgressFlushRef.current = Date.now();
-          const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          persistProgressRef.current?.(Number(data?.seconds || 0), duration);
-        });
+        // 'seeked' NÃO persiste: pular/retomar não é assistir. O auto-resume faz
+        // um seek pausado ao abrir a aula — persistir aqui recriava o progresso
+        // "fantasma". A posição é capturada pelo timeupdate durante o playback.
         player.on('ended', async () => {
+          isPlaying = false;
           if (!hasPlayed) return; // só conta conclusão se assistiu de fato
           lastProgressFlushRef.current = Date.now();
           let duration = stored?.durationSeconds || 0;
