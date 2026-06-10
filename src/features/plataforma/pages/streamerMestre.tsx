@@ -936,8 +936,9 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
         (isMobile ? resolvedBannerMobile || resolvedBannerContinue : resolvedBannerContinue || resolvedBannerPlayer) ||
         resolvedBannerMobile || lesson.thumbnailUrl || '/assets/images/miniatura_fundamentos_mestre.png';
 
-      // Atualiza ref de flush para garantir save mesmo sem os 15s do throttle
-      if (watchedSeconds > 0) {
+      // Atualiza ref de flush para garantir save mesmo sem os 10s do throttle.
+      // Só a partir de 10s (mesma regra do save no banco).
+      if (watchedSeconds >= 10) {
         unmountFlushRef.current = {
           watchedSeconds, durationSeconds,
           lessonId: keyBase, lessonTitle: lesson.title, thumbnail: previewImage,
@@ -974,7 +975,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
               localStorage.setItem('videos_assistidos', JSON.stringify(filtered));
             }
           }
-        } else if (hasRealProgress) {
+        } else if (watchedSeconds >= 10 || storedWatched >= 10) {
           const existingWatchedRaw = localStorage.getItem('videos_assistidos');
           const existingWatched = existingWatchedRaw ? JSON.parse(existingWatchedRaw) : [];
           const filteredWatched = Array.isArray(existingWatched)
@@ -991,10 +992,12 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
       } catch {}
 
       const userId = getCurrentUserId() || emailRef.current;
-      if (userId && watchedSeconds > 0) {
+      // Só persiste no banco após 10s assistidos (evita "aulas fantasma" no
+      // Continuar Assistindo) e sincroniza no máximo a cada 10s.
+      if (userId && watchedSeconds >= 10) {
         const syncKey = `fiveone_progress_sync_${lesson.videoId}`;
         const lastSync = Number(sessionStorage.getItem(syncKey) || 0);
-        if (now - lastSync > 5000) {
+        if (now - lastSync > 10000) {
           sessionStorage.setItem(syncKey, String(now));
           upsertProgress({
             user_id: userId,
@@ -1063,7 +1066,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   useEffect(() => {
     return () => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
-      if (!lessonId || watchedSeconds <= 0) return;
+      if (!lessonId || watchedSeconds < 10) return;
       const uid = getCurrentUserId() || emailRef.current;
       if (!uid) return;
       upsertProgress({
@@ -1086,7 +1089,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   useEffect(() => {
     const flush = () => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
-      if (!lessonId || watchedSeconds <= 0) return;
+      if (!lessonId || watchedSeconds < 10) return;
       const uid = getCurrentUserId() || emailRef.current;
       if (!uid) return;
       upsertProgress({
@@ -1118,7 +1121,7 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   useEffect(() => {
     const id = window.setInterval(() => {
       const { watchedSeconds, durationSeconds, lessonId, lessonTitle, thumbnail } = unmountFlushRef.current;
-      if (!lessonId || watchedSeconds <= 0) return;
+      if (!lessonId || watchedSeconds < 10) return;
       const uid = getCurrentUserId() || emailRef.current;
       if (!uid) return;
       upsertProgress({

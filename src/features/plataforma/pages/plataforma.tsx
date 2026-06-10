@@ -286,6 +286,8 @@ const PaginaInicial = () => {
   const visibleLastWatched = useMemo(() => {
     if (!lastWatchedArray.length) return [] as any[]
     return lastWatchedArray.filter((item) => {
+      // Só conta como "em andamento" depois de 10s assistidos (evita fantasmas)
+      if (Number(item.watchedSeconds || 0) < 10) return false
       // Testa todas as chaves possíveis — dados históricos podem usar id, videoId ou video_id
       const keys = [item.id, item.videoId, item.video_id].filter(Boolean) as string[]
       if (!keys.length) return true

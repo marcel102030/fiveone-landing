@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { fetchUserProgress, upsertProgress, ProgressRow } from '../services/progress'
+import { fetchUserProgress, ProgressRow } from '../services/progress'
 import { fetchCompletionsForUser } from '../services/completions'
 import type { LessonRef } from '../services/platformContent'
 
@@ -81,76 +81,14 @@ export function useStudentProgress(userId: string | null): StudentProgressState 
  * Roda uma vez por sessão por usuário.
  */
 export async function recoverLocalProgress(
-  userId: string,
-  lessonLookup: (id: string) => LessonRef | null | undefined,
-  remoteProgress: ProgressRow[],
+  _userId: string,
+  _lessonLookup: (id: string) => LessonRef | null | undefined,
+  _remoteProgress: ProgressRow[],
 ): Promise<void> {
-  const sessionKey = `fiveone_recovery_synced_${userId}`
-  if (sessionStorage.getItem(sessionKey)) return
-
-  const remoteMap = new Map(remoteProgress.map(r => [r.lesson_id, r.watched_seconds]))
-
-  // Fonte 1: chaves fiveone_progress::{id}
-  const progressKeys: string[] = []
-  try {
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i)
-      if (k?.startsWith('fiveone_progress::')) progressKeys.push(k)
-    }
-  } catch {}
-
-  for (const key of progressKeys) {
-    try {
-      const raw = localStorage.getItem(key)
-      if (!raw) continue
-      const local = JSON.parse(raw)
-      const lessonId    = key.replace('fiveone_progress::', '')
-      const localWatched = Math.round(Number(local.watchedSeconds || 0))
-      if (localWatched <= 0) continue
-      const remoteWatched = remoteMap.get(lessonId) ?? -1
-      if (remoteWatched >= localWatched) continue
-      const lesson = lessonLookup(lessonId)
-      await upsertProgress({
-        user_id:          userId,
-        lesson_id:        lessonId,
-        last_at:          local.lastAt ? new Date(local.lastAt).toISOString() : new Date().toISOString(),
-        watched_seconds:  localWatched,
-        duration_seconds: local.durationSeconds ? Math.round(Number(local.durationSeconds)) : null,
-        title:            lesson?.title || lessonId,
-        thumbnail:        lesson?.bannerContinue?.url || lesson?.bannerContinue?.dataUrl || lesson?.bannerMobile?.url || null,
-      }).catch(() => {})
-      remoteMap.set(lessonId, localWatched)
-    } catch {}
-  }
-
-  // Fonte 2: array videos_assistidos (entradas sem chave individual)
-  try {
-    const raw = localStorage.getItem('videos_assistidos')
-    if (raw) {
-      const arr = JSON.parse(raw)
-      if (Array.isArray(arr)) {
-        const uploaded = new Set(progressKeys.map(k => k.replace('fiveone_progress::', '')))
-        for (const item of arr) {
-          const lessonId    = item.id || item.videoId || item.video_id
-          if (!lessonId || uploaded.has(lessonId)) continue
-          const localWatched = Math.round(Number(item.watchedSeconds || 0))
-          if (localWatched <= 0) continue
-          const remoteWatched = remoteMap.get(lessonId) ?? -1
-          if (remoteWatched >= localWatched) continue
-          const lesson = lessonLookup(lessonId)
-          await upsertProgress({
-            user_id:          userId,
-            lesson_id:        lessonId,
-            last_at:          item.lastAt ? new Date(item.lastAt).toISOString() : new Date().toISOString(),
-            watched_seconds:  localWatched,
-            duration_seconds: item.durationSeconds ? Math.round(Number(item.durationSeconds)) : null,
-            title:            item.title || lesson?.title || lessonId,
-            thumbnail:        item.thumbnail || lesson?.bannerContinue?.url || null,
-          }).catch(() => {})
-        }
-      }
-    }
-  } catch {}
-
-  try { sessionStorage.setItem(sessionKey, '1') } catch {}
+  // ⛔️ Recovery APOSENTADO (jun/2026). Antes re-enviava o progresso salvo no
+  // localStorage para o banco, para cobrir o antigo bug float→int (já corrigido).
+  // Passou a ressuscitar progresso velho ("aulas fantasma") após recriação de
+  // conteúdo. O banco é a fonte de verdade e os saves do player (>=10s) vão
+  // direto para lá — então este recovery virou no-op. A assinatura é mantida
+  // para não quebrar a chamada na Plataforma.
 }
