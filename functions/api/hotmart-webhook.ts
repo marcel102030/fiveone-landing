@@ -11,6 +11,7 @@
 //   SITE_URL
 
 import { createClient } from '@supabase/supabase-js';
+import { buildWelcomeEmail } from './_welcomeEmail';
 
 const CORS = {
   'Access-Control-Allow-Origin': '*',
@@ -252,9 +253,12 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     // ── 7) E-mail: só envia credenciais quando a conta foi criada agora ─────
     let emailSent = false;
     if (createdAccount && env.RESEND_API_KEY) {
-      // A plataforma do aluno é sempre escolafiveone.com (não usa SITE_URL, que
-      // aponta para o site institucional fiveonemovement.com).
-      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, site: 'https://escolafiveone.com' });
+      // Título legível do curso para o e-mail (fallback no nome padrão).
+      let courseTitle = 'Defenda a sua Fé';
+      const { data: ministry } = await admin
+        .from('platform_ministry').select('title').eq('id', courseId).maybeSingle();
+      if (ministry?.title) courseTitle = ministry.title as string;
+      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, course: courseTitle });
     }
 
     return new Response(
@@ -325,55 +329,19 @@ async function sendWelcomeEmail(opts: {
   name: string | null;
   user: string;
   password: string;
-  site: string;
+  course: string;
 }): Promise<boolean> {
-  const { env, to, name, user, password, site } = opts;
+  const { env, to, name, user, password, course } = opts;
   try {
+    // Mesmo template bonito usado no cadastro manual (admin) — _welcomeEmail.
     const from =
-      env.RESEND_FROM_ALUNO?.trim() || 'Five One <bemvindofiveone@fiveonemovement.com>';
+      env.RESEND_FROM_ALUNO?.trim() || 'Escola Five One <no-reply@fiveonemovement.com>';
     const reply_to =
       env.RESEND_REPLY_TO_ALUNO?.trim() || 'escolafiveone@gmail.com';
 
-    const loginUrl = `${site}/login-aluno?utm_source=email&utm_medium=transactional&utm_campaign=hotmart_purchase`;
-    const greeting = name ? `Olá, ${escapeHtml(name)}!` : 'Olá!';
-
-    const html = `
-<div style="font-family: Inter, system-ui, Arial, sans-serif; max-width:640px; margin:0 auto; color:#0f172a;">
-  <div style="background:#0b1220; padding:22px 18px; border-radius:14px; color:#e7f2f9;">
-    <h1 style="margin:0 0 4px; font-size:22px;">Bem-vindo à Five One 🎉</h1>
-    <p style="margin:0; color:#a8c5db;">${greeting} Sua compra foi confirmada e seu acesso foi criado.</p>
-  </div>
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin-top:14px; border-collapse:separate; border:1px solid #e2e8f0; border-radius:12px;">
-    <tr>
-      <td style="padding:14px 16px;">
-        <div style="font-weight:700; margin-bottom:6px;">Suas credenciais de acesso</div>
-        <div style="font-family: monospace; background:#f8fafc; padding:12px; border-radius:8px; margin-bottom:12px;">
-          <div><span style="color:#64748b">Usuário:</span> ${escapeHtml(user)}</div>
-          <div style="margin-top:4px;"><span style="color:#64748b">Senha:</span> ${escapeHtml(password)}</div>
-        </div>
-        <p style="color:#475569; font-size:14px; margin:0 0 12px;">Guarde estas informações. Você pode alterar a senha após o primeiro acesso.</p>
-        <a href="${loginUrl}" style="background:#06b6d4; color:#ffffff; text-decoration:none; padding:12px 16px; border-radius:10px; font-size:16px; display:inline-block;">
-          Acessar a plataforma →
-        </a>
-      </td>
-    </tr>
-  </table>
-  <p style="font-size:12px; color:#94a3b8; text-align:center; margin-top:18px;">© 2025 Five One — Todos os direitos reservados</p>
-</div>`;
-
-    const text = [
-      'Bem-vindo à Five One!',
-      '',
-      greeting,
-      'Sua compra foi confirmada e seu acesso foi criado.',
-      '',
-      `Usuário: ${user}`,
-      `Senha: ${password}`,
-      '',
-      `Acessar: ${loginUrl}`,
-      '',
-      'Guarde estas informações e altere a senha após o primeiro login.',
-    ].join('\n');
+    const { subject, html, text } = buildWelcomeEmail({
+      name, user, password, course, campaign: 'hotmart_purchase',
+    });
 
     const r = await fetch('https://api.resend.com/emails', {
       method: 'POST',
@@ -381,27 +349,11 @@ async function sendWelcomeEmail(opts: {
         Authorization: `Bearer ${env.RESEND_API_KEY}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        from,
-        to,
-        reply_to,
-        subject: 'Bem-vindo à plataforma Five One — suas credenciais',
-        html,
-        text,
-      }),
+      body: JSON.stringify({ from, to, reply_to, subject, html, text }),
     });
 
     return r.ok;
   } catch {
     return false;
   }
-}
-
-function escapeHtml(str: string): string {
-  return String(str)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
 }
