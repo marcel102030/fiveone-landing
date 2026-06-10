@@ -2,6 +2,14 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import App from "./App.tsx";
+import { recoverFromChunkError } from "./shared/utils/chunkRecovery";
+
+// Falha ao pré-carregar um chunk lazy (deploy novo enquanto a aba está aberta)
+// → auto-recupera (limpa SW/cache e recarrega) em vez de quebrar a tela.
+window.addEventListener("vite:preloadError", (event) => {
+  event.preventDefault();
+  void recoverFromChunkError();
+});
 
 const rootElement = document.getElementById("root");
 const faviconLink = document.querySelector<HTMLLinkElement>('link[rel="icon"]');

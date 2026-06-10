@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from "react";
+import { isChunkLoadError, recoverFromChunkError } from "../../utils/chunkRecovery";
 
 type ErrorBoundaryProps = {
   children: ReactNode;
@@ -19,6 +20,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
   componentDidCatch(error: Error, info: ErrorInfo) {
     const scope = this.props.scope ?? "app";
+    // Erro de carregamento de chunk (deploy novo / SW desatualizado) →
+    // auto-recupera limpando SW/cache e recarregando, em vez de mostrar a tela
+    // de erro. A trava de tempo em recoverFromChunkError evita loop.
+    if (isChunkLoadError(error)) {
+      void recoverFromChunkError();
+      return;
+    }
     console.error(`[ErrorBoundary:${scope}]`, error, info.componentStack);
   }
 
