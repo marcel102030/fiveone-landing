@@ -190,7 +190,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
     <>
       <Header />
       <div className="min-h-screen bg-navy pt-6 pb-16 px-4 overflow-x-hidden">
-        <div className="max-w-3xl mx-auto w-full">
+        <div className="max-w-6xl mx-auto w-full">
           <button
             onClick={() => navigate('/plataforma')}
             className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors mb-6"
@@ -198,34 +198,33 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
             ← Voltar aos cursos
           </button>
 
-          {/* ── Cabeçalho do curso ── */}
-          <div className="flex flex-wrap items-end justify-between gap-4 mb-5">
-            <div>
+          <div className="lg:grid lg:grid-cols-3 lg:gap-8 lg:items-start">
+            {/* ── Coluna esquerda: info do curso (fixa no desktop) ── */}
+            <aside className="lg:col-span-1 lg:sticky lg:top-6 self-start">
               <h1 className="text-2xl sm:text-3xl font-bold text-slate-white tracking-tight">{courseName}</h1>
               {tagline && <p className="text-sm text-slate mt-1">{tagline}</p>}
-            </div>
-            <div className="flex gap-2.5">
-              <div className="bg-navy-light rounded-xl px-4 py-2.5 text-center min-w-[78px]">
-                <div className="text-xl font-bold text-mint tabular-nums">{courseStats.percent}%</div>
-                <div className="text-[11px] text-slate">concluído</div>
-              </div>
-              <div className="bg-navy-light rounded-xl px-4 py-2.5 text-center min-w-[78px]">
-                <div className="text-xl font-bold text-slate-white tabular-nums">{courseStats.done}/{courseStats.total}</div>
-                <div className="text-[11px] text-slate">aulas</div>
-              </div>
-            </div>
-          </div>
 
-          {/* Barra de progresso do curso */}
-          <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mb-6">
-            <div className="h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${courseStats.percent}%` }} />
-          </div>
+              <div className="flex gap-2.5 mt-4">
+                <div className="flex-1 bg-navy-light rounded-xl px-4 py-2.5 text-center">
+                  <div className="text-xl font-bold text-mint tabular-nums">{courseStats.percent}%</div>
+                  <div className="text-[11px] text-slate">concluído</div>
+                </div>
+                <div className="flex-1 bg-navy-light rounded-xl px-4 py-2.5 text-center">
+                  <div className="text-xl font-bold text-slate-white tabular-nums">{courseStats.done}/{courseStats.total}</div>
+                  <div className="text-[11px] text-slate">aulas</div>
+                </div>
+              </div>
+
+              {/* Barra de progresso do curso */}
+              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-4">
+                <div className="h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${courseStats.percent}%` }} />
+              </div>
 
           {/* ── Continuar de onde parou ── */}
           {continueLesson && (
             <button
               onClick={() => goToLesson(continueLesson.moduleId, continueLesson.videoId)}
-              className="group w-full flex items-center gap-3.5 bg-navy-light border border-mint/25 hover:border-mint/50 rounded-2xl p-3.5 mb-7 text-left transition-colors"
+              className="group w-full flex items-center gap-3.5 bg-navy-light border border-mint/25 hover:border-mint/50 rounded-2xl p-3.5 mt-5 text-left transition-colors"
             >
               <span className="w-10 h-10 rounded-full bg-mint text-navy flex items-center justify-center shrink-0">
                 <PlayIcon />
@@ -243,9 +242,10 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
               </span>
             </button>
           )}
+            </aside>
 
-          {/* ── Lista de módulos (accordion) ── */}
-          <div className="flex flex-col gap-3">
+            {/* ── Coluna direita: módulos (accordion) ── */}
+            <main className="lg:col-span-2 mt-6 lg:mt-0 flex flex-col gap-3">
             {modules.map((m) => {
               const open = expanded.has(m.id);
               const accent = open && !m.soon;
@@ -331,6 +331,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
                 </div>
               );
             })}
+            </main>
           </div>
         </div>
       </div>
