@@ -32,4 +32,20 @@
   Cache-Control: no-cache, no-store, must-revalidate
 
 /site.webmanifest
-  Cache-Control: no-cache
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# ── Ícones PWA — curto TTL para atualizar quando mudar
+/apple-touch-icon.png
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/favicon-96x96.png
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/web-app-manifest-192x192.png
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/web-app-manifest-512x512.png
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/favicon.ico
+  Cache-Control: no-cache, no-store, must-revalidate

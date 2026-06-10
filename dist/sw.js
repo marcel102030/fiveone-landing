@@ -1,11 +1,12 @@
-// Five One — Service Worker v1
-// Estratégia: Cache First para assets estáticos, Network First para navegação
+// Five One — Service Worker v3
+// v3: index.html NUNCA cacheado (tem Cache-Control: no-store no servidor)
+//     Garante que o script de supressão do beforeinstallprompt seja sempre fresco
 
-const CACHE_NAME = 'fiveone-v1';
+const CACHE_NAME = 'fiveone-v3';
 
+// index.html propositalmente ausente do precache —
+// sempre buscado da rede (já tem no-cache no _headers)
 const PRECACHE = [
-  '/',
-  '/index.html',
   '/offline.html',
 ];
 
@@ -95,20 +96,12 @@ self.addEventListener('fetch', (event) => {
   }
 
   // ── Navegação (SPA com BrowserRouter) ─────────────────────────────────
-  // Estratégia: Network First → cache → offline.html
+  // Estratégia: SEMPRE Network → index.html nunca vem do cache
+  // (garante que o script de supressão do beforeinstallprompt seja sempre fresco)
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response.ok) {
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, response.clone()));
-          }
-          return response;
-        })
-        .catch(() =>
-          caches.match('/index.html')
-            .then((cached) => cached || caches.match('/offline.html'))
-        )
+        .catch(() => caches.match('/offline.html'))
     );
     return;
   }

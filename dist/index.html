@@ -11,18 +11,32 @@
     gtag('config', 'G-9BGPY1X5Q9');
   </script>
   <meta charset="UTF-8" />
-  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/png" href="/favicon-96x96.png?v=3" sizes="96x96" />
   <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-  <link rel="shortcut icon" href="/favicon.ico" />
-  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
-  <link rel="manifest" href="/site.webmanifest" />
+  <link rel="shortcut icon" href="/favicon.ico?v=3" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-v3.png" />
+  <!-- manifest sempre presente — necessário para Chrome reconhecer o PWA -->
+  <link rel="manifest" href="/site.webmanifest?v=3" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-  <!-- PWA -->
+  <!--
+    PWA: captura beforeinstallprompt GLOBALMENTE antes do React carregar.
+    - e.preventDefault() suprime o banner nativo do browser em QUALQUER página
+    - window.__pwaPrompt guarda o evento para uso posterior
+    - Nosso componente PWAInstallBanner só exibe o UI quando o usuário está logado
+  -->
+  <script>
+  window.__pwaPrompt = null;
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    window.__pwaPrompt = e;
+  });
+  </script>
+
   <meta name="theme-color" content="#0a192f" />
   <meta name="application-name" content="Five One" />
-  <meta name="description" content="Movimento Five One — cursos bíblicos com fundamento teológico, treinamentos dos 5 Ministérios e o Teste dos 5 Ministérios." />
   <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="description" content="Movimento Five One — cursos bíblicos com fundamento teológico, treinamentos dos 5 Ministérios e o Teste dos 5 Ministérios." />
 
   <!-- iOS PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -44,8 +58,8 @@
   <meta name="twitter:image" content="https://fiveonemovement.com/assets/og-image.jpg" />
 
   <title>Five One</title>
-  <script type="module" crossorigin src="/assets/index-DD0uDO1x.js"></script>
-  <link rel="stylesheet" crossorigin href="/assets/index-DgSGGGuD.css">
+  <script type="module" crossorigin src="/assets/index-D412mx7K.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/index-CyQBqs2s.css">
 </head>
 
 <body>
