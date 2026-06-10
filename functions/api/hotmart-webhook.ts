@@ -243,8 +243,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     // ── 7) E-mail: só envia credenciais quando a conta foi criada agora ─────
     let emailSent = false;
     if (createdAccount && env.RESEND_API_KEY) {
-      const site = env.SITE_URL || `https://${new URL(request.url).host}`;
-      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, site });
+      // A plataforma do aluno é sempre escolafiveone.com (não usa SITE_URL, que
+      // aponta para o site institucional fiveonemovement.com).
+      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, site: 'https://escolafiveone.com' });
     }
 
     return new Response(

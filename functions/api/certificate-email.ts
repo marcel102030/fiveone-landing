@@ -66,7 +66,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       );
     }
 
-    const site = env.SITE_URL || `https://${new URL(request.url).host}`;
+    // Certificado é página da plataforma → escolafiveone.com (não o SITE_URL
+    // institucional, que aponta para fiveonemovement.com).
+    const site = 'https://escolafiveone.com';
     const certUrl = `${site}/certificado/${verifyCode}`;
     const from =
       env.RESEND_FROM_ALUNO?.trim() || 'Five One <no-reply@fiveonemovement.com>';

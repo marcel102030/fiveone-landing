@@ -172,7 +172,9 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
 
     // ── Enviar e-mail (não bloqueia a resposta) ───────────────────────────────
     if (env.RESEND_API_KEY?.startsWith('re_')) {
-      const site = env.SITE_URL || `https://${new URL(request.url).host}`;
+      // Certificado é página da plataforma → escolafiveone.com (não o SITE_URL
+      // institucional, que aponta para fiveonemovement.com).
+      const site = 'https://escolafiveone.com';
       const certUrl = `${site}/certificado/${verifyCode}`;
       const from = env.RESEND_FROM_ALUNO?.trim() || 'Five One <bemvindofiveone@fiveonemovement.com>';
       const dateFormatted = new Date(issuedAt).toLocaleDateString('pt-BR', {
