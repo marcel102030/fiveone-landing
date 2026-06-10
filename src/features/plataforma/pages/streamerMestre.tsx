@@ -416,9 +416,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   const emailRef = useRef<string | null>(null);
   emailRef.current = email;
 
-  const [videoList, setVideoList] = useState<LessonRef[]>(() =>
-    listLessons({ ministryId, onlyPublished: true, onlyActive: true })
-  );
+  const [videoList, setVideoList] = useState<LessonRef[]>(() => {
+    // Já inicia filtrado pelo módulo da URL (mesma lista usada nos efeitos),
+    // para o índice inicial casar com o ?vid= sem flicker.
+    let moduleId: string | undefined;
+    try { moduleId = new URLSearchParams(window.location.search).get('mod') || undefined; } catch {}
+    return listLessons({ ministryId, onlyPublished: true, onlyActive: true, moduleId });
+  });
   const playerInstanceRef = useRef<VimeoPlayer | null>(null);
   const youtubePlayerRef = useRef<any>(null);
   const lastProgressFlushRef = useRef<number>(0);
@@ -566,13 +570,14 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
   // Inicializa o índice SINCRONAMENTE a partir da URL para evitar flickering
   const [currentIndex, setCurrentIndex] = useState(() => {
     try {
-      const hash = window.location.hash; // e.g. "#/streamer-mestre?vid=xxx"
-      const qmark = hash.indexOf('?');
-      if (qmark < 0) return 0;
-      const params = new URLSearchParams(hash.slice(qmark + 1));
+      // Lê da query string (?vid=...&mod=...), NÃO do hash, e casa contra as
+      // aulas do MESMO módulo. Antes lia do hash (sempre vazio) → começava em 0,
+      // e a URL era reescrita para a aula errada (o "tremendo/procurando").
+      const params = new URLSearchParams(window.location.search);
+      const moduleId = params.get('mod') || undefined;
       const vid = params.get('vid');
       if (vid) {
-        const lessons = listLessons({ ministryId, onlyPublished: true, onlyActive: true });
+        const lessons = listLessons({ ministryId, onlyPublished: true, onlyActive: true, moduleId });
         const idx = lessons.findIndex(item => item.videoId === vid);
         if (idx >= 0) return idx;
       }
@@ -1420,7 +1425,15 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
     const currentVid = params.get('vid');
     const hasLegacy = params.has('i') || params.has('v');
     if (!hasLegacy && currentVid === lesson.videoId) return;
-    navigate(`/curso/${ministryId}/aula?vid=${encodeURIComponent(lesson.videoId)}`, { replace: true });
+    // Se a URL já aponta para uma aula VÁLIDA da lista, não sobrescreve: deixa
+    // o efeito de resolução mover o currentIndex até ela. Isso quebra a corrida
+    // que reescrevia a URL para a aula errada ao abrir uma aula que não é a 1ª.
+    if (!hasLegacy && currentVid && videoList.some(v => v.videoId === currentVid)) return;
+    const mod = params.get('mod');
+    const qs = mod
+      ? `?vid=${encodeURIComponent(lesson.videoId)}&mod=${encodeURIComponent(mod)}`
+      : `?vid=${encodeURIComponent(lesson.videoId)}`;
+    navigate(`/curso/${ministryId}/aula${qs}`, { replace: true });
   }, [videoList, currentIndex, searchKey, navigate]);
 
   // Subjects for filter
@@ -1520,6 +1533,12 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
 
         const stored = getStoredProgress(lesson);
         let pendingResume = stored?.watchedSeconds || 0;
+        // Só persiste progresso depois que o usuário REALMENTE deu play nesta
+        // aula. Evita que apenas ABRIR a aula (que restaura a posição salva e
+        // dispara um 'seeked'/'loaded') recrie progresso no "Continuar
+        // Assistindo" e, quando a posição salva é ~100%, marque como concluída
+        // e dispare o auto-avanço em cascata pelas aulas.
+        let hasPlayed = false;
 
         const tryResume = async (durationHint?: number) => {
           if (!pendingResume || pendingResume <= 5) return;
@@ -1530,22 +1549,25 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           pendingResume = 0;
         };
 
+        player.on('play', () => { hasPlayed = true; });
+        player.on('playing', () => { hasPlayed = true; });
+
         player.on('loaded', (data: any) => {
           lastProgressFlushRef.current = 0;
           markPlayerReady();
           tryResume(Number(data?.duration)).catch(() => {});
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
-          if (duration > 0) {
-            if ((stored?.watchedSeconds || 0) > 0) {
-              persistProgressRef.current?.(stored?.watchedSeconds || 0, duration);
-            } else {
-              setUiProgress((prev) => ({ watchedSeconds: 0, durationSeconds: duration > 0 ? duration : prev.durationSeconds }));
-            }
-          }
+          // Apenas reflete o ponto salvo na UI (barra de retomar). NÃO persiste —
+          // abrir a aula não conta como assistir.
+          setUiProgress((prev) => ({
+            watchedSeconds: stored?.watchedSeconds || 0,
+            durationSeconds: duration > 0 ? duration : prev.durationSeconds,
+          }));
         });
 
         player.on('durationchange', (data: any) => { tryResume(Number(data?.duration)).catch(() => {}); });
         player.on('timeupdate', (data: any) => {
+          if (!hasPlayed) return; // só salva durante playback real
           const now = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           if (now - lastProgressFlushRef.current >= 5000) {
@@ -1554,11 +1576,13 @@ const StreamerMestre = ({ ministryId = '' }: { ministryId?: MinistryKey }) => {
           }
         });
         player.on('seeked', (data: any) => {
+          if (!hasPlayed) return; // ignora o seek do auto-resume
           lastProgressFlushRef.current = Date.now();
           const duration = Number(data?.duration || stored?.durationSeconds || 0);
           persistProgressRef.current?.(Number(data?.seconds || 0), duration);
         });
         player.on('ended', async () => {
+          if (!hasPlayed) return; // só conta conclusão se assistiu de fato
           lastProgressFlushRef.current = Date.now();
           let duration = stored?.durationSeconds || 0;
           try { duration = await player.getDuration(); } catch {}
