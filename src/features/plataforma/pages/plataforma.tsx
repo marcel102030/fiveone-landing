@@ -883,12 +883,12 @@ const PaginaInicial = () => {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-              {/* Para Ler */}
-              <a href="https://fiveonemovement.com/insights" target="_blank" rel="noopener noreferrer"
+              {/* Próximos Cursos */}
+              <a href="https://fiveonemovement.com/cursos" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
-                <img src={imgParaLer} alt="Para Ler" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={imgProximosCursos} alt="Próximos Cursos" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver leituras →</span>
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver catálogo →</span>
               </a>
 
               {/* Teste dos 5 Ministérios */}
@@ -899,12 +899,12 @@ const PaginaInicial = () => {
                 <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Fazer o teste →</span>
               </a>
 
-              {/* Próximos Cursos */}
-              <a href="https://fiveonemovement.com/cursos" target="_blank" rel="noopener noreferrer"
+              {/* Para Ler */}
+              <a href="https://fiveonemovement.com/insights" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-video border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
-                <img src={imgProximosCursos} alt="Próximos Cursos" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                <img src={imgParaLer} alt="Para Ler" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
-                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver catálogo →</span>
+                <span className="absolute bottom-4 left-4 text-sm text-mint font-semibold drop-shadow">Ver leituras →</span>
               </a>
 
               {/* Leve os 5 Ministérios */}
