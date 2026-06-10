@@ -245,7 +245,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
             </aside>
 
             {/* ── Coluna direita: módulos (accordion) ── */}
-            <main className="lg:col-span-2 mt-6 lg:mt-0 flex flex-col gap-3">
+            <div className="lg:col-span-2 mt-6 lg:mt-0 flex flex-col gap-3">
             {modules.map((m) => {
               const open = expanded.has(m.id);
               const accent = open && !m.soon;
@@ -331,7 +331,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
                 </div>
               );
             })}
-            </main>
+            </div>
           </div>
         </div>
       </div>
