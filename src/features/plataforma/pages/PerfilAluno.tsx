@@ -1,7 +1,6 @@
 import { ChangeEvent, FormEvent, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "./Header";
-import PlatformUserProfile from "../components/PlatformUserProfile/PlatformUserProfile";
 import "./perfilAluno.css";
 import { getCurrentUserId } from "../../../shared/utils/user";
 import { usePlatformUserProfile, storePlatformProfile } from "../hooks/usePlatformUserProfile";
@@ -338,6 +337,12 @@ const PerfilAluno = () => {
     return null;
   }
 
+  const headerName =
+    form.displayName?.trim() ||
+    `${form.firstName} ${form.lastName}`.trim() ||
+    profile?.displayName ||
+    (email ? email.split("@")[0] : "Aluno");
+
   return (
     <div className="profile-page">
       <Header />
@@ -347,55 +352,91 @@ const PerfilAluno = () => {
           <p>Complete seu cadastro para personalizar sua experiência na plataforma.</p>
         </div>
 
-        <div className="profile-top">
-          <div className="profile-hero">
-            <PlatformUserProfile className="profile-hero__profile" />
-            <div className="profile-hero__meta">
-              <h2>Resumo da conta</h2>
-              <p>Essas informações se refletem em toda a plataforma e ajudam nossa equipe a acompanhar sua jornada.</p>
+        <div className="profile-layout">
+          {/* ── Sidebar: identidade + segurança ───────────────────────── */}
+          <aside className="profile-sidebar">
+            <section className="profile-card profile-identity">
+              <div className="profile-identity__avatar">
+                {avatarPreview ? (
+                  <img src={avatarPreview} alt="Logo do aluno" />
+                ) : (
+                  <span>{avatarFallback}</span>
+                )}
+              </div>
+              <h2 className="profile-identity__name">{headerName}</h2>
+              <p className="profile-identity__email">{email}</p>
+
               <div className="profile-badges">
                 {enrolledCourses.length > 0 ? (
                   enrolledCourses.map((course) => (
-                    <span key={course.id} className="profile-badge">Curso: {course.title}</span>
+                    <span key={course.id} className="profile-badge">{course.title}</span>
                   ))
                 ) : (
-                  !loading && <span className="profile-badge">Nenhum curso ativo</span>
+                  !loading && <span className="profile-badge profile-badge--muted">Nenhum curso ativo</span>
                 )}
-                <span className="profile-badge">E-mail: {email}</span>
               </div>
-            </div>
-          </div>
-        </div>
 
-        <div className="profile-columns">
-          <div className="profile-columns__main">
+              <div className="profile-identity__upload">
+                <label className="profile-avatar-button">
+                  <input type="file" accept="image/*" onChange={handleAvatarChange} />
+                  {avatarPreview ? "Trocar logo" : "Enviar logo"}
+                </label>
+                {avatarPreview && (
+                  <button type="button" className="profile-avatar-remove" onClick={handleAvatarRemove}>
+                    Remover
+                  </button>
+                )}
+                <p className="profile-avatar-hint">PNG ou JPG até 3 MB.</p>
+              </div>
+            </section>
+
+            <section className="profile-card profile-card--security">
+              <h3>Segurança da conta</h3>
+              <p>Atualize sua senha sempre que necessário para manter seu acesso protegido.</p>
+              {passwordFeedback && (
+                <div className={`profile-feedback profile-feedback--${passwordFeedback.type}`} role="status">
+                  {passwordFeedback.text}
+                </div>
+              )}
+              <form className="profile-password-grid" onSubmit={handlePasswordSubmit}>
+                <label>
+                  <span>Senha atual</span>
+                  <input
+                    type="password"
+                    value={passwordForm.current}
+                    onChange={(e) => handlePasswordField('current', e.target.value)}
+                    placeholder="Digite sua senha atual"
+                  />
+                </label>
+                <label>
+                  <span>Nova senha</span>
+                  <input
+                    type="password"
+                    value={passwordForm.next}
+                    onChange={(e) => handlePasswordField('next', e.target.value)}
+                    placeholder="Nova senha (mín. 8 caracteres)"
+                  />
+                </label>
+                <label>
+                  <span>Confirmar nova senha</span>
+                  <input
+                    type="password"
+                    value={passwordForm.confirm}
+                    onChange={(e) => handlePasswordField('confirm', e.target.value)}
+                    placeholder="Repita a nova senha"
+                  />
+                </label>
+                <button type="submit" className="profile-button primary" disabled={passwordSaving}>
+                  {passwordSaving ? 'Atualizando...' : 'Atualizar senha'}
+                </button>
+              </form>
+            </section>
+          </aside>
+
+          {/* ── Formulário principal ──────────────────────────────────── */}
+          <div className="profile-main-col">
             <form className="profile-form profile-card" onSubmit={handleSubmit}>
               <fieldset disabled={loading || saving} aria-busy={loading || saving}>
-                <section className="profile-section profile-section--avatar">
-                  <h2>Logo do aluno</h2>
-                  <div className="profile-avatar-upload">
-                    <div className="profile-avatar-preview">
-                      {avatarPreview ? (
-                        <img src={avatarPreview} alt="Logo do aluno" />
-                      ) : (
-                        <span>{avatarFallback}</span>
-                      )}
-                    </div>
-                    <div className="profile-avatar-actions">
-                      <label className="profile-avatar-button">
-                        <input type="file" accept="image/*" onChange={handleAvatarChange} />
-                        Enviar logo
-                      </label>
-                      {avatarPreview && (
-                        <button type="button" className="profile-avatar-remove" onClick={handleAvatarRemove}>
-                          Remover
-                        </button>
-                      )}
-                      <p className="profile-avatar-hint">PNG ou JPG até 3 MB.</p>
-                    </div>
-                  </div>
-                </section>
-
                 <section className="profile-section">
                   <h2>Dados pessoais</h2>
                   <div className="profile-grid">
@@ -542,50 +583,6 @@ const PerfilAluno = () => {
               </div>
             </form>
           </div>
-
-          <aside className="profile-columns__aside">
-            <section className="profile-card profile-card--security">
-              <h3>Segurança da conta</h3>
-              <p>Atualize sua senha sempre que necessário para manter seu acesso protegido.</p>
-              {passwordFeedback && (
-                <div className={`profile-feedback profile-feedback--${passwordFeedback.type}`} role="status">
-                  {passwordFeedback.text}
-                </div>
-              )}
-              <form className="profile-password-grid" onSubmit={handlePasswordSubmit}>
-                <label>
-                  <span>Senha atual</span>
-                  <input
-                    type="password"
-                    value={passwordForm.current}
-                    onChange={(e) => handlePasswordField('current', e.target.value)}
-                    placeholder="Digite sua senha atual"
-                  />
-                </label>
-                <label>
-                  <span>Nova senha</span>
-                  <input
-                    type="password"
-                    value={passwordForm.next}
-                    onChange={(e) => handlePasswordField('next', e.target.value)}
-                    placeholder="Nova senha (mín. 8 caracteres)"
-                  />
-                </label>
-                <label>
-                  <span>Confirmar nova senha</span>
-                  <input
-                    type="password"
-                    value={passwordForm.confirm}
-                    onChange={(e) => handlePasswordField('confirm', e.target.value)}
-                    placeholder="Repita a nova senha"
-                  />
-                </label>
-                <button type="submit" className="profile-button primary" disabled={passwordSaving}>
-                  {passwordSaving ? 'Atualizando...' : 'Atualizar senha'}
-                </button>
-              </form>
-            </section>
-          </aside>
         </div>
 
         {loading && (
