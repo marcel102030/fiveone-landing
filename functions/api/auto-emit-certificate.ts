@@ -75,6 +75,55 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       );
     }
 
+    // ── Validação de conclusão (segurança) ────────────────────────────────────
+    // Esta rota usa service-role e é pública; sem esta checagem qualquer um
+    // poderia forjar um certificado para qualquer e-mail. Só emite se o aluno
+    // concluiu TODAS as aulas publicadas do curso.
+    const { data: modules } = await admin
+      .from('platform_module')
+      .select('id')
+      .eq('ministry_id', ministryId)
+      .eq('status', 'published');
+    const moduleIds = (modules ?? []).map((m) => m.id as string);
+
+    let lessonIds: string[] = [];
+    if (moduleIds.length > 0) {
+      const { data: lessons } = await admin
+        .from('platform_lesson')
+        .select('id')
+        .in('module_id', moduleIds)
+        .eq('status', 'published')
+        .eq('is_active', true);
+      lessonIds = (lessons ?? []).map((l) => l.id as string);
+    }
+
+    if (lessonIds.length === 0) {
+      return new Response(
+        JSON.stringify({ ok: false, error: 'Curso sem aulas publicadas — certificado não pode ser emitido' }),
+        { status: 400, headers: { 'content-type': 'application/json', ...CORS } }
+      );
+    }
+
+    const { data: completions } = await admin
+      .from('platform_lesson_completion')
+      .select('lesson_id')
+      .eq('user_id', userEmail)
+      .in('lesson_id', lessonIds);
+    const completedSet = new Set((completions ?? []).map((c) => c.lesson_id as string));
+    const allDone = lessonIds.every((id) => completedSet.has(id));
+
+    if (!allDone) {
+      return new Response(
+        JSON.stringify({
+          ok: false,
+          error: 'Curso ainda não concluído',
+          concluidas: completedSet.size,
+          total: lessonIds.length,
+        }),
+        { status: 403, headers: { 'content-type': 'application/json', ...CORS } }
+      );
+    }
+
     // ── Emitir certificado ────────────────────────────────────────────────────
     const verifyCode = crypto.randomUUID();
     const issuedAt = new Date().toISOString();
@@ -87,6 +136,25 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
     });
 
     if (insertError) {
+      // Conflito do índice único uq_certificate_user_ministry (corrida entre
+      // dois disparos) → busca o certificado existente e retorna como idempotente.
+      const isConflict =
+        (insertError as { code?: string }).code === '23505' ||
+        /duplicate|unique/i.test(insertError.message);
+      if (isConflict) {
+        const { data: dup } = await admin
+          .from('platform_certificate')
+          .select('verify_code')
+          .eq('user_id', userEmail)
+          .eq('ministry_id', ministryId)
+          .maybeSingle();
+        if (dup?.verify_code) {
+          return new Response(
+            JSON.stringify({ ok: true, verifyCode: dup.verify_code, isNew: false }),
+            { status: 200, headers: { 'content-type': 'application/json', ...CORS } }
+          );
+        }
+      }
       return new Response(
         JSON.stringify({ ok: false, error: insertError.message }),
         { status: 500, headers: { 'content-type': 'application/json', ...CORS } }
