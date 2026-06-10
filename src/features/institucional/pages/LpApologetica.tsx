@@ -6,7 +6,7 @@ import { useEffect } from "react";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 
 const HOTMART_CHECKOUT_URL =
-  "https://pay.hotmart.com/SUBSTITUA_PELO_LINK_REAL?checkoutMode=10";
+  "https://pay.hotmart.com/D106250318V";
 
 const CheckIcon = () => (
   <svg className="w-5 h-5 text-mint shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>

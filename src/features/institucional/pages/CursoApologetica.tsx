@@ -10,9 +10,8 @@ import mestreIcon from "../../../assets/images/icons/mestre.png";
 import pastorIcon from "../../../assets/images/icons/pastor.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 
-// TODO: substituir por link real do Hotmart quando o produto estiver cadastrado lá
 const HOTMART_CHECKOUT_URL =
-  "https://pay.hotmart.com/";
+  "https://pay.hotmart.com/D106250318V";
 
 // ── Metadados do curso ────────────────────────────────────────────────────────
 
