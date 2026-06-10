@@ -225,23 +225,8 @@ const PaginaInicial = () => {
   // localStorage para que: (a) o player saiba onde fazer seek, (b) páginas de
   // módulos que lêem videos_assistidos mostrem progresso correto.
   useEffect(() => {
-    if (!progressLoaded) return // espera o banco carregar antes de reconciliar
+    if (!progress.length) return
     const lbv = lessonByVideoId
-    const dbIds = new Set(progress.map(r => r.lesson_id))
-    // Banco = fonte de verdade: remove chaves de progresso ÓRFÃS do localStorage
-    // (lições que não existem mais no banco). Sem isso, dados antigos no cache
-    // local fazem a sidebar do player e o "Continuar Assistindo" mostrarem
-    // progresso "fantasma" mesmo com o banco zerado.
-    try {
-      const orphans: string[] = []
-      for (let i = 0; i < localStorage.length; i++) {
-        const k = localStorage.key(i)
-        if (k && k.startsWith('fiveone_progress::') && !dbIds.has(k.slice('fiveone_progress::'.length))) {
-          orphans.push(k)
-        }
-      }
-      orphans.forEach(k => localStorage.removeItem(k))
-    } catch {}
     progress.forEach(r => {
       if (!r.lesson_id || r.watched_seconds <= 0) return
       try {
@@ -277,7 +262,7 @@ const PaginaInicial = () => {
         localStorage.setItem('fiveone_last_lesson', progress[0].lesson_id)
       }
     } catch {}
-  }, [progress, progressLoaded, lessonByVideoId])
+  }, [progress, lessonByVideoId])
 
   // ── Recovery sync: localStorage → banco (uma vez por sessão) ─────────────
   // Faz upload de progresso salvo localmente que nunca chegou ao banco.
