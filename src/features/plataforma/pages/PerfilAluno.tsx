@@ -5,8 +5,8 @@ import PlatformUserProfile from "../components/PlatformUserProfile/PlatformUserP
 import "./perfilAluno.css";
 import { getCurrentUserId } from "../../../shared/utils/user";
 import { usePlatformUserProfile, storePlatformProfile } from "../hooks/usePlatformUserProfile";
-import { getUserByEmail, updateUserName, verifyUser, resetUserPassword } from "../services/userAccount";
-import { FormationKey } from "../services/userAccount";
+import { getUserByEmail, updateUserName, verifyUser, updateOwnPassword, getEnrolledCourses } from "../services/userAccount";
+import { FormationKey, EnrolledCourse } from "../services/userAccount";
 import { getUserProfileDetails, upsertUserProfileDetails, uploadUserAvatar } from "../services/userProfile";
 
 type ProfileFormState = {
@@ -64,6 +64,7 @@ const PerfilAluno = () => {
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "", confirm: "" });
   const [passwordSaving, setPasswordSaving] = useState(false);
   const [passwordFeedback, setPasswordFeedback] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<EnrolledCourse[]>([]);
   const email = useMemo(() => getCurrentUserId(), []);
 
   useEffect(() => {
@@ -78,11 +79,13 @@ const PerfilAluno = () => {
       setLoading(true);
       try {
         const normalized = email.trim().toLowerCase();
-        const [userRow, details] = await Promise.all([
+        const [userRow, details, courses] = await Promise.all([
           getUserByEmail(normalized).catch(() => null),
           getUserProfileDetails(normalized).catch(() => null),
+          getEnrolledCourses(normalized).catch(() => [] as EnrolledCourse[]),
         ]);
         if (cancelled) return;
+        setEnrolledCourses(courses);
         setForm({
           firstName: details?.first_name || "",
           lastName: details?.last_name || "",
@@ -320,7 +323,7 @@ const PerfilAluno = () => {
         throw new Error('Senha atual inválida.');
       }
 
-      await resetUserPassword(email, next);
+      await updateOwnPassword(next);
       setPasswordFeedback({ type: 'success', text: 'Senha atualizada com sucesso.' });
       setPasswordForm({ current: '', next: '', confirm: '' });
     } catch (error: any) {
@@ -350,8 +353,12 @@ const PerfilAluno = () => {
               <h2>Resumo da conta</h2>
               <p>Essas informações se refletem em toda a plataforma e ajudam nossa equipe a acompanhar sua jornada.</p>
               <div className="profile-badges">
-                {profile?.formationLabel && (
-                  <span className="profile-badge">Curso: {profile.formationLabel}</span>
+                {enrolledCourses.length > 0 ? (
+                  enrolledCourses.map((course) => (
+                    <span key={course.id} className="profile-badge">Curso: {course.title}</span>
+                  ))
+                ) : (
+                  !loading && <span className="profile-badge">Nenhum curso ativo</span>
                 )}
                 <span className="profile-badge">E-mail: {email}</span>
               </div>

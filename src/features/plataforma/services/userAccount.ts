@@ -44,6 +44,25 @@ export async function getEnrollments(email: string): Promise<CourseId[]> {
   return (data || []).map((r: any) => r.course_id as CourseId);
 }
 
+export type EnrolledCourse = { id: CourseId; title: string };
+
+/**
+ * Retorna os cursos em que o aluno está matriculado, já com o título legível
+ * (de platform_ministry). Fonte de verdade da matrícula é platform_enrollment —
+ * NÃO o campo legado platform_user.formation.
+ */
+export async function getEnrolledCourses(email: string): Promise<EnrolledCourse[]> {
+  const ids = await getEnrollments(email);
+  if (!ids.length) return [];
+  const { data, error } = await supabase
+    .from('platform_ministry')
+    .select('id,title')
+    .in('id', ids);
+  if (error) throw error;
+  const titleById = new Map((data || []).map((m: any) => [m.id as string, m.title as string]));
+  return ids.map((id) => ({ id, title: titleById.get(id) || id }));
+}
+
 /** Matricula um aluno em um curso. Idempotente (ON CONFLICT DO NOTHING via upsert). */
 export async function enrollUser(email: string, courseId: CourseId): Promise<void> {
   const { error } = await supabase
@@ -232,6 +251,17 @@ export async function updateUserName(email: string, name: string | null): Promis
     .from('platform_user')
     .update({ name })
     .eq('email', email.toLowerCase());
+  if (error) throw error;
+}
+
+/**
+ * Self-service: altera a senha do PRÓPRIO usuário logado.
+ * Usa supabase.auth.updateUser — NÃO precisa de admin (ao contrário de
+ * resetUserPassword, que é para um admin redefinir a senha de outro aluno e
+ * exige role ADMIN no endpoint). É isto que a tela "Meu perfil" deve usar.
+ */
+export async function updateOwnPassword(newPassword: string): Promise<void> {
+  const { error } = await supabase.auth.updateUser({ password: newPassword });
   if (error) throw error;
 }
 
