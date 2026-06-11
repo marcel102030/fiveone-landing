@@ -9,6 +9,9 @@ export type WelcomeEmailParams = {
   password: string;
   course?: string | null;
   campaign?: string; // utm_campaign (ex.: 'student_created', 'hotmart_purchase')
+  // Pré-venda: quando preenchido (ex.: "6 de julho"), o e-mail diz que a vaga
+  // está garantida e o acesso às aulas abre nessa data, em vez de "comece agora".
+  launchLabel?: string | null;
 };
 
 export type WelcomeEmail = {
@@ -26,21 +29,29 @@ export function buildWelcomeEmail(p: WelcomeEmailParams): WelcomeEmail {
   const user = String(p.user || '').trim();
   const password = String(p.password || '').trim();
   const loginUrl = withUtm('https://escolafiveone.com/login-aluno', p.campaign || 'welcome');
+  const launchLabel = (p.launchLabel || '').toString().trim() || null;
 
   const firstName = name.split(' ')[0] || name;
-  const subject = firstName
-    ? `${firstName}, sua jornada em "${course}" começa agora — Escola Five One`
-    : `Sua jornada em "${course}" começa agora — Escola Five One`;
+  const subject = launchLabel
+    ? (firstName
+        ? `${firstName}, sua vaga em "${course}" está garantida! — Escola Five One`
+        : `Sua vaga em "${course}" está garantida! — Escola Five One`)
+    : (firstName
+        ? `${firstName}, sua jornada em "${course}" começa agora — Escola Five One`
+        : `Sua jornada em "${course}" começa agora — Escola Five One`);
 
   return {
     subject,
-    html: renderHtml({ name, user, password, loginUrl, course }),
-    text: renderText({ name, user, password, loginUrl, course }),
+    html: renderHtml({ name, user, password, loginUrl, course, launchLabel }),
+    text: renderText({ name, user, password, loginUrl, course, launchLabel }),
   };
 }
 
-function renderHtml({ name, user, password, loginUrl, course }: { name?: string | null; user: string; password: string; loginUrl: string; course: string }) {
-  const preheader = `Seu acesso à Escola Five One — ${course} está pronto!`;
+function renderHtml({ name, user, password, loginUrl, course, launchLabel }: { name?: string | null; user: string; password: string; loginUrl: string; course: string; launchLabel?: string | null }) {
+  const presale = !!launchLabel;
+  const preheader = presale
+    ? `Sua vaga em ${course} está garantida! As aulas abrem em ${launchLabel}.`
+    : `Seu acesso à Escola Five One — ${course} está pronto!`;
   const firstName = (name || '').trim().split(' ')[0];
   const greeting = firstName ? escapeHtml(firstName) : 'Aluno(a)';
   const NAVY = '#07101f';
@@ -73,7 +84,7 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
     <!-- Badge -->
     <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto 20px;">
       <tr><td bgcolor="#0d2a3a" style="background:#0d2a3a;border:1px solid #1a5a6e;border-radius:100px;padding:6px 18px;">
-        <span style="color:${MINT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">✓ Acesso criado com sucesso</span>
+        <span style="color:${MINT};font-size:11px;font-weight:700;letter-spacing:0.15em;text-transform:uppercase;">${presale ? '✓ Vaga garantida' : '✓ Acesso criado com sucesso'}</span>
       </td></tr>
     </table>
     <!-- Título -->
@@ -84,7 +95,9 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
       ${greeting}!
     </h1>
     <p style="margin:0 0 20px;color:#b0cee0;font-size:14px;line-height:1.6;">
-      Sua conta na Escola Five One foi criada<br/>e você já está matriculado(a) no curso:
+      ${presale
+        ? 'Sua compra foi confirmada e sua <strong style="color:#ffffff;">vaga está garantida</strong> no curso:'
+        : 'Sua conta na Escola Five One foi criada<br/>e você já está matriculado(a) no curso:'}
     </p>
     <!-- Curso destaque — fundo sólido garantido -->
     <table role="presentation" align="center" cellpadding="0" cellspacing="0" style="margin:0 auto;">
@@ -93,6 +106,7 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
         <p style="margin:0;color:${MINT};font-size:20px;font-weight:800;">${escapeHtml(course)}</p>
       </td></tr>
     </table>
+    ${presale ? `<p style="margin:20px auto 0;max-width:440px;color:#ffd9a8;font-size:13px;line-height:1.6;">📅 As aulas abrem no lançamento, em <strong style="color:#ffffff;">${escapeHtml(launchLabel || '')}</strong>. Seu acesso aqui libera <strong style="color:#ffffff;">automaticamente</strong> — você não precisa fazer nada.</p>` : ''}
   </td></tr>
 
   <!-- CREDENCIAIS — fundo branco com bgcolor -->
@@ -137,17 +151,17 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
       </tr>
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">2.</span>Acesse <strong>escolafiveone.com</strong> e faça seu login
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">2.</span>${presale ? 'Guarde suas <strong>credenciais</strong> (acima) com segurança para o lançamento' : 'Acesse <strong>escolafiveone.com</strong> e faça seu login'}
         </td>
       </tr>
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">3.</span>Vá em <strong>Perfil</strong> e altere sua senha
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">3.</span>${presale ? `Em <strong>${escapeHtml(launchLabel || '')}</strong>, acesse <strong>escolafiveone.com</strong> — suas aulas estarão liberadas` : 'Vá em <strong>Perfil</strong> e altere sua senha'}
         </td>
       </tr>
       <tr>
         <td style="padding:6px 0;color:#4b5563;font-size:13px;line-height:1.5;">
-          <span style="color:${MINT};font-weight:700;margin-right:8px;">4.</span>Acesse o curso <strong>${escapeHtml(course)}</strong> e comece sua jornada
+          <span style="color:${MINT};font-weight:700;margin-right:8px;">4.</span>${presale ? `Comece sua jornada em <strong>${escapeHtml(course)}</strong> assim que abrir 🚀` : `Acesse o curso <strong>${escapeHtml(course)}</strong> e comece sua jornada`}
         </td>
       </tr>
     </table>
@@ -166,12 +180,16 @@ function renderHtml({ name, user, password, loginUrl, course }: { name?: string 
 </html>`;
 }
 
-function renderText({ name, user, password, loginUrl, course }: { name?: string | null; user: string; password: string; loginUrl: string; course: string }) {
+function renderText({ name, user, password, loginUrl, course, launchLabel }: { name?: string | null; user: string; password: string; loginUrl: string; course: string; launchLabel?: string | null }) {
   const firstName = (name || '').trim().split(' ')[0] || 'Aluno(a)';
+  const presale = !!launchLabel;
   return [
     `Bem-vindo(a) à Escola Five One, ${firstName}!`,
     '',
-    `Seu acesso ao curso "${course}" foi criado com sucesso.`,
+    presale
+      ? `Sua compra foi confirmada e sua vaga no curso "${course}" está garantida.`
+      : `Seu acesso ao curso "${course}" foi criado com sucesso.`,
+    presale ? `As aulas abrem no lançamento, em ${launchLabel}. Seu acesso libera automaticamente.` : '',
     '',
     'SUAS CREDENCIAIS:',
     `Usuário: ${user}`,
@@ -181,11 +199,16 @@ function renderText({ name, user, password, loginUrl, course }: { name?: string 
     '',
     'PRÓXIMOS PASSOS:',
     `1. Entre no nosso grupo do WhatsApp: ${WHATSAPP_GROUP_URL}`,
-    '2. Acesse escolafiveone.com e faça seu login',
-    '3. Vá em Perfil e altere sua senha',
-    `4. Acesse o curso "${course}" e comece sua jornada`,
+    presale
+      ? '2. Guarde suas credenciais com segurança para o lançamento'
+      : '2. Acesse escolafiveone.com e faça seu login',
+    presale
+      ? `3. Em ${launchLabel}, acesse escolafiveone.com — suas aulas estarão liberadas`
+      : '3. Vá em Perfil e altere sua senha',
+    presale
+      ? `4. Comece sua jornada em "${course}" assim que abrir`
+      : `4. Acesse o curso "${course}" e comece sua jornada`,
     '',
-    'Guarde suas credenciais com segurança.',
     'Se não reconhece este e-mail, ignore esta mensagem.',
     '',
     `© ${new Date().getFullYear()} Five One — Todos os direitos reservados`,

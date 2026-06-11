@@ -19,6 +19,23 @@ const CORS = {
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
 
+// Pré-venda: cursos cujo acesso só abre numa data futura. Enquanto a data não
+// chega, o e-mail de boas-vindas avisa "vaga garantida, abre em <data>".
+// Manter em sincronia com features/plataforma/config/courseLaunch.ts.
+const PRESALE_LAUNCH: Record<string, string> = {
+  APOLOGETICA: '2026-07-06T09:00:00-03:00',
+};
+
+/** Retorna o rótulo da data (ex.: "6 de julho") se o curso ainda não abriu; senão null. */
+function presaleLaunchLabel(courseId: string | null): string | null {
+  if (!courseId) return null;
+  const iso = PRESALE_LAUNCH[courseId.toUpperCase()];
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Date.now() >= date.getTime()) return null; // já lançou
+  return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', timeZone: 'America/Sao_Paulo' });
+}
+
 type Env = {
   HOTMART_HOTTOK?: string;
   HOTMART_FORMATION_MAP?: string; // JSON stringified
@@ -258,7 +275,8 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
       const { data: ministry } = await admin
         .from('platform_ministry').select('title').eq('id', courseId).maybeSingle();
       if (ministry?.title) courseTitle = ministry.title as string;
-      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, course: courseTitle });
+      const launchLabel = presaleLaunchLabel(courseId);
+      emailSent = await sendWelcomeEmail({ env, to: email, name, user: email, password, course: courseTitle, launchLabel });
     }
 
     return new Response(
@@ -330,8 +348,9 @@ async function sendWelcomeEmail(opts: {
   user: string;
   password: string;
   course: string;
+  launchLabel?: string | null;
 }): Promise<boolean> {
-  const { env, to, name, user, password, course } = opts;
+  const { env, to, name, user, password, course, launchLabel } = opts;
   try {
     // Mesmo template bonito usado no cadastro manual (admin) — _welcomeEmail.
     const from =
@@ -340,7 +359,7 @@ async function sendWelcomeEmail(opts: {
       env.RESEND_REPLY_TO_ALUNO?.trim() || 'escolafiveone@gmail.com';
 
     const { subject, html, text } = buildWelcomeEmail({
-      name, user, password, course, campaign: 'hotmart_purchase',
+      name, user, password, course, campaign: 'hotmart_purchase', launchLabel,
     });
 
     const r = await fetch('https://api.resend.com/emails', {
