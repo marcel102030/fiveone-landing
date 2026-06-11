@@ -13,6 +13,11 @@ import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 const HOTMART_CHECKOUT_URL =
   "https://pay.hotmart.com/D106250318V";
 
+// Vídeo de apresentação do curso (trocar quando tiver o vídeo final).
+// Formato embed do YouTube — ID do vídeo + start em segundos.
+const COURSE_VIDEO_EMBED =
+  "https://www.youtube.com/embed/XQEGw923yD0?start=42&rel=0";
+
 // ── Metadados do curso ────────────────────────────────────────────────────────
 
 const COURSE_TITLE = "Defenda a sua Fé";
@@ -512,6 +517,30 @@ const CursoApologetica = () => {
         </div>
       </section>
 
+      {/* ──────────────────────────────────── Vídeo ─── */}
+      <section className="relative py-10 lg:py-14">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center mb-6">
+            <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
+              Assista agora
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight">
+              Conheça o curso em poucos minutos
+            </h2>
+          </div>
+          <div className="relative aspect-video rounded-2xl overflow-hidden border border-slate/10 shadow-card-hover bg-navy-light/60">
+            <iframe
+              className="absolute inset-0 w-full h-full"
+              src={COURSE_VIDEO_EMBED}
+              title="Defenda a sua Fé — apresentação do curso"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+            />
+          </div>
+          <BuyCTA label="Quero garantir minha vaga" />
+        </div>
+      </section>
+
       {/* ──────────────────────────────────── Sobre o curso ─── */}
       <section className="py-16 lg:py-20 bg-navy-light/30">
         <div className="max-w-4xl mx-auto px-6 lg:px-8">
@@ -648,14 +677,23 @@ const CursoApologetica = () => {
               <p className="text-sm text-mint font-medium mt-1">
                 Fundador do Movimento Five One
               </p>
+              <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-4">
+                <span className="text-2xs text-slate-light bg-navy/60 border border-mint/20 rounded-lg px-2.5 py-1.5">Teólogo</span>
+                <span className="text-2xs text-slate-light bg-navy/60 border border-mint/20 rounded-lg px-2.5 py-1.5">
+                  Pós-graduado em Novo Testamento · Cidade Viva
+                </span>
+              </div>
               <p className="text-sm sm:text-base text-slate leading-relaxed mt-4">
-                Apaixonado por equipar a igreja com fundamento bíblico e teológico
-                sólido. Acredita que cada cristão precisa saber explicar a sua
-                fé com profundidade e clareza, e dedica seu ministério a tornar
-                isso possível para qualquer pessoa.
+                Teólogo e pós-graduado em Novo Testamento pela Cidade Viva,
+                Marcelo dedica seu ministério a ensinar e capacitar pessoas a
+                viverem o seu dom ministerial com profundidade e propósito.
               </p>
-              <p className="text-2xs text-slate/60 italic mt-3">
-                Bio detalhada em breve.
+              <p className="text-sm sm:text-base text-slate leading-relaxed mt-3">
+                Apaixonado por equipar a igreja, ele acredita que todo cristão
+                pode — e deve — saber explicar a sua fé com clareza. Seu ensino é
+                marcado pela <strong className="text-slate-light">fidelidade às
+                Escrituras</strong> e por uma linguagem acessível, que aproxima a
+                teologia da vida real.
               </p>
             </div>
           </div>
