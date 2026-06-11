@@ -7,6 +7,9 @@ import { fetchUserProgress } from '../services/progress';
 import { fetchCompletionsForUser } from '../services/completions';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
 import { listCompletedLessonIds, reconcileCompletedLessons } from '../../../shared/utils/completedLessons';
+import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile';
+import { getCourseLaunchDate } from '../config/courseLaunch';
+import CourseLockScreen from '../components/CourseLockScreen';
 
 type LessonView = LessonRef & { completed: boolean };
 
@@ -52,6 +55,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   const courseId = propCourseId || paramId || '';
   const navigate = useNavigate();
   const { email: authEmail } = useAuth();
+  const { profile } = usePlatformUserProfile();
 
   const [lessons, setLessons] = useState<LessonRef[]>(() =>
     listLessons({ ministryId: courseId, onlyPublished: true, onlyActive: true })
@@ -187,6 +191,20 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   const courseName = ministry?.name || courseId;
   const tagline = ministry?.tagline || '';
   const started = courseStats.done > 0;
+
+  // ── Trava de pré-venda: conteúdo só abre na data de lançamento ──────────────
+  // Admins passam direto (para revisar antes de abrir ao público).
+  const isAdmin = profile?.role === 'ADMIN';
+  const launchDate = getCourseLaunchDate(courseId);
+  const courseLocked = !!launchDate && Date.now() < launchDate.getTime() && !isAdmin;
+  if (courseLocked && launchDate) {
+    return (
+      <>
+        <Header />
+        <CourseLockScreen courseName={courseName} launchDate={launchDate} />
+      </>
+    );
+  }
 
   return (
     <>
