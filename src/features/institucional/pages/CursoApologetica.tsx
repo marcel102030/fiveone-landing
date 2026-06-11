@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import courseCover from "../assets/images/capa_curso_apologetica.jpg";
 import instrutorFoto from "../assets/images/Marcelo.jpeg";
 import CourseWaitlist from "../components/CourseWaitlist";
-import { APOLOGETICA_LAUNCHED } from "../data/courses";
+import { APOLOGETICA_LAUNCHED, APOLOGETICA_PRESALE, APOLOGETICA_LAUNCH_DATE } from "../data/courses";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import profetaIcon from "../../../assets/images/icons/profeta.png";
 import mestreIcon from "../../../assets/images/icons/mestre.png";
@@ -257,6 +257,142 @@ function ModuleAccordion({
   );
 }
 
+// ── Pré-venda: countdown, botão de compra e card de preço ─────────────────────
+
+const SELLING = APOLOGETICA_LAUNCHED || APOLOGETICA_PRESALE;
+const PRESALE = APOLOGETICA_PRESALE && !APOLOGETICA_LAUNCHED;
+const LAUNCH_DAY_LABEL = APOLOGETICA_LAUNCH_DATE.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
+
+const PAYMENT_METHODS = ["Pix", "Cartão em até 12x", "Boleto"];
+
+function useCountdown(target: Date) {
+  const calc = () => {
+    const diff = target.getTime() - Date.now();
+    if (diff <= 0) return { days: 0, hours: 0, minutes: 0, seconds: 0, over: true };
+    return {
+      days: Math.floor(diff / 86400000),
+      hours: Math.floor((diff % 86400000) / 3600000),
+      minutes: Math.floor((diff % 3600000) / 60000),
+      seconds: Math.floor((diff % 60000) / 1000),
+      over: false,
+    };
+  };
+  const [t, setT] = useState(calc);
+  useEffect(() => {
+    const id = setInterval(() => setT(calc()), 1000);
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  return t;
+}
+
+function CountdownBar() {
+  const { days, hours, minutes, seconds, over } = useCountdown(APOLOGETICA_LAUNCH_DATE);
+  if (over) return null;
+  const cell = (v: number, l: string) => (
+    <div className="flex flex-col items-center min-w-[42px]">
+      <span className="text-2xl font-extrabold text-mint tabular-nums leading-none">{String(v).padStart(2, "0")}</span>
+      <span className="text-2xs text-slate/70 uppercase tracking-wide mt-0.5">{l}</span>
+    </div>
+  );
+  return (
+    <div className="flex items-center gap-1">
+      {cell(days, "dias")}<span className="text-slate/40 text-lg mb-2">:</span>
+      {cell(hours, "h")}<span className="text-slate/40 text-lg mb-2">:</span>
+      {cell(minutes, "min")}<span className="text-slate/40 text-lg mb-2">:</span>
+      {cell(seconds, "seg")}
+    </div>
+  );
+}
+
+function BuyButton({ children, className = "" }: { children: ReactNode; className?: string }) {
+  return (
+    <a
+      href={HOTMART_CHECKOUT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`group inline-flex items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 ${className}`}
+    >
+      {children}
+      <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
+        <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
+      </svg>
+    </a>
+  );
+}
+
+/** Bloco de preço/checkout — usado no hero. Mostra moldura de pré-venda. */
+function PurchaseCard() {
+  return (
+    <div className="p-5 sm:p-6 bg-navy-light/70 border border-mint/30 rounded-2xl">
+      {PRESALE && (
+        <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-slate/10">
+          <div>
+            <span className="inline-block px-2.5 py-1 rounded-full bg-mint text-navy text-2xs font-bold uppercase tracking-wider">
+              Pré-venda aberta
+            </span>
+            <p className="text-2xs text-slate uppercase tracking-widest mt-2">Acesso libera em</p>
+          </div>
+          <CountdownBar />
+        </div>
+      )}
+
+      <p className="text-2xs text-slate uppercase tracking-wider">
+        {PRESALE ? "Oferta de lançamento" : "Pagamento único"}
+      </p>
+      <div className="flex items-baseline gap-2">
+        <p className="text-4xl font-extrabold text-mint tabular-nums">R$ 59,90</p>
+        <p className="text-sm text-slate">à vista</p>
+      </div>
+      <p className="text-xs text-slate mt-0.5">
+        ou em até <strong className="text-slate-light">12x no cartão</strong>
+      </p>
+
+      <div className="flex flex-wrap gap-2 mt-4">
+        {PAYMENT_METHODS.map((m) => (
+          <span key={m} className="text-2xs text-slate-light bg-navy/60 border border-slate/15 rounded-lg px-2.5 py-1.5">
+            {m}
+          </span>
+        ))}
+      </div>
+
+      <BuyButton className="w-full mt-5">
+        {PRESALE ? "Garantir minha vaga na pré-venda" : "Quero esse curso agora"}
+      </BuyButton>
+
+      <div className="mt-4 space-y-1.5">
+        {PRESALE && (
+          <p className="flex items-center gap-2 text-xs text-slate">
+            <CheckIcon /> Acesso liberado no lançamento — {LAUNCH_DAY_LABEL}
+          </p>
+        )}
+        <p className="flex items-center gap-2 text-xs text-slate">
+          <CheckIcon /> Acesso por 1 ano + certificado de conclusão
+        </p>
+        <p className="flex items-center gap-2 text-xs text-slate">
+          <CheckIcon /> 7 dias de garantia incondicional
+        </p>
+        <p className="flex items-center gap-2 text-xs text-slate">
+          <CheckIcon /> Checkout 100% seguro via Hotmart
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/** CTA de compra centralizado, repetido ao longo da página. */
+function BuyCTA({ label }: { label: string }) {
+  if (!SELLING) return null;
+  return (
+    <div className="mt-10 text-center">
+      <BuyButton>{label}</BuyButton>
+      <p className="mt-3 text-2xs text-slate/80">
+        {PRESALE ? `Pré-venda · R$ 59,90 · acesso em ${LAUNCH_DAY_LABEL}` : "R$ 59,90 · pagamento único · checkout seguro Hotmart"}
+      </p>
+    </div>
+  );
+}
+
 // ── Página ────────────────────────────────────────────────────────────────────
 
 const CursoApologetica = () => {
@@ -327,7 +463,7 @@ const CursoApologetica = () => {
                 draggable={false}
               />
               <div className="absolute -top-3 right-3 sm:-top-4 sm:right-4 bg-mint text-navy text-xs font-bold px-3 py-1.5 rounded-full shadow-mint-strong rotate-3">
-                Lançamento
+                {PRESALE ? "Pré-venda" : "Lançamento"}
               </div>
             </div>
 
@@ -367,32 +503,10 @@ const CursoApologetica = () => {
                 </div>
               </div>
 
-              <div id="waitlist" />
-              {APOLOGETICA_LAUNCHED ? (
-                <>
-                  <div className="mt-7 p-5 bg-navy-light/60 border border-mint/20 rounded-2xl">
-                    <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
-                    <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
-                    <p className="text-2xs text-slate mt-1">Acesso por 1 ano · certificado incluído</p>
-                  </div>
-                  <a
-                    href={HOTMART_CHECKOUT_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="group mt-6 inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                  >
-                    Quero esse curso agora
-                    <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                      <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                    </svg>
-                  </a>
-                  <p className="mt-3 text-2xs text-slate/80">Você será direcionado ao checkout seguro do Hotmart</p>
-                </>
-              ) : (
-                <div className="mt-7">
-                  <CourseWaitlist />
-                </div>
-              )}
+              <div id="comprar" />
+              <div className="mt-7">
+                {SELLING ? <PurchaseCard /> : <CourseWaitlist />}
+              </div>
             </div>
           </div>
         </div>
@@ -472,6 +586,7 @@ const CursoApologetica = () => {
               </div>
             ))}
           </div>
+          <BuyCTA label="Quero dominar a apologética" />
         </div>
       </section>
 
@@ -502,6 +617,7 @@ const CursoApologetica = () => {
               </div>
             ))}
           </div>
+          <BuyCTA label="Esse curso é pra mim" />
         </div>
       </section>
 
@@ -569,6 +685,29 @@ const CursoApologetica = () => {
               </div>
             ))}
           </div>
+          <BuyCTA label="Quero garantir meu acesso" />
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────── Garantia ─── */}
+      <section className="py-16 lg:py-20">
+        <div className="max-w-3xl mx-auto px-6 lg:px-8">
+          <div className="bg-navy-light/60 border border-mint/25 rounded-3xl p-8 sm:p-10 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-mint/10 border border-mint/30 mb-5">
+              <svg className="w-8 h-8 text-mint" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                <polyline points="9 12 11 14 15 10" />
+              </svg>
+            </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-white tracking-tight">
+              Risco zero: 7 dias de garantia
+            </h2>
+            <p className="mt-4 text-base text-slate leading-relaxed max-w-xl mx-auto">
+              Entre, assista e sinta o curso. Se em até 7 dias você achar que não é
+              pra você, basta pedir o reembolso pela Hotmart e devolvemos 100% do
+              valor — sem perguntas, sem burocracia.
+            </p>
+          </div>
         </div>
       </section>
 
@@ -601,24 +740,20 @@ const CursoApologetica = () => {
           <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-white tracking-tight">
             Pronto para começar sua <span className="text-mint">jornada</span>?
           </h2>
-          {APOLOGETICA_LAUNCHED ? (
+          {SELLING ? (
             <>
               <p className="mt-5 text-base sm:text-lg text-slate max-w-xl mx-auto">
-                Pagamento único de R$ 59,90 com acesso por 1 ano ao curso
-                completo, materiais e certificado.
+                {PRESALE
+                  ? `Garanta agora na pré-venda por R$ 59,90. O acesso ao curso completo, materiais e certificado libera em ${LAUNCH_DAY_LABEL}.`
+                  : "Pagamento único de R$ 59,90 com acesso por 1 ano ao curso completo, materiais e certificado."}
               </p>
-              <div className="mt-9">
-                <a
-                  href={HOTMART_CHECKOUT_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="group inline-flex items-center justify-center gap-2 px-8 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
-                >
-                  Quero o curso de Apologética
-                  <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
-                    <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
-                  </svg>
-                </a>
+              <div className="mt-9 flex flex-col items-center gap-3">
+                <BuyButton className="px-8">
+                  {PRESALE ? "Garantir minha vaga na pré-venda" : "Quero o curso de Apologética"}
+                </BuyButton>
+                <p className="text-2xs text-slate/80">
+                  Pix · cartão em até 12x · boleto · 7 dias de garantia
+                </p>
               </div>
             </>
           ) : (
@@ -634,25 +769,25 @@ const CursoApologetica = () => {
         <div className="flex items-center gap-3">
           <div className="flex-1">
             <p className="text-2xs text-slate uppercase tracking-wider">
-              {APOLOGETICA_LAUNCHED ? "Apologética" : "Lança 6 de julho"}
+              {PRESALE ? `Pré-venda · acesso ${LAUNCH_DAY_LABEL}` : "Apologética"}
             </p>
             <p className="text-base font-bold text-mint tabular-nums leading-tight">
               R$ 59,90
             </p>
           </div>
-          {APOLOGETICA_LAUNCHED ? (
+          {SELLING ? (
             <a
               href={HOTMART_CHECKOUT_URL}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
             >
-              Comprar
+              {PRESALE ? "Garantir vaga" : "Comprar"}
             </a>
           ) : (
             <Link
-              to="#waitlist"
-              onClick={() => document.querySelector("#waitlist")?.scrollIntoView({ behavior: "smooth" })}
+              to="#comprar"
+              onClick={() => document.querySelector("#comprar")?.scrollIntoView({ behavior: "smooth" })}
               className="shrink-0 inline-flex items-center justify-center gap-1.5 px-5 py-3 bg-mint text-navy text-sm font-bold rounded-xl shadow-mint"
             >
               Lista de espera

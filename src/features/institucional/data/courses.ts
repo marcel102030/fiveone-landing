@@ -3,6 +3,10 @@
 // Quando APOLOGETICA_LAUNCHED = true   → mostra botão de compra normal
 // Troque para true no dia do lançamento.
 export const APOLOGETICA_LAUNCHED = false;
+// Pré-venda: vende AGORA (botões de compra ativos), mas com a moldura de que o
+// acesso libera no lançamento (APOLOGETICA_LAUNCH_DATE). Quando lançar de fato,
+// deixe APOLOGETICA_LAUNCHED = true (acesso imediato) — o presale deixa de moldar.
+export const APOLOGETICA_PRESALE = true;
 export const APOLOGETICA_LAUNCH_DATE = new Date("2026-07-06T09:00:00-03:00");
 
 // Fonte única de dados dos cursos.
