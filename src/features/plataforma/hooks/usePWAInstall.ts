@@ -22,6 +22,15 @@ function detectOS(): DeviceOS {
   return 'desktop';
 }
 
+/** Mostra o banner só em celular/tablet — nunca no computador. */
+function isMobileOrTablet(os: DeviceOS): boolean {
+  if (typeof window === 'undefined') return false;
+  if (os !== 'desktop') return true; // Android, iPhone, iPad com UA de iOS
+  // iPad no iPadOS 13+ se identifica como desktop (UA de Mac) — detecta por toque.
+  const ua = navigator.userAgent;
+  return /Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1;
+}
+
 function isStandalone(): boolean {
   if (typeof window === 'undefined') return false;
   return (
@@ -130,6 +139,7 @@ export function usePWAInstall(): PWAInstall {
   const canShow =
     isSchool &&
     !standalone &&
+    isMobileOrTablet(os) &&
     state === 'available' &&
     !dismissed();
 
