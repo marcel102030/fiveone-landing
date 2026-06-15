@@ -1001,6 +1001,67 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
+      {/* ── Comece aqui (Onboarding) ───────────────────────── */}
+      <section className="comece" id="comece">
+        <div className="comece-inner">
+          <div className="section-head reveal">
+            <span className="section-label">Comece aqui</span>
+            <h2>Como dar o primeiro passo</h2>
+            <p>Três passos simples para você conhecer, visitar e caminhar com a Rede de Igrejas nas Casas.</p>
+          </div>
+          <div className="reveal" style={{ maxWidth: 640, margin: '0 auto 36px' }}>
+            <RedeLocationNotice />
+          </div>
+          <div className="comece-grid">
+            <div className="comece-card reveal">
+              <div className="comece-card__media">
+                <img src={principal3} alt="Encontro nas casas" loading="lazy" />
+                <span className="comece-card__num">01</span>
+              </div>
+              <div className="comece-card__body">
+                <h3>Conheça a rede</h3>
+                <p>Entenda o que é a igreja nas casas e como vivemos os cinco motivos — adoração, comunhão, discipulado, serviço e missão.</p>
+                <button type="button" className="btn ghost" onClick={() => scrollToSection('manifesto')}>
+                  Quem somos →
+                </button>
+              </div>
+            </div>
+            <div className="comece-card reveal reveal-d1">
+              <div className="comece-card__media">
+                <img src={principal1} alt="Visita a uma casa" loading="lazy" />
+                <span className="comece-card__num">02</span>
+              </div>
+              <div className="comece-card__body">
+                <h3>Visite uma casa</h3>
+                <p>Confirme sua cidade e registre sua visita. Um presbítero local entra em contato para te receber com carinho.</p>
+                <Link className="btn primary" to={visitorFormPath}>
+                  Registrar minha visita
+                </Link>
+              </div>
+            </div>
+            <div className="comece-card reveal reveal-d2">
+              <div className="comece-card__media">
+                <img src={principal6} alt="Comunhão na rede" loading="lazy" />
+                <span className="comece-card__num">03</span>
+              </div>
+              <div className="comece-card__body">
+                <h3>Caminhe conosco</h3>
+                <p>Participe dos encontros — Estudo Bíblico (sexta) e Culto nas Casas (sábado), às 19h — e entre no nosso grupo no WhatsApp.</p>
+                <a
+                  className="btn ghost"
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.preventDefault(); goWhatsApp(whatsappLink); }}
+                >
+                  Falar no WhatsApp →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ── Participe ──────────────────────────────────────── */}
       <section className="participe" id="participe" style={{ backgroundImage: `url(${principal9})` }}>
         <div className="participe-overlay" />
@@ -1035,10 +1096,41 @@ const IgrejaNasCasas: React.FC = () => {
           <div className="section-head reveal">
             <h2>Encontre uma Casa</h2>
             <p>
-              Use os filtros para localizar uma igreja nas casas próxima de você e entrar em contato com os presbíteros
-              locais.
+              Hoje temos uma casa ativa em Campina Grande - PB. Conheça os detalhes abaixo — e use os filtros para
+              localizar casas conforme a rede for crescendo.
             </p>
           </div>
+
+          {igrejas[0] && (
+            <div className="mapa-destaque reveal">
+              <div className="mapa-destaque__top">
+                <span className="mapa-destaque__badge">● Casa ativa</span>
+                <h3>{igrejas[0].nome}</h3>
+                <p className="mapa-destaque__loc">📍 {igrejas[0].bairro} · {igrejas[0].cidade} — {igrejas[0].estado}</p>
+              </div>
+              <div className="mapa-destaque__rows">
+                <div className="mapa-destaque__row">
+                  <span>Presbítero</span>
+                  <strong>{igrejas[0].lider}</strong>
+                </div>
+                <div className="mapa-destaque__row">
+                  <span>Encontros</span>
+                  <strong>Estudo Bíblico · sex 19h&nbsp; &nbsp;·&nbsp; &nbsp;Culto nas Casas · sáb 19h</strong>
+                </div>
+                <div className="mapa-destaque__row">
+                  <span>Contato</span>
+                  <a href={`tel:${igrejas[0].telefone.replace(/[^+\d]/g, '')}`}>{igrejas[0].telefone}</a>
+                </div>
+              </div>
+              <div className="mapa-destaque__actions">
+                <Link className="btn primary" to={visitorFormPath}>Quero visitar esta casa</Link>
+                <a className="btn ghost" href={igrejas[0].linkMaps} target="_blank" rel="noopener noreferrer">
+                  Ver rota no Maps
+                </a>
+              </div>
+            </div>
+          )}
+
           <div className="mapa-filtros reveal">
             <label>
               <span>Estado</span>
