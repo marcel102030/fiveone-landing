@@ -10,6 +10,7 @@ import {
   listRedeHouseChurches,
 } from "../services/redeIgrejas";
 import { normalizePhone } from "../../../shared/utils/phone";
+import { CityGateInline } from "../components/CityGate";
 
 const MINISTRY_OPTIONS = [
   { value: "apostolo", label: "Tenho identificação com o dom Apostólico" },
@@ -182,6 +183,9 @@ export default function RedeCadastroMembro() {
   const [success, setSuccess] = useState(false);
   const [saving, setSaving] = useState(false);
   const [invitePresbiteroMemberId, setInvitePresbiteroMemberId] = useState<string | null>(null);
+  // Confirmação de cidade (a rede só atua em Campina Grande - PB). Vale para o
+  // formulário público de visitante; convites de membro (token) não passam por aqui.
+  const [cityConfirmed, setCityConfirmed] = useState(false);
 
   const [form, setForm] = useState({
     full_name: "",
@@ -592,7 +596,11 @@ export default function RedeCadastroMembro() {
           </div>
         )}
 
-        {!loading && !error && !success && (
+        {!loading && !error && !success && isVisitor && !cityConfirmed && (
+          <CityGateInline onConfirm={() => setCityConfirmed(true)} />
+        )}
+
+        {!loading && !error && !success && (!isVisitor || cityConfirmed) && (
           <form className="rede-signup-form" onSubmit={handleSubmit}>
             {isVisitor ? (
               <>

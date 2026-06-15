@@ -2,9 +2,12 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import '../igrejaNasCasas.css';
+import { useCityGateModal } from '../../components/CityGate';
 
 const RedeFiveOne: React.FC = () => {
   const navigate = useNavigate();
+  const { gate, modal: cityGateModal } = useCityGateModal();
+  const goWhatsApp = (url: string) => gate(() => window.open(url, '_blank', 'noopener,noreferrer'));
 
   const handleBack = () => {
     if (window.history.length > 1) {
@@ -153,6 +156,7 @@ const RedeFiveOne: React.FC = () => {
                 href="https://wa.me/5583987181731?text=Quero%20participar%20da%20Rede%20Five%20One"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); goWhatsApp((e.currentTarget as HTMLAnchorElement).href); }}
               >
                 Quero participar
               </a>
@@ -161,6 +165,7 @@ const RedeFiveOne: React.FC = () => {
                 href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); goWhatsApp((e.currentTarget as HTMLAnchorElement).href); }}
               >
                 Abrir minha casa
               </a>
@@ -172,6 +177,7 @@ const RedeFiveOne: React.FC = () => {
           </div>
         </section>
       </div>
+      {cityGateModal}
     </div>
   );
 };

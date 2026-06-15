@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { listRedeHouseChurches, RedeHouseChurch } from '../services/redeIgrejas';
+import { useCityGateModal, RedeLocationNotice } from '../components/CityGate';
 import encontro1 from '../../../assets/images/encontro1.jpg';
 import encontro2 from '../../../assets/images/encontro2.png';
 import encontro3 from '../../../assets/images/encontro1.jpg';
@@ -356,6 +357,10 @@ function CountUp({ end, started, suffix = '' }: { end: number; started: boolean;
 }
 
 const IgrejaNasCasas: React.FC = () => {
+  // Confirmação de cidade (a rede só atua em Campina Grande - PB).
+  const { gate, modal: cityGateModal } = useCityGateModal();
+  const goWhatsApp = (url: string) => gate(() => window.open(url, '_blank', 'noopener,noreferrer'));
+
   const [estadoSelecionado, setEstadoSelecionado] = useState('');
   const [cidadeSelecionada, setCidadeSelecionada] = useState('');
   const [estruturaTab, setEstruturaTab] = useState<string>(estruturaTabs[0]?.id ?? 'visao');
@@ -652,6 +657,9 @@ const IgrejaNasCasas: React.FC = () => {
             <button className="btn ghost" type="button" onClick={() => scrollToSection('mapa')}>
               Ver mapa da rede →
             </button>
+          </div>
+          <div style={{ maxWidth: 520, marginTop: 22 }}>
+            <RedeLocationNotice />
           </div>
         </div>
         <button
@@ -967,6 +975,9 @@ const IgrejaNasCasas: React.FC = () => {
             <h2>Agenda Five One</h2>
             <p>Encontros que sustentam a vida da rede e formam discípulos missionais.</p>
           </div>
+          <div className="reveal" style={{ maxWidth: 640, margin: '0 auto 28px' }}>
+            <RedeLocationNotice />
+          </div>
           <div className="programacao-grid">
             {programacao.map((item, i) => (
               <div key={item.titulo} className={`programacao-card reveal reveal-d${i + 1}`}>
@@ -975,7 +986,13 @@ const IgrejaNasCasas: React.FC = () => {
                   <span>{item.destaque}</span>
                 </div>
                 <p>{item.descricao}</p>
-                <a className="btn outline" href={item.link} target="_blank" rel="noopener noreferrer">
+                <a
+                  className="btn outline"
+                  href={item.link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.preventDefault(); goWhatsApp(item.link); }}
+                >
                   {item.botao}
                 </a>
               </div>
@@ -1003,6 +1020,7 @@ const IgrejaNasCasas: React.FC = () => {
                 href="https://wa.me/5583987181731?text=Olá!%20Vi%20no%20site%20da%20Rede%20Five%20One%20e%20tenho%20interesse%20em%20abrir%20minha%20casa%20para%20uma%20igreja%20nas%20casas.%20Como%20funciona%3F"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); goWhatsApp((e.currentTarget as HTMLAnchorElement).href); }}
               >
                 Abrir minha casa
               </a>
@@ -1104,6 +1122,9 @@ const IgrejaNasCasas: React.FC = () => {
             <h2>Fale com a Rede</h2>
             <p>Estamos prontos para caminhar junto com você, sua família e sua casa.</p>
           </div>
+          <div className="reveal" style={{ maxWidth: 640, margin: '0 auto 28px' }}>
+            <RedeLocationNotice />
+          </div>
           <div className="contato-grid">
             <form
               className="contato-form reveal"
@@ -1113,11 +1134,7 @@ const IgrejaNasCasas: React.FC = () => {
                 const nome = (formEl.elements.namedItem('nome') as HTMLInputElement)?.value || '';
                 const mensagem = (formEl.elements.namedItem('mensagem') as HTMLTextAreaElement)?.value || '';
                 const texto = `Olá! Vim do site da Rede Five One.\n\nNome: ${nome}\nMensagem: ${mensagem}`;
-                window.open(
-                  `https://wa.me/5583987181731?text=${encodeURIComponent(texto)}`,
-                  '_blank',
-                  'noopener,noreferrer',
-                );
+                goWhatsApp(`https://wa.me/5583987181731?text=${encodeURIComponent(texto)}`);
               }}
             >
               <label className="contato-field">
@@ -1152,7 +1169,12 @@ const IgrejaNasCasas: React.FC = () => {
               </div>
               <div className="info-card">
                 <span>WhatsApp</span>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">
+                <a
+                  href={whatsappLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => { e.preventDefault(); goWhatsApp(whatsappLink); }}
+                >
                   +55 (83) 98718-1731
                 </a>
               </div>
@@ -1173,7 +1195,8 @@ const IgrejaNasCasas: React.FC = () => {
         </div>
       </section>
 
-      <FloatingContacts instagramUrl={instagramUrl} whatsappUrl={whatsappLink} />
+      <FloatingContacts instagramUrl={instagramUrl} whatsappUrl={whatsappLink} onWhatsapp={() => goWhatsApp(whatsappLink)} />
+      {cityGateModal}
 
       {/* ── Footer ─────────────────────────────────────────── */}
       <footer className="footer-modern">
@@ -1187,7 +1210,7 @@ const IgrejaNasCasas: React.FC = () => {
             <ul>
               <li>
                 <span>WhatsApp</span>
-                <a href={whatsappLink} target="_blank" rel="noopener noreferrer">+55 (83) 98718-1731</a>
+                <a href={whatsappLink} target="_blank" rel="noopener noreferrer" onClick={(e) => { e.preventDefault(); goWhatsApp(whatsappLink); }}>+55 (83) 98718-1731</a>
               </li>
               <li>
                 <span>E-mail</span>
@@ -1219,7 +1242,7 @@ const IgrejaNasCasas: React.FC = () => {
             <a href={instagramUrl} target="_blank" rel="noopener noreferrer">
               Instagram · @redeigrejasfiveone
             </a>
-            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ marginTop: 10 }}>
+            <a href={whatsappLink} target="_blank" rel="noopener noreferrer" style={{ marginTop: 10 }} onClick={(e) => { e.preventDefault(); goWhatsApp(whatsappLink); }}>
               WhatsApp
             </a>
           </div>
@@ -1299,7 +1322,7 @@ const IgrejaNasCasas: React.FC = () => {
 
 export default IgrejaNasCasas;
 
-function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string; whatsappUrl: string }) {
+function FloatingContacts({ instagramUrl, whatsappUrl, onWhatsapp }: { instagramUrl: string; whatsappUrl: string; onWhatsapp?: () => void }) {
   return (
     <div className="floating-contacts">
       <div className="floating-contacts__fab-group">
@@ -1309,6 +1332,7 @@ function FloatingContacts({ instagramUrl, whatsappUrl }: { instagramUrl: string;
           target="_blank"
           rel="noopener noreferrer"
           aria-label="Conversar no WhatsApp"
+          onClick={(e) => { if (onWhatsapp) { e.preventDefault(); onWhatsapp(); } }}
         >
           <WhatsappIcon />
         </a>

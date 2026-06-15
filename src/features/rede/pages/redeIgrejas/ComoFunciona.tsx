@@ -2,9 +2,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import '../igrejaNasCasas.css';
+import { useCityGateModal } from '../../components/CityGate';
 
 const ComoFunciona: React.FC = () => {
   const navigate = useNavigate();
+  const { gate, modal: cityGateModal } = useCityGateModal();
+  const goWhatsApp = (url: string) => gate(() => window.open(url, '_blank', 'noopener,noreferrer'));
   const sectionIds = ['oque-sao', 'como-sao', 'o-que-fazem', 'lideranca'];
   const [isArticleMobile, setIsArticleMobile] = useState<boolean>(
     typeof window !== 'undefined' ? window.innerWidth <= 760 : false,
@@ -205,6 +208,7 @@ const ComoFunciona: React.FC = () => {
                 href="https://wa.me/5583987181731?text=Quero%20participar%20da%20Rede%20Five%20One"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); goWhatsApp((e.currentTarget as HTMLAnchorElement).href); }}
               >
                 Quero participar
               </a>
@@ -213,6 +217,7 @@ const ComoFunciona: React.FC = () => {
                 href="https://wa.me/5583987181731?text=Quero%20abrir%20minha%20casa%20para%20uma%20igreja"
                 target="_blank"
                 rel="noopener noreferrer"
+                onClick={(e) => { e.preventDefault(); goWhatsApp((e.currentTarget as HTMLAnchorElement).href); }}
               >
                 Abrir minha casa
               </a>
@@ -224,6 +229,7 @@ const ComoFunciona: React.FC = () => {
           </div>
         </section>
       </div>
+      {cityGateModal}
     </div>
   );
 };
