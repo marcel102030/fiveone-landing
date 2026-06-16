@@ -8,7 +8,7 @@ import { fetchCompletionsForUser } from '../services/completions';
 import { getMinistry, LessonRef, listLessons, subscribePlatformContent } from '../services/platformContent';
 import { listCompletedLessonIds, reconcileCompletedLessons } from '../../../shared/utils/completedLessons';
 import { usePlatformUserProfile } from '../hooks/usePlatformUserProfile';
-import { getCourseLaunchDate } from '../config/courseLaunch';
+import { getCourseLaunchDate, hasEarlyAccess } from '../config/courseLaunch';
 import CourseLockScreen from '../components/CourseLockScreen';
 
 type LessonView = LessonRef & { completed: boolean };
@@ -195,8 +195,9 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   // ── Trava de pré-venda: conteúdo só abre na data de lançamento ──────────────
   // Admins passam direto (para revisar antes de abrir ao público).
   const isAdmin = profile?.role === 'ADMIN';
+  const earlyAccess = hasEarlyAccess(courseId, getCurrentUserId() || authEmail);
   const launchDate = getCourseLaunchDate(courseId);
-  const courseLocked = !!launchDate && Date.now() < launchDate.getTime() && !isAdmin;
+  const courseLocked = !!launchDate && Date.now() < launchDate.getTime() && !isAdmin && !earlyAccess;
   if (courseLocked && launchDate) {
     return (
       <>

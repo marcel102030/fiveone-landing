@@ -1,0 +1,1 @@
+const n={APOLOGETICA:new Date("2026-07-06T09:00:00-03:00")},s={APOLOGETICA:["sueniakarcia@gmail.com","marcelosilvajunior78@gmail.com"]};function o(e,t){return!e||!t?!1:(s[e.toUpperCase()]||[]).includes(t.trim().toLowerCase())}function a(e){return e?n[e.toUpperCase()]??null:null}function i(e){const t=a(e);return t?Date.now()<t.getTime():!1}export{a as g,o as h,i};
