@@ -17,6 +17,7 @@ type ModuleView = {
   id: string;
   order: number;
   title: string;
+  description?: string;
   lessons: LessonView[];
   total: number;
   completed: number;
@@ -118,6 +119,7 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
         id: module.id,
         order: module.order + 1,
         title: module.title,
+        description: module.description,
         lessons: list,
         total,
         completed,
@@ -210,8 +212,19 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-navy pt-6 pb-16 px-4 overflow-x-hidden">
-        <div className="max-w-6xl mx-auto w-full">
+      <div className="min-h-screen bg-navy pt-6 pb-16 px-4 relative overflow-hidden">
+        {/* Decorações de fundo */}
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="absolute -top-10 right-0 w-[520px] h-[420px] bg-mint/[0.07] blur-[120px] rounded-full" />
+          <div className="absolute top-1/2 -left-24 w-[480px] h-[400px] bg-golden/[0.05] blur-[120px] rounded-full" />
+          <div className="absolute bottom-0 right-1/4 w-[600px] h-[420px] bg-mint/[0.05] blur-[110px] rounded-full" />
+        </div>
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.03]"
+          style={{ backgroundImage: 'radial-gradient(circle, #64ffda 1px, transparent 1px)', backgroundSize: '40px 40px' }}
+        />
+
+        <div className="relative max-w-6xl mx-auto w-full">
           <button
             onClick={() => navigate('/plataforma')}
             className="flex items-center gap-1.5 text-sm text-slate hover:text-mint transition-colors mb-6"
@@ -219,50 +232,92 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
             ← Voltar aos cursos
           </button>
 
+          {/* ── Hero do curso ── */}
+          <div className="relative rounded-3xl border border-mint/15 bg-gradient-to-br from-navy-light/80 via-navy-light/40 to-transparent p-6 sm:p-8 mb-7 overflow-hidden">
+            <div className="pointer-events-none absolute -top-16 -right-10 w-64 h-64 bg-mint/10 blur-[80px] rounded-full" />
+            <div className="relative">
+              <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-[11px] font-semibold uppercase tracking-wider mb-3">
+                Curso
+              </span>
+              <h1 className="text-3xl sm:text-4xl font-bold text-slate-white tracking-tight">{courseName}</h1>
+              {tagline && <p className="text-sm sm:text-base text-slate mt-2 max-w-2xl">{tagline}</p>}
+              <div className="flex flex-wrap gap-2.5 mt-5">
+                {[
+                  `${modules.length} ${modules.length === 1 ? 'módulo' : 'módulos'}`,
+                  `${courseStats.total} aulas`,
+                  'Certificado',
+                  'Acesso por 1 ano',
+                ].map((chip) => (
+                  <span key={chip} className="text-[12px] font-medium text-slate-light bg-navy/60 border border-white/10 rounded-lg px-3 py-1.5">
+                    {chip}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+
           <div className="lg:grid lg:grid-cols-3 lg:gap-8 lg:items-start">
-            {/* ── Coluna esquerda: info do curso (fixa no desktop) ── */}
-            <aside className="lg:col-span-1 lg:sticky lg:top-6 self-start">
-              <h1 className="text-2xl sm:text-3xl font-bold text-slate-white tracking-tight">{courseName}</h1>
-              {tagline && <p className="text-sm text-slate mt-1">{tagline}</p>}
+            {/* ── Coluna esquerda: progresso + o que inclui ── */}
+            <aside className="lg:col-span-1 lg:sticky lg:top-6 self-start space-y-5">
+              <div className="bg-navy-light rounded-2xl border border-white/10 p-5">
+                <div className="flex gap-2.5">
+                  <div className="flex-1 bg-navy rounded-xl px-4 py-2.5 text-center">
+                    <div className="text-xl font-bold text-mint tabular-nums">{courseStats.percent}%</div>
+                    <div className="text-[11px] text-slate">concluído</div>
+                  </div>
+                  <div className="flex-1 bg-navy rounded-xl px-4 py-2.5 text-center">
+                    <div className="text-xl font-bold text-slate-white tabular-nums">{courseStats.done}/{courseStats.total}</div>
+                    <div className="text-[11px] text-slate">aulas</div>
+                  </div>
+                </div>
 
-              <div className="flex gap-2.5 mt-4">
-                <div className="flex-1 bg-navy-light rounded-xl px-4 py-2.5 text-center">
-                  <div className="text-xl font-bold text-mint tabular-nums">{courseStats.percent}%</div>
-                  <div className="text-[11px] text-slate">concluído</div>
+                <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-4">
+                  <div className="h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${courseStats.percent}%` }} />
                 </div>
-                <div className="flex-1 bg-navy-light rounded-xl px-4 py-2.5 text-center">
-                  <div className="text-xl font-bold text-slate-white tabular-nums">{courseStats.done}/{courseStats.total}</div>
-                  <div className="text-[11px] text-slate">aulas</div>
-                </div>
+                {!started && (
+                  <p className="text-[12px] text-slate mt-3 text-center">Sua jornada começa na 1ª aula 🚀</p>
+                )}
+
+                {continueLesson && (
+                  <button
+                    onClick={() => goToLesson(continueLesson.moduleId, continueLesson.videoId)}
+                    className="group w-full flex items-center gap-3.5 bg-navy border border-mint/25 hover:border-mint/50 rounded-2xl p-3.5 mt-4 text-left transition-colors"
+                  >
+                    <span className="w-10 h-10 rounded-full bg-mint text-navy flex items-center justify-center shrink-0">
+                      <PlayIcon />
+                    </span>
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[11px] text-mint uppercase tracking-wider">
+                        {started ? 'Continuar de onde parou' : 'Começar o curso'}
+                      </span>
+                      <span className="block text-sm text-slate-white truncate">
+                        M{continueLesson.moduleOrder + 1} · {continueLesson.title}
+                      </span>
+                    </span>
+                    <span className="bg-mint text-navy text-sm font-semibold px-4 py-2 rounded-lg shrink-0 group-hover:bg-mint/90 transition-colors">
+                      {started ? 'Retomar' : 'Começar'}
+                    </span>
+                  </button>
+                )}
               </div>
 
-              {/* Barra de progresso do curso */}
-              <div className="h-1.5 bg-white/10 rounded-full overflow-hidden mt-4">
-                <div className="h-full bg-mint rounded-full transition-all duration-500" style={{ width: `${courseStats.percent}%` }} />
+              {/* Este curso inclui */}
+              <div className="bg-navy-light rounded-2xl border border-white/10 p-5">
+                <h3 className="text-sm font-semibold text-slate-white mb-3">Este curso inclui</h3>
+                <ul className="space-y-2.5">
+                  {[
+                    'Certificado de conclusão',
+                    'Acesso por 1 ano',
+                    'Assista no celular ou computador',
+                    'No seu ritmo, quando quiser',
+                  ].map((item) => (
+                    <li key={item} className="flex items-center gap-2.5 text-[13px] text-slate-light">
+                      <span className="text-mint shrink-0"><CheckIcon /></span>
+                      {item}
+                    </li>
+                  ))}
+                </ul>
               </div>
-
-          {/* ── Continuar de onde parou ── */}
-          {continueLesson && (
-            <button
-              onClick={() => goToLesson(continueLesson.moduleId, continueLesson.videoId)}
-              className="group w-full flex items-center gap-3.5 bg-navy-light border border-mint/25 hover:border-mint/50 rounded-2xl p-3.5 mt-5 text-left transition-colors"
-            >
-              <span className="w-10 h-10 rounded-full bg-mint text-navy flex items-center justify-center shrink-0">
-                <PlayIcon />
-              </span>
-              <span className="flex-1 min-w-0">
-                <span className="block text-[11px] text-mint uppercase tracking-wider">
-                  {started ? 'Continuar de onde parou' : 'Começar o curso'}
-                </span>
-                <span className="block text-sm text-slate-white truncate">
-                  M{continueLesson.moduleOrder + 1} · {continueLesson.title}
-                </span>
-              </span>
-              <span className="bg-mint text-navy text-sm font-semibold px-4 py-2 rounded-lg shrink-0 group-hover:bg-mint/90 transition-colors">
-                {started ? 'Retomar' : 'Começar'}
-              </span>
-            </button>
-          )}
             </aside>
 
             {/* ── Coluna direita: módulos (accordion) ── */}
@@ -293,6 +348,11 @@ const CursoModulos = ({ courseId: propCourseId }: Props) => {
                     </span>
                     <span className="flex-1 min-w-0">
                       <span className="block text-[15px] font-semibold text-slate-white">{m.title}</span>
+                      {m.description && !m.soon && (
+                        <span className={`block text-[12px] text-slate mt-1 leading-snug ${open ? '' : 'truncate'}`}>
+                          {m.description}
+                        </span>
+                      )}
                       {m.soon ? (
                         <span className="text-[11px] text-golden">Em breve</span>
                       ) : (
