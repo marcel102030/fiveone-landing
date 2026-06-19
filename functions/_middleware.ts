@@ -169,8 +169,12 @@ export const onRequest = async (ctx: {
     const redeResp = await env.ASSETS.fetch(new URL("/index.html", request.url));
     if (!redeResp.ok) return next();
     let redeHtml = await redeResp.text();
-    redeHtml = injectMeta(redeHtml, REDE_META);
+    // Canonical próprio (sempre sem www) — sem isto o Google trata a rede como
+    // cópia do fiveonemovement.com (mesmo HTML) e não indexa.
+    const canonical = `${REDE_SITE}${path === "/" ? "/" : path}`;
+    redeHtml = injectMeta(redeHtml, { ...REDE_META, url: canonical });
     redeHtml = injectRedeFavicon(redeHtml);
+    redeHtml = injectCanonical(redeHtml, canonical);
     return new Response(redeHtml, {
       headers: {
         "content-type": "text/html; charset=utf-8",
@@ -266,6 +270,13 @@ function injectMeta(html: string, meta: RouteMeta): string {
   out = replaceMeta(out, /name="twitter:description"/i, `<meta name="twitter:description" content="${desc}" />`);
   out = replaceMeta(out, /name="twitter:image"/i, `<meta name="twitter:image" content="${image}" />`);
   return out;
+}
+
+/** Insere (ou substitui) a tag <link rel="canonical">. */
+function injectCanonical(html: string, canonicalUrl: string): string {
+  const tag = `<link rel="canonical" href="${escapeAttr(canonicalUrl)}" />`;
+  const out = html.replace(/<link[^>]+rel="canonical"[^>]*>/gi, "");
+  return out.replace(/<\/head>/i, `${tag}</head>`);
 }
 
 /** Troca os ícones do Five One pelos da Rede de Igrejas nas Casas. */
