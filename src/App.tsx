@@ -122,6 +122,13 @@ function AppContent() {
     location.pathname === "/rede-igrejas" ||
     location.pathname.startsWith("/rede-igrejas/");
 
+  // Domínio próprio da Rede: redeigrejanascasas.com serve a página da rede em
+  // "/" e esconde a navbar/rodapé institucionais (a rede tem header próprio).
+  const isRedeDomain =
+    typeof window !== "undefined" &&
+    (window.location.hostname === "redeigrejanascasas.com" ||
+      window.location.hostname === "www.redeigrejanascasas.com");
+
   const hideLayout =
     location.pathname === "/links" ||
     location.pathname.startsWith("/lp/") ||
@@ -147,7 +154,8 @@ function AppContent() {
     location.pathname.startsWith("/rede/cadastro") ||
     location.pathname.startsWith("/certificado/") ||
     isInviteTest ||
-    isIgrejasStandalone;
+    isIgrejasStandalone ||
+    isRedeDomain;
 
   return (
     <>
@@ -158,7 +166,7 @@ function AppContent() {
           <ErrorBoundary scope="route">
           <Suspense fallback={<PageLoader label="Carregando…" />}>
           <Routes>
-            <Route path="/" element={<Home />} />
+            <Route path="/" element={isRedeDomain ? <IgrejaNasCasas /> : <Home />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/administracao"
