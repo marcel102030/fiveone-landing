@@ -70,6 +70,16 @@ const ROUTE_META: Record<string, RouteMeta> = {
   },
 };
 
+// Branding próprio da Rede de Igrejas nas Casas (domínio redeigrejanascasas.com).
+const REDE_SITE = "https://redeigrejanascasas.com";
+const REDE_META: RouteMeta = {
+  title: "Rede de Igrejas nas Casas | Five One",
+  description:
+    "Um movimento que transforma lares em centros de comunhão, discipulado e missão — bairro a bairro, em Campina Grande - PB.",
+  url: `${REDE_SITE}/`,
+  image: `${REDE_SITE}/rede-favicon-192.png`,
+};
+
 export const onRequest = async (ctx: {
   request: Request;
   env: Env;
@@ -139,6 +149,34 @@ export const onRequest = async (ctx: {
       return Response.redirect(new URL("/plataforma", request.url).toString(), 302);
     }
     return next();
+  }
+
+  // ── redeigrejanascasas.com: favicon + meta próprios da Rede ───────────────
+  // A SPA serve o mesmo index.html (logo/meta do Five One). Aqui, para o
+  // domínio da rede, trocamos o favicon e as meta tags para a logo da rede
+  // aparecer na busca do Google e nos compartilhamentos.
+  if (
+    url.hostname === "redeigrejanascasas.com" ||
+    url.hostname === "www.redeigrejanascasas.com"
+  ) {
+    const isAsset =
+      /\.[a-z0-9]+$/i.test(path) ||
+      path.startsWith("/api/") ||
+      path.startsWith("/assets/") ||
+      path.startsWith("/c/");
+    if (isAsset) return next();
+
+    const redeResp = await env.ASSETS.fetch(new URL("/index.html", request.url));
+    if (!redeResp.ok) return next();
+    let redeHtml = await redeResp.text();
+    redeHtml = injectMeta(redeHtml, REDE_META);
+    redeHtml = injectRedeFavicon(redeHtml);
+    return new Response(redeHtml, {
+      headers: {
+        "content-type": "text/html; charset=utf-8",
+        "cache-control": "public, max-age=0, must-revalidate",
+      },
+    });
   }
 
   const meta = ROUTE_META[path];
@@ -227,6 +265,21 @@ function injectMeta(html: string, meta: RouteMeta): string {
   out = replaceMeta(out, /name="twitter:title"/i, `<meta name="twitter:title" content="${title}" />`);
   out = replaceMeta(out, /name="twitter:description"/i, `<meta name="twitter:description" content="${desc}" />`);
   out = replaceMeta(out, /name="twitter:image"/i, `<meta name="twitter:image" content="${image}" />`);
+  return out;
+}
+
+/** Troca os ícones do Five One pelos da Rede de Igrejas nas Casas. */
+function injectRedeFavicon(html: string): string {
+  let out = html
+    .replace(/<link[^>]+rel="icon"[^>]*>/gi, "")
+    .replace(/<link[^>]+rel="shortcut icon"[^>]*>/gi, "")
+    .replace(/<link[^>]+rel="apple-touch-icon"[^>]*>/gi, "");
+  const icons =
+    '<link rel="icon" type="image/png" sizes="192x192" href="/rede-favicon-192.png?v=1" />' +
+    '<link rel="icon" type="image/png" sizes="96x96" href="/rede-favicon-96.png?v=1" />' +
+    '<link rel="shortcut icon" href="/rede-favicon-96.png?v=1" />' +
+    '<link rel="apple-touch-icon" href="/rede-favicon-192.png?v=1" />';
+  out = out.replace(/<\/head>/i, `${icons}</head>`);
   return out;
 }
 
