@@ -22,12 +22,48 @@ const STATIC_ROUTES: { url: string; priority: string; changefreq: string }[] = [
   { url: "/contato",             priority: "0.6", changefreq: "monthly" },
 ];
 
+// Sitemap próprio do domínio da Rede de Igrejas nas Casas.
+const REDE_SITE = "https://redeigrejanascasas.com";
+const REDE_ROUTES: { url: string; priority: string; changefreq: string }[] = [
+  { url: "/",                                priority: "1.0", changefreq: "weekly" },
+  { url: "/rede-igrejas/o-que-e-five-one",   priority: "0.8", changefreq: "monthly" },
+  { url: "/rede-igrejas/como-funciona",      priority: "0.8", changefreq: "monthly" },
+  { url: "/rede-igrejas/rede-five-one",      priority: "0.8", changefreq: "monthly" },
+];
+
+function buildSitemap(routes: { url: string; priority: string; changefreq: string }[], site: string, today: string): string {
+  const entries = routes
+    .map(({ url, priority, changefreq }) => `
+  <url>
+    <loc>${site}${url}</loc>
+    <lastmod>${today}</lastmod>
+    <changefreq>${changefreq}</changefreq>
+    <priority>${priority}</priority>
+  </url>`)
+    .join("");
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${entries}
+</urlset>`.trim();
+}
+
 export const onRequest = async (ctx: {
   request: Request;
   env: Env;
 }) => {
-  const { env } = ctx;
+  const { request, env } = ctx;
   const today = new Date().toISOString().split("T")[0];
+
+  // ── Domínio da Rede: sitemap próprio (sem cursos/blog do Five One) ────────
+  const host = new URL(request.url).hostname;
+  if (host === "redeigrejanascasas.com" || host === "www.redeigrejanascasas.com") {
+    return new Response(buildSitemap(REDE_ROUTES, REDE_SITE, today), {
+      headers: {
+        "content-type": "application/xml; charset=utf-8",
+        "cache-control": "public, max-age=3600",
+      },
+    });
+  }
 
   // Busca posts publicados do blog
   let posts: { slug: string; updated_at: string; published_at: string | null }[] = [];
