@@ -7,11 +7,29 @@ interface BeforeInstallPromptEvent extends Event {
 
 const DISMISSED_KEY = "pwa-install-dismissed";
 
+/** Instalação do app só faz sentido em celular/tablet (nunca no computador). */
+function isMobileOrTablet(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent;
+  if (/Android|iPhone|iPad|iPod/i.test(ua)) return true;
+  // iPad no iPadOS 13+ se identifica como Mac — detecta por toque.
+  return /Macintosh/.test(ua) && (navigator.maxTouchPoints || 0) > 1;
+}
+
 export default function PWAInstallBanner() {
   const [prompt, setPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
+    // Só na plataforma do aluno (escolafiveone.com), em celular/tablet, e fora
+    // do /plataforma (o dashboard tem o seu próprio banner). Sem isto, o banner
+    // vazava para o site institucional e o domínio da rede.
+    const host = window.location.hostname;
+    const isPlatform = host === "escolafiveone.com" || host === "localhost";
+    if (!isPlatform) return;
+    if (window.location.pathname.startsWith("/plataforma")) return;
+    if (!isMobileOrTablet()) return;
+
     // Don't show if already dismissed recently
     const dismissed = localStorage.getItem(DISMISSED_KEY);
     if (dismissed) return;

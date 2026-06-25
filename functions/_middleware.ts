@@ -279,12 +279,14 @@ function injectCanonical(html: string, canonicalUrl: string): string {
   return out.replace(/<\/head>/i, `${tag}</head>`);
 }
 
-/** Troca os ícones do Five One pelos da Rede de Igrejas nas Casas. */
+/** Troca os ícones do Five One pelos da Rede e remove o manifest (a rede não é
+ * um app instalável — sem manifest o Chrome não oferece "Instalar Five One"). */
 function injectRedeFavicon(html: string): string {
   let out = html
     .replace(/<link[^>]+rel="icon"[^>]*>/gi, "")
     .replace(/<link[^>]+rel="shortcut icon"[^>]*>/gi, "")
-    .replace(/<link[^>]+rel="apple-touch-icon"[^>]*>/gi, "");
+    .replace(/<link[^>]+rel="apple-touch-icon"[^>]*>/gi, "")
+    .replace(/<link[^>]+rel="manifest"[^>]*>/gi, "");
   const icons =
     '<link rel="icon" type="image/png" sizes="192x192" href="/rede-favicon-192.png?v=1" />' +
     '<link rel="icon" type="image/png" sizes="96x96" href="/rede-favicon-96.png?v=1" />' +
