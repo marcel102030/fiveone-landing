@@ -25,11 +25,10 @@ type LinkItem = {
 const LINKS: LinkItem[] = [
   {
     Icon: FaCompass,
-    iconClass: "text-navy",
+    iconClass: "text-mint",
     label: "Descubra seu Dom Ministerial",
     sublabel: "Teste gratuito dos 5 Ministérios",
     to: "/descubra-seu-dom",
-    highlight: true,
   },
   {
     Icon: FaBookOpen,
