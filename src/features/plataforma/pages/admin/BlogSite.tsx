@@ -242,7 +242,7 @@ function BlogList({
                       )}
                       {p.title}
                     </div>
-                    <div className="text-2xs text-slate mt-0.5"><code>/insights/{p.slug}</code></div>
+                    <div className="text-2xs text-slate mt-0.5"><code>/para-ler/{p.slug}</code></div>
                   </td>
                   <td className="px-4 py-3 text-slate-light">{p.category}</td>
                   <td className="px-4 py-3">
@@ -588,7 +588,7 @@ function BlogEditor({
 
           <Field
             label="Slug (URL)"
-            hint={`Será acessível em /insights/${state.slug || "..."}`}
+            hint={`Será acessível em /para-ler/${state.slug || "..."}`}
             required
           >
             <input
@@ -705,7 +705,7 @@ function BlogEditor({
                   ⭐ Post em destaque
                 </span>
                 <span className="block text-2xs text-slate mt-0.5 leading-snug">
-                  Ocupa o card principal em /insights. Marcar este desmarca
+                  Ocupa o card principal em /para-ler. Marcar este desmarca
                   automaticamente o destaque anterior.
                 </span>
               </span>

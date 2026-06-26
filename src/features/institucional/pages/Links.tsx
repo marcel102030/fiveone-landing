@@ -36,7 +36,7 @@ const LINKS: LinkItem[] = [
     iconClass: "text-mint",
     label: "Para Ler",
     sublabel: "Leituras semanais sobre fé e ministério",
-    to: "/insights",
+    to: "/para-ler",
   },
   {
     Icon: FaGraduationCap,

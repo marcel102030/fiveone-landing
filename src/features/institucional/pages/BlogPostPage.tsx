@@ -219,7 +219,7 @@ const BlogPostPage = () => {
           <h1 className="text-2xl sm:text-3xl font-bold text-slate-white">Leitura não encontrada</h1>
           <p className="mt-3 text-sm text-slate">O link pode estar incorreto ou o post pode ter sido removido.</p>
           <Link
-            to="/insights"
+            to="/para-ler"
             className="mt-8 inline-flex items-center gap-1.5 px-5 py-3 bg-mint text-navy font-semibold rounded-xl hover:shadow-mint-strong transition"
           >
             <ArrowLeftIcon />
@@ -256,7 +256,7 @@ const BlogPostPage = () => {
 
         <div className="relative max-w-3xl mx-auto px-6 lg:px-8">
           <Link
-            to="/insights"
+            to="/para-ler"
             className="inline-flex items-center gap-1.5 text-xs text-slate hover:text-mint transition-colors mb-6"
           >
             <ArrowLeftIcon />

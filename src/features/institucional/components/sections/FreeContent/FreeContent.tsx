@@ -20,7 +20,7 @@ const CHANNELS: Channel[] = [
     name: "Para Ler",
     desc: "Leituras teológicas e práticas que aprofundam a sua fé.",
     cta: "Explorar",
-    to: "/insights",
+    to: "/para-ler",
     Icon: FaBookOpen,
     iconClass: "bg-mint/10 border border-mint/30 text-mint",
   },
@@ -143,7 +143,7 @@ export default function FreeContent() {
                 Últimas leituras
               </h3>
               <Link
-                to="/insights"
+                to="/para-ler"
                 className="group inline-flex items-center gap-1.5 text-sm font-semibold text-mint shrink-0"
               >
                 Ver todos

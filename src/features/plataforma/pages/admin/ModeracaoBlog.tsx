@@ -173,7 +173,7 @@ export default function ModeracaoBlog() {
                   <p className="text-2xs text-slate mb-3">
                     em{" "}
                     <Link
-                      to={`/insights/${c.post_slug}`}
+                      to={`/para-ler/${c.post_slug}`}
                       target="_blank"
                       className="text-mint hover:underline"
                     >

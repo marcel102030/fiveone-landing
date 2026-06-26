@@ -301,9 +301,9 @@ function AppContent() {
             <Route path="/cursos" element={<Cursos />} />
             <Route path="/treinamentos" element={<Treinamentos />} />
             <Route path="/formacao-ministerial" element={<Navigate to="/cursos" replace />} />
-            <Route path="/insights" element={<BlogList />} />
-            <Route path="/insights/:postId" element={<BlogPostPage />} />
-            <Route path="/insights/:slug" element={<BlogPostPage />} />
+            <Route path="/para-ler" element={<BlogList />} />
+            <Route path="/para-ler/:postId" element={<BlogPostPage />} />
+            <Route path="/para-ler/:slug" element={<BlogPostPage />} />
             <Route path="/contato" element={<Contact />} />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
             <Route path="/rede-igrejas" element={<IgrejaNasCasas />} />

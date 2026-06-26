@@ -3,12 +3,12 @@ import { type BlogPost, formatPostDate } from "../../services/blog";
 
 /**
  * Card de post reutilizável (capa + categoria + título + excerpt + autor/data).
- * Usado na listagem /insights (BlogList) e na seção de conteúdo gratuito da Home.
+ * Usado na listagem /para-ler (BlogList) e na seção de conteúdo gratuito da Home.
  */
 export default function PostCard({ post }: { post: BlogPost }) {
   return (
     <Link
-      to={`/insights/${post.slug}`}
+      to={`/para-ler/${post.slug}`}
       className="group flex flex-col bg-navy-light/60 border border-slate/10 rounded-2xl overflow-hidden hover:border-mint/30 hover:shadow-mint transition-all"
     >
       <div className="relative aspect-video overflow-hidden bg-navy">

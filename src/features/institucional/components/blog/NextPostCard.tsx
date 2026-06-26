@@ -12,7 +12,7 @@ export default function NextPostCard({ post }: { post: BlogPost }) {
         Continue lendo
       </p>
       <Link
-        to={`/insights/${post.slug}`}
+        to={`/para-ler/${post.slug}`}
         className="group relative grid sm:grid-cols-[1fr_2fr] gap-5 sm:gap-7 bg-gradient-to-br from-navy-light to-navy border border-mint/20 rounded-3xl overflow-hidden hover:border-mint/40 transition-colors shadow-card-hover"
       >
         {/* Capa */}

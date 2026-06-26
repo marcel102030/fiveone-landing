@@ -900,7 +900,7 @@ const PaginaInicial = () => {
               </a>
 
               {/* Para Ler */}
-              <a href="https://fiveonemovement.com/insights" target="_blank" rel="noopener noreferrer"
+              <a href="https://fiveonemovement.com/para-ler" target="_blank" rel="noopener noreferrer"
                 className="group relative rounded-2xl overflow-hidden aspect-[16/10] border border-slate/10 hover:border-mint/30 hover:-translate-y-0.5 transition-all hover:shadow-mint">
                 <img src={imgParaLer} alt="Para Ler" className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />

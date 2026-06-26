@@ -7,7 +7,7 @@ type NavItem = { to: string; label: string };
 
 const NAV_ITEMS: NavItem[] = [
   { to: "/descubra-seu-dom", label: "Descubra seu Dom" },
-  { to: "/insights",         label: "Para Ler" },
+  { to: "/para-ler",         label: "Para Ler" },
   { to: "/cursos",           label: "Cursos" },
   { to: "/treinamentos",     label: "Treinamentos" },
   { to: "/contato",          label: "Contato" },

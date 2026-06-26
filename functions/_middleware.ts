@@ -6,7 +6,7 @@
 //
 // Aqui interceptamos as rotas públicas conhecidas e injetamos as meta tags
 // (og:* / twitter:*) corretas de cada uma ANTES de servir. Rotas não mapeadas
-// (assets, /api/*, /c/*, /insights/:post — que tem função própria) passam
+// (assets, /api/*, /c/*, /para-ler/:post — que tem função própria) passam
 // direto via next().
 
 interface Env {
@@ -34,11 +34,11 @@ const ROUTE_META: Record<string, RouteMeta> = {
       "Cursos bíblicos com fundamento teológico, treinamentos dos 5 Ministérios e o Teste dos 5 Ministérios. Comece pelo Curso de Apologética.",
     url: `${SITE}/`,
   },
-  "/insights": {
+  "/para-ler": {
     title: "Para Ler | Five One",
     description:
       "Leituras teológicas, ministeriais e práticas do Five One sobre os 5 ministérios, vida cristã, apologética, igreja e cultura.",
-    url: `${SITE}/insights`,
+    url: `${SITE}/para-ler`,
     image: `${SITE}/assets/og-para-ler.png`,
   },
   "/cursos": {
@@ -91,6 +91,12 @@ export const onRequest = async (ctx: {
   const url = new URL(request.url);
   let path = url.pathname.replace(/\/+$/, "");
   if (path === "") path = "/";
+
+  // ── Renomeado: /insights → /para-ler (301 preserva SEO e links antigos) ────
+  if (path === "/insights" || path.startsWith("/insights/")) {
+    const dest = `${url.origin}/para-ler${path.slice("/insights".length)}${url.search}`;
+    return Response.redirect(dest, 301);
+  }
 
   // ── fiveonemovement.com: rotas da plataforma → redirect para escolafiveone.com ──
   if (url.hostname === "fiveonemovement.com") {
@@ -184,11 +190,11 @@ export const onRequest = async (ctx: {
   }
 
   const meta = ROUTE_META[path];
-  if (!meta) return next(); // assets, /api/*, /c/*, /insights/:post, etc.
+  if (!meta) return next(); // assets, /api/*, /c/*, /para-ler/:post, etc.
 
-  // /insights usa a capa do post em destaque (ou o mais recente) como imagem.
+  // /para-ler usa a capa do post em destaque (ou o mais recente) como imagem.
   const resolved = { ...meta };
-  if (path === "/insights") {
+  if (path === "/para-ler") {
     const cover = await featuredPostCover(env);
     if (cover) resolved.image = cover;
   }

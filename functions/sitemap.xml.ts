@@ -18,7 +18,7 @@ const STATIC_ROUTES: { url: string; priority: string; changefreq: string }[] = [
   { url: "/cursos",              priority: "0.9", changefreq: "weekly" },
   { url: "/cursos/apologetica",  priority: "0.9", changefreq: "monthly" },
   { url: "/descubra-seu-dom",    priority: "0.8", changefreq: "monthly" },
-  { url: "/insights",            priority: "0.8", changefreq: "daily" },
+  { url: "/para-ler",            priority: "0.8", changefreq: "daily" },
   { url: "/contato",             priority: "0.6", changefreq: "monthly" },
 ];
 
@@ -102,7 +102,7 @@ export const onRequest = async (ctx: {
       const lastmod = (updated_at || published_at || today).split("T")[0];
       return `
   <url>
-    <loc>${SITE}/insights/${encodeURIComponent(slug)}</loc>
+    <loc>${SITE}/para-ler/${encodeURIComponent(slug)}</loc>
     <lastmod>${lastmod}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

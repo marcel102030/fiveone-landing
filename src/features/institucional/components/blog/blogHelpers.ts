@@ -35,7 +35,7 @@ const SITE_ORIGIN = "https://fiveonemovement.com";
  * à toa). O og:url canônico continua limpo; o token só afeta a chave de cache.
  */
 export function buildShareUrl(slug: string, updatedAt?: string | null): string {
-  const base = `${SITE_ORIGIN}/insights/${slug}`;
+  const base = `${SITE_ORIGIN}/para-ler/${slug}`;
   if (!updatedAt) return base;
   const t = Date.parse(updatedAt);
   if (Number.isNaN(t)) return base;

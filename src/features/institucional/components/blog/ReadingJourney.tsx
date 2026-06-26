@@ -193,7 +193,7 @@ function JourneyCard({
 
   return (
     <Link
-      to={`/insights/${post.slug}`}
+      to={`/para-ler/${post.slug}`}
       className="group flex flex-col bg-navy-light/60 border border-slate/10 rounded-2xl overflow-hidden hover:border-mint/30 hover:shadow-mint transition-all hover:-translate-y-1 duration-300"
     >
       {/* Capa */}

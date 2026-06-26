@@ -95,7 +95,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
          <p style="margin:0 0 32px;font-size:15px;line-height:1.6;color:#9fb3d1">
           Enquanto isso, explore as leituras que já publicamos:
          </p>
-         <a href="https://fiveonemovement.com/insights"
+         <a href="https://fiveonemovement.com/para-ler"
             style="display:inline-block;background:#64ffda;color:#0a192f;font-weight:700;font-size:15px;text-decoration:none;border-radius:10px;padding:14px 28px">
            Ver as leituras →
          </a>`;
@@ -142,7 +142,7 @@ export const onRequest = async (ctx: { request: Request; env: Env }) => {
         html,
         text: isWaitlist
           ? `${greeting}\n\nVocê está na lista de espera do Curso de Apologética Five One!\n\nAvisaremos quando abrir: https://fiveonemovement.com/cursos/apologetica`
-          : `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse as leituras em: https://fiveonemovement.com/insights`,
+          : `${greeting}\n\nVocê está inscrito no Para Ler do Five One!\n\nAcesse as leituras em: https://fiveonemovement.com/para-ler`,
       }),
     }).catch(() => {/* silencioso */});
   }

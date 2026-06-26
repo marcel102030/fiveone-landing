@@ -6,7 +6,7 @@ import logoUrl from "../../../../assets/images/logo-fiveone-white-small.png";
 const NAV_LINKS = [
   { to: "/cursos", label: "Cursos e Treinamentos" },
   { to: "/descubra-seu-dom", label: "Descubra seu Dom" },
-  { to: "/insights", label: "Para Ler" },
+  { to: "/para-ler", label: "Para Ler" },
   { to: "/contato", label: "Contato" },
 ];
 

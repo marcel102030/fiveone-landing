@@ -180,7 +180,7 @@ function CategoryChip({
 function FeaturedPostCard({ post }: { post: BlogPost }) {
   return (
     <Link
-      to={`/insights/${post.slug}`}
+      to={`/para-ler/${post.slug}`}
       className="group relative grid lg:grid-cols-5 gap-0 lg:gap-10 bg-gradient-to-br from-navy-light to-navy border border-mint/20 rounded-3xl overflow-hidden hover:border-mint/40 transition-colors shadow-card-hover"
     >
       <div className="relative lg:col-span-3 aspect-video lg:aspect-auto lg:h-full overflow-hidden bg-navy">
