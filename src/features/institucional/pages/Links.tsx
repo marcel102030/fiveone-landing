@@ -47,6 +47,13 @@ const LINKS: LinkItem[] = [
   {
     Icon: FaWhatsapp,
     iconClass: "text-[#25D366]",
+    label: "Grupo do Para Ler — WhatsApp",
+    sublabel: "Receba as leituras toda semana",
+    href: "https://chat.whatsapp.com/HsKc228MZtB4QN5bD0eDvl",
+  },
+  {
+    Icon: FaWhatsapp,
+    iconClass: "text-[#25D366]",
     label: "Lista de Espera — WhatsApp",
     sublabel: "Comunidade do curso de Apologética",
     href: "https://chat.whatsapp.com/DuYWYWMQleG897njhHUOKa?s=cl&p=i&ilr=4",
