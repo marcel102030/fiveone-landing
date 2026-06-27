@@ -1,10 +1,14 @@
 import { useEffect, useRef, useState } from "react";
+import { FaWhatsapp } from "react-icons/fa";
 import NewsletterForm from "./NewsletterForm";
 
 // Só o estado de assinatura persiste (não incomodar quem já assinou).
 // O dismissed é por sessão de componente — assim o banner reaparece em
 // cada artigo novo que o leitor abrir.
 const LS_SUBSCRIBED = "fiveone_newsletter_subscribed";
+
+// Grupo do WhatsApp do "Para Ler" — alternativa ao e-mail.
+const WHATSAPP_PARA_LER = "https://chat.whatsapp.com/HsKc228MZtB4QN5bD0eDvl";
 
 /**
  * Banner newsletter que aparece na tela (slide-up) quando o leitor chega
@@ -104,6 +108,22 @@ export default function NewsletterStickyBanner({
               compact
               onSuccess={onSubscribed}
             />
+
+            {/* ou entrar no grupo do WhatsApp */}
+            <div className="flex items-center gap-3 my-3">
+              <span className="h-px flex-1 bg-slate/15" />
+              <span className="text-2xs text-slate uppercase tracking-wider">ou</span>
+              <span className="h-px flex-1 bg-slate/15" />
+            </div>
+            <a
+              href={WHATSAPP_PARA_LER}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/40 text-[#25D366] text-sm font-semibold hover:bg-[#25D366]/20 transition-colors"
+            >
+              <FaWhatsapp className="w-4 h-4 shrink-0" />
+              Entrar no grupo do WhatsApp
+            </a>
           </div>
         )}
       </div>
