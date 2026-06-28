@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { FaWhatsapp } from "react-icons/fa";
 import NewsletterForm from "./NewsletterForm";
+import { PARA_LER_WHATSAPP } from "./ReadingClubCTA";
 
 // Só o estado de assinatura persiste (não incomodar quem já assinou).
 // O dismissed é por sessão de componente — assim o banner reaparece em
 // cada artigo novo que o leitor abrir.
 const LS_SUBSCRIBED = "fiveone_newsletter_subscribed";
-
-// Grupo do WhatsApp do "Para Ler" — alternativa ao e-mail.
-const WHATSAPP_PARA_LER = "https://chat.whatsapp.com/HsKc228MZtB4QN5bD0eDvl";
 
 /**
  * Banner newsletter que aparece na tela (slide-up) quando o leitor chega
@@ -101,29 +99,30 @@ export default function NewsletterStickyBanner({
               Gostou da leitura? 👋
             </p>
             <p className="text-xs text-slate mb-3">
-              Receba as próximas diretamente no seu e-mail — sem spam, só conteúdo que edifica.
+              Entre no nosso <strong className="text-slate-light">Clube de Leitura</strong> no WhatsApp — discuta os textos e receba as próximas leituras.
             </p>
-            <NewsletterForm
-              source="blog_sticky"
-              compact
-              onSuccess={onSubscribed}
-            />
+            <a
+              href={PARA_LER_WHATSAPP}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-center gap-2 w-full px-4 py-3 rounded-xl bg-[#25D366] text-[#052e16] text-sm font-bold hover:bg-[#1ebe5a] hover:scale-[1.02] active:scale-[0.98] transition-all"
+            >
+              <FaWhatsapp className="w-5 h-5 shrink-0" />
+              Entrar no Clube de Leitura
+            </a>
 
-            {/* ou entrar no grupo do WhatsApp */}
+            {/* ou receber por e-mail (secundário) */}
             <div className="flex items-center gap-3 my-3">
               <span className="h-px flex-1 bg-slate/15" />
               <span className="text-2xs text-slate uppercase tracking-wider">ou</span>
               <span className="h-px flex-1 bg-slate/15" />
             </div>
-            <a
-              href={WHATSAPP_PARA_LER}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/40 text-[#25D366] text-sm font-semibold hover:bg-[#25D366]/20 transition-colors"
-            >
-              <FaWhatsapp className="w-4 h-4 shrink-0" />
-              Entrar no grupo do WhatsApp
-            </a>
+            <p className="text-2xs text-slate mb-2">Prefere por e-mail?</p>
+            <NewsletterForm
+              source="blog_sticky"
+              compact
+              onSuccess={onSubscribed}
+            />
           </div>
         )}
       </div>

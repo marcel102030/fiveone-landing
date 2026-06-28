@@ -8,6 +8,7 @@ import {
 } from "../services/blog";
 import PostCard from "../components/blog/PostCard";
 import NewsletterForm from "../components/blog/NewsletterForm";
+import ReadingClubCTA from "../components/blog/ReadingClubCTA";
 import paraLerDesktop from "../assets/images/ParaLer1920.png";
 import paraLerMobile  from "../assets/images/ParaLer800.png";
 
@@ -93,8 +94,13 @@ const BlogList = () => {
         <p className="mt-3 text-sm sm:text-base text-slate max-w-xl mx-auto leading-relaxed">
           Toda semana uma nova leitura sobre fé, teologia e ministério para te ajudar a crescer no seu chamado.
         </p>
-        <div className="mt-6 max-w-md mx-auto">
-          <p className="text-xs text-slate mb-2">Receba as próximas leituras no e-mail</p>
+
+        {/* Clube de Leitura no WhatsApp — opção principal */}
+        <ReadingClubCTA className="mt-7" />
+
+        {/* E-mail — opção secundária */}
+        <div className="mt-5 max-w-md mx-auto">
+          <p className="text-xs text-slate mb-2">Prefere por e-mail? Receba as próximas leituras</p>
           <NewsletterForm source="blog_list" compact />
         </div>
       </div>
@@ -144,6 +150,13 @@ const BlogList = () => {
               )}
             </>
           )}
+        </div>
+      </section>
+
+      {/* ─────────── Clube de Leitura — fim da página ─── */}
+      <section className="pb-24">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8">
+          <ReadingClubCTA />
         </div>
       </section>
     </div>
