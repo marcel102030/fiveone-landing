@@ -84,10 +84,33 @@ const BlogList = () => {
         </picture>
         {/* Gradiente sutil só na base — transição para o navy */}
         <div className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-navy to-transparent pointer-events-none" />
+
+        {/* Indicador "role para ler" — convida a descer até as leituras */}
+        <button
+          onClick={() => document.getElementById("leituras")?.scrollIntoView({ behavior: "smooth", block: "start" })}
+          aria-label="Rolar para as leituras"
+          className="absolute bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-1.5 text-mint/90 hover:text-mint transition-colors"
+        >
+          <span
+            className="text-2xs font-semibold uppercase tracking-[0.2em]"
+            style={{ textShadow: "0 1px 6px rgba(0,0,0,0.7)" }}
+          >
+            Role para ler
+          </span>
+          <span
+            className="w-9 h-9 rounded-full border border-mint/40 bg-navy/50 backdrop-blur-sm flex items-center justify-center"
+            style={{ animation: "paraler-bounce 1.8s ease-in-out infinite" }}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+              <polyline points="6 9 12 15 18 9" />
+            </svg>
+          </span>
+        </button>
+        <style>{`@keyframes paraler-bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(6px)}}`}</style>
       </section>
 
       {/* Título + subtítulo + newsletter — abaixo da imagem */}
-      <div className="max-w-3xl mx-auto px-6 py-8 text-center">
+      <div id="leituras" className="max-w-3xl mx-auto px-6 py-8 text-center scroll-mt-20">
         <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight leading-tight">
           Leituras para <span className="text-mint">crescer</span> na fé
         </h1>
