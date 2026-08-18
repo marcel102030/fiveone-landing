@@ -23,10 +23,10 @@ const CORS = {
 // chega, o e-mail de boas-vindas avisa "vaga garantida, abre em <data>".
 // Manter em sincronia com features/plataforma/config/courseLaunch.ts.
 const PRESALE_LAUNCH: Record<string, string> = {
-  APOLOGETICA: '2026-07-06T09:00:00-03:00',
+  APOLOGETICA: '2026-11-20T09:00:00-03:00',
 };
 
-/** Retorna o rótulo da data (ex.: "6 de julho") se o curso ainda não abriu; senão null. */
+/** Retorna o rótulo da data (ex.: "20 de novembro") se o curso ainda não abriu; senão null. */
 function presaleLaunchLabel(courseId: string | null): string | null {
   if (!courseId) return null;
   const iso = PRESALE_LAUNCH[courseId.toUpperCase()];

@@ -106,6 +106,37 @@ const FOR_WHOM = [
   },
 ];
 
+// ── Seção "O Problema" — dores que o leitor reconhece (estilo Kosmos) ────────
+const PROBLEMS = [
+  "Alguém questiona a sua fé e você trava — sem saber o que responder.",
+  "Você crê, mas no fundo carrega dúvidas que nunca conseguiu resolver.",
+  "Um filho, amigo ou colega faz uma pergunta difícil e você não sabe explicar.",
+  "Você vê ateus e céticos “vencendo” debates e sente a fé cristã parecer frágil.",
+  "Você quer responder — mas com inteligência e respeito, não só “porque a Bíblia diz”.",
+];
+
+// ── Seção "Como funciona" — o método em 3 passos ─────────────────────────────
+const METHOD_STEPS = [
+  {
+    n: "01",
+    title: "Fundamento",
+    description:
+      "Entenda o que é (e o que não é) apologética e a base bíblica para defender a fé — começando por 1 Pedro 3.15.",
+  },
+  {
+    n: "02",
+    title: "Evidências & Respostas",
+    description:
+      "Aprenda os argumentos da existência de Deus, a confiabilidade da Bíblia e como responder às grandes objeções.",
+  },
+  {
+    n: "03",
+    title: "Prática",
+    description:
+      "Aplique tudo em conversas reais — com céticos, familiares e na sua própria caminhada — com clareza e respeito.",
+  },
+];
+
 const INCLUDED = [
   "20 aulas em vídeo (~8h20 de conteúdo)",
   "4 módulos organizados do básico ao avançado",
@@ -517,6 +548,77 @@ const CursoApologetica = () => {
         </div>
       </section>
 
+      {/* ──────────────────────────────────── O Problema ─── */}
+      <section className="py-16 lg:py-20">
+        <div className="max-w-4xl mx-auto px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center mb-10">
+            <span className="inline-block px-3 py-1 rounded-full bg-golden/10 border border-golden/30 text-golden text-xs font-medium uppercase tracking-wider mb-4">
+              Reconhece isso?
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight">
+              Você crê. Mas e quando <span className="text-mint">questionam</span> a sua fé?
+            </h2>
+          </div>
+
+          <div className="max-w-3xl mx-auto space-y-3">
+            {PROBLEMS.map((p) => (
+              <div
+                key={p}
+                className="flex items-start gap-3 bg-navy-light/50 border border-slate/10 rounded-xl px-5 py-4"
+              >
+                <span className="shrink-0 mt-0.5 text-golden">
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                    <circle cx="12" cy="12" r="10" />
+                    <line x1="12" y1="8" x2="12" y2="12" />
+                    <line x1="12" y1="16" x2="12.01" y2="16" />
+                  </svg>
+                </span>
+                <span className="text-sm sm:text-base text-slate-light leading-relaxed">{p}</span>
+              </div>
+            ))}
+          </div>
+
+          <p className="max-w-2xl mx-auto text-center mt-8 text-base sm:text-lg text-slate leading-relaxed">
+            Se você se identificou, o problema não é falta de fé — é falta de{" "}
+            <strong className="text-slate-light">fundamento</strong>. E é exatamente
+            isso que a apologética te dá.
+          </p>
+        </div>
+      </section>
+
+      {/* ──────────────────────────────────── Como funciona ─── */}
+      <section className="py-16 lg:py-20 bg-navy-light/30">
+        <div className="max-w-5xl mx-auto px-6 lg:px-8">
+          <div className="max-w-2xl mx-auto text-center mb-10 lg:mb-12">
+            <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
+              O método
+            </span>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight">
+              De “eu creio” para “eu sei <span className="text-mint">defender</span>”
+            </h2>
+            <p className="mt-3 text-sm sm:text-base text-slate">
+              Um caminho do básico ao avançado, em 3 passos.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-5">
+            {METHOD_STEPS.map((s) => (
+              <div
+                key={s.n}
+                className="relative bg-navy-light/60 border border-slate/10 rounded-2xl p-6 hover:border-mint/30 transition-colors"
+              >
+                <span className="text-4xl font-extrabold text-mint/30 tabular-nums leading-none">
+                  {s.n}
+                </span>
+                <h3 className="mt-3 text-lg font-bold text-slate-white">{s.title}</h3>
+                <p className="mt-2 text-sm text-slate leading-relaxed">{s.description}</p>
+              </div>
+            ))}
+          </div>
+          <BuyCTA label="Quero seguir esse caminho" />
+        </div>
+      </section>
+
       {/* ──────────────────────────────────── Vídeo ─── */}
       <section className="relative py-10 lg:py-14">
         <div className="max-w-4xl mx-auto px-6 lg:px-8">
@@ -538,36 +640,6 @@ const CursoApologetica = () => {
             />
           </div>
           <BuyCTA label="Quero garantir minha vaga" />
-        </div>
-      </section>
-
-      {/* ──────────────────────────────────── Sobre o curso ─── */}
-      <section className="py-16 lg:py-20 bg-navy-light/30">
-        <div className="max-w-4xl mx-auto px-6 lg:px-8">
-          <span className="inline-block px-3 py-1 rounded-full bg-mint/10 border border-mint/30 text-mint text-xs font-medium uppercase tracking-wider mb-4">
-            Sobre o curso
-          </span>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight mb-6">
-            Por que estudar apologética?
-          </h2>
-          <div className="space-y-5 text-base sm:text-lg text-slate leading-relaxed">
-            <p>
-              Em um mundo cada vez mais cético, defender a fé deixou de ser uma
-              opção para se tornar uma necessidade. Pessoas — talvez você mesmo
-              — têm dúvidas sinceras sobre Deus, sobre a Bíblia, sobre Jesus.
-            </p>
-            <p>
-              <strong className="text-slate-light">Apologética</strong> é o
-              estudo da defesa racional e bíblica da fé cristã. É a disciplina
-              que prepara você para responder com clareza, profundidade e
-              respeito a perguntas que antes pareciam difíceis demais.
-            </p>
-            <p>
-              Neste curso, você vai construir uma fé que <em>resiste</em>: que
-              sabe por que crê, sabe explicar e sabe dialogar — tanto com
-              céticos quanto com irmãos em dúvida.
-            </p>
-          </div>
         </div>
       </section>
 

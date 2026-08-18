@@ -9,7 +9,7 @@ export type WelcomeEmailParams = {
   password: string;
   course?: string | null;
   campaign?: string; // utm_campaign (ex.: 'student_created', 'hotmart_purchase')
-  // Pré-venda: quando preenchido (ex.: "6 de julho"), o e-mail diz que a vaga
+  // Pré-venda: quando preenchido (ex.: "20 de novembro"), o e-mail diz que a vaga
   // está garantida e o acesso às aulas abre nessa data, em vez de "comece agora".
   launchLabel?: string | null;
 };

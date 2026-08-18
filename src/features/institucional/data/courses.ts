@@ -7,7 +7,7 @@ export const APOLOGETICA_LAUNCHED = false;
 // acesso libera no lançamento (APOLOGETICA_LAUNCH_DATE). Quando lançar de fato,
 // deixe APOLOGETICA_LAUNCHED = true (acesso imediato) — o presale deixa de moldar.
 export const APOLOGETICA_PRESALE = true;
-export const APOLOGETICA_LAUNCH_DATE = new Date("2026-07-06T09:00:00-03:00");
+export const APOLOGETICA_LAUNCH_DATE = new Date("2026-11-20T09:00:00-03:00");
 
 // Fonte única de dados dos cursos.
 // Importada pela Home (CourseShowcase) e pela página /cursos.

@@ -41,7 +41,7 @@ const LINKS: LinkItem[] = [
     Icon: FaGraduationCap,
     iconClass: "text-mint",
     label: "Defenda a sua Fé",
-    sublabel: "Lançamento 6 de julho · R$ 59,90",
+    sublabel: "Lançamento 20 de novembro · R$ 59,90",
     to: "/cursos/apologetica",
   },
   {

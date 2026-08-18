@@ -6,7 +6,7 @@
 // (APOLOGETICA_LAUNCH_DATE em features/institucional/data/courses.ts).
 
 export const COURSE_LAUNCH_DATES: Record<string, Date> = {
-  APOLOGETICA: new Date('2026-07-06T09:00:00-03:00'),
+  APOLOGETICA: new Date('2026-11-20T09:00:00-03:00'),
 };
 
 // Acesso antecipado: e-mails que furam a trava de pré-venda (veem o conteúdo
