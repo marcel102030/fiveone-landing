@@ -29,6 +29,7 @@ interface QuizStoreBody {
   deviceType?: 'mobile' | 'tablet' | 'desktop';
   answers?: QuizAnswer[];               // respostas individuais (até 50 itens)
   sessionId?: string;                   // ID da quiz_session para marcar como concluída
+  instrumentVersion?: number;           // versão do instrumento (afirmações) usada
 }
 
 // ── Limites de validação (I9) ────────────────────────────────────────────────
@@ -210,6 +211,7 @@ export const onRequestPost = async (ctx: any) => {
       user_agent,
       ip_hash,
       result_token,
+      instrument_version: body.instrumentVersion ?? null,
     };
 
     const { data, error } = await withRetry(() =>

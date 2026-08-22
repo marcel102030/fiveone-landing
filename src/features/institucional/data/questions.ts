@@ -133,7 +133,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 19,
       category: CategoryEnum.APOSTOLO,
-      text: "Me sinto chamado a capacitar e enviar outras pessoas, ajudando-as a alcançar seu próprio propósito e missão.",
+      text: "Sinto-me chamado a enviar e comissionar pessoas para iniciar novas frentes e expandir a obra.",
     },
     {
       id: 20,
@@ -165,7 +165,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 25,
       category: CategoryEnum.PROFETA,
-      text: "Sinto necessidade de chamar as pessoas ao arrependimento ou a um recomeço mais autêntico em sua caminhada de fé.",
+      text: "Sinto o desejo de chamar as pessoas a uma caminhada de fé mais autêntica e sincera.",
     },
     {
       id: 26,
@@ -180,7 +180,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 28,
       category: CategoryEnum.PROFETA,
-      text: "Sinto que meu papel é ser uma voz que confronta e chama à reflexão, mesmo quando isso me torna impopular.",
+      text: "Sinto que meu papel é falar a verdade com coragem e amor, chamando as pessoas à reflexão.",
     },
     {
       id: 29,
@@ -190,7 +190,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 30,
       category: CategoryEnum.PROFETA,
-      text: "Tenho momentos de busca intensa por experiências sobrenaturais, como ouvir Deus de forma clara ou ter visões espirituais.",
+      text: "Busco ouvir a direção de Deus com clareza para discernir caminhos em situações importantes.",
     },
     {
       id: 31,
@@ -205,7 +205,7 @@ export const statements: Record<CategoryEnum, Statement[]> = {
     {
       id: 33,
       category: CategoryEnum.PROFETA,
-      text: "Já senti um peso emocional profundo por perceber que Deus estava entristecido com atitudes de um grupo ou pessoa.",
+      text: "Percebo com sensibilidade quando algo está espiritualmente fora do lugar em um grupo ou pessoa.",
     },
     {
       id: 34,

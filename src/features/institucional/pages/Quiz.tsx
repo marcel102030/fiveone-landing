@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 // useBlocker removido — incompatível com BrowserRouter (requer Data Router)
 import InputMask from "react-input-mask";
-import { CategoryEnum, ChoiceCategory } from "../types/quiz";
+import { CategoryEnum, ChoiceCategory, type Statement } from "../types/quiz";
 // @ts-ignore
 // @ts-ignore
 
@@ -157,6 +157,7 @@ async function saveQuizResponseToServer(payload: {
   source?: string;
   answers?: QuizAnswerPayload[];
   sessionId?: string;
+  instrumentVersion?: number;
 }): Promise<{ ok: boolean; result_token?: string }> {
   try {
     const res = await fetch('/api/quiz-store', {
@@ -406,6 +407,9 @@ const Quiz = () => {
   const quizStartedAtRef = useRef<number>(0);
   const questionStartedAtRef = useRef<number>(0);
   const answersRef = useRef<QuizAnswerPayload[]>([]);
+  // Instrumento vindo do banco (I8) — com fallback pro hardcoded (data/questions.ts)
+  const remoteStatementsRef = useRef<Record<CategoryEnum, Statement[]> | null>(null);
+  const instrumentVersionRef = useRef<number>(2);
 
   // New UX state
   const [openAccordion, setOpenAccordion] = useState<number | null>(0);
@@ -501,6 +505,41 @@ const Quiz = () => {
     setSavedProgress(loadProgress());
   }, []);
 
+  // Carrega as afirmações do banco (I8); se falhar, usa o fallback hardcoded
+  useEffect(() => {
+    let aborted = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/quiz-statements");
+        if (!res.ok) return;
+        const data = await res.json();
+        if (aborted || !data?.ok || !Array.isArray(data.statements)) return;
+        const grouped: Record<CategoryEnum, Statement[]> = {
+          [CategoryEnum.APOSTOLO]: [],
+          [CategoryEnum.PROFETA]: [],
+          [CategoryEnum.EVANGELISTA]: [],
+          [CategoryEnum.PASTOR]: [],
+          [CategoryEnum.MESTRE]: [],
+        };
+        for (const s of data.statements as Statement[]) {
+          const c = s.category as CategoryEnum;
+          if (grouped[c]) grouped[c].push({ id: s.id, category: c, text: s.text });
+        }
+        // Só usa o banco se todos os dons tiverem afirmações suficientes (>= 20)
+        const enough = Object.values(CategoryEnum).every((c) => grouped[c].length >= 20);
+        if (enough) {
+          remoteStatementsRef.current = grouped;
+          if (typeof data.instrumentVersion === "number") instrumentVersionRef.current = data.instrumentVersion;
+        }
+      } catch {
+        /* mantém fallback hardcoded */
+      }
+    })();
+    return () => {
+      aborted = true;
+    };
+  }, []);
+
   // Count-up animation for result scores
   useEffect(() => {
     if (!userInfo.submitted) return;
@@ -529,7 +568,8 @@ const Quiz = () => {
 
   const handleStartQuiz = () => {
     // Constrói o instrumento contrabalanceado (50 comparações, posição randomizada)
-    const built = buildCounterbalancedComparisons();
+    // Fonte: banco (I8) se disponível; senão, fallback hardcoded.
+    const built = buildCounterbalancedComparisons(remoteStatementsRef.current ?? undefined);
     setComparisons(built);
     setCurrentPair(built[0] ?? null);
     setCurrentQuestion(0);
@@ -1239,6 +1279,7 @@ const Quiz = () => {
                           source,
                           answers: answersRef.current,
                           sessionId: sessionId ?? undefined,
+                          instrumentVersion: instrumentVersionRef.current,
                         });
 
                         if (result.ok && result.result_token) {
