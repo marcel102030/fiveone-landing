@@ -182,6 +182,22 @@ const QuizResult = () => {
     .sort((a, b) => b.score - a.score);
 
   const topCat = (result.topDom as CategoryEnum) ?? sortedScores[0]?.cat;
+  const secondCat = sortedScores.find((s) => s.cat !== topCat)?.cat;
+  const topPct = Math.round(sortedScores.find((s) => s.cat === topCat)?.score ?? sortedScores[0]?.score ?? 0);
+  const secondPct = Math.round(sortedScores.find((s) => s.cat === secondCat)?.score ?? 0);
+  const gap = topPct - secondPct;
+  const isTieTop = Boolean(secondCat && gap === 0);
+  const profileNote = !topCat
+    ? ""
+    : isTieTop && secondCat
+      ? `Empate técnico entre ${DOM_NAMES[topCat]} e ${DOM_NAMES[secondCat]} — dois dons em forte expressão.`
+      : gap >= 8
+        ? `${DOM_NAMES[topCat]} aparece como o dom predominante.`
+        : gap >= 3 && secondCat
+          ? `Dom principal: ${DOM_NAMES[topCat]}, com forte presença de ${DOM_NAMES[secondCat]}.`
+          : secondCat
+            ? `Perfil equilibrado: ${DOM_NAMES[topCat]} e ${DOM_NAMES[secondCat]} caminham juntos.`
+            : `Dom principal: ${DOM_NAMES[topCat]}.`;
   const radarScores: Record<CategoryEnum, number> = {} as Record<CategoryEnum, number>;
   sortedScores.forEach(({ cat, score }) => { radarScores[cat] = Math.round(score); });
 
@@ -208,10 +224,26 @@ const QuizResult = () => {
             <div className="hero-icon-wrap">
               <img src={categoryIcons[topCat]} alt={DOM_NAMES[topCat]} className="hero-icon" />
             </div>
+            <div style={{ fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#64ffda", fontWeight: 700, marginBottom: "0.2rem" }}>
+              {isTieTop ? "Dons principais (empate)" : "Dom principal"}
+            </div>
+            <div className="hero-name">
+              {isTieTop && secondCat ? `${DOM_NAMES[topCat]} & ${DOM_NAMES[secondCat]}` : DOM_NAMES[topCat]}
+            </div>
             <div className="hero-pct">{animatedScores[topCat] ?? 0}%</div>
-            <div className="hero-name">{DOM_NAMES[topCat]}</div>
             <p className="hero-phrase">{DOM_PHRASES[topCat]}</p>
+            {!isTieTop && secondCat && (
+              <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem", color: "#9ab0bc" }}>
+                Dom secundário: <strong style={{ color: "#cfd8dc" }}>{DOM_NAMES[secondCat]}</strong> ({animatedScores[secondCat] ?? 0}%)
+              </p>
+            )}
           </div>
+        )}
+
+        {profileNote && (
+          <p style={{ textAlign: "center", maxWidth: 620, margin: "1rem auto 0", color: "#cfd8dc", fontSize: "1rem", lineHeight: 1.6 }}>
+            {profileNote}
+          </p>
         )}
 
         {/* Radar */}
@@ -238,6 +270,10 @@ const QuizResult = () => {
             </div>
           ))}
         </div>
+
+        <p style={{ textAlign: "center", maxWidth: 560, margin: "1.25rem auto 0", color: "#7f98a6", fontSize: "0.82rem", lineHeight: 1.55 }}>
+          Os percentuais são <strong>relativos entre os 5 dons</strong> (somam ~100%). O que mais importa é o <strong>ranking</strong> — a ordem dos dons —, não o número isolado.
+        </p>
       </div>
 
       {/* CTA */}

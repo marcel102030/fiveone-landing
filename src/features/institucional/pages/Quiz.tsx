@@ -894,11 +894,12 @@ const Quiz = () => {
 
   // ===== FORM SCREEN =====
   if (showResults && !userInfo.submitted) {
-    // Determine leading dom for anticipation phrase
-    const leadingEntry = Object.entries(categoryScores).sort((a, b) => b[1] - a[1])[0];
-    const leadingDom = leadingEntry ? (leadingEntry[0] as CategoryEnum) : null;
+    // Dois dons de maior expressão para a prévia (linguagem calibrada, sem exagero)
+    const previewSorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+    const leadingDom = previewSorted[0] ? (previewSorted[0][0] as CategoryEnum) : null;
+    const secondDom = previewSorted[1] ? (previewSorted[1][0] as CategoryEnum) : null;
     const anticipationPhrase = leadingDom
-      ? `Suas respostas indicam forte inclinação para o dom de ${DOM_NAMES[leadingDom]}. Preencha abaixo para ver seu resultado completo.`
+      ? `Suas respostas apontam ${DOM_NAMES[leadingDom]} como seu dom principal${secondDom ? `, seguido de ${DOM_NAMES[secondDom]}` : ''}. Preencha abaixo para ver o resultado completo — com ranking, gráfico e PDF.`
       : 'Preencha abaixo para ver seu resultado completo.';
 
     return (
@@ -1183,6 +1184,23 @@ const Quiz = () => {
 
     const topEntry = sortedScores[0];
     const topCat = topEntry?.categoryEnum;
+    const secondEntry = sortedScores[1];
+    const secondCat = secondEntry?.categoryEnum;
+    const topPct = topEntry ? Math.round(topEntry.score) : 0;
+    const secondPct = secondEntry ? Math.round(secondEntry.score) : 0;
+    const gap = topPct - secondPct;
+    const isTieTop = Boolean(topEntry && secondEntry && gap === 0);
+    const profileNote = !topCat
+      ? ''
+      : isTieTop && secondCat
+        ? `Empate técnico entre ${DOM_NAMES[topCat]} e ${DOM_NAMES[secondCat]} — dois dons em forte expressão.`
+        : gap >= 8
+          ? `${DOM_NAMES[topCat]} aparece como o seu dom predominante.`
+          : gap >= 3 && secondCat
+            ? `Seu dom principal é ${DOM_NAMES[topCat]}, com forte presença de ${DOM_NAMES[secondCat]}.`
+            : secondCat
+              ? `Perfil equilibrado: ${DOM_NAMES[topCat]} e ${DOM_NAMES[secondCat]} caminham juntos.`
+              : `Seu dom principal é ${DOM_NAMES[topCat]}.`;
 
     // Scores as percent for radar
     const radarScores: Record<CategoryEnum, number> = {} as Record<CategoryEnum, number>;
@@ -1230,10 +1248,26 @@ const Quiz = () => {
                 <div className="hero-icon-wrap">
                   <img src={categoryIcons[topCat]} alt={DOM_NAMES[topCat]} className="hero-icon" />
                 </div>
+                <div style={{ fontSize: "0.72rem", letterSpacing: "0.12em", textTransform: "uppercase", color: "#64ffda", fontWeight: 700, marginBottom: "0.2rem" }}>
+                  {isTieTop ? "Dons principais (empate)" : "Seu dom principal"}
+                </div>
+                <div className="hero-name">
+                  {isTieTop && secondCat ? `${DOM_NAMES[topCat]} & ${DOM_NAMES[secondCat]}` : DOM_NAMES[topCat]}
+                </div>
                 <div className="hero-pct">{animatedScores[topCat] ?? 0}%</div>
-                <div className="hero-name">{DOM_NAMES[topCat]}</div>
                 <p className="hero-phrase">{DOM_PHRASES[topCat]}</p>
+                {!isTieTop && secondCat && (
+                  <p style={{ margin: "0.5rem 0 0", fontSize: "0.9rem", color: "#9ab0bc" }}>
+                    Dom secundário: <strong style={{ color: "#cfd8dc" }}>{DOM_NAMES[secondCat]}</strong> ({animatedScores[secondCat] ?? 0}%)
+                  </p>
+                )}
               </div>
+            )}
+
+            {profileNote && (
+              <p style={{ textAlign: "center", maxWidth: 620, margin: "1rem auto 0", color: "#cfd8dc", fontSize: "1rem", lineHeight: 1.6 }}>
+                {profileNote}
+              </p>
             )}
 
             {/* Radar chart + distribution bars */}
@@ -1262,6 +1296,10 @@ const Quiz = () => {
                 </div>
               ))}
             </div>
+
+            <p style={{ textAlign: "center", maxWidth: 560, margin: "1.25rem auto 0", color: "#7f98a6", fontSize: "0.82rem", lineHeight: 1.55 }}>
+              Os percentuais são <strong>relativos entre os 5 dons</strong> (somam ~100%). O que mais importa é o seu <strong>ranking</strong> — a ordem dos dons —, não o número isolado.
+            </p>
 
             <div className="down-arrow"></div>
           </div>

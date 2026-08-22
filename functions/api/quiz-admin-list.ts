@@ -123,6 +123,7 @@ export const onRequestGet = async (ctx: any) => {
           thisMonth: thisMonth ?? 0,
           avgSeconds,
           totalAll: aggData?.length ?? 0,
+          uniqueLeads: Object.keys(emailCounts).length,
           churches: (churches ?? []).map((c: any) => ({ id: c.id, name: c.name, city: c.city })),
           sourceBreakdown,
           recentDates,

@@ -39,6 +39,7 @@ interface Summary {
   thisMonth: number;
   avgSeconds: number | null;
   totalAll: number;
+  uniqueLeads: number;
   churches: ChurchItem[];
   sourceBreakdown: Record<string, number>;
   recentDates: string[];
@@ -375,6 +376,7 @@ export default function RelatorioQuiz() {
       {summary && (
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(180px,1fr))', gap: 16, marginBottom: 32 }}>
           <SummaryCard label="Total de respostas" value={summary.totalAll} icon="&#128203;" accent />
+          <SummaryCard label="Leads únicos"       value={summary.uniqueLeads ?? summary.totalAll} sub="e-mails distintos" icon="&#128100;" />
           <SummaryCard label="Este mês"           value={summary.thisMonth} icon="&#128197;" />
           <SummaryCard
             label="Dom mais comum"
