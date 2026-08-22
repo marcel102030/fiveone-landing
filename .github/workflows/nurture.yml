@@ -1,0 +1,33 @@
+name: quiz-nurture
+
+# Régua de nutrição pós-teste "Descubra seu Dom".
+# Chama o endpoint /api/quiz-nurture-run uma vez por dia; ele envia os e-mails
+# devidos (D+1, D+3, D+7) e avança o estágio de cada lead.
+#
+# Pré-requisitos:
+#   1. Migrations aplicadas (supabase db push) — colunas de nurture.
+#   2. Env var NURTURE_CRON_SECRET no Cloudflare Pages (mesmo valor do secret abaixo).
+#   3. Secret NURTURE_CRON_SECRET no GitHub:
+#      Settings → Secrets and variables → Actions → New repository secret.
+
+on:
+  schedule:
+    - cron: "0 12 * * *" # todo dia às 12:00 UTC (~09:00 BRT)
+  workflow_dispatch: {} # permite disparo manual pela aba Actions
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Disparar régua de nutrição
+        run: |
+          if [ -z "${NURTURE_CRON_SECRET}" ]; then
+            echo "::error::Secret NURTURE_CRON_SECRET não configurado no GitHub."
+            exit 1
+          fi
+          echo "Chamando /api/quiz-nurture-run..."
+          RESPONSE=$(curl -fsS -X POST https://fiveonemovement.com/api/quiz-nurture-run \
+            -H "X-Nurture-Secret: ${NURTURE_CRON_SECRET}")
+          echo "Resposta: ${RESPONSE}"
+        env:
+          NURTURE_CRON_SECRET: ${{ secrets.NURTURE_CRON_SECRET }}
