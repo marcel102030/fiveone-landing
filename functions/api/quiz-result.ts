@@ -20,7 +20,7 @@ async function verifyToken(token: string, secret?: string, expectedSlug?: string
     if (sigB64 !== s64) return { ok: false, error: 'assinatura inválida' };
     return { ok: true, payload };
   } catch (e) {
-    return { ok: false, error: String(e) };
+    return { ok: false, error: 'token inválido' };
   }
 }
 
@@ -45,7 +45,7 @@ export const onRequestGet = async (ctx: any) => {
     let churchId = churchIdParam || undefined;
     if (!churchId && churchSlug) {
       const { data, error } = await admin.from('church').select('id').eq('slug', churchSlug).maybeSingle();
-      if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      if (error) { console.error('quiz-result church error:', error.message); return new Response(JSON.stringify({ error: 'Erro ao processar.' }), { status: 500 }); }
       if (!data) return new Response(JSON.stringify({ error: 'igreja não encontrada (slug)' }), { status: 404 });
       churchId = data.id;
     }
@@ -57,7 +57,7 @@ export const onRequestGet = async (ctx: any) => {
     if (token) {
       const allowed = await verifyToken(token, ctx.env.REPORT_SHARE_SECRET as string | undefined, churchSlug);
       if (!allowed.ok) {
-        return new Response(JSON.stringify({ error: allowed.error || 'token inválido' }), { status: 403, headers: { 'content-type': 'application/json' } });
+        return new Response(JSON.stringify({ error: 'token inválido' }), { status: 403, headers: { 'content-type': 'application/json' } });
       }
     }
 
@@ -67,7 +67,7 @@ export const onRequestGet = async (ctx: any) => {
       .eq('id', id)
       .maybeSingle();
 
-    if (error) return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    if (error) { console.error('quiz-result query error:', error.message); return new Response(JSON.stringify({ error: 'Erro ao carregar resultado.' }), { status: 500 }); }
     if (!data) return new Response(JSON.stringify({ error: 'resposta não encontrada' }), { status: 404 });
     if (data.church_id !== churchId) {
       return new Response(JSON.stringify({ error: 'resposta não pertence à igreja informada' }), { status: 403 });
@@ -88,7 +88,8 @@ export const onRequestGet = async (ctx: any) => {
       headers: { 'content-type': 'application/json' },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    console.error('quiz-result error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), { status: 500 });
   }
 };
 

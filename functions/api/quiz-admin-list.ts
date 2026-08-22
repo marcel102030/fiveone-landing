@@ -1,9 +1,18 @@
-import { createClient } from '@supabase/supabase-js';
+import { assertAdmin, ADMIN_AUTH_CORS as CORS, type AdminAuthEnv } from './_adminAuth';
 
-// GET /api/quiz-admin-list
+// Preflight CORS (o front admin envia o header Authorization)
+export const onRequestOptions = async () =>
+  new Response(null, { status: 204, headers: CORS });
+
+// GET /api/quiz-admin-list  — SOMENTE administradores autenticados
 // Parâmetros: page, limit, search, topDom, source, churchId, dateFrom, dateTo, sort, order
 export const onRequestGet = async (ctx: any) => {
   try {
+    // Exige sessão admin ANTES de tocar em qualquer PII de leads.
+    const authResult = await assertAdmin(ctx.request, ctx.env as AdminAuthEnv);
+    if (!authResult.ok) return authResult.response;
+    const admin = authResult.admin;
+
     const url = new URL(ctx.request.url);
     const p = url.searchParams;
 
@@ -20,12 +29,6 @@ export const onRequestGet = async (ctx: any) => {
 
     const allowedSort = ['created_at', 'person_name', 'top_dom', 'completion_seconds'];
     const sortCol = allowedSort.includes(sort) ? sort : 'created_at';
-
-    const admin = createClient(
-      ctx.env.SUPABASE_URL as string,
-      ctx.env.SUPABASE_SERVICE_ROLE_KEY as string,
-      { auth: { persistSession: false } }
-    );
 
     let query = admin
       .from('quiz_response')
@@ -66,8 +69,9 @@ export const onRequestGet = async (ctx: any) => {
     const { data, error, count } = await query;
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
-        status: 500, headers: { 'content-type': 'application/json' }
+      console.error('quiz-admin-list query error:', error.message);
+      return new Response(JSON.stringify({ error: 'Erro ao carregar dados.' }), {
+        status: 500, headers: { 'content-type': 'application/json', ...CORS }
       });
     }
 
@@ -125,11 +129,12 @@ export const onRequestGet = async (ctx: any) => {
           duplicateEmails,
         },
       }),
-      { headers: { 'content-type': 'application/json' } }
+      { headers: { 'content-type': 'application/json', ...CORS } }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
-      status: 500, headers: { 'content-type': 'application/json' }
+    console.error('quiz-admin-list error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), {
+      status: 500, headers: { 'content-type': 'application/json', ...CORS }
     });
   }
 };

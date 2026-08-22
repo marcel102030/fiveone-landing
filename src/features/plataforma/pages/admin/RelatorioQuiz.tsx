@@ -2,6 +2,13 @@ import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import "./AdministracaoFiveOne.css";
 import "./AdminChurches.css";
+import { supabase } from "../../../../shared/lib/supabaseClient";
+
+// Envia o JWT admin para o endpoint protegido /api/quiz-admin-list
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  return session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {};
+}
 
 // ─── Tipos ────────────────────────────────────────────────────────────────────
 
@@ -266,7 +273,7 @@ export default function RelatorioQuiz() {
   async function load(p: number) {
     setLoading(true);
     try {
-      const res  = await fetch(buildUrl(p));
+      const res  = await fetch(buildUrl(p), { headers: await authHeaders() });
       const data: ApiResult = await res.json();
       if (data.ok) {
         setRows(data.results);
@@ -305,7 +312,7 @@ export default function RelatorioQuiz() {
     if (churchId) params.set('churchId', churchId);
     if (dateFrom) params.set('dateFrom', dateFrom);
     if (dateTo)   params.set('dateTo',   dateTo);
-    const res  = await fetch(`/api/quiz-admin-list?${params}`);
+    const res  = await fetch(`/api/quiz-admin-list?${params}`, { headers: await authHeaders() });
     const data: ApiResult = await res.json();
     if (!data.ok) return;
     const headers = ['Nome','Email','Telefone','Dom Principal','Apostolo%','Profeta%','Evangelista%','Pastor%','Mestre%','Fonte','Igreja','Cidade','Dispositivo','Tempo(s)','Data','Token'];

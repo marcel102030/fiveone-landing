@@ -70,7 +70,10 @@ export const onRequestPost = async (ctx: any) => {
         .eq('slug', body.churchSlug)
         .maybeSingle();
 
-      if (findErr) return new Response(JSON.stringify({ error: findErr.message }), { status: 500 });
+      if (findErr) {
+        console.error('quiz-store church lookup error:', findErr.message);
+        return new Response(JSON.stringify({ error: 'Erro ao processar.' }), { status: 500 });
+      }
       if (!found) return new Response(JSON.stringify({ error: 'igreja não encontrada (slug)' }), { status: 404 });
       churchId = found.id;
     }
@@ -113,7 +116,8 @@ export const onRequestPost = async (ctx: any) => {
       .single();
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      console.error('quiz-store insert error:', error.message);
+      return new Response(JSON.stringify({ error: 'Erro ao salvar resposta.' }), { status: 500 });
     }
 
     const responseId = data.id as string;
@@ -161,6 +165,7 @@ export const onRequestPost = async (ctx: any) => {
       { headers: { 'content-type': 'application/json' } }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    console.error('quiz-store error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), { status: 500 });
   }
 };

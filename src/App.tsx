@@ -79,6 +79,7 @@ const MeuProgresso = lazy(() => import("./features/plataforma/pages/MeuProgresso
 const MeusCertificados = lazy(() => import("./features/plataforma/pages/MeusCertificados"));
 const CertificadoPublico = lazy(() => import("./features/plataforma/pages/CertificadoPublico"));
 const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
+const PoliticaPrivacidade = lazy(() => import("./features/institucional/pages/PoliticaPrivacidade"));
 const CursoApologetica = lazy(() => import("./features/institucional/pages/CursoApologetica"));
 const LpApologetica = lazy(() => import("./features/institucional/pages/LpApologetica"));
 const Links = lazy(() => import("./features/institucional/pages/Links"));
@@ -296,6 +297,7 @@ function AppContent() {
             <Route path="/copiar" element={<CopyLink />} />
             <Route path="/quem-somos" element={<About />} />
             <Route path="/descubra-seu-dom" element={<Quiz />} />
+            <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/teste-dons" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
             <Route path="/quiz" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
             <Route path="/cursos" element={<Cursos />} />

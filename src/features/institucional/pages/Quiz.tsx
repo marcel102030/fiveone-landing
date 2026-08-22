@@ -325,6 +325,8 @@ const Quiz = () => {
     email: false,
     phone: false,
   });
+  const [consent, setConsent] = useState(false);
+  const [consentError, setConsentError] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<ChoiceCategory | null>(null);
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
@@ -583,6 +585,8 @@ const Quiz = () => {
     setOpenAccordion(0);
     setRevealFull(false);
     setIsSubmitting(false);
+    setConsent(false);
+    setConsentError(false);
     setAnimatedScores({
       [CategoryEnum.APOSTOLO]: 0,
       [CategoryEnum.PROFETA]: 0,
@@ -962,6 +966,31 @@ const Quiz = () => {
               {formErrors.phone && <span className="error-msg">Digite um telefone válido</span>}
             </div>
 
+            <div className="consent-field" style={{ margin: "0.25rem 0 0.75rem" }}>
+              <label style={{ display: "flex", alignItems: "flex-start", gap: "0.6rem", cursor: "pointer", fontSize: "0.85rem", color: "#cfd8dc", lineHeight: 1.45, textAlign: "left" }}>
+                <input
+                  type="checkbox"
+                  checked={consent}
+                  onChange={(e) => {
+                    setConsent(e.target.checked);
+                    if (e.target.checked) setConsentError(false);
+                  }}
+                  style={{ marginTop: "0.2rem", width: 18, height: 18, flexShrink: 0, accentColor: "#64ffda", cursor: "pointer" }}
+                />
+                <span>
+                  Autorizo o uso dos meus dados para receber o resultado e comunicações do Five One, conforme a{" "}
+                  <a href="/politica-de-privacidade" target="_blank" rel="noopener noreferrer" style={{ color: "#64ffda", textDecoration: "underline" }}>
+                    Política de Privacidade
+                  </a>.
+                </span>
+              </label>
+              {consentError && (
+                <span className="error-msg" style={{ display: "block", marginTop: "0.35rem" }}>
+                  Você precisa aceitar para ver o resultado.
+                </span>
+              )}
+            </div>
+
             <div className="form-field-3">
               <button
                 disabled={isSubmitting}
@@ -973,8 +1002,10 @@ const Quiz = () => {
                     phone: userInfo.phone.replace(/\D/g, "").length !== 11,
                   };
                   setFormErrors(hasErrors);
+                  const consentMissing = !consent;
+                  setConsentError(consentMissing);
 
-                  if (!Object.values(hasErrors).some(Boolean)) {
+                  if (!Object.values(hasErrors).some(Boolean) && !consentMissing) {
                     setIsSubmitting(true);
                     setShowEmailInfo(true);
                     setUserInfo((prev) => ({ ...prev, submitted: true }));
@@ -1389,7 +1420,7 @@ const Quiz = () => {
                 <button
                   className="share-result-btn"
                   onClick={() => {
-                    const url = `${window.location.origin}${window.location.pathname}#/resultado/${resultToken}`;
+                    const url = `${window.location.origin}/resultado/${resultToken}`;
                     navigator.clipboard?.writeText(url).then(() => {
                       alert("Link copiado para a área de transferência!");
                     }).catch(() => {

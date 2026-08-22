@@ -27,7 +27,8 @@ export const onRequestGet = async (ctx: any) => {
       .maybeSingle();
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), {
+      console.error('quiz-result-by-token query error:', error.message);
+      return new Response(JSON.stringify({ error: 'Erro ao carregar resultado.' }), {
         status: 500,
         headers: { 'content-type': 'application/json' },
       });
@@ -55,7 +56,8 @@ export const onRequestGet = async (ctx: any) => {
       { headers: { 'content-type': 'application/json' } }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), {
+    console.error('quiz-result-by-token error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), {
       status: 500,
       headers: { 'content-type': 'application/json' },
     });

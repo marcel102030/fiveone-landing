@@ -59,7 +59,8 @@ export const onRequestPost = async (ctx: any) => {
       .single();
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      console.error('quiz-session db error:', error.message);
+      return new Response(JSON.stringify({ error: 'Erro ao salvar sessão.' }), { status: 500 });
     }
 
     return new Response(
@@ -67,7 +68,8 @@ export const onRequestPost = async (ctx: any) => {
       { headers: { 'content-type': 'application/json' } }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    console.error('quiz-session error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), { status: 500 });
   }
 };
 
@@ -101,7 +103,8 @@ export const onRequestPatch = async (ctx: any) => {
       .eq('id', body.sessionId);
 
     if (error) {
-      return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+      console.error('quiz-session db error:', error.message);
+      return new Response(JSON.stringify({ error: 'Erro ao salvar sessão.' }), { status: 500 });
     }
 
     return new Response(
@@ -109,6 +112,7 @@ export const onRequestPatch = async (ctx: any) => {
       { headers: { 'content-type': 'application/json' } }
     );
   } catch (e) {
-    return new Response(JSON.stringify({ error: String(e) }), { status: 500 });
+    console.error('quiz-session error:', e);
+    return new Response(JSON.stringify({ error: 'Erro interno.' }), { status: 500 });
   }
 };
