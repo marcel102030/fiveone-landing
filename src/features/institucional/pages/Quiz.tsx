@@ -1069,6 +1069,14 @@ const Quiz = () => {
     return (
       <section className="quiz-section">
         <div className="content-container">
+          {/* M7: micro-celebração ao concluir as 50 etapas */}
+          <div style={{ textAlign: "center", marginBottom: "0.5rem" }}>
+            <span
+              style={{ display: "inline-block", padding: "0.35rem 0.9rem", borderRadius: 999, background: "rgba(100,255,218,0.12)", border: "1px solid rgba(100,255,218,0.35)", color: "#64ffda", fontSize: "0.78rem", fontWeight: 700, letterSpacing: "0.04em" }}
+            >
+              🎉 Você concluiu o teste!
+            </span>
+          </div>
           <h2>Quase lá!</h2>
           <p className="form-anticipation">{anticipationPhrase}</p>
           <div className="start-form">
@@ -1700,17 +1708,31 @@ const Quiz = () => {
             </div>
           </div>
 
-          <h2 style={{ marginTop: '1.5rem' }}>
-            Etapa {currentQuestion + 1} de {TOTAL_QUESTIONS}
+          {/* M1: contador discreto (aria-live anuncia a etapa) + M5: percentual */}
+          <p
+            aria-live="polite"
+            style={{ marginTop: "1.25rem", marginBottom: "0.25rem", fontSize: "0.8rem", letterSpacing: "0.08em", textTransform: "uppercase", color: "#7f98a6", fontWeight: 600 }}
+          >
+            Etapa {currentQuestion + 1} de {comparisons.length || TOTAL_QUESTIONS} ·{" "}
+            {Math.round(((currentQuestion + 1) / (comparisons.length || TOTAL_QUESTIONS)) * 100)}%
+          </p>
+
+          {/* M1: a pergunta real ganha o destaque */}
+          <h2 style={{ marginTop: "0.25rem", fontSize: "1.4rem" }}>
+            Com qual afirmação você mais se identifica?
           </h2>
 
-          <p>Selecione a afirmação com a qual você mais se identifica.</p>
-
-          <div className={`statement-container ${transitioning ? "slide-out" : "slide-in"}`}>
+          <div
+            className={`statement-container ${transitioning ? "slide-out" : "slide-in"}`}
+            role="radiogroup"
+            aria-label="Escolha uma afirmação"
+          >
             <button
               className={`statement-button${selectedCategory === currentPair.statement1.category ? " selected" : ""}`}
               onClick={() => setSelectedCategory(currentPair.statement1.category)}
               aria-label={currentPair.statement1.text}
+              role="radio"
+              aria-checked={selectedCategory === currentPair.statement1.category}
               type="button"
             >
               {currentPair.statement1.text}
@@ -1718,10 +1740,21 @@ const Quiz = () => {
                 <span className="selected-icon" aria-label="Selecionado" style={{ marginLeft: 8 }}>✓</span>
               )}
             </button>
+
+            {/* M6: divisor claro entre as duas opções */}
+            <span
+              aria-hidden="true"
+              style={{ textAlign: "center", color: "#4a6572", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "0.12em" }}
+            >
+              ou
+            </span>
+
             <button
               className={`statement-button${selectedCategory === currentPair.statement2.category ? " selected" : ""}`}
               onClick={() => setSelectedCategory(currentPair.statement2.category)}
               aria-label={currentPair.statement2.text}
+              role="radio"
+              aria-checked={selectedCategory === currentPair.statement2.category}
               type="button"
             >
               {currentPair.statement2.text}
@@ -1737,6 +1770,7 @@ const Quiz = () => {
               onClick={() => setSelectedCategory("nenhuma")}
               className={`quiz-pill${selectedCategory === "nenhuma" ? " selected" : ""}`}
               type="button"
+              aria-pressed={selectedCategory === "nenhuma"}
             >
               Nenhuma das opções
             </button>
@@ -1744,6 +1778,7 @@ const Quiz = () => {
               onClick={() => setSelectedCategory("ambas")}
               className={`quiz-pill${selectedCategory === "ambas" ? " selected" : ""}`}
               type="button"
+              aria-pressed={selectedCategory === "ambas"}
             >
               Me identifico com as duas
             </button>
