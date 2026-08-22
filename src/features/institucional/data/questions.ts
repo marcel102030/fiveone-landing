@@ -623,3 +623,51 @@ export const getStatementsByCategory = (
 ): Statement[] => {
   return statements[category];
 };
+
+// ── Motor de pareamento v2: desenho contrabalanceado ─────────────────────────
+// Cada uma das 10 combinações de dons aparece `perPair` vezes (5 → 50 etapas),
+// consumindo cada afirmação exatamente uma vez. A posição (cima/baixo) é
+// randomizada por comparação e a ordem das 50 comparações é embaralhada.
+export type ComparisonPair = { statement1: Statement; statement2: Statement };
+
+function shuffle<T>(arr: T[]): T[] {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+export function buildCounterbalancedComparisons(
+  source: Record<CategoryEnum, Statement[]> = statements,
+  perPair = 5,
+): ComparisonPair[] {
+  const cats = Object.values(CategoryEnum) as CategoryEnum[];
+  const shuffled: Record<string, Statement[]> = {};
+  const ptr: Record<string, number> = {};
+  cats.forEach((c) => {
+    shuffled[c] = shuffle(source[c] ?? []);
+    ptr[c] = 0;
+  });
+
+  const out: ComparisonPair[] = [];
+  for (let i = 0; i < cats.length; i++) {
+    for (let j = i + 1; j < cats.length; j++) {
+      const A = cats[i];
+      const B = cats[j];
+      for (let k = 0; k < perPair; k++) {
+        const sA = shuffled[A][ptr[A]++];
+        const sB = shuffled[B][ptr[B]++];
+        if (!sA || !sB) continue; // dom sem afirmações suficientes: pula
+        // Randomiza posição (elimina viés de primazia)
+        out.push(
+          Math.random() < 0.5
+            ? { statement1: sA, statement2: sB }
+            : { statement1: sB, statement2: sA },
+        );
+      }
+    }
+  }
+  return shuffle(out);
+}

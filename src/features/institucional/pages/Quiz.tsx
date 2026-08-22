@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 // useBlocker removido — incompatível com BrowserRouter (requer Data Router)
 import InputMask from "react-input-mask";
-import { CategoryEnum, Statement, ChoiceCategory } from "../types/quiz";
+import { CategoryEnum, ChoiceCategory } from "../types/quiz";
 // @ts-ignore
 // @ts-ignore
 
@@ -22,7 +22,7 @@ import escolaFiveOne from "../../../assets/images/escola-fiveone.jpeg";
 import { generatePDF } from "../../../shared/utils/pdfGenerators/mainPdfGenerator";
 
 
-import { getRandomComparisonPair, categoryMetadata } from "../data/questions";
+import { buildCounterbalancedComparisons, categoryMetadata, type ComparisonPair } from "../data/questions";
 
 import "./Quiz.css";
 import TrainingFormats from "../components/TrainingFormats";
@@ -176,6 +176,73 @@ async function saveQuizResponseToServer(payload: {
   }
 }
 
+// === Persistência de progresso (I14) e recálculo de score ===
+const PROGRESS_KEY = "fiveone_quiz_progress";
+
+interface SavedProgress {
+  v: number;
+  comparisons: ComparisonPair[];
+  currentQuestion: number;
+  answers: QuizAnswerPayload[];
+  scores: Record<CategoryEnum, number>;
+  startedAt: number;
+  sessionId: string | null;
+}
+
+function loadProgress(): SavedProgress | null {
+  try {
+    const raw = localStorage.getItem(PROGRESS_KEY);
+    if (!raw) return null;
+    const p = JSON.parse(raw) as SavedProgress;
+    if (p?.v !== 2 || !Array.isArray(p.comparisons) || p.comparisons.length === 0) return null;
+    if (typeof p.currentQuestion !== "number" || p.currentQuestion >= p.comparisons.length) return null;
+    return p;
+  } catch {
+    return null;
+  }
+}
+
+function saveProgress(p: SavedProgress) {
+  try {
+    localStorage.setItem(PROGRESS_KEY, JSON.stringify(p));
+  } catch {
+    /* storage cheio/indisponível — ignora */
+  }
+}
+
+function clearProgress() {
+  try {
+    localStorage.removeItem(PROGRESS_KEY);
+  } catch {
+    /* ignora */
+  }
+}
+
+// Recalcula a pontuação a partir das respostas (fonte da verdade — permite Voltar).
+function scoresFromAnswers(
+  answers: QuizAnswerPayload[],
+  comps: ComparisonPair[],
+): Record<CategoryEnum, number> {
+  const s: Record<CategoryEnum, number> = {
+    [CategoryEnum.APOSTOLO]: 0,
+    [CategoryEnum.PROFETA]: 0,
+    [CategoryEnum.EVANGELISTA]: 0,
+    [CategoryEnum.PASTOR]: 0,
+    [CategoryEnum.MESTRE]: 0,
+  };
+  answers.forEach((a) => {
+    const comp = comps[a.step - 1];
+    if (!comp) return;
+    if (a.choice === "a") s[comp.statement1.category] += 1;
+    else if (a.choice === "b") s[comp.statement2.category] += 1;
+    else if (a.choice === "both") {
+      s[comp.statement1.category] += 1;
+      s[comp.statement2.category] += 1;
+    }
+  });
+  return s;
+}
+
 // === Cores, frases e radar ===
 const DOM_COLORS: Record<CategoryEnum, string> = {
   [CategoryEnum.APOSTOLO]:    '#1b6ea5',
@@ -309,11 +376,9 @@ const Quiz = () => {
   });
   const [showResults, setShowResults] = useState(false);
   const [quizStarted, setQuizStarted] = useState(false);
-  const [usedStatements, setUsedStatements] = useState<Set<number>>(new Set());
-  const [currentPair, setCurrentPair] = useState<{
-    statement1: Statement;
-    statement2: Statement;
-  } | null>(null);
+  const [comparisons, setComparisons] = useState<ComparisonPair[]>([]);
+  const [currentPair, setCurrentPair] = useState<ComparisonPair | null>(null);
+  const [savedProgress, setSavedProgress] = useState<SavedProgress | null>(null);
   const [userInfo, setUserInfo] = useState({
     name: "",
     email: "",
@@ -431,19 +496,10 @@ const Quiz = () => {
     }
   }, [quizStarted]);
 
+  // Detecta progresso salvo (I14) ao montar — habilita "Continuar de onde parou"
   useEffect(() => {
-    if (quizStarted && !currentPair) {
-      const pair = getRandomComparisonPair(usedStatements);
-      if (pair) {
-        setCurrentPair(pair);
-        setUsedStatements(
-          (prev) => new Set([...prev, pair.statement1.id, pair.statement2.id])
-        );
-      } else {
-        setShowResults(true);
-      }
-    }
-  }, [quizStarted, currentPair, usedStatements]);
+    setSavedProgress(loadProgress());
+  }, []);
 
   // Count-up animation for result scores
   useEffect(() => {
@@ -472,10 +528,25 @@ const Quiz = () => {
   }, [userInfo.submitted]);
 
   const handleStartQuiz = () => {
+    // Constrói o instrumento contrabalanceado (50 comparações, posição randomizada)
+    const built = buildCounterbalancedComparisons();
+    setComparisons(built);
+    setCurrentPair(built[0] ?? null);
+    setCurrentQuestion(0);
+    answersRef.current = [];
+    setCategoryScores({
+      [CategoryEnum.APOSTOLO]: 0,
+      [CategoryEnum.PROFETA]: 0,
+      [CategoryEnum.EVANGELISTA]: 0,
+      [CategoryEnum.PASTOR]: 0,
+      [CategoryEnum.MESTRE]: 0,
+    });
+    clearProgress();
+    setSavedProgress(null);
+
     setQuizStarted(true);
     quizStartedAtRef.current = Date.now();
     questionStartedAtRef.current = Date.now();
-    answersRef.current = [];
     const ctx = getChurchFromURL();
     const source = detectSource(ctx);
     fetch('/api/quiz-session', {
@@ -493,6 +564,25 @@ const Quiz = () => {
     }
   };
 
+  // Retoma o teste de onde parou (I14)
+  const handleResume = () => {
+    const p = savedProgress;
+    if (!p) {
+      handleStartQuiz();
+      return;
+    }
+    setComparisons(p.comparisons);
+    setCurrentQuestion(p.currentQuestion);
+    setCurrentPair(p.comparisons[p.currentQuestion] ?? null);
+    answersRef.current = Array.isArray(p.answers) ? p.answers : [];
+    setCategoryScores(p.scores);
+    setSessionId(p.sessionId ?? null);
+    quizStartedAtRef.current = p.startedAt || Date.now();
+    questionStartedAtRef.current = Date.now();
+    setSavedProgress(null);
+    setQuizStarted(true);
+  };
+
   const onHandleChoice = (chosenCategory: ChoiceCategory) => {
     setTransitioning(true);
     const pair = currentPair!;
@@ -506,13 +596,11 @@ const Quiz = () => {
       else if (chosenCategory === pair.statement1.category) choice = 'a';
       else choice = 'b';
 
-      answersRef.current.push({
-        step,
-        statementAId: pair.statement1.id,
-        statementBId: pair.statement2.id,
-        choice,
-        timeMs,
-      });
+      // Registra a resposta desta etapa de forma idempotente (permite Voltar e refazer)
+      const answers = answersRef.current.filter((a) => a.step !== step);
+      answers.push({ step, statementAId: pair.statement1.id, statementBId: pair.statement2.id, choice, timeMs });
+      answers.sort((a, b) => a.step - b.step);
+      answersRef.current = answers;
 
       if (step % 10 === 0 && sessionId) {
         fetch('/api/quiz-session', {
@@ -524,51 +612,65 @@ const Quiz = () => {
 
       questionStartedAtRef.current = Date.now();
 
-      setCategoryScores((prevScores) => {
-        const updatedScores = { ...prevScores };
+      // Pontuação recalculada a partir das respostas (consistente com Voltar)
+      const newScores = scoresFromAnswers(answersRef.current, comparisons);
+      setCategoryScores(newScores);
 
-        if (chosenCategory === "ambas") {
-          updatedScores[pair.statement1.category] += 1;
-          updatedScores[pair.statement2.category] += 1;
-        } else if (
-          chosenCategory !== "nenhuma" &&
-          chosenCategory in updatedScores
-        ) {
-          updatedScores[chosenCategory] += 1;
-        }
-
-        return updatedScores;
-      });
-
-      if (currentQuestion >= TOTAL_QUESTIONS - 1) {
+      const isLast = currentQuestion >= comparisons.length - 1;
+      if (isLast) {
         if (typeof gtag === "function") {
           gtag("event", "quiz_completed", {
             event_category: "quiz",
             event_label: "Quiz dos 5 Ministérios",
           });
         }
+        clearProgress();
         setShowResults(true);
-        setCurrentPair(null);
         setTransitioning(false);
         return;
       }
 
-      const newPair = getRandomComparisonPair(usedStatements);
-      if (!newPair) {
-        setShowResults(true);
-        setCurrentPair(null);
-        setTransitioning(false);
-        return;
-      }
+      const nextIndex = currentQuestion + 1;
+      setCurrentQuestion(nextIndex);
+      setCurrentPair(comparisons[nextIndex] ?? null);
 
-      setCurrentQuestion((prev) => prev + 1);
-      setCurrentPair(newPair);
-      setUsedStatements(
-        (prev) => new Set([...prev, newPair.statement1.id, newPair.statement2.id])
-      );
+      // Persiste progresso para retomar depois (I14)
+      saveProgress({
+        v: 2,
+        comparisons,
+        currentQuestion: nextIndex,
+        answers: answersRef.current,
+        scores: newScores,
+        startedAt: quizStartedAtRef.current,
+        sessionId,
+      });
 
       setTransitioning(false);
     }, 300);
+  };
+
+  // Voltar uma etapa (I13) — pré-seleciona a resposta anterior
+  const handleBack = () => {
+    if (currentQuestion <= 0 || transitioning) return;
+    const prevIndex = currentQuestion - 1;
+    const prevPair = comparisons[prevIndex];
+    const prevAnswer = answersRef.current.find((a) => a.step === prevIndex + 1);
+    setCurrentQuestion(prevIndex);
+    setCurrentPair(prevPair ?? null);
+    if (prevAnswer && prevPair) {
+      setSelectedCategory(
+        prevAnswer.choice === "both"
+          ? "ambas"
+          : prevAnswer.choice === "none"
+            ? "nenhuma"
+            : prevAnswer.choice === "a"
+              ? prevPair.statement1.category
+              : prevPair.statement2.category,
+      );
+    } else {
+      setSelectedCategory(null);
+    }
+    setShowSelectWarning(false);
   };
 
   const onHandleReset = () => {
@@ -576,7 +678,9 @@ const Quiz = () => {
     setShowResults(false);
     setCurrentQuestion(0);
     setCurrentPair(null);
-    setUsedStatements(new Set());
+    setComparisons([]);
+    clearProgress();
+    setSavedProgress(loadProgress());
     setSessionId(null);
     setResultToken(null);
     answersRef.current = [];
@@ -837,6 +941,26 @@ const Quiz = () => {
             <span className="intro-chip">~10 minutos</span>
             <span className="intro-chip">Resultado com PDF</span>
           </div>
+
+          {/* Retomar teste salvo (I14) */}
+          {savedProgress && (
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", margin: "0 auto 1.25rem", maxWidth: 420 }}>
+              <button
+                onClick={handleResume}
+                className="start-button"
+                style={{ background: "#64ffda", color: "#052e16" }}
+                aria-label="Continuar o teste de onde parou"
+              >
+                Continuar de onde parei (etapa {Math.min(savedProgress.currentQuestion + 1, savedProgress.comparisons.length)}/{savedProgress.comparisons.length})
+              </button>
+              <button
+                onClick={handleStartQuiz}
+                style={{ background: "none", border: "none", color: "#9ab0bc", fontSize: "0.85rem", textDecoration: "underline", cursor: "pointer" }}
+              >
+                Recomeçar do zero
+              </button>
+            </div>
+          )}
 
           {/* Top CTA */}
           <div className="top-start-button-wrapper">
@@ -1584,37 +1708,50 @@ const Quiz = () => {
             </button>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", marginTop: "1rem" }}>
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem", marginTop: "1rem" }}>
             {showSelectWarning && (
-              <p style={{ color: "#ff5252", textAlign: "center", marginBottom: "1rem" }}>
+              <p style={{ color: "#ff5252", textAlign: "center", margin: 0 }}>
                 Por favor, selecione uma das opções antes de continuar.
               </p>
             )}
-            <button
-              ref={nextStepButtonRef}
-              onClick={() => {
-                if (!selectedCategory) {
-                  setShowSelectWarning(true);
-                  return;
-                }
+            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+              {currentQuestion > 0 && (
+                <button
+                  type="button"
+                  onClick={handleBack}
+                  className="reset-button"
+                  aria-label="Voltar para a etapa anterior"
+                  style={{ background: "#314b56", color: "#fff" }}
+                >
+                  ← Voltar
+                </button>
+              )}
+              <button
+                ref={nextStepButtonRef}
+                onClick={() => {
+                  if (!selectedCategory) {
+                    setShowSelectWarning(true);
+                    return;
+                  }
 
-                if (nextStepButtonRef.current) {
-                  nextStepButtonRef.current.classList.add("ring");
-                  setTimeout(() => {
-                    nextStepButtonRef.current?.classList.remove("ring");
-                  }, 500);
-                }
+                  if (nextStepButtonRef.current) {
+                    nextStepButtonRef.current.classList.add("ring");
+                    setTimeout(() => {
+                      nextStepButtonRef.current?.classList.remove("ring");
+                    }, 500);
+                  }
 
-                onHandleChoice(selectedCategory);
-                setSelectedCategory(null);
-                setShowSelectWarning(false);
-              }}
-              disabled={!selectedCategory}
-              className="next-step-button"
-              aria-label="Próxima Etapa"
-            >
-              Próxima Etapa
-            </button>
+                  onHandleChoice(selectedCategory);
+                  setSelectedCategory(null);
+                  setShowSelectWarning(false);
+                }}
+                disabled={!selectedCategory}
+                className="next-step-button"
+                aria-label={currentQuestion >= comparisons.length - 1 ? "Ver resultado" : "Próxima Etapa"}
+              >
+                {currentQuestion >= comparisons.length - 1 ? "Ver resultado" : "Próxima Etapa"}
+              </button>
+            </div>
           </div>
 
           {process.env.NODE_ENV === "development" &&
