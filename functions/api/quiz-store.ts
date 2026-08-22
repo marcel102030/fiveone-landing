@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { computeScoresFromAnswers } from './_quizScoring';
 
 interface Person {
   name?: string;
@@ -35,40 +36,6 @@ interface QuizStoreBody {
 // ── Limites de validação (I9) ────────────────────────────────────────────────
 const MAX_ANSWERS = 60;                 // esperado 50; folga para segurança
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-type Dom = 'apostolo' | 'profeta' | 'evangelista' | 'pastor' | 'mestre';
-const DOMS: Dom[] = ['apostolo', 'profeta', 'evangelista', 'pastor', 'mestre'];
-
-// Mapa afirmação→dom por faixa de id (1-20 apóstolo, 21-40 profeta, ...).
-// Fonte da verdade no servidor — impede resultado manipulado pelo cliente (C6).
-function categoryForStatementId(id: number): Dom | null {
-  if (id >= 1 && id <= 20) return 'apostolo';
-  if (id >= 21 && id <= 40) return 'profeta';
-  if (id >= 41 && id <= 60) return 'evangelista';
-  if (id >= 61 && id <= 80) return 'pastor';
-  if (id >= 81 && id <= 100) return 'mestre';
-  return null;
-}
-
-// Recalcula pontuação a partir das respostas individuais (autoridade do servidor).
-function computeScoresFromAnswers(answers: QuizAnswer[]) {
-  const raw: Record<Dom, number> = { apostolo: 0, profeta: 0, evangelista: 0, pastor: 0, mestre: 0 };
-  for (const a of answers) {
-    const ca = categoryForStatementId(a.statementAId);
-    const cb = categoryForStatementId(a.statementBId);
-    if (a.choice === 'a') { if (ca) raw[ca] += 1; }
-    else if (a.choice === 'b') { if (cb) raw[cb] += 1; }
-    else if (a.choice === 'both') { if (ca) raw[ca] += 1; if (cb) raw[cb] += 1; }
-    // 'none' → não pontua
-  }
-  const total = DOMS.reduce((s, k) => s + raw[k], 0);
-  const pct: Record<string, number> = {};
-  for (const k of DOMS) pct[k] = total > 0 ? Math.round((raw[k] / total) * 100) : 0;
-  const maxRaw = Math.max(0, ...DOMS.map((k) => raw[k]));
-  const ties = maxRaw > 0 ? DOMS.filter((k) => raw[k] === maxRaw) : [];
-  const topDom = ties[0] ?? '';
-  return { raw: raw as Record<string, number>, pct, total, topDom, ties: ties as string[] };
-}
 
 // Retry simples para escritas transitórias (I7).
 async function withRetry<T extends { error: any }>(fn: () => PromiseLike<T>, tries = 3): Promise<T> {
