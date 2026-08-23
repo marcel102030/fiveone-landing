@@ -3,7 +3,8 @@ import {
   DOMS,
   DOM_ORDER,
   DomKey,
-  combinationText,
+  combinationRich,
+  comboSignificados,
   tieText,
   PLANO_30,
 } from "./ministerialContent";
@@ -515,26 +516,38 @@ function renderResultado(d: jsPDF, name: string, a: Analysis, scores: Record<Dom
   radar(d, M + 42, y + 42, 34, scores);
   bars(d, a.ranked, M + 96, y + 12, CW - 96);
   y += 96;
-  // combinação
+  // combinação (texto mais completo)
   let comboTxt = "";
+  let significados: string[] = [];
   if (a.mode === "balanced") {
-    comboTxt = "Seus 5 dons aparecem muito próximos — um perfil equilibrado e versátil.";
+    comboTxt =
+      "Seus 5 dons aparecem muito próximos — um perfil equilibrado e versátil. Em vez de um chamado único e evidente, você transita por várias funções; explore o comparativo e observe onde mais se reconhece no dia a dia.";
   } else if (a.primaries.length >= 2) {
     comboTxt = tieText(a.primaries[0], a.primaries[1]);
+    significados = comboSignificados(a.primaries[0], a.primaries[1]);
   } else if (a.secondaries[0]) {
-    comboTxt = combinationText(a.primaries[0], a.secondaries[0]);
+    comboTxt = combinationRich(a.primaries[0], a.secondaries[0]);
+    significados = comboSignificados(a.primaries[0], a.secondaries[0]);
   } else {
-    comboTxt = `Seu dom principal é ${DOMS[a.primaries[0]].nome}.`;
+    comboTxt = `Seu dom principal é ${DOMS[a.primaries[0]].nome}. ${DOMS[a.primaries[0]].frase}`;
+    significados = comboSignificados(a.primaries[0]);
   }
   fc(d, C.panelSoft);
   dc(d, C.line);
   d.setLineWidth(0.2);
-  const comboLines = (d.splitTextToSize(comboTxt, CW - 12) as string[]).length;
-  const comboH = 12 + comboLines * 5.2;
+  const comboLines = (d.splitTextToSize(comboTxt, CW - 14) as string[]).length;
+  const comboH = 13 + comboLines * 5.1;
   d.roundedRect(M, y, CW, comboH, 3, 3, "FD");
-  eyebrow(d, "Sua combinação", M + 6, y + 8, C.mint);
-  para(d, comboTxt, M + 6, y + 15, CW - 12, 10, C.text, 1.45);
-  y += comboH + 8;
+  eyebrow(d, "Sua combinação", M + 7, y + 9, C.mint);
+  para(d, comboTxt, M + 7, y + 16, CW - 14, 9.6, C.text, 1.45);
+  y += comboH + 10;
+  // o que isso significa
+  if (significados.length) {
+    y = sectionTitle(d, "O que isso significa", M, y);
+    y += 2;
+    y = flowList(d, significados, M, y, CW, 9);
+    y += 8;
+  }
   // nota relativa
   dc(d, C.mint);
   d.setLineWidth(0.6);
@@ -666,24 +679,30 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
   y += 10;
   // percentual relativo entre os 5 dons (mesma base das barras da pág. 2)
   const total = Math.max(1, DOM_ORDER.reduce((s, k) => s + Math.max(0, scores[k] || 0), 0));
+  const txtX = M + 26;
+  const txtW = CW - 32;
   others.forEach((dom) => {
-    const h = 32;
+    d.setFont("helvetica", "normal");
+    d.setFontSize(8.8);
+    const lines = (d.splitTextToSize(DOMS[dom].resumoOutro, txtW) as string[]).length;
+    const step = 8.8 * 0.352778 * 1.4;
+    const h = 17 + lines * step + 8;
     fc(d, C.panelSoft);
     dc(d, C.line);
     d.setLineWidth(0.2);
     d.roundedRect(M, y, CW, h, 3, 3, "FD");
-    domBadge(d, dom, M + 6, y + 7, 14);
+    domBadge(d, dom, M + 6, y + 6, 13);
     d.setFont(SERIF, "normal");
     d.setFontSize(14);
     tc(d, C.white);
     const pct = Math.round((Math.max(0, scores[dom] || 0) / total) * 100);
-    d.text(`${DOMS[dom].nome} · ${pct}%`, M + 27, y + 12);
-    para(d, DOMS[dom].frase, M + 27, y + 18, CW - 34, 8.8, C.muted, 1.35);
+    d.text(`${DOMS[dom].nome} · ${pct}%`, txtX, y + 11);
+    const endY = para(d, DOMS[dom].resumoOutro, txtX, y + 17, txtW, 8.8, C.muted, 1.4);
     d.setFont("helvetica", "bold");
-    d.setFontSize(7);
+    d.setFontSize(6.8);
     tc(d, blend(DOMS[dom].cor, C.navy, 0.8));
-    d.text(DOMS[dom].palavras.slice(0, 4).join("   ·   ").toUpperCase(), M + 27, y + 27, { charSpace: 0.3 });
-    y += h + 9;
+    d.text(DOMS[dom].palavras.slice(0, 4).join("   ·   ").toUpperCase(), txtX, endY + 3.5, { charSpace: 0.3 });
+    y += h + 8;
   });
   // nota de fecho
   y += 1;
@@ -700,26 +719,37 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
   return pageNum + 1;
 }
 
-function renderComparativo(d: jsPDF, footerName: string, pageNum: number) {
+function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highlight?: DomKey) {
   addPage(d);
   let y = 30;
   eyebrow(d, "Efésios 4 · em um olhar", M, y);
   y += 8;
   heading(d, "Os cinco dons lado a lado", M, y, 19);
-  y += 12;
+  y += 8;
+  y = para(
+    d,
+    "Cada dom pensa, foca e contribui de um jeito. Compare as cinco funções — a sua coluna está destacada.",
+    M,
+    y,
+    CW,
+    9,
+    C.muted,
+    1.45,
+  );
+  y += 8;
 
-  y += 4;
-  const labelW = 22;
+  const labelW = 20;
   const gap = 2.4;
   const colW = (CW - labelW - gap * 5) / 5;
   const rowY = y;
+  const colX = (i: number) => M + labelW + gap + i * (colW + gap);
   // cabeçalho colorido
   DOM_ORDER.forEach((k, i) => {
-    const x = M + labelW + gap + i * (colW + gap);
+    const x = colX(i);
     fc(d, DOMS[k].cor);
     d.roundedRect(x, rowY, colW, 11, 1.8, 1.8, "F");
     d.setFont("helvetica", "bold");
-    d.setFontSize(7.4);
+    d.setFontSize(7.2);
     tc(d, k === "evangelista" ? ([58, 47, 0] as RGB) : C.navy);
     d.text(DOMS[k].nome, x + colW / 2, rowY + 7, { align: "center" });
   });
@@ -727,53 +757,61 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number) {
   const rows: { label: string; get: (k: DomKey) => string; miss?: boolean }[] = [
     { label: "Vocação", get: (k) => DOMS[k].vocacao },
     { label: "Foco", get: (k) => DOMS[k].foco },
+    { label: "Pergunta", get: (k) => DOMS[k].perguntaChave },
     { label: "Estilo", get: (k) => DOMS[k].estilo },
+    { label: "Traz", get: (k) => DOMS[k].contribuicaoCurta },
     { label: "Se falta", get: (k) => DOMS[k].seFalta, miss: true },
   ];
   let ry = rowY + 14;
-  const cellH = 16;
+  const cellH = 14;
   rows.forEach((row) => {
     d.setFont("helvetica", "bold");
-    d.setFontSize(7.4);
+    d.setFontSize(7);
     tc(d, C.label);
-    d.text(row.label.toUpperCase(), M + labelW - 2, ry + cellH / 2 + 1, { align: "right", charSpace: 0.4 });
+    d.text(row.label.toUpperCase(), M + labelW - 2, ry + cellH / 2 + 1, { align: "right", charSpace: 0.3 });
     DOM_ORDER.forEach((k, i) => {
-      const x = M + labelW + gap + i * (colW + gap);
-      fc(d, C.panelSoft);
+      const x = colX(i);
+      const on = k === highlight;
+      fc(d, on ? blend(DOMS[k].cor, C.navy, 0.12) : C.panelSoft);
       dc(d, C.line);
       d.setLineWidth(0.15);
       d.roundedRect(x, ry, colW, cellH, 1.6, 1.6, "FD");
-      d.setFont("helvetica", "normal");
-      d.setFontSize(7.4);
-      tc(d, row.miss ? C.gold : C.text);
+      d.setFont("helvetica", on ? "bold" : "normal");
+      d.setFontSize(7.2);
+      tc(d, row.miss ? C.gold : on ? C.white : C.text);
       const lines = d.splitTextToSize(row.get(k), colW - 3) as string[];
-      const lh = 7.4 * 0.352778 * 1.15;
+      const lh = 7.2 * 0.352778 * 1.12;
       const startY = ry + cellH / 2 - ((lines.length - 1) * lh) / 2 + 1;
       lines.forEach((ln, li) => d.text(ln, x + colW / 2, startY + li * lh, { align: "center" }));
     });
     ry += cellH + gap;
   });
 
-  ry += 6;
+  // moldura de destaque na coluna do dom da pessoa
+  if (highlight) {
+    const i = DOM_ORDER.indexOf(highlight);
+    if (i >= 0) {
+      const x = colX(i);
+      dc(d, DOMS[highlight].cor);
+      d.setLineWidth(0.7);
+      d.roundedRect(x - 0.8, rowY - 0.8, colW + 1.6, ry - gap - rowY + 1.6, 2.2, 2.2, "S");
+      d.setFont("helvetica", "bold");
+      d.setFontSize(6.4);
+      tc(d, DOMS[highlight].cor);
+      d.text("SEU DOM", x + colW / 2, ry + 2.5, { align: "center", charSpace: 0.4 });
+    }
+  }
+
+  ry += highlight ? 8 : 6;
+  const note =
+    "Por que os cinco: cada dom é uma dimensão do próprio ministério de Cristo. Nenhum é melhor que o outro — juntos, e não isolados, edificam um corpo maduro, missionário e saudável. Onde você é forte, sirva; onde é fraco, cerque-se de quem completa.";
   fc(d, blend(C.gold, C.navy, 0.08));
   dc(d, blend(C.gold, C.navy, 0.3));
   d.setLineWidth(0.2);
-  const noteLines = d.splitTextToSize(
-    "Por que os cinco: cada dom é uma dimensão do próprio ministério de Cristo. Juntos — não isolados — edificam um corpo maduro, missionário e saudável.",
-    CW - 12,
-  ) as string[];
-  const noteH = 10 + noteLines.length * 4.6;
+  const noteLines = (d.splitTextToSize(note, CW - 12) as string[]).length;
+  const noteH = 10 + noteLines * 4.7;
   d.roundedRect(M, ry, CW, noteH, 3, 3, "FD");
-  para(
-    d,
-    "Por que os cinco: cada dom é uma dimensão do próprio ministério de Cristo. Juntos — não isolados — edificam um corpo maduro, missionário e saudável.",
-    M + 6,
-    ry + 6,
-    CW - 12,
-    8.6,
-    C.muted,
-    1.4,
-  );
+  para(d, note, M + 6, ry + 6.5, CW - 12, 8.7, C.text, 1.45);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageNum));
   return pageNum + 1;
 }
@@ -784,7 +822,20 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
   eyebrow(d, "Do resultado à prática", M, y);
   y += 8;
   heading(d, "Seu plano de 30 dias", M, y, 20);
-  y += 18;
+  y += 8;
+  y = para(
+    d,
+    "Quatro semanas para transformar o seu resultado em prática. Um passo de cada vez — chamado se desenvolve com constância, não com pressa.",
+    M,
+    y,
+    CW,
+    9,
+    C.muted,
+    1.45,
+  );
+  y += 10;
+  const colX = M + 32;
+  const colW = CW - 32;
   PLANO_30.forEach((w, i) => {
     if (i > 0) {
       dc(d, C.line);
@@ -792,17 +843,19 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
       d.line(M, y - 6, PAGE.w - M, y - 6);
     }
     d.setFont(SERIF, "normal");
-    d.setFontSize(12);
+    d.setFontSize(11.5);
     tc(d, C.mint);
     d.text(w.semana, M, y + 1);
     d.setFont(SERIF, "normal");
-    d.setFontSize(12.5);
+    d.setFontSize(13);
     tc(d, C.white);
-    d.text(w.titulo, M + 32, y + 1);
-    para(d, w.texto.replace("{DOM}", primaryName), M + 32, y + 8, CW - 32, 9.4, C.muted, 1.45);
-    y += 29;
+    d.text(w.titulo, colX, y + 1);
+    let ty = para(d, w.texto.replace("{DOM}", primaryName), colX, y + 8, colW, 9.2, C.muted, 1.45);
+    ty += 2;
+    ty = para(d, w.passo, colX, ty, colW, 8.4, C.mint, 1.4, ["helvetica", "bold"]);
+    y = ty + 9;
   });
-  y += 3;
+  y += 1;
   verseBox(d, "Cada um exerça o dom que recebeu para servir aos outros.", "1 Pedro 4:10", M, y, CW);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageNum));
   return pageNum + 1;
@@ -822,7 +875,7 @@ function renderInstagram(d: jsPDF) {
   tc(d, C.mint);
   d.text("VAMOS JUNTOS", PAGE.w - M, 25, { align: "right", charSpace: 0.7 });
 
-  let y = 110;
+  let y = 66;
   // badge instagram
   fc(d, [214, 41, 118]);
   d.roundedRect(M, y, 22, 22, 6, 6, "F");
@@ -832,47 +885,76 @@ function renderInstagram(d: jsPDF) {
   d.circle(M + 11, y + 11, 3, "S");
   fc(d, C.white);
   d.circle(M + 15, y + 6.5, 0.9, "F");
-  y += 34;
+  y += 33;
 
-  heading(d, "Continue comigo", M, y, 26);
+  heading(d, "Continue comigo", M, y, 27);
   y += 12;
   y = para(
     d,
-    "Toda semana eu compartilho Bíblia, teologia e cultura à luz do Evangelho — e conteúdos pra você desenvolver o seu chamado.",
+    "Você descobriu o seu dom — agora vem a caminhada. Toda semana eu compartilho conteúdo pra te ajudar a desenvolver o seu chamado e viver a fé com profundidade.",
     M,
     y,
-    120,
+    128,
     10.5,
     C.muted,
     1.55,
   );
-  y += 10;
+  y += 13;
+  // o que você encontra
+  y = sectionTitle(d, "O que você encontra por lá", M, y);
+  y += 3;
+  y = flowList(
+    d,
+    [
+      "Estudos de Bíblia e teologia que cabem no seu dia",
+      "Cultura e atualidade lidas à luz do Evangelho",
+      "Ferramentas práticas para você exercer o seu dom",
+    ],
+    M,
+    y,
+    CW,
+    9.6,
+  );
+  y += 15;
+  // handles
   d.setFont(SERIF, "normal");
-  d.setFontSize(20);
+  d.setFontSize(22);
   tc(d, C.mint);
   d.text("@marcelojunior.fiveone", M, y);
   y += 8;
   d.setFont("helvetica", "normal");
   d.setFontSize(9.5);
   tc(d, C.muted);
-  d.text("e também: @fiveone.oficial", M, y);
-  y += 6;
-  tc(d, C.label);
-  d.setFontSize(8.6);
-  d.text("Teólogo · Dom de Mestre (Ef 4)", M, y);
-  y += 14;
-  // pílula
+  d.text("e também: @fiveone.oficial  ·  Teólogo · Dom de Mestre (Ef 4)", M, y);
+  y += 15;
+  // pílulas
   fc(d, C.mint);
-  d.roundedRect(M, y, 62, 11, 5.5, 5.5, "F");
+  d.roundedRect(M, y, 64, 12, 6, 6, "F");
   d.setFont("helvetica", "bold");
   d.setFontSize(9.5);
   tc(d, [5, 46, 22]);
-  d.text("Seguir no Instagram", M + 31, y + 7, { align: "center" });
-  y += 20;
+  d.text("Seguir no Instagram", M + 32, y + 7.6, { align: "center" });
+  dc(d, C.line);
+  d.setLineWidth(0.3);
+  fc(d, C.panelSoft);
+  d.roundedRect(M + 70, y, 58, 12, 6, 6, "FD");
+  d.setFont("helvetica", "normal");
+  tc(d, C.text);
+  d.text("fiveonemovement.com", M + 70 + 29, y + 7.6, { align: "center" });
+  y += 22;
   dc(d, C.mint);
   d.setLineWidth(0.6);
-  d.line(M, y, M, y + 10);
-  para(d, "Me marca contando qual foi o seu dom — vou adorar ver!", M + 4, y + 3, CW - 4, 9, C.muted, 1.4);
+  d.line(M, y, M, y + 11);
+  para(
+    d,
+    "Me marca nos stories contando qual foi o seu dom — vou adorar ver e caminhar com você nessa jornada!",
+    M + 4,
+    y + 3,
+    CW - 4,
+    9,
+    C.muted,
+    1.4,
+  );
 
   footer(d, "Five One · Movimento dos 5 Ministérios", "@marcelojunior.fiveone");
 }
@@ -932,7 +1014,8 @@ export async function generateMinisterialPdf(
   if (a.others.length > 0) {
     page = renderOutras(doc, a.others, s, name || "Participante", page);
   }
-  page = renderComparativo(doc, name || "Participante", page);
+  const highlightDom = a.mode === "balanced" ? undefined : a.primaries[0];
+  page = renderComparativo(doc, name || "Participante", page, highlightDom);
   const primaryName = DOMS[a.primaries[0]].nome;
   page = renderPlano(doc, primaryName, name || "Participante", page);
   renderInstagram(doc);

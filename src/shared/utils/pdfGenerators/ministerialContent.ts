@@ -19,12 +19,16 @@ export interface DomContent {
   naPratica: string[];         // como se manifesta no dia a dia
   imaturo: string;             // quando o dom opera imaturo
   maduro: string;              // quando o dom opera maduro
+  resumoOutro: string;         // pág "outras capacidades": explica o dom + fala da pessoa
+  contribuicao: string;        // o que este dom traz ao corpo (frase curta)
   versiculo: { texto: string; ref: string };
   referencias: string[];
   // comparativo
   vocacao: string;
   foco: string;
   estilo: string;
+  perguntaChave: string;       // a pergunta que este dom faz (curta)
+  contribuicaoCurta: string;   // contribuição em 1 palavra (tabela)
   seFalta: string;             // "estagna", "perde rumo", etc.
 }
 
@@ -65,22 +69,25 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Desgaste por assumir além do limite",
     ],
     comoDesenvolver: [
-      "Transmita a visão com clareza e ouça as perguntas de quem está ao redor.",
-      "Recrute pessoas com mente apostólica/profética para ajudar a executar.",
-      "Ande com pastores e mestres — equilibram o avanço com cuidado e profundidade.",
-      "Desenvolva compromisso com detalhes e acompanhamento pós-implantação.",
+      "Transmita a visão com clareza e paciência — as pessoas precisam enxergar o 'porquê' antes de te seguirem no 'como'.",
+      "Cerque-se de quem executa e cuida: recrute mentes proféticas para alinhar e pastores para não perder ninguém no caminho.",
+      "Comprometa-se com o acompanhamento — o que você inicia só floresce se alguém sustentar depois da largada.",
+      "Ande com mestres e pastores: eles equilibram o seu avanço com profundidade e cuidado com as pessoas.",
     ],
     palavras: ["Visionário", "Pioneiro", "Estratégico", "Multiplicador", "Fundador"],
     naPratica: [
-      "Você enxerga onde a igreja pode chegar antes dos outros e já começa a abrir caminho.",
-      "Sente inquietação com o que está estagnado e vontade de iniciar algo novo.",
-      "Conecta pessoas, recursos e ideias em torno de um propósito maior.",
-      "Pensa em multiplicar: não basta crescer, é preciso enviar e estabelecer.",
+      "Você enxerga onde a igreja pode chegar antes dos outros — e já começa a rascunhar o caminho para lá.",
+      "O que está parado te incomoda: você sente um impulso interno de iniciar, destravar e fazer acontecer.",
+      "Naturalmente conecta pessoas, recursos e ideias em torno de um propósito maior do que você.",
+      "Você pensa além do hoje: não basta crescer, é preciso multiplicar, enviar e estabelecer o que nasce.",
     ],
     imaturo:
       "Atropela pessoas e processos pela pressa de avançar, começa muitas frentes sem concluir e controla em vez de confiar.",
     maduro:
       "Abre caminho com visão e leva as pessoas junto — forma e envia outros para sustentar o que nasce.",
+    resumoOutro:
+      "O apóstolo é pioneiro: enxerga onde a igreja pode chegar e abre caminho. Em você, mesmo em menor intensidade, isso aparece como inquietação com o que está parado e vontade de começar algo novo. Cultive dando um passo concreto naquilo que você sente que precisa nascer.",
+    contribuicao: "visão de expansão e capacidade de multiplicar",
     versiculo: {
       texto:
         "Como sábio construtor, lancei o fundamento, e outro edifica sobre ele. Cada um veja como edifica.",
@@ -99,6 +106,8 @@ export const DOMS: Record<DomKey, DomContent> = {
     vocacao: "Pioneiro",
     foco: "Expandir",
     estilo: "Estratégico",
+    perguntaChave: "Aonde ir?",
+    contribuicaoCurta: "Expansão",
     seFalta: "estagna",
   },
 
@@ -138,22 +147,25 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Resistência à correção de outros líderes",
     ],
     comoDesenvolver: [
-      "Seja voz que traz vida: profecia edifica, exorta e consola — não amedronta.",
-      "Compartilhe percepções com humildade; toda profecia é avaliada pela comunidade.",
-      "Sustente a sensibilidade com oração, jejum e estudo bíblico consistente.",
-      "Valorize a correção fraterna e o discipulado de outros dons.",
+      "Fale para edificar: a profecia madura exorta e consola — nunca amedronta, humilha ou expõe.",
+      "Submeta suas percepções à comunidade: toda palavra é avaliada, e a humildade te protege do engano.",
+      "Sustente a sensibilidade com oração, jejum e Palavra — sem base bíblica, impressão vira só opinião.",
+      "Deixe-se pastorear e ensinar: a correção fraterna amadurece o seu dom e evita o isolamento.",
     ],
     palavras: ["Sensível", "Verdadeiro", "Discernidor", "Corajoso", "Vigilante"],
     naPratica: [
-      "Você percebe rápido quando algo está fora de lugar, mesmo sem saber explicar de imediato.",
-      "Sente o peso de falar a verdade, ainda que seja desconfortável.",
-      "Busca a presença de Deus e discerne tempos e direções.",
-      "Se incomoda com aparências e anseia por autenticidade na igreja.",
+      "Você percebe rápido quando algo está fora de lugar, mesmo sem conseguir explicar de imediato o porquê.",
+      "Sente o peso de falar a verdade, ainda que seja desconfortável — e fica inquieto quando se cala.",
+      "Busca a presença de Deus e, a partir dela, discerne tempos, motivações e direções.",
+      "Se incomoda com aparências e religiosidade vazia: você anseia por autenticidade na igreja.",
     ],
     imaturo:
       "Fala fora do tempo e sem amor, confunde opinião com revelação e foca nos erros, perdendo a esperança e o consolo.",
     maduro:
       "Traz verdade que edifica, exorta e consola — corrige com mansidão e submete suas percepções à comunidade.",
+    resumoOutro:
+      "O profeta é sensível à voz de Deus e zela pela verdade. Em você, mesmo em segundo plano, isso funciona como um radar interno para o que é autêntico — e uma inquietação saudável quando algo foge do lugar. Cultive reservando tempo de oração e escuta antes de decidir.",
+    contribuicao: "sensibilidade espiritual e compromisso com a verdade",
     versiculo: {
       texto:
         "Certamente o Senhor Deus não faz coisa alguma sem revelar o seu segredo aos seus servos, os profetas.",
@@ -172,6 +184,8 @@ export const DOMS: Record<DomKey, DomContent> = {
     vocacao: "Guardião",
     foco: "Alinhar",
     estilo: "Confrontador",
+    perguntaChave: "É verdade?",
+    contribuicaoCurta: "Direção",
     seFalta: "perde rumo",
   },
 
@@ -211,22 +225,25 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Diluir a cruz numa mensagem de bem-estar",
     ],
     comoDesenvolver: [
-      "Mantenha a centralidade do Evangelho: amor de Deus e chamado ao arrependimento.",
-      "Promova discipulado desde a conversão — não deixe quem alcançou pelo caminho.",
-      "Equilibre paixão com verdade bíblica; firme a mensagem nas Escrituras.",
-      "Desperte outros a testemunhar — evangelismo é cultura, não só evento.",
+      "Mantenha a cruz no centro: alcance com o Evangelho inteiro, não só com uma mensagem de bem-estar.",
+      "Discipule quem você alcança — evangelismo sem acompanhamento deixa pessoas pelo caminho.",
+      "Firme a mensagem na Bíblia: paixão sem verdade empolga, mas não sustenta a fé de ninguém.",
+      "Multiplique a cultura missionária: treine outros a testemunhar, não carregue a missão sozinho.",
     ],
     palavras: ["Relacional", "Comunicador", "Missionário", "Adaptável", "Compassivo"],
     naPratica: [
-      "Você puxa conversa e o assunto naturalmente caminha para o que realmente importa.",
-      "Fica atento a quem está sofrendo e sente o impulso de se aproximar.",
-      "Traduz temas espirituais complexos em linguagem simples e acessível.",
-      "Se anima genuinamente quando vê alguém dando um passo de fé.",
+      "Você puxa conversa e, sem forçar, o assunto naturalmente caminha para o que realmente importa.",
+      "Fica atento a quem está sofrendo ou distante e sente um impulso genuíno de se aproximar.",
+      "Traduz temas espirituais complexos em linguagem simples, próxima da vida real das pessoas.",
+      "Se anima de verdade quando vê alguém dando um passo de fé — isso te move mais que números.",
     ],
     imaturo:
       "Pressiona por decisões rápidas, mede tudo por números e abandona quem alcançou sem discipular.",
     maduro:
       "Alcança com paciência, caminha junto no discipulado e celebra o processo, não só o momento da decisão.",
+    resumoOutro:
+      "O evangelista vive para alcançar quem ainda não conhece a Cristo. Em você, mesmo em menor intensidade, isso aparece como facilidade de se conectar e vontade de falar de fé de forma simples. Cultive convidando uma pessoa para uma conversa real esta semana.",
+    contribuicao: "paixão por alcançar e comunicar esperança",
     versiculo: {
       texto: "Faça o trabalho de um evangelista, cumpra plenamente o seu ministério.",
       ref: "2 Timóteo 4:5",
@@ -244,6 +261,8 @@ export const DOMS: Record<DomKey, DomContent> = {
     vocacao: "Alcançador",
     foco: "Converter",
     estilo: "Persuasivo",
+    perguntaChave: "Quem falta?",
+    contribuicaoCurta: "Alcance",
     seFalta: "se fecha",
   },
 
@@ -283,22 +302,25 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Descuidar da própria formação e limites saudáveis",
     ],
     comoDesenvolver: [
-      "Cuide sem gerar dependência: forme pessoas maduras e autônomas na fé.",
-      "Aprenda a confrontar com graça — cuidado verdadeiro também corrige.",
-      "Estabeleça limites saudáveis entre vida pessoal e ministério.",
-      "Ande com apóstolos e mestres para equilibrar cuidado com visão e profundidade.",
+      "Cuide sem gerar dependência: seu papel é formar pessoas maduras, não mantê-las presas a você.",
+      "Aprenda a confrontar com graça — evitar o conflito necessário não é cuidado, é omissão.",
+      "Estabeleça limites saudáveis: você cuida melhor dos outros quando também cuida de si mesmo.",
+      "Ande com apóstolos e mestres para somar visão e profundidade ao seu cuidado.",
     ],
     palavras: ["Acolhedor", "Cuidadoso", "Presente", "Conciliador", "Fiel"],
     naPratica: [
-      "Você percebe quando alguém não está bem, mesmo que a pessoa não diga nada.",
-      "As pessoas te procuram para desabafar e buscar conselho.",
-      "Se importa em manter a unidade e reconciliar quem se afastou.",
-      "Sente alegria em acompanhar alguém crescendo ao longo do tempo.",
+      "Você percebe quando alguém não está bem, mesmo que a pessoa não diga uma palavra sobre isso.",
+      "As pessoas te procuram para desabafar — sentem em você um espaço seguro para serem ouvidas.",
+      "Você se importa em manter a unidade e sofre quando vê alguém se afastando ou magoado.",
+      "Sente alegria profunda em acompanhar alguém crescendo, passo a passo, ao longo do tempo.",
     ],
     imaturo:
       "Superprotege e gera dependência, evita o conflito necessário e se sobrecarrega por não delegar.",
     maduro:
       "Cuida formando pessoas maduras e autônomas, confronta com graça quando é preciso e mantém limites saudáveis.",
+    resumoOutro:
+      "O pastor cuida, protege e caminha ao lado das pessoas. Em você, mesmo em segundo plano, isso aparece como empatia para perceber quem não está bem e disposição para acolher. Cultive procurando alguém que precisa e simplesmente estando presente.",
+    contribuicao: "cuidado com as pessoas e senso de comunidade",
     versiculo: {
       texto: "Eu sou o bom pastor. O bom pastor dá a sua vida pelas ovelhas.",
       ref: "João 10:11",
@@ -316,6 +338,8 @@ export const DOMS: Record<DomKey, DomContent> = {
     vocacao: "Cuidador",
     foco: "Nutrir",
     estilo: "Relacional",
+    perguntaChave: "Quem precisa?",
+    contribuicaoCurta: "Cuidado",
     seFalta: "esfria",
   },
 
@@ -355,22 +379,25 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Idolatrar o conhecimento acima da comunhão com Deus",
     ],
     comoDesenvolver: [
-      "Conecte sempre a doutrina com a prática — ensino que muda a vida.",
-      "Cuide da simplicidade: comunique para ser entendido, não para impressionar.",
-      "Ande com evangelistas e pastores para unir profundidade a missão e cuidado.",
-      "Forme novos mestres — multiplique o ensino, não o centralize.",
+      "Ensine para transformar, não só para informar: conecte sempre a doutrina com a vida real.",
+      "Cuide da simplicidade — comunique para ser entendido, não para impressionar quem ouve.",
+      "Evite brigas por assuntos secundários: firmeza no essencial, graça no que é debatível.",
+      "Ande com evangelistas e pastores para unir profundidade a missão e cuidado com pessoas.",
     ],
     palavras: ["Estudioso", "Didático", "Fiel", "Profundo", "Coerente"],
     naPratica: [
-      "Você gosta de entender as coisas a fundo antes de ensinar ou opinar.",
-      "As pessoas te procuram com perguntas difíceis sobre a Bíblia e a fé.",
-      "Se incomoda quando algo é ensinado de forma rasa ou incorreta.",
-      "Busca coerência entre aquilo que você crê, ensina e vive.",
+      "Você gosta de entender as coisas a fundo antes de ensinar, opinar ou tomar uma posição.",
+      "As pessoas te procuram com perguntas difíceis sobre a Bíblia, a fé e a vida cristã.",
+      "Se incomoda quando algo é ensinado de forma rasa, descontextualizada ou incorreta.",
+      "Busca coerência entre aquilo que você crê, aquilo que ensina e aquilo que vive.",
     ],
     imaturo:
       "Prioriza o conhecimento acima da vida, usa linguagem técnica que afasta e se perde em debates secundários.",
     maduro:
       "Ensina para transformar, comunica com simplicidade e conecta a doutrina com a prática do dia a dia.",
+    resumoOutro:
+      "O mestre ama a Palavra e ensina com fidelidade e clareza. Em você, mesmo em menor intensidade, isso aparece como sede de entender a fundo e cuidado com a verdade. Cultive estudando um tema que te intriga e compartilhando o que aprendeu com alguém.",
+    contribuicao: "profundidade na Palavra e clareza para ensinar",
     versiculo: {
       texto:
         "Procura apresentar-te a Deus aprovado, como obreiro que maneja bem a palavra da verdade.",
@@ -389,6 +416,8 @@ export const DOMS: Record<DomKey, DomContent> = {
     vocacao: "Formador",
     foco: "Ensinar",
     estilo: "Analítico",
+    perguntaChave: "O que diz a Palavra?",
+    contribuicaoCurta: "Solidez",
     seFalta: "fica rasa",
   },
 };
@@ -429,10 +458,53 @@ export function tieText(a: DomKey, b: DomKey): string {
   return `Empate técnico entre ${DOMS[a].nome} e ${DOMS[b].nome} — dois dons em forte expressão. ${COMBINATIONS[`${a}-${b}`] ?? COMBINATIONS[`${b}-${a}`] ?? ""}`.trim();
 }
 
+// Combinação em parágrafo mais completo (pág. resultado)
+export function combinationRich(primary: DomKey, secondary: DomKey): string {
+  const p = DOMS[primary];
+  const s = DOMS[secondary];
+  return `${combinationText(primary, secondary)} Como ${p.nome}, seu foco natural é ${p.foco.toLowerCase()}; com ${s.nome} em segundo plano, você soma ${s.contribuicao}. Na prática, isso te posiciona para unir ${p.foco.toLowerCase()} e ${s.foco.toLowerCase()} no seu chamado.`;
+}
+
+// Bullets "o que isso significa" (pág. resultado)
+export function comboSignificados(primary: DomKey, secondary?: DomKey): string[] {
+  const out = [
+    `Seu dom principal (${DOMS[primary].nome}) mostra por onde você mais naturalmente serve e floresce.`,
+  ];
+  if (secondary) {
+    out.push(`Seu dom secundário (${DOMS[secondary].nome}) tempera o principal e amplia o seu alcance.`);
+  }
+  out.push("O ranking importa mais que os números: é a ordem que revela o seu jeito de servir.");
+  return out;
+}
+
 // Plano de 30 dias (o {DOM} é substituído pelo nome do dom principal)
-export const PLANO_30: { semana: string; titulo: string; texto: string }[] = [
-  { semana: "Semana 1", titulo: "Observar", texto: "Anote 3 momentos em que o seu dom de {DOM} apareceu naturalmente." },
-  { semana: "Semana 2", titulo: "Fundamentar", texto: "Estude 2 textos-base do seu dom e uma referência do seu dom secundário." },
-  { semana: "Semana 3", titulo: "Praticar", texto: "Coloque o dom em ação servindo uma pessoa ou grupo esta semana." },
-  { semana: "Semana 4", titulo: "Multiplicar", texto: "Convide alguém para caminhar com você. Reveja o que amadureceu no mês." },
+export const PLANO_30: { semana: string; titulo: string; texto: string; passo: string }[] = [
+  {
+    semana: "Semana 1",
+    titulo: "Observar & reconhecer",
+    texto:
+      "Preste atenção em você durante a semana. Anote 3 situações concretas em que o seu dom de {DOM} apareceu de forma natural — o que você fez, como se sentiu e qual foi o fruto.",
+    passo: "Passo prático: no fim da semana, releia as anotações e circule o momento em que você se sentiu mais vivo.",
+  },
+  {
+    semana: "Semana 2",
+    titulo: "Fundamentar na Palavra",
+    texto:
+      "Um dom sem raiz bíblica vira só temperamento. Estude 2 textos-base do seu dom principal e 1 do secundário, anotando o que cada um ensina sobre o seu chamado.",
+    passo: "Passo prático: escolha 1 versículo para memorizar e carregar como lema do mês.",
+  },
+  {
+    semana: "Semana 3",
+    titulo: "Praticar servindo",
+    texto:
+      "Dom se desenvolve na prática, não na teoria. Coloque o seu dom de {DOM} a serviço de uma pessoa ou grupo específico esta semana — de forma intencional, não aleatória.",
+    passo: "Passo prático: defina hoje QUEM você vai servir e QUANDO. Marque na sua agenda.",
+  },
+  {
+    semana: "Semana 4",
+    titulo: "Multiplicar & revisar",
+    texto:
+      "Chamado maduro não se guarda, se compartilha. Convide alguém para caminhar com você e revise o mês: o que amadureceu, o que Deus destacou e qual é o próximo passo.",
+    passo: "Passo prático: escreva em uma frase o próximo passo do seu chamado para os próximos 90 dias.",
+  },
 ];
