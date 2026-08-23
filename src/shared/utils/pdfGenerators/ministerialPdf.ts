@@ -7,6 +7,10 @@ import {
   tieText,
   PLANO_30,
 } from "./ministerialContent";
+import { FRAUNCES_DISPLAY, FRAUNCES_ITALIC } from "./frauncesFont";
+
+// Fonte serifada de display (Fraunces) — registrada no doc em generateMinisterialPdf
+const SERIF = "Fraunces";
 
 // ── Paleta (RGB) ──────────────────────────────────────────────────────────────
 type RGB = [number, number, number];
@@ -62,7 +66,7 @@ function eyebrow(d: jsPDF, text: string, x: number, y: number, color: RGB = C.mi
   d.text(text.toUpperCase(), x, y, { charSpace: 0.7 });
 }
 function heading(d: jsPDF, text: string, x: number, y: number, size: number, color: RGB = C.white) {
-  d.setFont("times", "bold");
+  d.setFont(SERIF, "normal");
   d.setFontSize(size);
   tc(d, color);
   d.text(text, x, y);
@@ -140,7 +144,7 @@ function bullets2(
 
 // versículo em destaque, retorna y final
 function verseBox(d: jsPDF, texto: string, ref: string, x: number, y: number, w: number): number {
-  d.setFont("times", "italic");
+  d.setFont(SERIF, "italic");
   d.setFontSize(12);
   const lines = d.splitTextToSize(`"${texto}"`, w - 14) as string[];
   const lineStep = 12 * 0.352778 * 1.35;
@@ -281,7 +285,7 @@ function analyze(scores: Record<DomKey, number>): Analysis {
 function domBadge(d: jsPDF, dom: DomKey, x: number, y: number, size: number) {
   fc(d, DOMS[dom].cor);
   d.circle(x + size / 2, y + size / 2, size / 2, "F");
-  d.setFont("times", "bold");
+  d.setFont(SERIF, "normal");
   d.setFontSize(size * 3);
   tc(d, C.navy);
   d.text(DOMS[dom].glyph, x + size / 2, y + size / 2 + size * 0.32, { align: "center" });
@@ -290,7 +294,7 @@ function domBadge(d: jsPDF, dom: DomKey, x: number, y: number, size: number) {
 function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
   bg(d);
   // topo
-  d.setFont("times", "bold");
+  d.setFont(SERIF, "normal");
   d.setFontSize(15);
   tc(d, C.white);
   d.text("Five One", M, 24);
@@ -308,8 +312,8 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
   let y = 120;
   eyebrow(d, "Relatório de resultado", M, y);
   y += 14;
-  const fs = fitFontSize(d, name, CW, 46, ["times", "bold"]);
-  d.setFont("times", "bold");
+  const fs = fitFontSize(d, name, CW, 46, [SERIF, "normal"]);
+  d.setFont(SERIF, "normal");
   d.setFontSize(fs);
   tc(d, C.white);
   d.text(name, M, y);
@@ -337,7 +341,7 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
     d.setLineWidth(0.2);
     d.roundedRect(M, y, CW, 24, 3, 3, "FD");
     eyebrow(d, "Resultado", M + 6, y + 9, C.gold);
-    d.setFont("times", "bold");
+    d.setFont(SERIF, "normal");
     d.setFontSize(15);
     tc(d, C.white);
     d.text("Perfil equilibrado", M + 6, y + 18);
@@ -354,7 +358,7 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
       eyebrow(d, b.label, bx + 5, y + 8, C.label);
       fc(d, DOMS[b.dom].cor);
       d.circle(bx + 6.5, y + 16.5, 1.6, "F");
-      d.setFont("times", "bold");
+      d.setFont(SERIF, "normal");
       d.setFontSize(b.sec ? 14 : 16);
       tc(d, b.sec ? C.muted : C.white);
       d.text(DOMS[b.dom].nome, bx + 11, y + 18);
@@ -510,7 +514,7 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
     d.setLineWidth(0.2);
     d.roundedRect(M, y, CW, h, 3, 3, "FD");
     domBadge(d, dom, M + 5, y + 5, 12);
-    d.setFont("times", "bold");
+    d.setFont(SERIF, "normal");
     d.setFontSize(13);
     tc(d, C.white);
     d.text(`${DOMS[dom].nome} · ${Math.round(scores[dom] || 0)}%`, M + 22, y + 9);
@@ -611,11 +615,11 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
       d.setLineWidth(0.2);
       d.line(M, y - 4, PAGE.w - M, y - 4);
     }
-    d.setFont("times", "bold");
+    d.setFont(SERIF, "normal");
     d.setFontSize(11);
     tc(d, C.mint);
     d.text(w.semana, M, y + 1);
-    d.setFont("times", "bold");
+    d.setFont(SERIF, "normal");
     d.setFontSize(11.5);
     tc(d, C.white);
     d.text(w.titulo, M + 30, y + 1);
@@ -631,7 +635,7 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
 function renderInstagram(d: jsPDF) {
   addPage(d);
   // topo
-  d.setFont("times", "bold");
+  d.setFont(SERIF, "normal");
   d.setFontSize(12);
   tc(d, C.white);
   d.text("Five One", M, 24);
@@ -668,7 +672,7 @@ function renderInstagram(d: jsPDF) {
     1.55,
   );
   y += 10;
-  d.setFont("times", "bold");
+  d.setFont(SERIF, "normal");
   d.setFontSize(20);
   tc(d, C.mint);
   d.text("@marcelojunior.fiveone", M, y);
@@ -727,6 +731,12 @@ export async function generateMinisterialPdf(
 
   const a = analyze(s);
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
+
+  // registra a Fraunces (display + italic)
+  doc.addFileToVFS("Fraunces.ttf", FRAUNCES_DISPLAY);
+  doc.addFont("Fraunces.ttf", SERIF, "normal");
+  doc.addFileToVFS("Fraunces-Italic.ttf", FRAUNCES_ITALIC);
+  doc.addFont("Fraunces-Italic.ttf", SERIF, "italic");
 
   renderCover(doc, name || "Participante", dateStr, a);
   renderResultado(doc, name || "Participante", a, s);
