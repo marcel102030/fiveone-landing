@@ -19,7 +19,7 @@ import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 import escolaFiveOne from "../../../assets/images/escola-fiveone.jpeg";
 
-import { generatePDF } from "../../../shared/utils/pdfGenerators/mainPdfGenerator";
+import { generateMinisterialPdf } from "../../../shared/utils/pdfGenerators/ministerialPdf";
 
 
 import { buildCounterbalancedComparisons, categoryMetadata, type ComparisonPair } from "../data/questions";
@@ -747,64 +747,19 @@ const Quiz = () => {
   };
 
   const handleDownloadPDF = async () => {
-    const domNameToKey: Record<string, string> = {
-      'Apóstolo': 'Apostólico',
-      'Profeta': 'Profeta',
-      'Evangelista': 'Evangelístico',
-      'Pastor': 'Pastor',
-      'Mestre': 'Mestre',
-    };
-
     try {
       setIsGeneratingPDF(true);
       const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
-
-      const sortedScores = Object.entries(categoryScores)
-        .map(([category, score]) => {
-          const metadata = categoryMetadata.find((c) => c.id === category);
-          const safeScore = totalScore > 0 ? (score / totalScore) * 100 : 0;
-
-          if (!metadata || isNaN(safeScore)) {
-            return null;
-          }
-
-          return {
-            categoryEnum: category as CategoryEnum,
-            score: safeScore,
-            metadata,
-          };
-        })
-        .filter((entry): entry is NonNullable<typeof entry> => entry !== null)
-        .sort((a, b) => b.score - a.score);
-
-      if (sortedScores.length === 0) {
+      if (totalScore <= 0) {
         alert('Erro ao gerar PDF. Não foi possível calcular seu Dom principal.');
         return;
       }
-
-      const highestScore = sortedScores[0].score;
-      const tiedDoms = sortedScores.filter(
-        (s) => Math.abs(s.score - highestScore) < 0.0001
-      );
-
-      const principais = tiedDoms
-        .map((domResult) => domNameToKey[domResult.metadata.name] ?? domResult.metadata.name)
-        .filter((value): value is string => Boolean(value));
-      const principaisNormalizados = Array.from(new Set(principais));
-
-      if (principaisNormalizados.length === 0 && sortedScores[0]) {
-        principaisNormalizados.push(domNameToKey[sortedScores[0].metadata.name] ?? sortedScores[0].metadata.name);
-      }
-
-      await generatePDF(
-        userInfo.name,
-        new Date().toLocaleDateString(),
-        sortedScores.map((s) => ({
-          dom: domNameToKey[s.metadata.name],
-          valor: s.score,
-        })),
-        principaisNormalizados
-      );
+      const scoresByDom: Record<string, number> = {};
+      Object.entries(categoryScores).forEach(([k, v]) => {
+        scoresByDom[k] = (Number(v) / totalScore) * 100;
+      });
+      const hoje = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
+      await generateMinisterialPdf(userInfo.name, hoje, scoresByDom, true);
 
       setShowDownloadSuccess(true);
       setTimeout(() => setShowDownloadSuccess(false), 8000);
@@ -1185,53 +1140,22 @@ const Quiz = () => {
 
                     (async () => {
                       try {
-                        const domNameToKey: Record<string, string> = {
-                          "Apóstolo": "Apostólico",
-                          "Profeta": "Profeta",
-                          "Evangelista": "Evangelístico",
-                          "Pastor": "Pastor",
-                          "Mestre": "Mestre",
-                        };
-
                         const totalScore = Object.values(categoryScores).reduce((sum, val) => sum + val, 0);
-
-                        const sortedScores = Object.entries(categoryScores)
-                          .map(([category, score]) => {
-                            const metadata = categoryMetadata.find((c) => c.id === category);
-                            const safeScore = totalScore > 0 ? (score / totalScore) * 100 : 0;
-                            if (!metadata || isNaN(safeScore)) return null;
-                            return { categoryEnum: category as CategoryEnum, score: safeScore, metadata };
-                          })
-                          .filter((e): e is NonNullable<typeof e> => e !== null)
-                          .sort((a, b) => b.score - a.score);
-
-                        if (sortedScores.length === 0) {
+                        if (totalScore <= 0) {
                           console.warn("Não foi possível calcular o Dom principal para envio por e-mail.");
                           return;
                         }
 
-                        const percentuaisPdf = sortedScores.map((s) => ({
-                          dom: domNameToKey[s.metadata.name] ?? s.metadata.name,
-                          valor: s.score,
-                        }));
+                        const scoresByDom: Record<string, number> = {};
+                        Object.entries(categoryScores).forEach(([k, v]) => {
+                          scoresByDom[k] = (Number(v) / totalScore) * 100;
+                        });
 
-                        const highestScore = sortedScores[0].score;
-                        const tiedDoms = sortedScores.filter((s) => Math.abs(s.score - highestScore) < 0.0001);
-
-                        const principais = tiedDoms
-                          .map((s) => domNameToKey[s.metadata.name] ?? s.metadata.name)
-                          .filter((value): value is string => Boolean(value));
-                        const principaisNormalizados = Array.from(new Set(principais));
-                        if (principaisNormalizados.length === 0 && percentuaisPdf[0]) {
-                          principaisNormalizados.push(percentuaisPdf[0].dom);
-                        }
-
-                        const hoje = new Date().toLocaleDateString("pt-BR");
-                        const { base64, filename } = await generatePDF(
+                        const hoje = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+                        const { base64, filename } = await generateMinisterialPdf(
                           userInfo.name,
                           hoje,
-                          percentuaisPdf,
-                          principaisNormalizados,
+                          scoresByDom,
                           false
                         );
 
