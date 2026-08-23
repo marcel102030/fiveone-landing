@@ -291,40 +291,50 @@ function domBadge(d: jsPDF, dom: DomKey, x: number, y: number, size: number) {
   d.text(DOMS[dom].glyph, x + size / 2, y + size / 2 + size * 0.32, { align: "center" });
 }
 
+// brilho radial suave (anéis concêntricos) — evita o "disco chapado"
+function softGlow(d: jsPDF, cx: number, cy: number, rMax: number, peak = 0.09) {
+  const rings = 30;
+  for (let i = rings; i >= 1; i--) {
+    const r = (rMax * i) / rings;
+    const t = peak * (1 - (i - 1) / rings);
+    fc(d, blend(C.mint, C.navy, t));
+    d.circle(cx, cy, r, "F");
+  }
+  fc(d, C.navy);
+}
+
 function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
   bg(d);
+  // brilho ambiente no topo-direito (desenhado ANTES do texto)
+  softGlow(d, 172, 30, 96, 0.09);
+
   // topo
   d.setFont(SERIF, "normal");
-  d.setFontSize(19);
+  d.setFontSize(18);
   tc(d, C.white);
-  d.text("Five One", M, 26);
+  d.text("Five One", M, 27);
   d.setFont("helvetica", "bold");
   d.setFontSize(7.8);
   tc(d, C.label);
-  d.text("PERFIL MINISTERIAL", PAGE.w - M, 25, { align: "right", charSpace: 0.8 });
+  d.text("PERFIL MINISTERIAL", PAGE.w - M, 26, { align: "right", charSpace: 0.8 });
 
-  // glow sutil
-  fc(d, blend(C.mint, C.navy, 0.06));
-  d.circle(170, 60, 55, "F");
-  fc(d, C.navy);
-
-  // hero — nome grande, preenchendo a largura (igual ao mockup)
-  eyebrow(d, "Relatório de resultado", M, 128);
-  const fs = fitFontSize(d, name, CW, 70, [SERIF, "normal"]);
+  // hero — bloco coeso e elevado (igual ao mockup)
+  eyebrow(d, "Relatório de resultado", M, 108);
+  const fs = fitFontSize(d, name, CW, 66, [SERIF, "normal"]);
   d.setFont(SERIF, "normal");
   d.setFontSize(fs);
   tc(d, C.white);
   const ascent = fs * 0.352778 * 0.72; // altura aprox. do nome em mm
-  const nameBaseline = 128 + 8 + ascent;
+  const nameBaseline = 108 + 7 + ascent;
   d.text(name, M, nameBaseline);
-  let y = nameBaseline + 9;
+  let y = nameBaseline + 8;
   d.setFont("helvetica", "normal");
   d.setFontSize(11);
   tc(d, C.muted);
   d.text(`Avaliação realizada em ${dateStr}`, M, y);
 
   // caixas de dom
-  y += 20;
+  y += 17;
   const coPrincipal = a.primaries.length >= 2;
   const boxes: { label: string; dom: DomKey; sec?: boolean }[] = [];
   if (a.mode === "balanced") {
