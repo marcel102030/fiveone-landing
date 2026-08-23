@@ -5,7 +5,6 @@ import {
   DomKey,
   combinationRich,
   comboSignificados,
-  tieText,
   PLANO_30,
 } from "./ministerialContent";
 import { FRAUNCES_DISPLAY, FRAUNCES_ITALIC } from "./frauncesFont";
@@ -387,24 +386,30 @@ function analyze(scores: Record<DomKey, number>): Analysis {
   const ranked = DOM_ORDER.map((dom) => ({ dom, score: scores[dom] || 0 })).sort(
     (a, b) => b.score - a.score,
   );
-  const max = ranked[0].score;
-  const primaries = ranked.filter((r) => r.score === max).map((r) => r.dom);
+  // Empates são definidos pelo PERCENTUAL ARREDONDADO (o número que a pessoa vê),
+  // não pelo score cru — assim 20%/20% no display = empate de verdade no PDF.
+  const total = Math.max(1, ranked.reduce((s, r) => s + Math.max(0, r.score), 0));
+  const pctOf = (v: number) => Math.round((Math.max(0, v) / total) * 100);
+  const withPct = ranked.map((r) => ({ ...r, pct: pctOf(r.score) }));
+
+  const p1 = withPct[0].pct;
+  const primaries = withPct.filter((r) => r.pct === p1).map((r) => r.dom);
+
   let mode: Analysis["mode"] = "normal";
   let secondaries: DomKey[] = [];
   if (primaries.length >= 4) {
     mode = "balanced";
   } else {
-    if (primaries.length === 1) mode = "normal";
-    else if (primaries.length === 2) mode = "tie2";
-    else mode = "tie3";
-    if (mode !== "tie3") {
-      const rest = ranked.filter((r) => !primaries.includes(r.dom));
-      const secScore = rest.length ? rest[0].score : -1;
-      secondaries = rest.filter((r) => r.score === secScore && secScore > 0).map((r) => r.dom);
+    mode = primaries.length === 1 ? "normal" : primaries.length === 2 ? "tie2" : "tie3";
+    // secundário(s): próximo grupo de mesmo percentual (só quando há 1 ou 2 principais)
+    if (primaries.length <= 2) {
+      const rest = withPct.filter((r) => r.pct < p1);
+      const p2 = rest.length ? rest[0].pct : -1;
+      if (p2 > 0) secondaries = rest.filter((r) => r.pct === p2).map((r) => r.dom);
     }
   }
-  const used = new Set([...primaries, ...secondaries]);
-  const others = ranked.filter((r) => !used.has(r.dom)).map((r) => r.dom);
+  const used = new Set<DomKey>([...primaries, ...secondaries]);
+  const others = withPct.filter((r) => !used.has(r.dom)).map((r) => r.dom);
   return { ranked, primaries, secondaries, others, mode };
 }
 
@@ -462,16 +467,6 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
 
   // caixas de dom
   y += 17;
-  const coPrincipal = a.primaries.length >= 2;
-  const boxes: { label: string; dom: DomKey; sec?: boolean }[] = [];
-  if (a.mode === "balanced") {
-    // sem principal único
-  } else if (coPrincipal) {
-    a.primaries.forEach((dm) => boxes.push({ label: "Dom principal", dom: dm }));
-  } else {
-    boxes.push({ label: "Dom principal", dom: a.primaries[0] });
-    if (a.secondaries[0]) boxes.push({ label: "Dom secundário", dom: a.secondaries[0], sec: true });
-  }
   if (a.mode === "balanced") {
     fc(d, C.panelSoft);
     dc(d, C.line);
@@ -483,22 +478,34 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
     tc(d, C.white);
     d.text("Perfil equilibrado", M + 7, y + 23);
   } else {
-    const n = boxes.length;
+    // todas as caixas: principais + secundários (cobre empates de qualquer tamanho)
+    const boxes: { label: string; dom: DomKey; sec: boolean }[] = [];
+    a.primaries.forEach((dm) => boxes.push({ label: "Dom principal", dom: dm, sec: false }));
+    a.secondaries.forEach((dm) => boxes.push({ label: "Dom secundário", dom: dm, sec: true }));
+
+    const cols = boxes.length === 1 ? 1 : 2;
+    const rows = Math.ceil(boxes.length / cols);
     const gap = 6;
-    const bw = (CW - gap * (n - 1)) / n;
-    boxes.forEach((b, i) => {
-      const bx = M + i * (bw + gap);
+    const vgap = 6;
+    const h = rows >= 3 ? 22 : rows === 2 ? 26 : 30;
+    const bw = cols === 1 ? CW : (CW - gap) / 2; // largura fixa (grade consistente)
+    boxes.forEach((b, idx) => {
+      const r = Math.floor(idx / cols);
+      const col = idx % cols;
+      const bx = M + col * (bw + gap);
+      const by = y + r * (h + vgap);
       fc(d, C.panelSoft);
       dc(d, C.line);
       d.setLineWidth(0.2);
-      d.roundedRect(bx, y, bw, 30, 3.5, 3.5, "FD");
-      eyebrow(d, b.label, bx + 7, y + 11, C.label);
+      d.roundedRect(bx, by, bw, h, 3.5, 3.5, "FD");
+      eyebrow(d, b.label, bx + 7, by + h * 0.33, C.label);
+      const nameFs = b.sec ? (h >= 26 ? 19 : 16) : h >= 26 ? 22 : 18;
       fc(d, DOMS[b.dom].cor);
-      d.circle(bx + 8.4, y + 21.2, 2, "F");
+      d.circle(bx + 8.4, by + h * 0.68, 2, "F");
       d.setFont(SERIF, "normal");
-      d.setFontSize(b.sec ? 19 : 22);
+      d.setFontSize(nameFs);
       tc(d, b.sec ? C.muted : C.white);
-      d.text(DOMS[b.dom].nome, bx + 13, y + 23.2);
+      d.text(DOMS[b.dom].nome, bx + 13, by + h * 0.73 + 2);
     });
   }
 
@@ -516,16 +523,35 @@ function renderResultado(d: jsPDF, name: string, a: Analysis, scores: Record<Dom
   radar(d, M + 42, y + 42, 34, scores);
   bars(d, a.ranked, M + 96, y + 12, CW - 96);
   y += 96;
-  // combinação (texto mais completo)
+  // combinação (texto mais completo) — cobre todos os empates
+  const nameList = (doms: DomKey[]): string => {
+    const ns = doms.map((dm) => DOMS[dm].nome);
+    if (ns.length <= 1) return ns[0] ?? "";
+    return `${ns.slice(0, -1).join(", ")} e ${ns[ns.length - 1]}`;
+  };
   let comboTxt = "";
   let significados: string[] = [];
   if (a.mode === "balanced") {
     comboTxt =
       "Seus 5 dons aparecem muito próximos — um perfil equilibrado e versátil. Em vez de um chamado único e evidente, você transita por várias funções; explore o comparativo e observe onde mais se reconhece no dia a dia.";
   } else if (a.primaries.length >= 2) {
-    comboTxt = tieText(a.primaries[0], a.primaries[1]);
-    significados = comboSignificados(a.primaries[0], a.primaries[1]);
-  } else if (a.secondaries[0]) {
+    const secTxt = a.secondaries.length
+      ? ` Logo atrás vem ${nameList(a.secondaries)}${a.secondaries.length > 1 ? " (também empatados)" : ""}.`
+      : "";
+    comboTxt = `Empate técnico entre ${nameList(a.primaries)} — ${a.primaries.length} dons operando com força muito parecida em você. Nenhum é "o" principal sozinho; cada um é aprofundado nas próximas páginas.${secTxt}`;
+    significados = [
+      `Seus dons em destaque (${nameList(a.primaries)}) mostram por onde você mais serve e floresce — em equilíbrio.`,
+      "Empate não é indefinição: é a marca de quem combina funções. Leia cada dom e veja como se somam.",
+      "O ranking importa mais que os números: observe a ordem e como esses dons aparecem no seu dia a dia.",
+    ];
+  } else if (a.secondaries.length >= 2) {
+    comboTxt = `${DOMS[a.primaries[0]].nome} é o seu dom principal, com ${nameList(a.secondaries)} empatados logo atrás. Na prática, você une ${DOMS[a.primaries[0]].contribuicao} a mais de uma força de apoio — um perfil versátil, que se expressa de formas diferentes conforme o contexto.`;
+    significados = [
+      `Seu dom principal (${DOMS[a.primaries[0]].nome}) mostra por onde você mais naturalmente serve e floresce.`,
+      `Seus dons secundários (${nameList(a.secondaries)}) empataram — ambos temperam o principal e ampliam o seu alcance.`,
+      "O ranking importa mais que os números: é a ordem que revela o seu jeito de servir.",
+    ];
+  } else if (a.secondaries.length === 1) {
     comboTxt = combinationRich(a.primaries[0], a.secondaries[0]);
     significados = comboSignificados(a.primaries[0], a.secondaries[0]);
   } else {
@@ -629,11 +655,11 @@ function renderPrimary(d: jsPDF, dom: DomKey, kicker: string, footerName: string
 }
 
 // Secundário: 1 página completa
-function renderSecondary(d: jsPDF, dom: DomKey, footerName: string, pageNum: number): number {
+function renderSecondary(d: jsPDF, dom: DomKey, footerName: string, pageNum: number, coSec = false): number {
   const dc0 = DOMS[dom];
   addPage(d);
   let y = 28;
-  y = domHeader(d, dom, "Dom secundário", y);
+  y = domHeader(d, dom, coSec ? "Dom secundário (empate)" : "Dom secundário", y);
   y += 7;
   y = para(d, dc0.essencia, M, y, CW, 10, C.text, 1.55);
   y += 10;
@@ -1007,8 +1033,9 @@ export async function generateMinisterialPdf(
       const kicker = coPrincipal ? "Dom principal (empate)" : "Dom principal";
       page = renderPrimary(doc, dom, kicker, name || "Participante", page);
     });
+    const coSec = a.secondaries.length >= 2;
     a.secondaries.forEach((dom) => {
-      page = renderSecondary(doc, dom, name || "Participante", page);
+      page = renderSecondary(doc, dom, name || "Participante", page, coSec);
     });
   }
   if (a.others.length > 0) {
