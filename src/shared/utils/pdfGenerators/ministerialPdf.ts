@@ -212,6 +212,7 @@ function radar(d: jsPDF, cx: number, cy: number, R: number, scores: Record<DomKe
 // ── Barras de ranking ─────────────────────────────────────────────────────────
 function bars(d: jsPDF, ranked: { dom: DomKey; score: number }[], x: number, y: number, w: number) {
   const maxPct = Math.max(1, ...ranked.map((r) => r.score));
+  const total = Math.max(1, ranked.reduce((s, r) => s + Math.max(0, r.score), 0));
   const rowH = 11;
   ranked.forEach((r, i) => {
     const ry = y + i * rowH;
@@ -224,7 +225,9 @@ function bars(d: jsPDF, ranked: { dom: DomKey; score: number }[], x: number, y: 
     d.text(DOMS[r.dom].nome, x + 4.5, ry);
     d.setFont("helvetica", "bold");
     tc(d, C.white);
-    d.text(`${Math.round(r.score)}%`, x + w, ry, { align: "right" });
+    // percentual RELATIVO entre os 5 dons (soma ~100%), não o score bruto
+    const pct = Math.round((Math.max(0, r.score) / total) * 100);
+    d.text(`${pct}%`, x + w, ry, { align: "right" });
     // trilho
     const ty = ry + 1.5;
     fc(d, C.panel);
@@ -517,6 +520,8 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
     1.5,
   );
   y += 8;
+  // percentual relativo entre os 5 dons (mesma base das barras da pág. 2)
+  const total = Math.max(1, DOM_ORDER.reduce((s, k) => s + Math.max(0, scores[k] || 0), 0));
   others.forEach((dom) => {
     const h = 22;
     fc(d, C.panelSoft);
@@ -527,7 +532,8 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
     d.setFont(SERIF, "normal");
     d.setFontSize(13);
     tc(d, C.white);
-    d.text(`${DOMS[dom].nome} · ${Math.round(scores[dom] || 0)}%`, M + 22, y + 9);
+    const pct = Math.round((Math.max(0, scores[dom] || 0) / total) * 100);
+    d.text(`${DOMS[dom].nome} · ${pct}%`, M + 22, y + 9);
     para(d, DOMS[dom].frase, M + 22, y + 15, CW - 28, 8.6, C.muted, 1.35);
     y += h + 5;
   });
@@ -644,18 +650,17 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
 
 function renderInstagram(d: jsPDF) {
   addPage(d);
+  // brilho ambiente (antes do texto, igual à capa)
+  softGlow(d, 174, 34, 92, 0.08);
   // topo
   d.setFont(SERIF, "normal");
-  d.setFontSize(12);
+  d.setFontSize(15);
   tc(d, C.white);
-  d.text("Five One", M, 24);
+  d.text("Five One", M, 26);
   d.setFont("helvetica", "bold");
   d.setFontSize(7.6);
   tc(d, C.mint);
-  d.text("VAMOS JUNTOS", PAGE.w - M, 23, { align: "right", charSpace: 0.7 });
-
-  fc(d, blend(C.mint, C.navy, 0.05));
-  d.circle(175, 55, 45, "F");
+  d.text("VAMOS JUNTOS", PAGE.w - M, 25, { align: "right", charSpace: 0.7 });
 
   let y = 110;
   // badge instagram
