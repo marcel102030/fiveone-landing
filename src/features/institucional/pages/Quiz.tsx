@@ -1797,7 +1797,7 @@ const Quiz = () => {
                   onClick={handleBack}
                   className="reset-button"
                   aria-label="Voltar para a etapa anterior"
-                  style={{ background: "#314b56", color: "#fff" }}
+                  style={{ background: "#314b56", color: "#fff", margin: 0, padding: "1rem 1.75rem", fontSize: "1.05rem", borderRadius: 12 }}
                 >
                   ← Voltar
                 </button>
@@ -1823,6 +1823,7 @@ const Quiz = () => {
                 }}
                 disabled={!selectedCategory}
                 className="next-step-button"
+                style={{ marginTop: 0 }}
                 aria-label={currentQuestion >= comparisons.length - 1 ? "Ver resultado" : "Próxima Etapa"}
               >
                 {currentQuestion >= comparisons.length - 1 ? "Ver resultado" : "Próxima Etapa"}
