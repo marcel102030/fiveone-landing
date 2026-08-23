@@ -3092,3 +3092,19 @@
   position: relative;
   z-index: 1;
 }
+
+/* Navegação Voltar / Próxima Etapa */
+.quiz-nav-buttons {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+/* No mobile: "Próxima Etapa" em cima (ação principal) e "Voltar" embaixo */
+@media (max-width: 480px) {
+  .quiz-nav-buttons {
+    flex-direction: column-reverse;
+    align-items: center;
+  }
+}

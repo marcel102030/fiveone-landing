@@ -1790,7 +1790,7 @@ const Quiz = () => {
                 Por favor, selecione uma das opções antes de continuar.
               </p>
             )}
-            <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", alignItems: "center", flexWrap: "wrap" }}>
+            <div className="quiz-nav-buttons">
               {currentQuestion > 0 && (
                 <button
                   type="button"
