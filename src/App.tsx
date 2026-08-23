@@ -154,6 +154,10 @@ function AppContent() {
     location.pathname === "/copiar" ||
     location.pathname.startsWith("/rede/cadastro") ||
     location.pathname.startsWith("/certificado/") ||
+    // Modo foco: o teste roda imersivo, sem navbar/rodapé
+    location.pathname === "/descubra-seu-dom" ||
+    location.pathname === "/teste-dons" ||
+    location.pathname === "/quiz" ||
     isInviteTest ||
     isIgrejasStandalone ||
     isRedeDomain;

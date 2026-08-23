@@ -20,6 +20,16 @@ import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 import escolaFiveOne from "../../../assets/images/escola-fiveone.jpeg";
 
 import { generateMinisterialPdf } from "../../../shared/utils/pdfGenerators/ministerialPdf";
+import {
+  sfx,
+  confettiBurst,
+  startAmbient,
+  stopAmbient,
+  fxEnabled,
+  setFxEnabled,
+  musicPref,
+  setMusicPref,
+} from "../utils/quizFx";
 
 
 import { buildCounterbalancedComparisons, categoryMetadata, type ComparisonPair } from "../data/questions";
@@ -396,6 +406,49 @@ const Quiz = () => {
   const [selectedCategory, setSelectedCategory] = useState<ChoiceCategory | null>(null);
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
+  // Experiência: som/música + micro-celebrações
+  const [fxOn, setFxOn] = useState(false);
+  const [musicOn, setMusicOn] = useState(false);
+  const [celebration, setCelebration] = useState<{ title: string; sub: string } | null>(null);
+  const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Inicializa preferências de som/música; retoma música no 1º gesto; limpa ao sair
+  useEffect(() => {
+    setFxOn(fxEnabled());
+    const wantsMusic = musicPref();
+    setMusicOn(wantsMusic);
+    const resume = () => {
+      if (musicPref()) startAmbient();
+      window.removeEventListener("pointerdown", resume);
+    };
+    if (wantsMusic) window.addEventListener("pointerdown", resume, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", resume);
+      stopAmbient();
+      if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+    };
+  }, []);
+
+  const toggleFx = () => {
+    const next = !fxOn;
+    setFxOn(next);
+    setFxEnabled(next);
+    if (next) sfx.sample();
+  };
+  const toggleMusic = () => {
+    const next = !musicOn;
+    setMusicOn(next);
+    setMusicPref(next);
+    if (next) startAmbient();
+    else stopAmbient();
+  };
+  const triggerCelebration = (title: string, sub: string) => {
+    setCelebration({ title, sub });
+    confettiBurst();
+    sfx.milestone();
+    if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
+    celebrationTimerRef.current = setTimeout(() => setCelebration(null), 1900);
+  };
   const [showDownloadSuccess, setShowDownloadSuccess] = useState(false);
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [showEmailInfo, setShowEmailInfo] = useState(false);
@@ -625,6 +678,7 @@ const Quiz = () => {
 
   const onHandleChoice = (chosenCategory: ChoiceCategory) => {
     setTransitioning(true);
+    sfx.advance();
     const pair = currentPair!;
     const timeMs = Date.now() - questionStartedAtRef.current;
     const step = currentQuestion + 1;
@@ -664,6 +718,8 @@ const Quiz = () => {
             event_label: "Quiz dos 5 Ministérios",
           });
         }
+        sfx.finish();
+        stopAmbient();
         clearProgress();
         setShowResults(true);
         setTransitioning(false);
@@ -673,6 +729,18 @@ const Quiz = () => {
       const nextIndex = currentQuestion + 1;
       setCurrentQuestion(nextIndex);
       setCurrentPair(comparisons[nextIndex] ?? null);
+
+      // Micro-celebração ao cruzar 25% / 50% / 75% / 90%
+      const totalQ = comparisons.length || TOTAL_QUESTIONS;
+      const newStep = nextIndex + 1;
+      const marks = [
+        { frac: 0.25, title: "25% concluído", sub: "Ótimo ritmo — siga assim ✨" },
+        { frac: 0.5, title: "Metade do caminho! 🔥", sub: "Você está indo muito bem" },
+        { frac: 0.75, title: "75% concluído", sub: "Reta final chegando 💪" },
+        { frac: 0.9, title: "Quase lá!", sub: "Faltam poucas etapas 🎯" },
+      ];
+      const hit = marks.find((m) => newStep === Math.round(totalQ * m.frac));
+      if (hit) triggerCelebration(hit.title, hit.sub);
 
       // Persiste progresso para retomar depois (I14)
       saveProgress({
@@ -1608,7 +1676,47 @@ const Quiz = () => {
   return (
     <>
       {pdfToastBlock}
-      <section className="quiz-section">
+
+      {/* Barra de foco: logo + controles de som/música */}
+      <div className="quiz-focus-bar">
+        <div className="quiz-focus-inner">
+          <a href="/" className="quiz-focus-logo" aria-label="Five One — voltar ao início">
+            <img src={logo} alt="Five One" />
+          </a>
+          <div className="quiz-focus-controls">
+            <button
+              type="button"
+              onClick={toggleFx}
+              className={`focus-toggle${fxOn ? " on" : ""}`}
+              aria-pressed={fxOn}
+              title={fxOn ? "Desligar sons" : "Ligar sons"}
+            >
+              <span aria-hidden="true">{fxOn ? "🔊" : "🔈"}</span> Som
+            </button>
+            <button
+              type="button"
+              onClick={toggleMusic}
+              className={`focus-toggle${musicOn ? " on" : ""}`}
+              aria-pressed={musicOn}
+              title={musicOn ? "Desligar música" : "Ligar música ambiente"}
+            >
+              <span aria-hidden="true">♪</span> Música
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Overlay de micro-celebração */}
+      {celebration && (
+        <div className="quiz-celebration" role="status" aria-live="polite">
+          <div className="quiz-celebration-card">
+            <div className="quiz-celebration-title">{celebration.title}</div>
+            <div className="quiz-celebration-sub">{celebration.sub}</div>
+          </div>
+        </div>
+      )}
+
+      <section className="quiz-section quiz-focus-active">
         <div className="content-container" ref={quizTopRef}>
 
           {/* Milestone progress */}
@@ -1653,7 +1761,7 @@ const Quiz = () => {
           >
             <button
               className={`statement-button${selectedCategory === currentPair.statement1.category ? " selected" : ""}`}
-              onClick={() => setSelectedCategory(currentPair.statement1.category)}
+              onClick={() => { sfx.tick(); setSelectedCategory(currentPair.statement1.category); }}
               aria-label={currentPair.statement1.text}
               role="radio"
               aria-checked={selectedCategory === currentPair.statement1.category}
@@ -1675,7 +1783,7 @@ const Quiz = () => {
 
             <button
               className={`statement-button${selectedCategory === currentPair.statement2.category ? " selected" : ""}`}
-              onClick={() => setSelectedCategory(currentPair.statement2.category)}
+              onClick={() => { sfx.tick(); setSelectedCategory(currentPair.statement2.category); }}
               aria-label={currentPair.statement2.text}
               role="radio"
               aria-checked={selectedCategory === currentPair.statement2.category}
@@ -1691,7 +1799,7 @@ const Quiz = () => {
           {/* Quiz pills for "nenhuma" / "ambas" */}
           <div className="quiz-pills">
             <button
-              onClick={() => setSelectedCategory("nenhuma")}
+              onClick={() => { sfx.tick(); setSelectedCategory("nenhuma"); }}
               className={`quiz-pill${selectedCategory === "nenhuma" ? " selected" : ""}`}
               type="button"
               aria-pressed={selectedCategory === "nenhuma"}
@@ -1699,7 +1807,7 @@ const Quiz = () => {
               Nenhuma das opções
             </button>
             <button
-              onClick={() => setSelectedCategory("ambas")}
+              onClick={() => { sfx.tick(); setSelectedCategory("ambas"); }}
               className={`quiz-pill${selectedCategory === "ambas" ? " selected" : ""}`}
               type="button"
               aria-pressed={selectedCategory === "ambas"}
