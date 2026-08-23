@@ -483,21 +483,21 @@ export const PLANO_30: { semana: string; titulo: string; texto: string; passo: s
     semana: "Semana 1",
     titulo: "Observar & reconhecer",
     texto:
-      "Preste atenção em você durante a semana. Anote 3 situações concretas em que o seu dom de {DOM} apareceu de forma natural — o que você fez, como se sentiu e qual foi o fruto.",
+      "Preste atenção em você durante a semana. Anote 3 situações concretas em que você usou {DOM} de forma natural — o que fez, como se sentiu e qual foi o fruto.",
     passo: "Passo prático: no fim da semana, releia as anotações e circule o momento em que você se sentiu mais vivo.",
   },
   {
     semana: "Semana 2",
     titulo: "Fundamentar na Palavra",
     texto:
-      "Um dom sem raiz bíblica vira só temperamento. Estude 2 textos-base do seu dom principal e 1 do secundário, anotando o que cada um ensina sobre o seu chamado.",
+      "Um dom sem raiz bíblica vira só temperamento. Estude os textos-base do seu perfil — dom principal e secundário — anotando o que cada um ensina sobre o seu chamado.",
     passo: "Passo prático: escolha 1 versículo para memorizar e carregar como lema do mês.",
   },
   {
     semana: "Semana 3",
     titulo: "Praticar servindo",
     texto:
-      "Dom se desenvolve na prática, não na teoria. Coloque o seu dom de {DOM} a serviço de uma pessoa ou grupo específico esta semana — de forma intencional, não aleatória.",
+      "Dom se desenvolve na prática, não na teoria. Coloque {DOM} a serviço de uma pessoa ou grupo específico esta semana — de forma intencional, não aleatória.",
     passo: "Passo prático: defina hoje QUEM você vai servir e QUANDO. Marque na sua agenda.",
   },
   {

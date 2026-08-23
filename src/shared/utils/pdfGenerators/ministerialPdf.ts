@@ -382,6 +382,12 @@ type Analysis = {
   others: DomKey[];
   mode: "normal" | "tie2" | "tie3" | "balanced";
 };
+// lista nomes de dons: "A", "A e B", "A, B e C"
+function joinNames(doms: DomKey[]): string {
+  const ns = doms.map((dm) => DOMS[dm].nome);
+  if (ns.length <= 1) return ns[0] ?? "";
+  return `${ns.slice(0, -1).join(", ")} e ${ns[ns.length - 1]}`;
+}
 function analyze(scores: Record<DomKey, number>): Analysis {
   const ranked = DOM_ORDER.map((dom) => ({ dom, score: scores[dom] || 0 })).sort(
     (a, b) => b.score - a.score,
@@ -524,11 +530,7 @@ function renderResultado(d: jsPDF, name: string, a: Analysis, scores: Record<Dom
   bars(d, a.ranked, M + 96, y + 12, CW - 96);
   y += 96;
   // combinação (texto mais completo) — cobre todos os empates
-  const nameList = (doms: DomKey[]): string => {
-    const ns = doms.map((dm) => DOMS[dm].nome);
-    if (ns.length <= 1) return ns[0] ?? "";
-    return `${ns.slice(0, -1).join(", ")} e ${ns[ns.length - 1]}`;
-  };
+  const nameList = joinNames;
   let comboTxt = "";
   let significados: string[] = [];
   if (a.mode === "balanced") {
@@ -745,8 +747,10 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
   return pageNum + 1;
 }
 
-function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highlight?: DomKey) {
+function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highlights: DomKey[] = []) {
   addPage(d);
+  const hset = new Set(highlights);
+  const many = highlights.length > 1;
   let y = 30;
   eyebrow(d, "Efésios 4 · em um olhar", M, y);
   y += 8;
@@ -754,7 +758,9 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highli
   y += 8;
   y = para(
     d,
-    "Cada dom pensa, foca e contribui de um jeito. Compare as cinco funções — a sua coluna está destacada.",
+    highlights.length
+      ? `Cada dom pensa, foca e contribui de um jeito. Compare as cinco funções — ${many ? "as suas colunas estão destacadas" : "a sua coluna está destacada"}.`
+      : "Cada dom pensa, foca e contribui de um jeito. Compare as cinco funções lado a lado.",
     M,
     y,
     CW,
@@ -797,7 +803,7 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highli
     d.text(row.label.toUpperCase(), M + labelW - 2, ry + cellH / 2 + 1, { align: "right", charSpace: 0.3 });
     DOM_ORDER.forEach((k, i) => {
       const x = colX(i);
-      const on = k === highlight;
+      const on = hset.has(k);
       fc(d, on ? blend(DOMS[k].cor, C.navy, 0.12) : C.panelSoft);
       dc(d, C.line);
       d.setLineWidth(0.15);
@@ -813,24 +819,26 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highli
     ry += cellH + gap;
   });
 
-  // moldura de destaque na coluna do dom da pessoa
-  if (highlight) {
-    const i = DOM_ORDER.indexOf(highlight);
-    if (i >= 0) {
-      const x = colX(i);
-      dc(d, DOMS[highlight].cor);
-      d.setLineWidth(0.7);
-      d.roundedRect(x - 0.8, rowY - 0.8, colW + 1.6, ry - gap - rowY + 1.6, 2.2, 2.2, "S");
-      d.setFont("helvetica", "bold");
-      d.setFontSize(6.4);
-      tc(d, DOMS[highlight].cor);
-      d.text("SEU DOM", x + colW / 2, ry + 2.5, { align: "center", charSpace: 0.4 });
-    }
-  }
+  // moldura de destaque em CADA coluna de dom principal (cobre empate)
+  highlights.forEach((h) => {
+    const i = DOM_ORDER.indexOf(h);
+    if (i < 0) return;
+    const x = colX(i);
+    dc(d, DOMS[h].cor);
+    d.setLineWidth(0.7);
+    d.roundedRect(x - 0.8, rowY - 0.8, colW + 1.6, ry - gap - rowY + 1.6, 2.2, 2.2, "S");
+    d.setFont("helvetica", "bold");
+    d.setFontSize(6.4);
+    tc(d, DOMS[h].cor);
+    d.text(many ? "SEUS DONS" : "SEU DOM", x + colW / 2, ry + 2.5, { align: "center", charSpace: 0.4 });
+  });
 
-  ry += highlight ? 8 : 6;
-  const note =
-    "Por que os cinco: cada dom é uma dimensão do próprio ministério de Cristo. Nenhum é melhor que o outro — juntos, e não isolados, edificam um corpo maduro, missionário e saudável. Onde você é forte, sirva; onde é fraco, cerque-se de quem completa.";
+  ry += highlights.length ? 8 : 6;
+  // nota mais profunda; personaliza quando há dom(s) em destaque
+  const domTxt = highlights.length ? joinNames(highlights) : "";
+  const note = highlights.length
+    ? `Cada um dos cinco dons é uma dimensão do próprio ministério de Cristo — e nenhum foi feito para operar sozinho. ${domTxt} ${many ? "são as suas principais formas" : "é a sua principal forma"} de servir, mas o corpo só amadurece quando os cinco caminham juntos: o apóstolo abre caminho, o profeta alinha, o evangelista alcança, o pastor cuida e o mestre firma na verdade. Onde você é forte, sirva com intensidade; onde é mais fraco, não force — cerque-se de quem completa você. Foi assim que Deus desenhou a igreja: interdependente, e não uniforme.`
+    : "Cada um dos cinco dons é uma dimensão do próprio ministério de Cristo — e nenhum foi feito para operar sozinho. O corpo só amadurece quando os cinco caminham juntos: o apóstolo abre caminho, o profeta alinha, o evangelista alcança, o pastor cuida e o mestre firma na verdade. Onde você é forte, sirva com intensidade; onde é mais fraco, cerque-se de quem completa você. Foi assim que Deus desenhou a igreja: interdependente, e não uniforme.";
   fc(d, blend(C.gold, C.navy, 0.08));
   dc(d, blend(C.gold, C.navy, 0.3));
   d.setLineWidth(0.2);
@@ -842,7 +850,11 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number, highli
   return pageNum + 1;
 }
 
-function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum: number) {
+function renderPlano(d: jsPDF, primaries: DomKey[], footerName: string, pageNum: number) {
+  const domPhrase =
+    primaries.length > 1
+      ? `os seus dons de ${joinNames(primaries)}`
+      : `o seu dom de ${DOMS[primaries[0]].nome}`;
   addPage(d);
   let y = 30;
   eyebrow(d, "Do resultado à prática", M, y);
@@ -876,7 +888,7 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
     d.setFontSize(13);
     tc(d, C.white);
     d.text(w.titulo, colX, y + 1);
-    let ty = para(d, w.texto.replace("{DOM}", primaryName), colX, y + 8, colW, 9.2, C.muted, 1.45);
+    let ty = para(d, w.texto.replace("{DOM}", domPhrase), colX, y + 8, colW, 9.2, C.muted, 1.45);
     ty += 2;
     ty = para(d, w.passo, colX, ty, colW, 8.4, C.mint, 1.4, ["helvetica", "bold"]);
     y = ty + 9;
@@ -1041,10 +1053,10 @@ export async function generateMinisterialPdf(
   if (a.others.length > 0) {
     page = renderOutras(doc, a.others, s, name || "Participante", page);
   }
-  const highlightDom = a.mode === "balanced" ? undefined : a.primaries[0];
-  page = renderComparativo(doc, name || "Participante", page, highlightDom);
-  const primaryName = DOMS[a.primaries[0]].nome;
-  page = renderPlano(doc, primaryName, name || "Participante", page);
+  const highlightDoms = a.mode === "balanced" ? [] : a.primaries;
+  page = renderComparativo(doc, name || "Participante", page, highlightDoms);
+  const planoPrimaries = a.primaries.length ? a.primaries : [a.ranked[0].dom];
+  page = renderPlano(doc, planoPrimaries, name || "Participante", page);
   renderInstagram(doc);
 
   const filename = `Perfil_Ministerial_${(name || "Participante")
