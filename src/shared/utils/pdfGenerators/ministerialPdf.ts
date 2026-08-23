@@ -159,6 +159,129 @@ function verseBox(d: jsPDF, texto: string, ref: string, x: number, y: number, w:
   return y + h;
 }
 
+// lista com marcador "›" (fluxo), retorna y final
+function flowList(
+  d: jsPDF,
+  items: string[],
+  x: number,
+  y: number,
+  w: number,
+  size = 9.2,
+  color: RGB = C.text,
+): number {
+  items.forEach((it) => {
+    d.setFont("helvetica", "bold");
+    d.setFontSize(size);
+    tc(d, C.mint);
+    d.text("›", x, y);
+    y = para(d, it, x + 4.5, y, w - 4.5, size, color, 1.4);
+    y += 2.8;
+  });
+  return y;
+}
+
+// chips (pílulas), retorna y final
+function chips(d: jsPDF, items: string[], x: number, y: number, w: number): number {
+  d.setFont("helvetica", "normal");
+  d.setFontSize(8.6);
+  const padX = 4;
+  const gap = 2.6;
+  const h = 7.4;
+  let cx = x;
+  let cy = y;
+  items.forEach((it) => {
+    const cw = d.getTextWidth(it) + padX * 2;
+    if (cx + cw > x + w) {
+      cx = x;
+      cy += h + gap;
+    }
+    fc(d, C.panelSoft);
+    dc(d, C.line);
+    d.setLineWidth(0.2);
+    d.roundedRect(cx, cy, cw, h, 3.7, 3.7, "FD");
+    tc(d, C.text);
+    d.text(it, cx + padX, cy + 5);
+    cx += cw + gap;
+  });
+  return cy + h;
+}
+
+// imaturo × maduro — duas caixas lado a lado, retorna y final
+function matBox(d: jsPDF, imaturo: string, maduro: string, x: number, y: number, w: number): number {
+  const gap = 6;
+  const bw = (w - gap) / 2;
+  const items = [
+    { h: "Quando imaturo", txt: imaturo, col: C.gold },
+    { h: "Quando maduro", txt: maduro, col: C.mint },
+  ];
+  const size = 8.6;
+  const step = size * 0.352778 * 1.4;
+  let maxLines = 1;
+  d.setFont("helvetica", "normal");
+  d.setFontSize(size);
+  items.forEach((it) => {
+    maxLines = Math.max(maxLines, (d.splitTextToSize(it.txt, bw - 10) as string[]).length);
+  });
+  const boxH = 12 + maxLines * step + 3;
+  items.forEach((it, i) => {
+    const bx = x + i * (bw + gap);
+    fc(d, blend(it.col, C.navy, 0.05));
+    dc(d, blend(it.col, C.navy, 0.32));
+    d.setLineWidth(0.2);
+    d.roundedRect(bx, y, bw, boxH, 2.5, 2.5, "FD");
+    d.setFont("helvetica", "bold");
+    d.setFontSize(7.2);
+    tc(d, it.col);
+    d.text(it.h.toUpperCase(), bx + 5, y + 7, { charSpace: 0.5 });
+    para(d, it.txt, bx + 5, y + 13, bw - 10, size, C.muted, 1.4);
+  });
+  return y + boxH;
+}
+
+// duas listas tituladas lado a lado, retorna y final
+function twoLists(
+  d: jsPDF,
+  lt: string,
+  li: string[],
+  ltCol: RGB,
+  rt: string,
+  ri: string[],
+  rtCol: RGB,
+  x: number,
+  y: number,
+  w: number,
+): number {
+  const gap = 8;
+  const colW = (w - gap) / 2;
+  const cols = [
+    { t: lt, items: li, col: ltCol },
+    { t: rt, items: ri, col: rtCol },
+  ];
+  const size = 9;
+  const step = size * 0.352778 * 1.32;
+  let maxY = y;
+  cols.forEach((c, ci) => {
+    const cx = x + ci * (colW + gap);
+    d.setFont("helvetica", "bold");
+    d.setFontSize(7.6);
+    tc(d, c.col);
+    d.text(c.t.toUpperCase(), cx, y, { charSpace: 0.6 });
+    let cy = y + 6.5;
+    c.items.forEach((it) => {
+      fc(d, c.col);
+      d.circle(cx + 0.9, cy - 0.9, 0.8, "F");
+      d.setFont("helvetica", "normal");
+      d.setFontSize(size);
+      tc(d, C.text);
+      const lines = d.splitTextToSize(it, colW - 4) as string[];
+      lines.forEach((ln, k) => d.text(ln, cx + 3.4, cy + k * step));
+      cy += Math.max(lines.length, 1) * step + 1.8;
+    });
+    maxY = Math.max(maxY, cy);
+  });
+  return maxY;
+}
+
 // ── Radar ─────────────────────────────────────────────────────────────────────
 function radar(d: jsPDF, cx: number, cy: number, R: number, scores: Record<DomKey, number>) {
   const maxPct = Math.max(1, ...DOM_ORDER.map((k) => scores[k] || 0));
@@ -440,63 +563,84 @@ function domHeader(d: jsPDF, dom: DomKey, kicker: string, y: number, small = fal
 // Primário: 2 páginas completas
 function renderPrimary(d: jsPDF, dom: DomKey, kicker: string, footerName: string, pageStart: number): number {
   const dc0 = DOMS[dom];
-  // página 1
+  // ── página 1: essência · forças e pontos cegos · palavras · na prática ──
   addPage(d);
   let y = 28;
   y = domHeader(d, dom, kicker, y);
-  y += 6;
+  y += 7;
   y = para(d, dc0.essencia, M, y, CW, 10, C.text, 1.55);
-  y += 8;
-  y = sectionTitle(d, "Características", M, y);
-  y = bullets2(d, dc0.caracteristicas.slice(0, 8), M, y, 9, C.mint);
-  y += 8;
-  y = sectionTitle(d, "Funções principais", M, y);
-  y = bullets2(d, dc0.funcoes.slice(0, 6), M, y, 9, C.mint);
+  y += 10;
+  y = twoLists(
+    d,
+    "Características",
+    dc0.caracteristicas.slice(0, 6),
+    C.mint,
+    "Pontos cegos",
+    dc0.pontosCegos.slice(0, 6),
+    C.gold,
+    M,
+    y,
+    CW,
+  );
+  y += 11;
+  y = sectionTitle(d, "Palavras-chave", M, y);
+  y += 2;
+  y = chips(d, dc0.palavras, M, y, CW);
+  y += 12;
+  y = sectionTitle(d, "Como se manifesta no dia a dia", M, y);
+  y += 2;
+  flowList(d, dc0.naPratica, M, y, CW);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageStart));
 
-  // página 2
+  // ── página 2: maturidade · funções · como desenvolver · versículo ──
   addPage(d);
   y = 28;
   domBadge(d, dom, M, y, 11);
   eyebrow(d, `${dc0.nome} · continuação`, M + 16, y + 4, C.label);
   heading(d, "Cuidados e crescimento", M + 16, y + 15, 18);
-  y += 24;
-  y = sectionTitle(d, "Pontos cegos", M, y, C.gold);
-  y = bullets2(d, dc0.pontosCegos.slice(0, 8), M, y, 9, C.gold);
-  y += 8;
+  y += 26;
+  y = sectionTitle(d, "Imaturo × Maduro", M, y, C.gold);
+  y += 2;
+  y = matBox(d, dc0.imaturo, dc0.maduro, M, y, CW);
+  y += 12;
+  y = sectionTitle(d, "Funções principais", M, y);
+  y = bullets2(d, dc0.funcoes.slice(0, 6), M, y, 9, C.mint);
+  y += 11;
   y = sectionTitle(d, "Como desenvolver", M, y);
-  d.setFont("helvetica", "normal");
-  d.setFontSize(9.2);
-  dc0.comoDesenvolver.forEach((it) => {
-    tc(d, C.mint);
-    d.text("›", M, y);
-    y = para(d, it, M + 4, y, CW - 4, 9.2, C.text, 1.4);
-    y += 2.5;
-  });
-  y += 5;
-  y = verseBox(d, dc0.versiculo.texto, dc0.versiculo.ref, M, y, CW);
+  y += 2;
+  y = flowList(d, dc0.comoDesenvolver, M, y, CW);
   y += 8;
-  y = sectionTitle(d, "Referências bíblicas", M, y);
-  bullets2(d, dc0.referencias, M, y, 8.5, C.line, C.muted);
+  verseBox(d, dc0.versiculo.texto, dc0.versiculo.ref, M, y, CW);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageStart + 1));
   return pageStart + 2;
 }
 
-// Secundário: 1 página condensada
+// Secundário: 1 página completa
 function renderSecondary(d: jsPDF, dom: DomKey, footerName: string, pageNum: number): number {
   const dc0 = DOMS[dom];
   addPage(d);
   let y = 28;
   y = domHeader(d, dom, "Dom secundário", y);
-  y += 6;
+  y += 7;
   y = para(d, dc0.essencia, M, y, CW, 10, C.text, 1.55);
-  y += 8;
-  y = sectionTitle(d, "Características", M, y);
-  y = bullets2(d, dc0.caracteristicas.slice(0, 6), M, y, 9, C.mint);
-  y += 8;
-  y = sectionTitle(d, "Pontos cegos", M, y, C.gold);
-  y = bullets2(d, dc0.pontosCegos.slice(0, 6), M, y, 9, C.gold);
-  y += 8;
+  y += 10;
+  y = twoLists(
+    d,
+    "Características",
+    dc0.caracteristicas.slice(0, 6),
+    C.mint,
+    "Pontos cegos",
+    dc0.pontosCegos.slice(0, 6),
+    C.gold,
+    M,
+    y,
+    CW,
+  );
+  y += 11;
+  y = sectionTitle(d, "Imaturo × Maduro", M, y, C.gold);
+  y += 2;
+  y = matBox(d, dc0.imaturo, dc0.maduro, M, y, CW);
+  y += 10;
   verseBox(d, dc0.versiculo.texto, dc0.versiculo.ref, M, y, CW);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageNum));
   return pageNum + 1;
@@ -519,24 +663,39 @@ function renderOutras(d: jsPDF, others: DomKey[], scores: Record<DomKey, number>
     C.muted,
     1.5,
   );
-  y += 8;
+  y += 10;
   // percentual relativo entre os 5 dons (mesma base das barras da pág. 2)
   const total = Math.max(1, DOM_ORDER.reduce((s, k) => s + Math.max(0, scores[k] || 0), 0));
   others.forEach((dom) => {
-    const h = 22;
+    const h = 32;
     fc(d, C.panelSoft);
     dc(d, C.line);
     d.setLineWidth(0.2);
     d.roundedRect(M, y, CW, h, 3, 3, "FD");
-    domBadge(d, dom, M + 5, y + 5, 12);
+    domBadge(d, dom, M + 6, y + 7, 14);
     d.setFont(SERIF, "normal");
-    d.setFontSize(13);
+    d.setFontSize(14);
     tc(d, C.white);
     const pct = Math.round((Math.max(0, scores[dom] || 0) / total) * 100);
-    d.text(`${DOMS[dom].nome} · ${pct}%`, M + 22, y + 9);
-    para(d, DOMS[dom].frase, M + 22, y + 15, CW - 28, 8.6, C.muted, 1.35);
-    y += h + 5;
+    d.text(`${DOMS[dom].nome} · ${pct}%`, M + 27, y + 12);
+    para(d, DOMS[dom].frase, M + 27, y + 18, CW - 34, 8.8, C.muted, 1.35);
+    d.setFont("helvetica", "bold");
+    d.setFontSize(7);
+    tc(d, blend(DOMS[dom].cor, C.navy, 0.8));
+    d.text(DOMS[dom].palavras.slice(0, 4).join("   ·   ").toUpperCase(), M + 27, y + 27, { charSpace: 0.3 });
+    y += h + 9;
   });
+  // nota de fecho
+  y += 1;
+  const cl =
+    "Estas capacidades não são fraquezas — são parte do time que Deus colocou em você. Desenvolva o seu dom principal sem ignorar as outras.";
+  fc(d, blend(C.mint, C.navy, 0.05));
+  dc(d, C.line);
+  d.setLineWidth(0.2);
+  const clLines = (d.splitTextToSize(cl, CW - 12) as string[]).length;
+  const clH = 10 + clLines * 4.8;
+  d.roundedRect(M, y, CW, clH, 3, 3, "FD");
+  para(d, cl, M + 6, y + 7, CW - 12, 8.8, C.text, 1.45);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageNum));
   return pageNum + 1;
 }
@@ -549,19 +708,20 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number) {
   heading(d, "Os cinco dons lado a lado", M, y, 19);
   y += 12;
 
+  y += 4;
   const labelW = 22;
-  const gap = 2;
+  const gap = 2.4;
   const colW = (CW - labelW - gap * 5) / 5;
   const rowY = y;
   // cabeçalho colorido
   DOM_ORDER.forEach((k, i) => {
     const x = M + labelW + gap + i * (colW + gap);
     fc(d, DOMS[k].cor);
-    d.roundedRect(x, rowY, colW, 9, 1.6, 1.6, "F");
+    d.roundedRect(x, rowY, colW, 11, 1.8, 1.8, "F");
     d.setFont("helvetica", "bold");
     d.setFontSize(7.4);
     tc(d, k === "evangelista" ? ([58, 47, 0] as RGB) : C.navy);
-    d.text(DOMS[k].nome, x + colW / 2, rowY + 6, { align: "center" });
+    d.text(DOMS[k].nome, x + colW / 2, rowY + 7, { align: "center" });
   });
 
   const rows: { label: string; get: (k: DomKey) => string; miss?: boolean }[] = [
@@ -570,8 +730,8 @@ function renderComparativo(d: jsPDF, footerName: string, pageNum: number) {
     { label: "Estilo", get: (k) => DOMS[k].estilo },
     { label: "Se falta", get: (k) => DOMS[k].seFalta, miss: true },
   ];
-  let ry = rowY + 12;
-  const cellH = 12;
+  let ry = rowY + 14;
+  const cellH = 16;
   rows.forEach((row) => {
     d.setFont("helvetica", "bold");
     d.setFontSize(7.4);
@@ -624,25 +784,25 @@ function renderPlano(d: jsPDF, primaryName: string, footerName: string, pageNum:
   eyebrow(d, "Do resultado à prática", M, y);
   y += 8;
   heading(d, "Seu plano de 30 dias", M, y, 20);
-  y += 14;
+  y += 18;
   PLANO_30.forEach((w, i) => {
     if (i > 0) {
       dc(d, C.line);
       d.setLineWidth(0.2);
-      d.line(M, y - 4, PAGE.w - M, y - 4);
+      d.line(M, y - 6, PAGE.w - M, y - 6);
     }
     d.setFont(SERIF, "normal");
-    d.setFontSize(11);
+    d.setFontSize(12);
     tc(d, C.mint);
     d.text(w.semana, M, y + 1);
     d.setFont(SERIF, "normal");
-    d.setFontSize(11.5);
+    d.setFontSize(12.5);
     tc(d, C.white);
-    d.text(w.titulo, M + 30, y + 1);
-    para(d, w.texto.replace("{DOM}", primaryName), M + 30, y + 7, CW - 30, 9.2, C.muted, 1.4);
-    y += 22;
+    d.text(w.titulo, M + 32, y + 1);
+    para(d, w.texto.replace("{DOM}", primaryName), M + 32, y + 8, CW - 32, 9.4, C.muted, 1.45);
+    y += 29;
   });
-  y += 2;
+  y += 3;
   verseBox(d, "Cada um exerça o dom que recebeu para servir aos outros.", "1 Pedro 4:10", M, y, CW);
   footer(d, `Perfil Ministerial · ${footerName}`, String(pageNum));
   return pageNum + 1;

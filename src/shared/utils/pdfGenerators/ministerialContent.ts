@@ -15,6 +15,10 @@ export interface DomContent {
   funcoes: string[];
   pontosCegos: string[];
   comoDesenvolver: string[];
+  palavras: string[];          // palavras-chave (chips)
+  naPratica: string[];         // como se manifesta no dia a dia
+  imaturo: string;             // quando o dom opera imaturo
+  maduro: string;              // quando o dom opera maduro
   versiculo: { texto: string; ref: string };
   referencias: string[];
   // comparativo
@@ -66,6 +70,17 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Ande com pastores e mestres — equilibram o avanço com cuidado e profundidade.",
       "Desenvolva compromisso com detalhes e acompanhamento pós-implantação.",
     ],
+    palavras: ["Visionário", "Pioneiro", "Estratégico", "Multiplicador", "Fundador"],
+    naPratica: [
+      "Você enxerga onde a igreja pode chegar antes dos outros e já começa a abrir caminho.",
+      "Sente inquietação com o que está estagnado e vontade de iniciar algo novo.",
+      "Conecta pessoas, recursos e ideias em torno de um propósito maior.",
+      "Pensa em multiplicar: não basta crescer, é preciso enviar e estabelecer.",
+    ],
+    imaturo:
+      "Atropela pessoas e processos pela pressa de avançar, começa muitas frentes sem concluir e controla em vez de confiar.",
+    maduro:
+      "Abre caminho com visão e leva as pessoas junto — forma e envia outros para sustentar o que nasce.",
     versiculo: {
       texto:
         "Como sábio construtor, lancei o fundamento, e outro edifica sobre ele. Cada um veja como edifica.",
@@ -128,6 +143,17 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Sustente a sensibilidade com oração, jejum e estudo bíblico consistente.",
       "Valorize a correção fraterna e o discipulado de outros dons.",
     ],
+    palavras: ["Sensível", "Verdadeiro", "Discernidor", "Corajoso", "Vigilante"],
+    naPratica: [
+      "Você percebe rápido quando algo está fora de lugar, mesmo sem saber explicar de imediato.",
+      "Sente o peso de falar a verdade, ainda que seja desconfortável.",
+      "Busca a presença de Deus e discerne tempos e direções.",
+      "Se incomoda com aparências e anseia por autenticidade na igreja.",
+    ],
+    imaturo:
+      "Fala fora do tempo e sem amor, confunde opinião com revelação e foca nos erros, perdendo a esperança e o consolo.",
+    maduro:
+      "Traz verdade que edifica, exorta e consola — corrige com mansidão e submete suas percepções à comunidade.",
     versiculo: {
       texto:
         "Certamente o Senhor Deus não faz coisa alguma sem revelar o seu segredo aos seus servos, os profetas.",
@@ -190,6 +216,17 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Equilibre paixão com verdade bíblica; firme a mensagem nas Escrituras.",
       "Desperte outros a testemunhar — evangelismo é cultura, não só evento.",
     ],
+    palavras: ["Relacional", "Comunicador", "Missionário", "Adaptável", "Compassivo"],
+    naPratica: [
+      "Você puxa conversa e o assunto naturalmente caminha para o que realmente importa.",
+      "Fica atento a quem está sofrendo e sente o impulso de se aproximar.",
+      "Traduz temas espirituais complexos em linguagem simples e acessível.",
+      "Se anima genuinamente quando vê alguém dando um passo de fé.",
+    ],
+    imaturo:
+      "Pressiona por decisões rápidas, mede tudo por números e abandona quem alcançou sem discipular.",
+    maduro:
+      "Alcança com paciência, caminha junto no discipulado e celebra o processo, não só o momento da decisão.",
     versiculo: {
       texto: "Faça o trabalho de um evangelista, cumpra plenamente o seu ministério.",
       ref: "2 Timóteo 4:5",
@@ -251,6 +288,17 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Estabeleça limites saudáveis entre vida pessoal e ministério.",
       "Ande com apóstolos e mestres para equilibrar cuidado com visão e profundidade.",
     ],
+    palavras: ["Acolhedor", "Cuidadoso", "Presente", "Conciliador", "Fiel"],
+    naPratica: [
+      "Você percebe quando alguém não está bem, mesmo que a pessoa não diga nada.",
+      "As pessoas te procuram para desabafar e buscar conselho.",
+      "Se importa em manter a unidade e reconciliar quem se afastou.",
+      "Sente alegria em acompanhar alguém crescendo ao longo do tempo.",
+    ],
+    imaturo:
+      "Superprotege e gera dependência, evita o conflito necessário e se sobrecarrega por não delegar.",
+    maduro:
+      "Cuida formando pessoas maduras e autônomas, confronta com graça quando é preciso e mantém limites saudáveis.",
     versiculo: {
       texto: "Eu sou o bom pastor. O bom pastor dá a sua vida pelas ovelhas.",
       ref: "João 10:11",
@@ -312,6 +360,17 @@ export const DOMS: Record<DomKey, DomContent> = {
       "Ande com evangelistas e pastores para unir profundidade a missão e cuidado.",
       "Forme novos mestres — multiplique o ensino, não o centralize.",
     ],
+    palavras: ["Estudioso", "Didático", "Fiel", "Profundo", "Coerente"],
+    naPratica: [
+      "Você gosta de entender as coisas a fundo antes de ensinar ou opinar.",
+      "As pessoas te procuram com perguntas difíceis sobre a Bíblia e a fé.",
+      "Se incomoda quando algo é ensinado de forma rasa ou incorreta.",
+      "Busca coerência entre aquilo que você crê, ensina e vive.",
+    ],
+    imaturo:
+      "Prioriza o conhecimento acima da vida, usa linguagem técnica que afasta e se perde em debates secundários.",
+    maduro:
+      "Ensina para transformar, comunica com simplicidade e conecta a doutrina com a prática do dia a dia.",
     versiculo: {
       texto:
         "Procura apresentar-te a Deus aprovado, como obreiro que maneja bem a palavra da verdade.",
