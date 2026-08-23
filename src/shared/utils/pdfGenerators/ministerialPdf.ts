@@ -295,36 +295,36 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
   bg(d);
   // topo
   d.setFont(SERIF, "normal");
-  d.setFontSize(15);
+  d.setFontSize(19);
   tc(d, C.white);
-  d.text("Five One", M, 24);
+  d.text("Five One", M, 26);
   d.setFont("helvetica", "bold");
-  d.setFontSize(7.6);
+  d.setFontSize(7.8);
   tc(d, C.label);
-  d.text("PERFIL MINISTERIAL", PAGE.w - M, 23, { align: "right", charSpace: 0.7 });
+  d.text("PERFIL MINISTERIAL", PAGE.w - M, 25, { align: "right", charSpace: 0.8 });
 
   // glow sutil
   fc(d, blend(C.mint, C.navy, 0.06));
   d.circle(170, 60, 55, "F");
   fc(d, C.navy);
 
-  // hero
-  let y = 120;
-  eyebrow(d, "Relatório de resultado", M, y);
-  y += 14;
-  const fs = fitFontSize(d, name, CW, 46, [SERIF, "normal"]);
+  // hero — nome grande, preenchendo a largura (igual ao mockup)
+  eyebrow(d, "Relatório de resultado", M, 128);
+  const fs = fitFontSize(d, name, CW, 70, [SERIF, "normal"]);
   d.setFont(SERIF, "normal");
   d.setFontSize(fs);
   tc(d, C.white);
-  d.text(name, M, y);
-  y += 10;
+  const ascent = fs * 0.352778 * 0.72; // altura aprox. do nome em mm
+  const nameBaseline = 128 + 8 + ascent;
+  d.text(name, M, nameBaseline);
+  let y = nameBaseline + 9;
   d.setFont("helvetica", "normal");
-  d.setFontSize(10);
+  d.setFontSize(11);
   tc(d, C.muted);
   d.text(`Avaliação realizada em ${dateStr}`, M, y);
 
   // caixas de dom
-  y += 18;
+  y += 20;
   const coPrincipal = a.primaries.length >= 2;
   const boxes: { label: string; dom: DomKey; sec?: boolean }[] = [];
   if (a.mode === "balanced") {
@@ -339,12 +339,12 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
     fc(d, C.panelSoft);
     dc(d, C.line);
     d.setLineWidth(0.2);
-    d.roundedRect(M, y, CW, 24, 3, 3, "FD");
-    eyebrow(d, "Resultado", M + 6, y + 9, C.gold);
+    d.roundedRect(M, y, CW, 30, 3.5, 3.5, "FD");
+    eyebrow(d, "Resultado", M + 7, y + 11, C.gold);
     d.setFont(SERIF, "normal");
-    d.setFontSize(15);
+    d.setFontSize(21);
     tc(d, C.white);
-    d.text("Perfil equilibrado", M + 6, y + 18);
+    d.text("Perfil equilibrado", M + 7, y + 23);
   } else {
     const n = boxes.length;
     const gap = 6;
@@ -354,14 +354,14 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
       fc(d, C.panelSoft);
       dc(d, C.line);
       d.setLineWidth(0.2);
-      d.roundedRect(bx, y, bw, 24, 3, 3, "FD");
-      eyebrow(d, b.label, bx + 5, y + 8, C.label);
+      d.roundedRect(bx, y, bw, 30, 3.5, 3.5, "FD");
+      eyebrow(d, b.label, bx + 7, y + 11, C.label);
       fc(d, DOMS[b.dom].cor);
-      d.circle(bx + 6.5, y + 16.5, 1.6, "F");
+      d.circle(bx + 8.4, y + 21.2, 2, "F");
       d.setFont(SERIF, "normal");
-      d.setFontSize(b.sec ? 14 : 16);
+      d.setFontSize(b.sec ? 19 : 22);
       tc(d, b.sec ? C.muted : C.white);
-      d.text(DOMS[b.dom].nome, bx + 11, y + 18);
+      d.text(DOMS[b.dom].nome, bx + 13, y + 23.2);
     });
   }
 
