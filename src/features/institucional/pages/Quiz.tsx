@@ -1249,22 +1249,24 @@ const Quiz = () => {
             Antes de ver o resultado completo, <strong>siga o Marcelo</strong> — toda semana ele ensina
             como desenvolver o seu dom de {gDomName}. Não perca o que vem por aí.
           </p>
-          <a
-            href={IG_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="gate-follow-btn"
-            onClick={() => {
-              trackFollow("gate");
-              setResultUnlocked(true);
-            }}
-          >
-            <FaInstagram style={{ marginRight: 8, verticalAlign: "-2px" }} />
-            Seguir @{IG_HANDLE}
-          </a>
-          <button type="button" className="gate-skip" onClick={() => setResultUnlocked(true)}>
-            Ver meu resultado →
-          </button>
+          <div className="gate-buttons">
+            <a
+              href={IG_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gate-follow-btn"
+              onClick={() => {
+                trackFollow("gate");
+                setResultUnlocked(true);
+              }}
+            >
+              <FaInstagram style={{ marginRight: 8, verticalAlign: "-2px" }} />
+              Seguir @{IG_HANDLE}
+            </a>
+            <button type="button" className="gate-result-btn" onClick={() => setResultUnlocked(true)}>
+              Ver meu resultado →
+            </button>
+          </div>
           <p className="gate-reassure">
             <span aria-hidden="true">✓</span> Seu resultado completo já foi enviado para o seu e-mail —
             pode seguir sem medo de perder.
