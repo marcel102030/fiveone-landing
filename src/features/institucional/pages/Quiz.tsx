@@ -466,7 +466,7 @@ const Quiz = () => {
   const [emailInfoLeaving, setEmailInfoLeaving] = useState(false);
 
   const [sessionId, setSessionId] = useState<string | null>(null);
-  const [resultToken, setResultToken] = useState<string | null>(null);
+  const [, setResultToken] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const quizStartedAtRef = useRef<number>(0);
   const questionStartedAtRef = useRef<number>(0);
