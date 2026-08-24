@@ -362,6 +362,15 @@ function buildCustomerEmailHtml(payload: {
       </td></tr>
     </table>
   </td></tr>
+  <tr><td style="padding:28px 32px 0;">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background:#faf5ff; border:1px solid #f0e6fb; border-radius:14px;">
+      <tr><td style="padding:22px 24px; text-align:center;">
+        <p style="margin:0 0 4px; font-size:11px; font-weight:700; letter-spacing:2px; color:#d62976; text-transform:uppercase;">Continue no Instagram</p>
+        <p style="margin:0 0 16px; font-size:15px; line-height:1.6; color:#3d4f6f;">Toda semana o <strong>Marcelo</strong> ensina como desenvolver o seu dom de <strong>${ctaDomLabel}</strong> — Bíblia, teologia e prática. Vem comigo!</p>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" align="center" style="margin:0 auto;"><tr><td style="border-radius:12px; background-image:linear-gradient(135deg,#feda75,#d62976 45%,#4f5bd5); background-color:#d62976;"><a href="https://www.instagram.com/marcelojunior.fiveone/" style="display:block; padding:14px 30px; color:#ffffff !important; font-weight:700; font-size:15px; text-decoration:none;"><!--[if mso]><span style="color:#ffffff;"><![endif]-->Seguir @marcelojunior.fiveone<!--[if mso]></span><![endif]--></a></td></tr></table>
+      </td></tr>
+    </table>
+  </td></tr>
   <tr><td style="padding:36px 32px 8px; color:#0a192f;">
     <div style="height:2px; width:32px; background:#64ffda; margin-bottom:14px;"></div>
     <h3 style="margin:0 0 4px; font-size:18px; font-weight:700; color:#0a192f;">Suas 5 pontuações</h3>

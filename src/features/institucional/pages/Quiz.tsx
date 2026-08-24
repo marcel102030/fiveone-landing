@@ -30,6 +30,11 @@ import {
   musicPref,
   setMusicPref,
 } from "../utils/quizFx";
+import { makeQrDataUrl } from "../utils/qr";
+
+// Instagram do Marcelo (perfil principal a converter)
+const IG_HANDLE = "marcelojunior.fiveone";
+const IG_URL = "https://www.instagram.com/marcelojunior.fiveone/";
 
 
 import { buildCounterbalancedComparisons, categoryMetadata, type ComparisonPair } from "../data/questions";
@@ -411,6 +416,17 @@ const Quiz = () => {
   const [musicOn, setMusicOn] = useState(false);
   const [celebration, setCelebration] = useState<{ title: string; sub: string } | null>(null);
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Soft-gate de Instagram antes de revelar o resultado
+  const [resultUnlocked, setResultUnlocked] = useState(false);
+  const trackFollow = (where: string) => {
+    if (typeof gtag === "function") {
+      gtag("event", "instagram_follow_click", { event_category: "quiz", event_label: where });
+    }
+  };
+  const openInstagram = () => {
+    trackFollow("gate");
+    window.open(IG_URL, "_blank", "noopener");
+  };
 
   // Inicializa preferências de som/música; retoma música no 1º gesto; limpa ao sair
   useEffect(() => {
@@ -827,7 +843,8 @@ const Quiz = () => {
         scoresByDom[k] = (Number(v) / totalScore) * 100;
       });
       const hoje = new Date().toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' });
-      await generateMinisterialPdf(userInfo.name, hoje, scoresByDom, true);
+      const igQr = await makeQrDataUrl(IG_URL);
+      await generateMinisterialPdf(userInfo.name, hoje, scoresByDom, true, igQr ?? undefined);
 
       setShowDownloadSuccess(true);
       setTimeout(() => setShowDownloadSuccess(false), 8000);
@@ -1220,11 +1237,13 @@ const Quiz = () => {
                         });
 
                         const hoje = new Date().toLocaleDateString("pt-BR", { day: "numeric", month: "long", year: "numeric" });
+                        const igQr = await makeQrDataUrl(IG_URL);
                         const { base64, filename } = await generateMinisterialPdf(
                           userInfo.name,
                           hoje,
                           scoresByDom,
-                          false
+                          false,
+                          igQr ?? undefined,
                         );
 
                         const scoresForEmail = computeScoresForEmail(categoryScores);
@@ -1302,6 +1321,23 @@ const Quiz = () => {
               >
                 {isSubmitting ? 'Processando...' : 'Ver resultado'}
               </button>
+
+              {/* Gatilho: seguir o Marcelo */}
+              <div className="form-follow-nudge">
+                <span>
+                  Teste criado por <strong>@{IG_HANDLE}</strong>
+                </span>
+                <a
+                  href={IG_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="form-follow-link"
+                  onClick={() => trackFollow("form")}
+                >
+                  <FaInstagram style={{ verticalAlign: "-2px", marginRight: 5 }} />
+                  Seguir no Instagram
+                </a>
+              </div>
             </div>
           </div>
         </div>
@@ -1332,6 +1368,41 @@ const Quiz = () => {
       </div>
     )
   );
+
+  // ===== SOFT-GATE: seguir o Instagram antes de revelar o resultado =====
+  if (showResults && userInfo.submitted && !resultUnlocked) {
+    const gSorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+    const gLead = gSorted[0] ? (gSorted[0][0] as CategoryEnum) : null;
+    const gDomName = gLead ? DOM_NAMES[gLead] : "o seu dom";
+    return (
+      <section className="quiz-section quiz-gate">
+        <div className="content-container gate-card">
+          <span className="gate-badge">🎉 Seu resultado está pronto!</span>
+          <h2 className="gate-title">
+            Você é <span className="gate-dom">{gDomName}</span>
+          </h2>
+          <p className="gate-text">
+            Antes de ver o resultado completo, <strong>siga o Marcelo</strong> — toda semana ele ensina
+            como desenvolver o seu dom de {gDomName}. Não perca o que vem por aí.
+          </p>
+          <button
+            type="button"
+            className="gate-follow-btn"
+            onClick={() => {
+              openInstagram();
+              setResultUnlocked(true);
+            }}
+          >
+            <FaInstagram style={{ marginRight: 8, verticalAlign: "-2px" }} />
+            Seguir @{IG_HANDLE}
+          </button>
+          <button type="button" className="gate-skip" onClick={() => setResultUnlocked(true)}>
+            Ver meu resultado →
+          </button>
+        </div>
+      </section>
+    );
+  }
 
   // ===== RESULTS SCREEN =====
   if (showResults) {

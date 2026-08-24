@@ -899,7 +899,7 @@ function renderPlano(d: jsPDF, primaries: DomKey[], footerName: string, pageNum:
   return pageNum + 1;
 }
 
-function renderInstagram(d: jsPDF) {
+function renderInstagram(d: jsPDF, a: Analysis, igQr?: string) {
   addPage(d);
   // brilho ambiente (antes do texto, igual à capa)
   softGlow(d, 174, 34, 92, 0.08);
@@ -913,7 +913,10 @@ function renderInstagram(d: jsPDF) {
   tc(d, C.mint);
   d.text("VAMOS JUNTOS", PAGE.w - M, 25, { align: "right", charSpace: 0.7 });
 
-  let y = 66;
+  const domTxt = a.primaries.length ? joinNames(a.primaries) : "o seu dom";
+  const colW = 116; // coluna de texto à esquerda (QR fica à direita)
+
+  let y = 60;
   // badge instagram
   fc(d, [214, 41, 118]);
   d.roundedRect(M, y, 22, 22, 6, 6, "F");
@@ -923,78 +926,91 @@ function renderInstagram(d: jsPDF) {
   d.circle(M + 11, y + 11, 3, "S");
   fc(d, C.white);
   d.circle(M + 15, y + 6.5, 0.9, "F");
-  y += 33;
+  y += 32;
 
-  heading(d, "Continue comigo", M, y, 27);
-  y += 12;
+  heading(d, "Continue comigo", M, y, 26);
+  y += 11;
   y = para(
     d,
-    "Você descobriu o seu dom — agora vem a caminhada. Toda semana eu compartilho conteúdo pra te ajudar a desenvolver o seu chamado e viver a fé com profundidade.",
+    `Você descobriu que é ${domTxt}. Agora vem a caminhada — e eu quero andar com você. Toda semana eu ajudo você a desenvolver o seu dom.`,
     M,
     y,
-    128,
-    10.5,
+    colW,
+    10,
     C.muted,
-    1.55,
+    1.5,
   );
-  y += 13;
-  // o que você encontra
+  y += 11;
   y = sectionTitle(d, "O que você encontra por lá", M, y);
   y += 3;
   y = flowList(
     d,
     [
-      "Estudos de Bíblia e teologia que cabem no seu dia",
-      "Cultura e atualidade lidas à luz do Evangelho",
-      "Ferramentas práticas para você exercer o seu dom",
+      "Como desenvolver, na prática, o seu dom",
+      "Bíblia, teologia e cultura à luz do Evangelho",
+      "Conteúdo novo toda semana pra crescer no seu chamado",
     ],
     M,
     y,
-    CW,
-    9.6,
+    colW,
+    9.4,
   );
+
+  // QR à direita — "aponte a câmera e me siga"
+  if (igQr) {
+    const qs = 44;
+    const qx = PAGE.w - M - qs;
+    const qy = 72;
+    fc(d, C.white);
+    d.roundedRect(qx - 3, qy - 3, qs + 6, qs + 17, 3.5, 3.5, "F");
+    try {
+      d.addImage(igQr, "PNG", qx, qy, qs, qs);
+    } catch {
+      /* sem QR se addImage falhar */
+    }
+    d.setFont("helvetica", "bold");
+    d.setFontSize(7.6);
+    tc(d, C.navy);
+    d.text("Aponte a câmera", qx + qs / 2, qy + qs + 6, { align: "center" });
+    d.text("e me siga", qx + qs / 2, qy + qs + 10.5, { align: "center" });
+  }
+
   y += 15;
-  // handles
+  // handle grande (herói)
   d.setFont(SERIF, "normal");
-  d.setFontSize(22);
+  d.setFontSize(23);
   tc(d, C.mint);
   d.text("@marcelojunior.fiveone", M, y);
-  y += 8;
+  y += 7;
   d.setFont("helvetica", "normal");
-  d.setFontSize(9.5);
+  d.setFontSize(9);
   tc(d, C.muted);
-  d.text("e também: @fiveone.oficial  ·  Teólogo · Dom de Mestre (Ef 4)", M, y);
-  y += 15;
-  // pílulas
+  d.text("Marcelo Junior · Teólogo (Ef 4)  ·  também: @fiveone.oficial", M, y);
+  y += 13;
+  // pílula seguir (destaque)
   fc(d, C.mint);
-  d.roundedRect(M, y, 64, 12, 6, 6, "F");
+  d.roundedRect(M, y, 72, 13, 6.5, 6.5, "F");
   d.setFont("helvetica", "bold");
-  d.setFontSize(9.5);
+  d.setFontSize(10);
   tc(d, [5, 46, 22]);
-  d.text("Seguir no Instagram", M + 32, y + 7.6, { align: "center" });
-  dc(d, C.line);
-  d.setLineWidth(0.3);
-  fc(d, C.panelSoft);
-  d.roundedRect(M + 70, y, 58, 12, 6, 6, "FD");
-  d.setFont("helvetica", "normal");
-  tc(d, C.text);
-  d.text("fiveonemovement.com", M + 70 + 29, y + 7.6, { align: "center" });
-  y += 22;
+  d.text("Seguir no Instagram", M + 36, y + 8.4, { align: "center" });
+  y += 21;
+  // loop de stories
   dc(d, C.mint);
   d.setLineWidth(0.6);
   d.line(M, y, M, y + 11);
   para(
     d,
-    "Me marca nos stories contando qual foi o seu dom — vou adorar ver e caminhar com você nessa jornada!",
+    "Me marca nos stories contando qual foi o seu dom — vou adorar ver e repostar! Assim mais gente descobre o chamado também.",
     M + 4,
     y + 3,
     CW - 4,
     9,
-    C.muted,
+    C.text,
     1.4,
   );
 
-  footer(d, "Five One · Movimento dos 5 Ministérios", "@marcelojunior.fiveone");
+  footer(d, "Five One · @marcelojunior.fiveone", "@marcelojunior.fiveone");
 }
 
 // ── Entry point ─────────────────────────────────────────────────────────────────
@@ -1018,6 +1034,7 @@ export async function generateMinisterialPdf(
   dateStr: string,
   scores: Record<string, number>,
   download = true,
+  igQr?: string,
 ): Promise<MinisterialPdfResult> {
   const s = DOM_ORDER.reduce((acc, k) => {
     acc[k] = Number(scores[k] ?? 0);
@@ -1057,7 +1074,7 @@ export async function generateMinisterialPdf(
   page = renderComparativo(doc, name || "Participante", page, highlightDoms);
   const planoPrimaries = a.primaries.length ? a.primaries : [a.ranked[0].dom];
   page = renderPlano(doc, planoPrimaries, name || "Participante", page);
-  renderInstagram(doc);
+  renderInstagram(doc, a, igQr);
 
   const filename = `Perfil_Ministerial_${(name || "Participante")
     .normalize("NFD")

@@ -3226,3 +3226,92 @@
   .quiz-celebration-card { animation: celebFade 1.9s ease forwards; }
   @keyframes celebFade { 0%,100% { opacity: 0; } 12%,82% { opacity: 1; } }
 }
+
+/* ===== SOFT-GATE Instagram (antes do resultado) ===== */
+.quiz-gate { justify-content: center; }
+.gate-card {
+  max-width: 540px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.gate-badge {
+  display: inline-block;
+  padding: 0.4rem 1rem;
+  border-radius: 999px;
+  background: rgba(100, 255, 218, 0.12);
+  border: 1px solid rgba(100, 255, 218, 0.35);
+  color: var(--mint);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  margin-bottom: 1.3rem;
+}
+.gate-title { font-size: 2rem; color: var(--text-light-slate); margin: 0 0 0.9rem; }
+.gate-dom { color: var(--mint); }
+.gate-text {
+  color: var(--text-slate);
+  font-size: 1.05rem;
+  line-height: 1.7;
+  margin: 0 auto 1.9rem;
+  max-width: 440px;
+}
+.gate-text strong { color: var(--text-light-slate); }
+.gate-follow-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, #feda75, #d62976 45%, #4f5bd5);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  border: none;
+  border-radius: 14px;
+  cursor: pointer;
+  box-shadow: 0 10px 30px -8px rgba(214, 41, 118, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.gate-follow-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px -8px rgba(214, 41, 118, 0.6); }
+.gate-skip {
+  margin-top: 1.2rem;
+  background: none;
+  border: none;
+  color: var(--text-slate);
+  font-size: 0.9rem;
+  cursor: pointer;
+  text-decoration: underline;
+  opacity: 0.8;
+}
+.gate-skip:hover { color: var(--text-light-slate); opacity: 1; }
+
+/* Gatilho de follow no formulário */
+.form-follow-nudge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.8rem;
+  margin-top: 1.1rem;
+  font-size: 0.85rem;
+  color: var(--text-slate);
+}
+.form-follow-link {
+  display: inline-flex;
+  align-items: center;
+  color: var(--mint);
+  font-weight: 600;
+  text-decoration: none;
+  border: 1px solid rgba(100, 255, 218, 0.3);
+  border-radius: 999px;
+  padding: 0.3rem 0.9rem;
+  transition: all 0.2s ease;
+}
+.form-follow-link:hover { background: rgba(100, 255, 218, 0.08); border-color: var(--mint); }
+
+@media (max-width: 480px) {
+  .gate-title { font-size: 1.6rem; }
+  .gate-text { font-size: 0.98rem; }
+  .gate-follow-btn { font-size: 1rem; padding: 0.9rem 1.5rem; }
+}
