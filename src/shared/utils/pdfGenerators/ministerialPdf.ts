@@ -484,35 +484,57 @@ function renderCover(d: jsPDF, name: string, dateStr: string, a: Analysis) {
     tc(d, C.white);
     d.text("Perfil equilibrado", M + 7, y + 23);
   } else {
-    // todas as caixas: principais + secundários (cobre empates de qualquer tamanho)
-    const boxes: { label: string; dom: DomKey; sec: boolean }[] = [];
-    a.primaries.forEach((dm) => boxes.push({ label: "Dom principal", dom: dm, sec: false }));
-    a.secondaries.forEach((dm) => boxes.push({ label: "Dom secundário", dom: dm, sec: true }));
-
-    const cols = boxes.length === 1 ? 1 : 2;
-    const rows = Math.ceil(boxes.length / cols);
-    const gap = 6;
-    const vgap = 6;
-    const h = rows >= 3 ? 22 : rows === 2 ? 26 : 30;
-    const bw = cols === 1 ? CW : (CW - gap) / 2; // largura fixa (grade consistente)
-    boxes.forEach((b, idx) => {
-      const r = Math.floor(idx / cols);
-      const col = idx % cols;
-      const bx = M + col * (bw + gap);
-      const by = y + r * (h + vgap);
-      fc(d, C.panelSoft);
-      dc(d, C.line);
-      d.setLineWidth(0.2);
-      d.roundedRect(bx, by, bw, h, 3.5, 3.5, "FD");
-      eyebrow(d, b.label, bx + 7, by + h * 0.33, C.label);
-      const nameFs = b.sec ? (h >= 26 ? 19 : 16) : h >= 26 ? 22 : 18;
-      fc(d, DOMS[b.dom].cor);
-      d.circle(bx + 8.4, by + h * 0.68, 2, "F");
+    // ── DOM PRINCIPAL: caixa(s) herói — colorida, maior, em evidência ──
+    const pn = a.primaries.length;
+    const pGap = 6;
+    const pw = pn === 1 ? CW : (CW - pGap * (pn - 1)) / pn;
+    const ph = 36;
+    a.primaries.forEach((dom, i) => {
+      const bx = M + i * (pw + pGap);
+      const col = DOMS[dom].cor;
+      fc(d, blend(col, C.navy, 0.16)); // fundo tingido na cor do dom
+      dc(d, col);
+      d.setLineWidth(0.8);
+      d.roundedRect(bx, y, pw, ph, 4, 4, "FD");
+      // barra de destaque à esquerda
+      fc(d, col);
+      d.rect(bx + 1.6, y + 5, 2, ph - 10, "F");
+      eyebrow(d, pn > 1 ? "Dom principal (empate)" : "Dom principal", bx + 9, y + 12, col);
+      fc(d, col);
+      d.circle(bx + 10.6, y + 25, 3, "F");
       d.setFont(SERIF, "normal");
-      d.setFontSize(nameFs);
-      tc(d, b.sec ? C.muted : C.white);
-      d.text(DOMS[b.dom].nome, bx + 13, by + h * 0.73 + 2);
+      d.setFontSize(pn === 1 ? 27 : pn === 2 ? 23 : 19);
+      tc(d, C.white);
+      d.text(DOMS[dom].nome, bx + 16.5, y + 27);
     });
+    y += ph + 9;
+
+    // ── DONS SECUNDÁRIOS: menores e discretos ──
+    if (a.secondaries.length) {
+      const sn = a.secondaries.length;
+      eyebrow(d, sn > 1 ? "Dons secundários" : "Dom secundário", M, y, C.label);
+      y += 5;
+      const scols = sn === 1 ? 1 : sn === 2 ? 2 : sn === 4 ? 2 : 3;
+      const sGap = 5;
+      const sw = (CW - sGap * (scols - 1)) / scols;
+      const sh = 18;
+      a.secondaries.forEach((dom, i) => {
+        const rr = Math.floor(i / scols);
+        const cc = i % scols;
+        const bx = M + cc * (sw + sGap);
+        const by = y + rr * (sh + sGap);
+        fc(d, C.panelSoft);
+        dc(d, C.line);
+        d.setLineWidth(0.2);
+        d.roundedRect(bx, by, sw, sh, 3, 3, "FD");
+        fc(d, DOMS[dom].cor);
+        d.circle(bx + 6.5, by + sh / 2, 1.7, "F");
+        d.setFont(SERIF, "normal");
+        d.setFontSize(sn >= 3 ? 13 : 15);
+        tc(d, C.muted);
+        d.text(DOMS[dom].nome, bx + 11, by + sh / 2 + 2.2);
+      });
+    }
   }
 
   footer(d, "Efésios 4:11-13", "@marcelojunior.fiveone");
