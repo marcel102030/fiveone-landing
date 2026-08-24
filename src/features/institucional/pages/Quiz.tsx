@@ -1525,6 +1525,14 @@ const Quiz = () => {
               Os percentuais são <strong>relativos entre os 5 dons</strong> (somam ~100%). O que mais importa é o seu <strong>ranking</strong> — a ordem dos dons —, não o número isolado.
             </p>
 
+            {topCat && (
+              <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                <a href={`/dom/${topCat}`} className="dom-learn-more">
+                  Entenda o dom de {DOM_NAMES[topCat]} a fundo →
+                </a>
+              </div>
+            )}
+
             <div className="down-arrow"></div>
           </div>
 

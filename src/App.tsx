@@ -32,6 +32,7 @@ const Quiz = lazy(() => import("./features/institucional/pages/Quiz"));
 const About = lazy(() => import("./features/institucional/pages/About"));
 const Contact = lazy(() => import("./features/institucional/pages/Contact"));
 const Cursos = lazy(() => import("./features/institucional/pages/Cursos"));
+const DomPage = lazy(() => import("./features/institucional/pages/DomPage"));
 const Treinamentos = lazy(() => import("./features/institucional/pages/Treinamentos"));
 const BlogPostPage = lazy(() => import("./features/institucional/pages/BlogPostPage"));
 const Ministerio = lazy(() => import("./features/institucional/pages/Ministerio"));
@@ -305,6 +306,7 @@ function AppContent() {
             <Route path="/teste-dons" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
             <Route path="/quiz" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
             <Route path="/cursos" element={<Cursos />} />
+            <Route path="/dom/:slug" element={<DomPage />} />
             <Route path="/treinamentos" element={<Treinamentos />} />
             <Route path="/formacao-ministerial" element={<Navigate to="/cursos" replace />} />
             <Route path="/para-ler" element={<BlogList />} />
