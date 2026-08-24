@@ -27,6 +27,48 @@ import { focusStore } from "../../../shared/state/focusMode";
 const IG_HANDLE = "marcelojunior.fiveone";
 const IG_URL = "https://www.instagram.com/marcelojunior.fiveone/";
 
+// Vídeo de parabéns no fim do teste. Preencha com os links (Vimeo, YouTube ou .mp4).
+// Vazio = o vídeo não aparece. Vertical para celular, horizontal para computador.
+const RESULT_VIDEO = {
+  vertical: "", // ex.: "https://vimeo.com/123456789" ou "https://youtu.be/XXXX" ou "/videos/parabens-vertical.mp4"
+  horizontal: "", // ex.: "https://vimeo.com/987654321"
+};
+
+function renderVideoEmbed(url: string, vertical: boolean) {
+  const ratioClass = vertical ? "video-vertical" : "video-horizontal";
+  const yt = url.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/))([\w-]+)/);
+  const vimeo = url.match(/vimeo\.com\/(?:video\/)?(\d+)/);
+  if (yt) {
+    return (
+      <div className={`result-video-frame ${ratioClass}`}>
+        <iframe
+          src={`https://www.youtube.com/embed/${yt[1]}?rel=0`}
+          title="Mensagem do Marcelo"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  if (vimeo) {
+    return (
+      <div className={`result-video-frame ${ratioClass}`}>
+        <iframe
+          src={`https://player.vimeo.com/video/${vimeo[1]}`}
+          title="Mensagem do Marcelo"
+          allow="autoplay; fullscreen; picture-in-picture"
+          allowFullScreen
+        />
+      </div>
+    );
+  }
+  return (
+    <div className={`result-video-frame ${ratioClass}`}>
+      <video src={url} controls playsInline preload="metadata" />
+    </div>
+  );
+}
+
 
 import { buildCounterbalancedComparisons, categoryMetadata, type ComparisonPair } from "../data/questions";
 
@@ -426,6 +468,18 @@ const Quiz = () => {
       body: JSON.stringify({ email: userInfo.email, product, name: userInfo.name }),
     }).catch(() => {});
   };
+
+  // Celular × computador (para escolher o vídeo vertical/horizontal)
+  const [isMobileView, setIsMobileView] = useState(
+    typeof window !== "undefined" && window.matchMedia("(max-width: 768px)").matches,
+  );
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia("(max-width: 768px)");
+    const on = () => setIsMobileView(mq.matches);
+    mq.addEventListener?.("change", on);
+    return () => mq.removeEventListener?.("change", on);
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -1535,6 +1589,18 @@ const Quiz = () => {
 
             <div className="down-arrow"></div>
           </div>
+
+          {/* Vídeo de parabéns do Marcelo (vertical no celular, horizontal no PC) */}
+          {(isMobileView ? RESULT_VIDEO.vertical : RESULT_VIDEO.horizontal) && (
+            <div className="result-cta result-cta-video">
+              <p className="result-cta-eyebrow">🎉 Você concluiu o teste!</p>
+              <h3 className="result-cta-title">Uma mensagem do Marcelo pra você</h3>
+              {renderVideoEmbed(
+                isMobileView ? RESULT_VIDEO.vertical : RESULT_VIDEO.horizontal,
+                isMobileView,
+              )}
+            </div>
+          )}
 
           {/* Compartilhar (viral) */}
           <div className="result-cta result-cta-share">
