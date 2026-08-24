@@ -423,10 +423,6 @@ const Quiz = () => {
       gtag("event", "instagram_follow_click", { event_category: "quiz", event_label: where });
     }
   };
-  const openInstagram = () => {
-    trackFollow("gate");
-    window.open(IG_URL, "_blank", "noopener");
-  };
 
   // Inicializa preferências de som/música; retoma música no 1º gesto; limpa ao sair
   useEffect(() => {
@@ -1385,20 +1381,26 @@ const Quiz = () => {
             Antes de ver o resultado completo, <strong>siga o Marcelo</strong> — toda semana ele ensina
             como desenvolver o seu dom de {gDomName}. Não perca o que vem por aí.
           </p>
-          <button
-            type="button"
+          <a
+            href={IG_URL}
+            target="_blank"
+            rel="noopener noreferrer"
             className="gate-follow-btn"
             onClick={() => {
-              openInstagram();
+              trackFollow("gate");
               setResultUnlocked(true);
             }}
           >
             <FaInstagram style={{ marginRight: 8, verticalAlign: "-2px" }} />
             Seguir @{IG_HANDLE}
-          </button>
+          </a>
           <button type="button" className="gate-skip" onClick={() => setResultUnlocked(true)}>
             Ver meu resultado →
           </button>
+          <p className="gate-reassure">
+            <span aria-hidden="true">✓</span> Seu resultado completo já foi enviado para o seu e-mail —
+            pode seguir sem medo de perder.
+          </p>
         </div>
       </section>
     );

@@ -3270,9 +3270,19 @@
   border: none;
   border-radius: 14px;
   cursor: pointer;
+  text-decoration: none;
   box-shadow: 0 10px 30px -8px rgba(214, 41, 118, 0.5);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
+.gate-reassure {
+  margin: 1.4rem auto 0;
+  max-width: 380px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-slate);
+  opacity: 0.85;
+}
+.gate-reassure span { color: var(--mint); font-weight: 700; }
 .gate-follow-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px -8px rgba(214, 41, 118, 0.6); }
 .gate-skip {
   margin-top: 1.2rem;
