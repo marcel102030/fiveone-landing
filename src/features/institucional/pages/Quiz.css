@@ -3502,3 +3502,34 @@
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .share-btn:hover { transform: translateY(-2px); box-shadow: 0 14px 36px -8px rgba(37, 211, 102, 0.6); }
+
+/* ===== Desafie um amigo (viral + relacional) ===== */
+.result-cta-challenge { border-color: rgba(216, 180, 90, 0.3); background: rgba(216, 180, 90, 0.05); }
+.challenge-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(216, 180, 90, 0.12);
+  color: #e6c84a;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 1rem 2rem;
+  border: 1.5px solid rgba(216, 180, 90, 0.5);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.challenge-btn:hover { background: rgba(216, 180, 90, 0.2); transform: translateY(-2px); }
+.challenge-banner {
+  max-width: 520px;
+  margin: 0 auto 1.5rem;
+  text-align: center;
+  background: rgba(216, 180, 90, 0.1);
+  border: 1px solid rgba(216, 180, 90, 0.35);
+  border-radius: 12px;
+  padding: 0.7rem 1rem;
+  color: #e6c84a;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+.challenge-banner strong { color: #f4d97a; }

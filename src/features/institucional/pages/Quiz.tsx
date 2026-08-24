@@ -915,6 +915,21 @@ const Quiz = () => {
     }, "image/png");
   };
 
+  // Desafie um amigo — convite viral (nativo no celular, WhatsApp no desktop)
+  const handleChallengeFriend = () => {
+    const sorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+    const top = sorted[0]?.[0] as CategoryEnum | undefined;
+    const name = top ? DOM_NAMES[top] : "meu dom";
+    if (typeof gtag === "function") gtag("event", "challenge_friend", { event_category: "quiz", event_label: name });
+    const url = "https://fiveonemovement.com/descubra-seu-dom?desafio=1";
+    const text = `Fiz o Teste dos 5 Ministérios e o meu dom é ${name}! 🙌 Faz o seu e me conta qual é o seu — depois a gente compara e ora um pelo chamado do outro. É rápido (~10 min):`;
+    if (navigator.share) {
+      navigator.share({ title: "Teste dos 5 Ministérios", text, url }).catch(() => {});
+    } else {
+      window.open(`https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`, "_blank", "noopener");
+    }
+  };
+
   // ===== INTRO SCREEN =====
   if (!quizStarted) {
     return (
@@ -952,6 +967,12 @@ const Quiz = () => {
         </div>
 
         <div className="content-container" style={{ position: 'relative', zIndex: 1 }}>
+          {typeof window !== "undefined" &&
+            new URLSearchParams(window.location.search).has("desafio") && (
+              <div className="challenge-banner" role="status">
+                🤝 Você foi <strong>desafiado</strong> a descobrir o seu dom — bora?
+              </div>
+            )}
           {(churchCtx.churchSlug || churchCtx.churchId) && (
             <div className="church-banner-wrapper">
               <div className="church-banner" role="status" aria-live="polite">
@@ -1516,6 +1537,17 @@ const Quiz = () => {
             </p>
             <button type="button" className="share-btn" onClick={handleShareResult}>
               📲 Compartilhar meu resultado
+            </button>
+          </div>
+
+          {/* Desafie um amigo (viral + relacional) */}
+          <div className="result-cta result-cta-challenge">
+            <h3 className="result-cta-title">Desafie alguém que você ama</h3>
+            <p className="result-cta-text">
+              Descubra o dom de um amigo, do seu cônjuge, do seu líder — e orem juntos pelo chamado de cada um.
+            </p>
+            <button type="button" className="challenge-btn" onClick={handleChallengeFriend}>
+              🤝 Desafiar um amigo
             </button>
           </div>
 
