@@ -834,6 +834,87 @@ const Quiz = () => {
     }
   };
 
+  // Card compartilhável (1080×1920) — compartilhamento nativo (WhatsApp/Stories)
+  const handleShareResult = async () => {
+    const totalScore = Object.values(categoryScores).reduce((s, v) => s + v, 0);
+    if (totalScore <= 0) return;
+    const sorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
+    const top = sorted[0]?.[0] as CategoryEnum | undefined;
+    if (!top) return;
+    const second = sorted[1]?.[0] as CategoryEnum | undefined;
+    const color = DOM_COLORS[top];
+    const name = DOM_NAMES[top];
+    const phrase = DOM_PHRASES[top];
+    if (typeof gtag === "function") gtag("event", "share_result", { event_category: "quiz", event_label: name });
+
+    const W = 1080, H = 1920;
+    const canvas = document.createElement("canvas");
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    const hexA = (hex: string, a: number) => {
+      const h = hex.replace("#", "");
+      return `rgba(${parseInt(h.slice(0, 2), 16)},${parseInt(h.slice(2, 4), 16)},${parseInt(h.slice(4, 6), 16)},${a})`;
+    };
+    const g0 = ctx.createLinearGradient(0, 0, 0, H);
+    g0.addColorStop(0, "#0d1b2a"); g0.addColorStop(1, "#0a1420");
+    ctx.fillStyle = g0; ctx.fillRect(0, 0, W, H);
+    const rg = ctx.createRadialGradient(W * 0.78, H * 0.16, 0, W * 0.78, H * 0.16, 760);
+    rg.addColorStop(0, hexA(color, 0.2)); rg.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = color; ctx.fillRect(0, 0, W, 16);
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#f4f8fb"; ctx.font = "600 62px Georgia, serif"; ctx.fillText("Five One", W / 2, 165);
+    ctx.fillStyle = "#64ffda"; ctx.font = "700 30px Arial, sans-serif";
+    ctx.fillText("TESTE DOS 5 MINISTÉRIOS", W / 2, 222);
+    // ícone do dom em círculo colorido
+    ctx.fillStyle = color; ctx.beginPath(); ctx.arc(W / 2, 470, 132, 0, Math.PI * 2); ctx.fill();
+    await new Promise<void>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = "anonymous";
+      img.src = categoryIcons[top];
+      img.onload = () => {
+        ctx.save(); ctx.filter = "brightness(0) invert(1)"; ctx.globalAlpha = 0.95;
+        ctx.drawImage(img, W / 2 - 80, 470 - 80, 160, 160); ctx.restore(); resolve();
+      };
+      img.onerror = () => resolve();
+    });
+    ctx.fillStyle = "#9ab0bc"; ctx.font = "700 42px Arial, sans-serif"; ctx.fillText("MEU DOM MINISTERIAL É", W / 2, 730);
+    ctx.fillStyle = color; ctx.font = "700 150px Georgia, serif"; ctx.fillText(name, W / 2, 880);
+    if (second) {
+      ctx.fillStyle = "#9ab0bc"; ctx.font = "400 46px Arial, sans-serif";
+      ctx.fillText(`com ${DOM_NAMES[second]} em segundo`, W / 2, 950);
+    }
+    ctx.fillStyle = "#cfd8dc"; ctx.font = "italic 400 50px Georgia, serif";
+    let line = "", yy = 1090;
+    for (const w of phrase.split(" ")) {
+      const t = line ? line + " " + w : w;
+      if (ctx.measureText(t).width > 900 && line) { ctx.fillText(line, W / 2, yy); line = w; yy += 68; }
+      else line = t;
+    }
+    if (line) ctx.fillText(line, W / 2, yy);
+    ctx.fillStyle = "#7f98a6"; ctx.font = "400 42px Arial, sans-serif"; ctx.fillText("Descubra o seu dom em", W / 2, H - 330);
+    ctx.fillStyle = "#64ffda"; ctx.font = "700 58px Arial, sans-serif"; ctx.fillText("fiveonemovement.com", W / 2, H - 255);
+    ctx.fillStyle = "#f4f8fb"; ctx.font = "400 44px Arial, sans-serif"; ctx.fillText("@marcelojunior.fiveone", W / 2, H - 150);
+
+    canvas.toBlob(async (blob) => {
+      if (!blob) return;
+      const file = new File([blob], "meu-dom-five-one.png", { type: "image/png" });
+      const shareData: ShareData = {
+        files: [file],
+        title: "Meu Dom Ministerial",
+        text: `Meu dom é ${name}! Descubra o seu no Teste dos 5 Ministérios:`,
+      };
+      if (navigator.share && navigator.canShare?.({ files: [file] })) {
+        try { await navigator.share(shareData); return; } catch { /* usuário cancelou */ }
+      }
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url; a.download = file.name; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }, "image/png");
+  };
+
   // ===== INTRO SCREEN =====
   if (!quizStarted) {
     return (
@@ -1424,6 +1505,18 @@ const Quiz = () => {
             </p>
 
             <div className="down-arrow"></div>
+          </div>
+
+          {/* Compartilhar (viral) */}
+          <div className="result-cta result-cta-share">
+            <h3 className="result-cta-title">Compartilhe o seu dom</h3>
+            <p className="result-cta-text">
+              Mostre pra todo mundo qual é o seu dom — manda no grupo do WhatsApp, posta nos stories.
+              Marque o <strong>@marcelojunior.fiveone</strong> que eu reposto!
+            </p>
+            <button type="button" className="share-btn" onClick={handleShareResult}>
+              📲 Compartilhar meu resultado
+            </button>
           </div>
 
           {/* Ênfase 1: seguir o Marcelo */}
