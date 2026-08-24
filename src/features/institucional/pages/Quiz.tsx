@@ -19,17 +19,9 @@ import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 
 import { generateMinisterialPdf } from "../../../shared/utils/pdfGenerators/ministerialPdf";
-import {
-  sfx,
-  confettiBurst,
-  startAmbient,
-  stopAmbient,
-  fxEnabled,
-  setFxEnabled,
-  musicPref,
-  setMusicPref,
-} from "../utils/quizFx";
+import { confettiBurst } from "../utils/quizFx";
 import { makeQrDataUrl } from "../utils/qr";
+import { focusStore } from "../../../shared/state/focusMode";
 
 // Instagram do Marcelo (perfil principal a converter)
 const IG_HANDLE = "marcelojunior.fiveone";
@@ -410,9 +402,7 @@ const Quiz = () => {
   const [selectedCategory, setSelectedCategory] = useState<ChoiceCategory | null>(null);
   const [showSelectWarning, setShowSelectWarning] = useState(false);
   const [transitioning, setTransitioning] = useState(false);
-  // Experiência: som/música + micro-celebrações
-  const [fxOn, setFxOn] = useState(false);
-  const [musicOn, setMusicOn] = useState(false);
+  // Micro-celebrações
   const [celebration, setCelebration] = useState<{ title: string; sub: string } | null>(null);
   const celebrationTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Soft-gate de Instagram antes de revelar o resultado
@@ -423,40 +413,21 @@ const Quiz = () => {
     }
   };
 
-  // Inicializa preferências de som/música; retoma música no 1º gesto; limpa ao sair
   useEffect(() => {
-    setFxOn(fxEnabled());
-    const wantsMusic = musicPref();
-    setMusicOn(wantsMusic);
-    const resume = () => {
-      if (musicPref()) startAmbient();
-      window.removeEventListener("pointerdown", resume);
-    };
-    if (wantsMusic) window.addEventListener("pointerdown", resume, { once: true });
     return () => {
-      window.removeEventListener("pointerdown", resume);
-      stopAmbient();
       if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
     };
   }, []);
 
-  const toggleFx = () => {
-    const next = !fxOn;
-    setFxOn(next);
-    setFxEnabled(next);
-    if (next) sfx.sample();
-  };
-  const toggleMusic = () => {
-    const next = !musicOn;
-    setMusicOn(next);
-    setMusicPref(next);
-    if (next) startAmbient();
-    else stopAmbient();
-  };
+  // Modo foco (esconde navbar/rodapé) só enquanto o teste está sendo feito
+  useEffect(() => {
+    focusStore.set(quizStarted);
+    return () => focusStore.set(false);
+  }, [quizStarted]);
+
   const triggerCelebration = (title: string, sub: string) => {
     setCelebration({ title, sub });
     confettiBurst();
-    sfx.milestone();
     if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
     celebrationTimerRef.current = setTimeout(() => setCelebration(null), 1900);
   };
@@ -689,7 +660,6 @@ const Quiz = () => {
 
   const onHandleChoice = (chosenCategory: ChoiceCategory) => {
     setTransitioning(true);
-    sfx.advance();
     const pair = currentPair!;
     const timeMs = Date.now() - questionStartedAtRef.current;
     const step = currentQuestion + 1;
@@ -729,8 +699,6 @@ const Quiz = () => {
             event_label: "Quiz dos 5 Ministérios",
           });
         }
-        sfx.finish();
-        stopAmbient();
         clearProgress();
         setShowResults(true);
         setTransitioning(false);
@@ -1509,32 +1477,12 @@ const Quiz = () => {
     <>
       {pdfToastBlock}
 
-      {/* Barra de foco: logo + controles de som/música */}
+      {/* Barra de foco: apenas o logo (imersivo) */}
       <div className="quiz-focus-bar">
         <div className="quiz-focus-inner">
           <a href="/" className="quiz-focus-logo" aria-label="Five One — voltar ao início">
             <img src={logo} alt="Five One" />
           </a>
-          <div className="quiz-focus-controls">
-            <button
-              type="button"
-              onClick={toggleFx}
-              className={`focus-toggle${fxOn ? " on" : ""}`}
-              aria-pressed={fxOn}
-              title={fxOn ? "Desligar sons" : "Ligar sons"}
-            >
-              <span aria-hidden="true">{fxOn ? "🔊" : "🔈"}</span> Som
-            </button>
-            <button
-              type="button"
-              onClick={toggleMusic}
-              className={`focus-toggle${musicOn ? " on" : ""}`}
-              aria-pressed={musicOn}
-              title={musicOn ? "Desligar música" : "Ligar música ambiente"}
-            >
-              <span aria-hidden="true">♪</span> Música
-            </button>
-          </div>
         </div>
       </div>
 
@@ -1593,7 +1541,7 @@ const Quiz = () => {
           >
             <button
               className={`statement-button${selectedCategory === currentPair.statement1.category ? " selected" : ""}`}
-              onClick={() => { sfx.tick(); setSelectedCategory(currentPair.statement1.category); }}
+              onClick={() => setSelectedCategory(currentPair.statement1.category)}
               aria-label={currentPair.statement1.text}
               role="radio"
               aria-checked={selectedCategory === currentPair.statement1.category}
@@ -1615,7 +1563,7 @@ const Quiz = () => {
 
             <button
               className={`statement-button${selectedCategory === currentPair.statement2.category ? " selected" : ""}`}
-              onClick={() => { sfx.tick(); setSelectedCategory(currentPair.statement2.category); }}
+              onClick={() => setSelectedCategory(currentPair.statement2.category)}
               aria-label={currentPair.statement2.text}
               role="radio"
               aria-checked={selectedCategory === currentPair.statement2.category}
@@ -1631,7 +1579,7 @@ const Quiz = () => {
           {/* Quiz pills for "nenhuma" / "ambas" */}
           <div className="quiz-pills">
             <button
-              onClick={() => { sfx.tick(); setSelectedCategory("nenhuma"); }}
+              onClick={() => setSelectedCategory("nenhuma")}
               className={`quiz-pill${selectedCategory === "nenhuma" ? " selected" : ""}`}
               type="button"
               aria-pressed={selectedCategory === "nenhuma"}
@@ -1639,7 +1587,7 @@ const Quiz = () => {
               Nenhuma das opções
             </button>
             <button
-              onClick={() => { sfx.tick(); setSelectedCategory("ambas"); }}
+              onClick={() => setSelectedCategory("ambas")}
               className={`quiz-pill${selectedCategory === "ambas" ? " selected" : ""}`}
               type="button"
               aria-pressed={selectedCategory === "ambas"}

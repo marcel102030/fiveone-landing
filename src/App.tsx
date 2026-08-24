@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useSyncExternalStore } from "react";
 import {
   Route,
   BrowserRouter as Router,
@@ -24,6 +24,7 @@ import Navbar from "./shared/components/layout/Navbar/Navbar";
 import ScrollToTop from "./shared/components/layout/ScrollToTop/ScrollToTop";
 import ScrollToTopOnMount from "./shared/components/layout/ScrollToTop/ScrollToTopOnMount";
 import PWAInstallBanner from "./shared/components/PWAInstallBanner/PWAInstallBanner";
+import { focusStore } from "./shared/state/focusMode";
 
 // ── Lazy chunks: cada rota vira um chunk separado ─────────────────────────────
 const BlogList = lazy(() => import("./features/institucional/pages/BlogList"));
@@ -97,6 +98,7 @@ function AppContent() {
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const isQuizFocus = useSyncExternalStore(focusStore.subscribe, focusStore.get, focusStore.get);
 
   const isInviteTest =
     (location.pathname === "/descubra-seu-dom" ||
@@ -154,10 +156,8 @@ function AppContent() {
     location.pathname === "/copiar" ||
     location.pathname.startsWith("/rede/cadastro") ||
     location.pathname.startsWith("/certificado/") ||
-    // Modo foco: o teste roda imersivo, sem navbar/rodapé
-    location.pathname === "/descubra-seu-dom" ||
-    location.pathname === "/teste-dons" ||
-    location.pathname === "/quiz" ||
+    // Modo foco: só quando o teste está sendo feito (não na intro)
+    isQuizFocus ||
     isInviteTest ||
     isIgrejasStandalone ||
     isRedeDomain;
