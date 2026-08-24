@@ -413,6 +413,20 @@ const Quiz = () => {
     }
   };
 
+  // Lista de espera de produtos (curso / livro) no fim do teste
+  const [waitlist, setWaitlist] = useState<{ curso: boolean; livro: boolean }>({ curso: false, livro: false });
+  const joinWaitlist = (product: "curso" | "livro") => {
+    setWaitlist((w) => ({ ...w, [product]: true })); // otimista
+    if (typeof gtag === "function") {
+      gtag("event", "waitlist_join", { event_category: "quiz", event_label: product });
+    }
+    fetch("/api/quiz-waitlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: userInfo.email, product, name: userInfo.name }),
+    }).catch(() => {});
+  };
+
   useEffect(() => {
     return () => {
       if (celebrationTimerRef.current) clearTimeout(celebrationTimerRef.current);
@@ -1412,8 +1426,6 @@ const Quiz = () => {
             <div className="down-arrow"></div>
           </div>
 
-          <TrainingFormats />
-
           {/* Ênfase 1: seguir o Marcelo */}
           <div className="result-cta result-cta-follow">
             <p className="result-cta-eyebrow">Continue comigo</p>
@@ -1452,6 +1464,67 @@ const Quiz = () => {
             >
               📄 Baixar Resultado em PDF
             </button>
+          </div>
+
+          {/* Próximos passos: produtos (curso e livro em lista de espera; mentoria ativa) */}
+          <div className="result-products">
+            <p className="result-products-eyebrow">Do resultado ao próximo passo</p>
+            <h3 className="result-products-title">Aprofunde o seu chamado</h3>
+            <p className="result-products-sub">
+              Descobrir o dom é o começo. Estes são os caminhos pra desenvolver o seu dom de{" "}
+              <strong>{DOM_NAMES[topCat]}</strong> na prática.
+            </p>
+            <div className="product-cards">
+              {/* Curso */}
+              <div className="product-card">
+                <span className="product-tag">Em breve</span>
+                <div className="product-name">🎓 Curso “Viva o seu Chamado”</div>
+                <p className="product-desc">
+                  20 aulas pra identificar, desenvolver e viver o seu dom no dia a dia — na família, na igreja e no mundo.
+                </p>
+                {waitlist.curso ? (
+                  <div className="product-done">✓ Você está na lista de espera!</div>
+                ) : (
+                  <button type="button" className="product-btn" onClick={() => joinWaitlist("curso")}>
+                    Quero ser avisado no lançamento
+                  </button>
+                )}
+              </div>
+              {/* Livro */}
+              <div className="product-card">
+                <span className="product-tag">Em breve</span>
+                <div className="product-name">📚 Livro dos 5 Ministérios</div>
+                <p className="product-desc">
+                  Um mergulho em Efésios 4 e nos cinco dons — teologia acessível pra você viver o seu chamado com profundidade.
+                </p>
+                {waitlist.livro ? (
+                  <div className="product-done">✓ Você está na lista de espera!</div>
+                ) : (
+                  <button type="button" className="product-btn" onClick={() => joinWaitlist("livro")}>
+                    Quero ser avisado no lançamento
+                  </button>
+                )}
+              </div>
+              {/* Mentoria */}
+              <div className="product-card product-card-live">
+                <span className="product-tag product-tag-live">Disponível agora</span>
+                <div className="product-name">🧭 Mentoria individual</div>
+                <p className="product-desc">
+                  Uma sessão 1&nbsp;a&nbsp;1 com a Five One pra acelerar o seu chamado, focada no seu dom de {DOM_NAMES[topCat]}.
+                </p>
+                <a
+                  href="https://fiveonemovement.com/solucoes/mentoria-individual"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="product-btn product-btn-live"
+                  onClick={() => {
+                    if (typeof gtag === "function") gtag("event", "mentoria_click", { event_category: "quiz" });
+                  }}
+                >
+                  Quero uma mentoria
+                </a>
+              </div>
+            </div>
           </div>
 
           <button
