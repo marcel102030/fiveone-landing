@@ -3297,12 +3297,14 @@
 .gate-buttons .gate-follow-btn,
 .gate-result-btn {
   width: 100%;
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-weight: 700;
   font-size: 1.1rem;
   padding: 1rem 1.5rem;
+  border: 1.5px solid transparent;
   border-radius: 14px;
   cursor: pointer;
   text-decoration: none;
