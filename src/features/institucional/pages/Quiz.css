@@ -3546,3 +3546,11 @@
   transition: all 0.2s ease;
 }
 .dom-learn-more:hover { border-color: var(--mint); }
+
+/* Quem é o Marcelo (contexto no CTA de seguir) */
+.result-cta-who {
+  font-size: 0.85rem;
+  color: var(--mint);
+  font-weight: 600;
+  margin: -0.3rem 0 0.9rem;
+}

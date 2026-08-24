@@ -1362,8 +1362,8 @@ const Quiz = () => {
             Você é <span className="gate-dom">{gDomName}</span>
           </h2>
           <p className="gate-text">
-            Antes de ver o resultado completo, <strong>siga o Marcelo</strong> — toda semana ele ensina
-            como desenvolver o seu dom de {gDomName}. Não perca o que vem por aí.
+            Antes de ver o resultado, siga o <strong>Marcelo Junior</strong> — teólogo e criador da
+            Five One. Toda semana ele ensina como desenvolver o seu dom de {gDomName}. Não perca o que vem por aí.
           </p>
           <div className="gate-buttons">
             <a
@@ -1563,8 +1563,10 @@ const Quiz = () => {
           <div className="result-cta result-cta-follow">
             <p className="result-cta-eyebrow">Continue comigo</p>
             <h3 className="result-cta-title">Siga o Marcelo no Instagram</h3>
+            <p className="result-cta-who">Marcelo Junior · Teólogo e criador da Five One</p>
             <p className="result-cta-text">
-              Toda semana eu ensino como desenvolver o seu dom de {DOM_NAMES[topCat]} — Bíblia, teologia e prática. Vem comigo!
+              Toda semana eu ensino Bíblia, teologia e cultura à luz do Evangelho — e conteúdos pra você
+              desenvolver o seu dom de {DOM_NAMES[topCat]}. Vem comigo!
             </p>
             <a
               href={IG_URL}
