@@ -7,7 +7,7 @@ import { CategoryEnum, ChoiceCategory, type Statement } from "../types/quiz";
 
 
 import { BsInfoCircleFill } from "react-icons/bs";
-import { FaInstagram, FaTiktok, FaYoutube } from "react-icons/fa";
+import { FaInstagram } from "react-icons/fa";
 
 
 
@@ -17,7 +17,6 @@ import pastorIcon from "../../../assets/images/icons/pastor.png";
 import profetaIcon from "../../../assets/images/icons/profeta.png";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
-import escolaFiveOne from "../../../assets/images/escola-fiveone.jpeg";
 
 import { generateMinisterialPdf } from "../../../shared/utils/pdfGenerators/ministerialPdf";
 import {
@@ -853,105 +852,6 @@ const Quiz = () => {
     }
   };
 
-  const handleShareImage = async () => {
-    const totalScore = Object.values(categoryScores).reduce((s, v) => s + v, 0);
-    const sorted = Object.entries(categoryScores).sort((a, b) => b[1] - a[1]);
-    const topCatKey = sorted[0]?.[0] as CategoryEnum | undefined;
-    if (!topCatKey) return;
-
-    const pct = totalScore > 0 ? Math.round((sorted[0][1] / totalScore) * 100) : 0;
-    const color = DOM_COLORS[topCatKey];
-    const name = DOM_NAMES[topCatKey];
-    const phrase = DOM_PHRASES[topCatKey];
-
-    const SIZE = 1080;
-    const canvas = document.createElement('canvas');
-    canvas.width = SIZE; canvas.height = SIZE;
-    const ctx = canvas.getContext('2d')!;
-
-    // Background
-    const bg = ctx.createLinearGradient(0, 0, 0, SIZE);
-    bg.addColorStop(0, '#0d1b2a');
-    bg.addColorStop(1, '#0a1520');
-    ctx.fillStyle = bg;
-    ctx.fillRect(0, 0, SIZE, SIZE);
-
-    // Top color bar
-    ctx.fillStyle = color;
-    ctx.fillRect(0, 0, SIZE, 10);
-
-    // Dom icon
-    await new Promise<void>((resolve) => {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = categoryIcons[topCatKey];
-      img.onload = () => {
-        ctx.save();
-        ctx.filter = 'brightness(0) invert(1)';
-        ctx.globalAlpha = 0.85;
-        ctx.drawImage(img, SIZE / 2 - 70, 160, 140, 140);
-        ctx.restore();
-        resolve();
-      };
-      img.onerror = () => resolve();
-    });
-
-    // Percentage
-    ctx.fillStyle = color;
-    ctx.font = 'bold 180px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${pct}%`, SIZE / 2, 460);
-
-    // Dom name
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 90px system-ui, sans-serif';
-    ctx.fillText(name, SIZE / 2, 580);
-
-    // Phrase (word wrap)
-    ctx.fillStyle = '#9ab0bc';
-    ctx.font = '38px system-ui, sans-serif';
-    const words = phrase.split(' ');
-    let line = '';
-    let y = 670;
-    for (const word of words) {
-      const test = line ? `${line} ${word}` : word;
-      if (ctx.measureText(test).width > SIZE - 160) {
-        ctx.fillText(line, SIZE / 2, y);
-        line = word;
-        y += 52;
-      } else { line = test; }
-    }
-    if (line) ctx.fillText(line, SIZE / 2, y);
-
-    // Divider
-    ctx.strokeStyle = 'rgba(100,255,218,0.2)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(120, 860); ctx.lineTo(SIZE - 120, 860);
-    ctx.stroke();
-
-    // Branding
-    ctx.fillStyle = '#64ffda';
-    ctx.font = 'bold 32px system-ui, sans-serif';
-    ctx.fillText('fiveonemovement.com/descubra-seu-dom', SIZE / 2, 940);
-    ctx.fillStyle = '#4a6572';
-    ctx.font = '26px system-ui, sans-serif';
-    ctx.fillText('Quiz dos 5 Ministérios — Five One', SIZE / 2, 990);
-
-    // Download or native share
-    canvas.toBlob(async (blob) => {
-      if (!blob) return;
-      const file = new File([blob], `resultado-${name.toLowerCase()}.png`, { type: 'image/png' });
-      if (navigator.share && navigator.canShare?.({ files: [file] })) {
-        try { await navigator.share({ files: [file], title: `Meu Dom: ${name}` }); return; } catch { /* fallback */ }
-      }
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = file.name; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    }, 'image/png');
-  };
-
   // ===== INTRO SCREEN =====
   if (!quizStarted) {
     return (
@@ -1544,187 +1444,46 @@ const Quiz = () => {
 
           <TrainingFormats />
 
-          <div className="don-profile-wrapper">
-            <h2
-              style={{
-                textAlign: "center",
-                marginBottom: "2.5rem",
-                marginTop: "5rem",
-                fontSize: "2rem",
-                color: "#ffffff",
-              }}
-            >
-              Entenda seu Resultado
-            </h2>
-            <p
-              style={{
-                textAlign: "center",
-                maxWidth: "750px",
-                margin: "0 auto 3.5rem",
-                fontSize: "1.15rem",
-                lineHeight: "1.6",
-                color: "#cfd8dc",
-              }}
-            >
-              Os cinco dons ministeriais descritos em Efésios 4 — Apóstolo, Profeta, Evangelista, Pastor e Mestre — expressam dimensões únicas do ministério de Cristo distribuídas ao seu Corpo.
-              A seguir, você encontrará uma explicação teológica de cada um desses dons, com base bíblica e doutrinária.
+          {/* Ênfase 1: seguir o Marcelo */}
+          <div className="result-cta result-cta-follow">
+            <p className="result-cta-eyebrow">Continue comigo</p>
+            <h3 className="result-cta-title">Siga o Marcelo no Instagram</h3>
+            <p className="result-cta-text">
+              Toda semana eu ensino como desenvolver o seu dom de {DOM_NAMES[topCat]} — Bíblia, teologia e prática. Vem comigo!
             </p>
-            <div className="don-profile-cards">
-              <div className={`don-card apostolo-card${topCat === CategoryEnum.APOSTOLO ? ' highlight-card' : ''}`}>
-                <div className="don-card-header">
-                  <img src={apostoloIcon} alt="Ícone do Apóstolo" className="don-icon" />
-                  <h3>Apóstolo</h3>
-                </div>
-                <p>
-                  O papel do apóstolo no Corpo de Cristo é de extrema importância. Ele amplia a visão da igreja, assegurando que cada membro cumpra seu papel de forma eficaz, restaurando princípios fundamentais e mantendo a igreja ancorada em bases sólidas.
-                </p>
-                <p>
-                  Os apóstolos são desbravadores espirituais, frequentemente responsáveis por abrir novos caminhos, plantar igrejas e estabelecer fundamentos doutrinários. Sua liderança é marcada por coragem, visão estratégica e um profundo senso de missão.
-                </p>
-              </div>
-              <div className={`don-card profeta-card${topCat === CategoryEnum.PROFETA ? ' highlight-card' : ''}`}>
-                <div className="don-card-header">
-                  <img src={profetaIcon} alt="Ícone do Profeta" className="don-icon" />
-                  <h3>Profeta</h3>
-                </div>
-                <p>
-                  O profeta é aquele que guarda a aliança. Sua principal função é garantir que a igreja permaneça fiel ao coração de Deus, confrontando desvios e chamando o povo de volta ao arrependimento e à intimidade com o Senhor.
-                </p>
-                <p>
-                  Profetas são sensíveis à voz de Deus e muitas vezes têm discernimento aguçado sobre tempos, estações e situações espirituais. São chamados a proclamar a verdade com ousadia e a alinhar a igreja com os valores do Reino.
-                </p>
-              </div>
-              <div className={`don-card evangelista-card${topCat === CategoryEnum.EVANGELISTA ? ' highlight-card' : ''}`}>
-                <div className="don-card-header">
-                  <img src={evangelistaIcon} alt="Ícone do Evangelista" className="don-icon" />
-                  <h3>Evangelista</h3>
-                </div>
-                <p>
-                  O evangelista é aquele que carrega no coração o anseio por alcançar os perdidos. Seu chamado está voltado à proclamação das boas novas de Jesus Cristo com paixão, clareza e compaixão.
-                </p>
-                <p>
-                  Evangelistas movem a igreja para fora das quatro paredes, inspirando-a a viver de forma missionária. Têm a capacidade de conectar o evangelho com a vida real das pessoas e convidá-las a uma transformação genuína em Cristo.
-                </p>
-              </div>
-              <div className={`don-card pastor-card${topCat === CategoryEnum.PASTOR ? ' highlight-card' : ''}`}>
-                <div className="don-card-header">
-                  <img src={pastorIcon} alt="Ícone do Pastor" className="don-icon" />
-                  <h3>Pastor</h3>
-                </div>
-                <p>
-                  O pastor é aquele que cuida, consola e caminha junto. Ele tem um coração voltado ao rebanho, guiando com empatia, proximidade e zelo.
-                </p>
-                <p>
-                  Pastores promovem ambientes de cuidado e pertencimento dentro da igreja. Sua presença é marcada por serviço, escuta ativa e disposição para ajudar os outros a amadurecerem na fé.
-                </p>
-              </div>
-              <div className={`don-card mestre-card${topCat === CategoryEnum.MESTRE ? ' highlight-card' : ''}`}>
-                <div className="don-card-header">
-                  <img src={mestreIcon} alt="Ícone do Mestre" className="don-icon" />
-                  <h3>Mestre</h3>
-                </div>
-                <p>
-                  O mestre é aquele que busca compreender e comunicar a verdade de Deus de forma clara e profunda. Tem paixão pelo ensino das Escrituras e pela formação espiritual da igreja.
-                </p>
-                <p>
-                  Mestres ajudam a igreja a permanecer sólida na Palavra, combatendo falsas doutrinas e promovendo crescimento teológico. Sua influência molda o entendimento e a prática cristã.
-                </p>
-              </div>
-            </div>
+            <a
+              href={IG_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="gate-follow-btn"
+              onClick={() => trackFollow("result")}
+            >
+              <FaInstagram style={{ marginRight: 8, verticalAlign: "-2px" }} />
+              Seguir @{IG_HANDLE}
+            </a>
+            <p className="result-cta-secondary">
+              Five One também está no{" "}
+              <a href="https://www.instagram.com/fiveone.oficial/" target="_blank" rel="noopener noreferrer">Instagram</a>,{" "}
+              <a href="https://www.tiktok.com/@fiveonemovement" target="_blank" rel="noopener noreferrer">TikTok</a> e{" "}
+              <a href="https://www.youtube.com/@Five_One_Movement" target="_blank" rel="noopener noreferrer">YouTube</a>.
+            </p>
           </div>
 
-          <section className="promo-escola-section">
-            <div className="promo-escola-image">
-              <img src={escolaFiveOne} alt="Movimento Five One" />
-            </div>
-            <div className="promo-escola-content">
-              <h3>Descubra o Movimento Five One</h3>
-              <p>
-                Viva sua verdadeira identidade em Cristo. Descubra seu chamado, desenvolva seu dom
-                ministerial e conecte-se com uma comunidade de aprendizado e propósito.
-              </p>
-              <a href="https://escolafiveone.hotmart.host/formacao-de-mestre-five-one-df44d8cd-3a6b-44b0-aaec-652290fc529a" target="_blank" rel="noopener noreferrer">
-                Quero Fazer Parte
-              </a>
-            </div>
-          </section>
-
-          <div className="social-share">
-            <p style={{ textAlign: "center", fontWeight: "bold", marginBottom: "1rem" }}>
-              Nos siga nas redes sociais:
+          {/* Ênfase 2: baixar o PDF completo */}
+          <div className="result-cta result-cta-pdf">
+            <h3 className="result-cta-title">Seu perfil completo em PDF</h3>
+            <p className="result-cta-text">
+              O PDF traz o aprofundamento do seu dom, o comparativo dos 5 e um plano de 30 dias — guarde e compartilhe.
             </p>
-            <div className="share-buttons" style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-              <a
-                href="https://www.instagram.com/fiveone.oficial/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="instagram"
-                aria-label="Instagram"
-              >
-                <FaInstagram size={24} />
-                <span className="tooltip-share">Instagram</span>
-              </a>
-              <a
-                href="https://www.tiktok.com/@fiveonemovement"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="tiktok"
-                aria-label="TikTok"
-              >
-                <FaTiktok size={24} />
-                <span className="tooltip-share">TikTok</span>
-              </a>
-              <a
-                href="https://www.youtube.com/@Five_One_Movement"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="youtube"
-                aria-label="YouTube"
-                style={{ backgroundColor: "#FF0000", padding: "10px", borderRadius: "12px" }}
-              >
-                <FaYoutube size={24} color="#fff" />
-              </a>
-            </div>
-          </div>
-
-          {resultToken && (
-            <div style={{ textAlign: "center", margin: "2rem 0 0.5rem" }}>
-              <p style={{ color: "#cfd8dc", marginBottom: "0.5rem", fontSize: "0.95rem" }}>
-                Salve o link abaixo para revisitar seu resultado a qualquer momento:
-              </p>
-              <div className="result-actions">
-                <button
-                  className="share-result-btn"
-                  onClick={() => {
-                    const url = `${window.location.origin}/resultado/${resultToken}`;
-                    navigator.clipboard?.writeText(url).then(() => {
-                      alert("Link copiado para a área de transferência!");
-                    }).catch(() => {
-                      window.prompt("Copie o link:", url);
-                    });
-                  }}
-                >
-                  🔗 Copiar link do resultado
-                </button>
-                <button className="share-result-btn" onClick={handleShareImage}>
-                  🖼️ Salvar como imagem
-                </button>
-              </div>
-            </div>
-          )}
-
-          <p className="pdf-download-note" style={{ textAlign: "center", marginTop: "3rem" }}>
-            Clique para baixar um PDF com o seu resultado. Você pode guardar ou compartilhar!
-          </p>
-          <div className="pdf-download-wrapper">
             <button
               onClick={handleDownloadPDF}
-              className="start-button"
+              className="start-button pdf-big-btn"
               aria-label="Baixar resultado em PDF"
             >
-              Baixar Resultado em PDF
+              📄 Baixar Resultado em PDF
             </button>
           </div>
+
           <button
             onClick={onHandleReset}
             className="reset-button"

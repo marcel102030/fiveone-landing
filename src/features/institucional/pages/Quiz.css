@@ -3325,3 +3325,52 @@
   .gate-text { font-size: 0.98rem; }
   .gate-follow-btn { font-size: 1rem; padding: 0.9rem 1.5rem; }
 }
+
+/* ===== Tela de resultado enxuta: ênfase em seguir + PDF ===== */
+.result-cta {
+  max-width: 560px;
+  margin: 2.5rem auto 0;
+  text-align: center;
+  padding: 2rem 1.5rem;
+  border-radius: 18px;
+  border: 1px solid rgba(100, 255, 218, 0.15);
+  background: rgba(255, 255, 255, 0.02);
+}
+.result-cta-follow {
+  border-color: rgba(214, 41, 118, 0.3);
+  background: rgba(214, 41, 118, 0.05);
+}
+.result-cta-eyebrow {
+  font-size: 0.78rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--mint);
+  font-weight: 700;
+  margin: 0 0 0.4rem;
+}
+.result-cta-title {
+  font-size: 1.5rem;
+  color: var(--text-light-slate);
+  margin: 0 0 0.6rem;
+}
+.result-cta-text {
+  font-size: 1rem;
+  color: var(--text-slate);
+  line-height: 1.6;
+  margin: 0 auto 1.5rem;
+  max-width: 440px;
+}
+.result-cta-secondary {
+  font-size: 0.82rem;
+  color: var(--text-slate);
+  margin: 1.2rem 0 0;
+  opacity: 0.85;
+}
+.result-cta-secondary a { color: var(--mint); text-decoration: none; }
+.result-cta-secondary a:hover { text-decoration: underline; }
+.pdf-big-btn { font-size: 1.15rem !important; padding: 1.1rem 2rem !important; }
+
+@media (max-width: 480px) {
+  .result-cta { padding: 1.6rem 1.1rem; }
+  .result-cta-title { font-size: 1.3rem; }
+}
