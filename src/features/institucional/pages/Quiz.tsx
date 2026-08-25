@@ -1678,10 +1678,10 @@ const Quiz = () => {
             <div className="product-cards">
               {/* Curso */}
               <div className="product-card product-card-live">
-                <span className="product-tag product-tag-live">Turma pioneira</span>
+                <span className="product-tag product-tag-live">Pré-venda · lança 9/set</span>
                 <div className="product-name">🎓 Curso “Viva o seu Chamado”</div>
                 <p className="product-desc">
-                  21 aulas pra identificar, desenvolver e viver o seu dom no dia a dia — liberadas toda semana, na turma pioneira.
+                  21 aulas pra desenvolver e viver o seu dom na prática. Na pré-venda: de R$&nbsp;59,90 por <strong>R$&nbsp;39,90</strong> + o Livro dos 5 Ministérios de bônus.
                 </p>
                 <a
                   href="/cursos/viva-o-seu-chamado"
@@ -1690,7 +1690,7 @@ const Quiz = () => {
                     if (typeof gtag === "function") gtag("event", "curso_click", { event_category: "quiz", event_label: "viva-o-seu-chamado" });
                   }}
                 >
-                  Conhecer o curso →
+                  Garantir na pré-venda →
                 </a>
               </div>
               {/* Livro */}

@@ -8,7 +8,9 @@ import profetaIcon  from "../../../assets/images/icons/profeta.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 import pastorIcon from "../../../assets/images/icons/pastor.png";
 import mestreIcon from "../../../assets/images/icons/mestre.png";
-import { UPCOMING_COURSES as upcoming } from "../data/courses";
+import { UPCOMING_COURSES as upcoming, VIVA_LAUNCH_DATE, VIVA_PRICE, VIVA_PRICE_FULL } from "../data/courses";
+
+const VIVA_LAUNCH_LABEL = VIVA_LAUNCH_DATE.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
 const CheckIcon = () => (
   <svg className="w-4 h-4 text-mint shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -125,7 +127,7 @@ const Cursos = () => {
               <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint text-navy text-xs font-bold uppercase tracking-wider">
-                    Turma pioneira
+                    Pré-venda aberta
                   </span>
                   <span className="text-xs text-slate">Curso dos 5 Ministérios · 21 aulas</span>
                 </div>
@@ -181,17 +183,22 @@ const Cursos = () => {
 
                 <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="text-2xs text-slate uppercase tracking-wider">Lançamento</p>
-                    <p className="text-2xl sm:text-3xl font-bold text-mint">Turma pioneira</p>
-                    <p className="text-2xs text-slate/70 mt-0.5">
-                      Entre na lista e seja avisado da abertura
+                    <p className="text-2xs text-slate uppercase tracking-wider">
+                      Pré-venda · lança {VIVA_LAUNCH_LABEL}
+                    </p>
+                    <p className="flex items-baseline gap-2">
+                      <span className="text-base text-slate line-through tabular-nums">{VIVA_PRICE_FULL}</span>
+                      <span className="text-2xl sm:text-3xl font-bold text-mint tabular-nums">{VIVA_PRICE}</span>
+                    </p>
+                    <p className="text-2xs text-golden/90 mt-0.5">
+                      🎁 + Livro dos 5 Ministérios de bônus
                     </p>
                   </div>
                   <Link
                     to="/cursos/viva-o-seu-chamado"
                     className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   >
-                    Saiba mais
+                    Garantir na pré-venda
                     <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" /></svg>
                   </Link>
                 </div>

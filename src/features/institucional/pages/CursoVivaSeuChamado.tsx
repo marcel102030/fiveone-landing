@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import courseCover from "../assets/images/VivaOSeuChamado.png";
 import instrutorFoto from "../assets/images/Marcelo.jpeg";
 import CourseWaitlist from "../components/CourseWaitlist";
-import { VIVA_LAUNCHED, VIVA_PRESALE, VIVA_LAUNCH_DATE, VIVA_HOTMART_URL, VIVA_PRICE } from "../data/courses";
+import { VIVA_LAUNCHED, VIVA_PRESALE, VIVA_LAUNCH_DATE, VIVA_HOTMART_URL, VIVA_PRICE, VIVA_PRICE_FULL } from "../data/courses";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
 import profetaIcon from "../../../assets/images/icons/profeta.png";
 import mestreIcon from "../../../assets/images/icons/mestre.png";
@@ -12,6 +12,7 @@ import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 
 const HOTMART_CHECKOUT_URL = VIVA_HOTMART_URL;
 const PRICE = VIVA_PRICE;
+const PRICE_FULL = VIVA_PRICE_FULL;
 
 // Vídeo de apresentação do curso — quando tiver o vídeo, cole o embed aqui
 // (YouTube/Vimeo). Enquanto ficar vazio, a seção de vídeo não aparece.
@@ -153,8 +154,12 @@ const INCLUDED = [
 
 const FAQ_ITEMS = [
   {
+    q: "O que recebo comprando na pré-venda?",
+    a: "Você garante o curso com desconto (de R$ 59,90 por R$ 39,90) e ganha, de bônus, o Livro dos 5 Ministérios. No dia do lançamento (9 de setembro) são liberadas 5 aulas de uma vez e, depois, uma nova aula por semana.",
+  },
+  {
     q: "Como funciona o acesso ao curso?",
-    a: "Após entrar, você recebe acesso à plataforma. As aulas são liberadas semanalmente (turma pioneira), no seu ritmo, no computador ou no celular.",
+    a: "Após a compra, você recebe acesso à plataforma. No lançamento chegam as 5 primeiras aulas e, depois, uma nova a cada semana — no seu ritmo, no computador ou no celular.",
   },
   {
     q: "Por que as aulas são liberadas por semana?",
@@ -300,7 +305,8 @@ function ModuleAccordion({
 
 // ── Pré-venda: countdown, botão de compra e card de preço ─────────────────────
 
-const SELLING = VIVA_LAUNCHED || VIVA_PRESALE;
+// Só vende de fato quando há um checkout configurado — sem link, cai na lista de espera.
+const SELLING = (VIVA_LAUNCHED || VIVA_PRESALE) && HOTMART_CHECKOUT_URL.trim() !== "";
 const PRESALE = VIVA_PRESALE && !VIVA_LAUNCHED;
 const LAUNCH_DAY_LABEL = VIVA_LAUNCH_DATE.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
@@ -379,14 +385,21 @@ function PurchaseCard() {
       )}
 
       <p className="text-2xs text-slate uppercase tracking-wider">
-        {PRESALE ? "Oferta de lançamento" : "Pagamento único"}
+        {PRESALE ? "Preço de pré-venda" : "Pagamento único"}
       </p>
       <div className="flex items-baseline gap-2">
+        {PRESALE && (
+          <p className="text-lg text-slate line-through decoration-slate/60 tabular-nums">{PRICE_FULL}</p>
+        )}
         <p className="text-4xl font-extrabold text-mint tabular-nums">{PRICE}</p>
         <p className="text-sm text-slate">à vista</p>
       </div>
       <p className="text-xs text-slate mt-0.5">
-        ou em até <strong className="text-slate-light">12x no cartão</strong>
+        {PRESALE ? (
+          <>de <span className="line-through">{PRICE_FULL}</span> · ou em até <strong className="text-slate-light">12x no cartão</strong></>
+        ) : (
+          <>ou em até <strong className="text-slate-light">12x no cartão</strong></>
+        )}
       </p>
 
       <div className="flex flex-wrap gap-2 mt-4">
@@ -403,17 +416,22 @@ function PurchaseCard() {
 
       <div className="mt-4 space-y-1.5">
         {PRESALE && (
-          <p className="flex items-center gap-2 text-xs text-slate">
-            <CheckIcon /> Acesso liberado no lançamento — {LAUNCH_DAY_LABEL}
-          </p>
+          <>
+            <p className="flex items-start gap-2 text-xs text-slate">
+              <CheckIcon /> No lançamento ({LAUNCH_DAY_LABEL}): 5 aulas de uma vez + 1 nova por semana
+            </p>
+            <p className="flex items-start gap-2 text-xs text-golden">
+              <CheckIcon /> Bônus exclusivo da pré-venda: o Livro dos 5 Ministérios no lançamento
+            </p>
+          </>
         )}
-        <p className="flex items-center gap-2 text-xs text-slate">
+        <p className="flex items-start gap-2 text-xs text-slate">
           <CheckIcon /> Acesso por 1 ano + certificado de conclusão
         </p>
-        <p className="flex items-center gap-2 text-xs text-slate">
+        <p className="flex items-start gap-2 text-xs text-slate">
           <CheckIcon /> 7 dias de garantia incondicional
         </p>
-        <p className="flex items-center gap-2 text-xs text-slate">
+        <p className="flex items-start gap-2 text-xs text-slate">
           <CheckIcon /> Checkout 100% seguro via Hotmart
         </p>
       </div>
@@ -428,7 +446,7 @@ function BuyCTA({ label }: { label: string }) {
     <div className="mt-10 text-center">
       <BuyButton>{label}</BuyButton>
       <p className="mt-3 text-2xs text-slate/80">
-        {PRESALE ? `Pré-venda · ${PRICE} · acesso em ${LAUNCH_DAY_LABEL}` : `${PRICE} · pagamento único · checkout seguro Hotmart`}
+        {PRESALE ? `Pré-venda · de ${PRICE_FULL} por ${PRICE} · acesso em ${LAUNCH_DAY_LABEL}` : `${PRICE} · pagamento único · checkout seguro Hotmart`}
       </p>
     </div>
   );
@@ -563,6 +581,64 @@ const CursoVivaSeuChamado = () => {
           </div>
         </div>
       </section>
+
+      {/* ──────────────────────── Como funciona o lançamento (pré-venda) ─── */}
+      {PRESALE && (
+        <section className="py-12 lg:py-16 bg-navy-light/30">
+          <div className="max-w-5xl mx-auto px-6 lg:px-8">
+            <div className="max-w-2xl mx-auto text-center mb-8 lg:mb-10">
+              <span className="inline-block px-3 py-1 rounded-full bg-golden/10 border border-golden/30 text-golden text-xs font-medium uppercase tracking-wider mb-4">
+                Pré-venda aberta
+              </span>
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white tracking-tight">
+                Como funciona o lançamento
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-slate">
+                Garanta agora com desconto e comece com tudo no dia {LAUNCH_DAY_LABEL}.
+              </p>
+            </div>
+
+            <div className="grid sm:grid-cols-3 gap-5">
+              <div className="relative bg-navy-light/60 border border-mint/20 rounded-2xl p-6 text-center">
+                <div className="text-3xl mb-3" aria-hidden>🚀</div>
+                <p className="text-2xs text-mint uppercase tracking-widest font-semibold mb-1">
+                  {LAUNCH_DAY_LABEL}
+                </p>
+                <h3 className="text-lg font-bold text-slate-white">5 aulas de uma vez</h3>
+                <p className="mt-2 text-sm text-slate leading-relaxed">
+                  No dia do lançamento você já recebe as 5 primeiras aulas para começar com força.
+                </p>
+              </div>
+              <div className="relative bg-navy-light/60 border border-slate/10 rounded-2xl p-6 text-center">
+                <div className="text-3xl mb-3" aria-hidden>🗓️</div>
+                <p className="text-2xs text-slate uppercase tracking-widest font-semibold mb-1">
+                  Toda semana
+                </p>
+                <h3 className="text-lg font-bold text-slate-white">1 nova aula por semana</h3>
+                <p className="mt-2 text-sm text-slate leading-relaxed">
+                  Depois do lançamento, uma aula nova a cada semana — no ritmo certo para aplicar de verdade.
+                </p>
+              </div>
+              <div className="relative bg-navy-light/60 border border-golden/30 rounded-2xl p-6 text-center">
+                <div className="text-3xl mb-3" aria-hidden>🎁</div>
+                <p className="text-2xs text-golden uppercase tracking-widest font-semibold mb-1">
+                  Bônus da pré-venda
+                </p>
+                <h3 className="text-lg font-bold text-slate-white">Livro dos 5 Ministérios</h3>
+                <p className="mt-2 text-sm text-slate leading-relaxed">
+                  Quem compra na pré-venda ganha o livro, liberado junto com o curso no lançamento.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-center mt-8 text-sm sm:text-base text-slate">
+              De <span className="line-through">{PRICE_FULL}</span>{" "}
+              <span className="text-mint font-bold text-lg">{PRICE}</span> só na pré-venda.
+            </p>
+            <BuyCTA label="Garantir minha vaga na pré-venda" />
+          </div>
+        </section>
+      )}
 
       {/* ──────────────────────────────────── O Problema ─── */}
       <section className="py-16 lg:py-20">
@@ -872,7 +948,7 @@ const CursoVivaSeuChamado = () => {
             <>
               <p className="mt-5 text-base sm:text-lg text-slate max-w-xl mx-auto">
                 {PRESALE
-                  ? `Garanta agora na pré-venda por ${PRICE}. O acesso às aulas, materiais e certificado começa em ${LAUNCH_DAY_LABEL}.`
+                  ? `Garanta agora na pré-venda: de ${PRICE_FULL} por ${PRICE}, com o Livro dos 5 Ministérios de bônus. No lançamento (${LAUNCH_DAY_LABEL}) saem 5 aulas de uma vez e, depois, 1 nova por semana.`
                   : `Entre na turma pioneira por ${PRICE}, com acesso por 1 ano às aulas, materiais e certificado.`}
               </p>
               <div className="mt-9 flex flex-col items-center gap-3">

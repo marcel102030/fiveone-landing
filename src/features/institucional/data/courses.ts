@@ -9,14 +9,19 @@ export const APOLOGETICA_PRESALE = false;
 export const APOLOGETICA_LAUNCH_DATE = new Date("2026-11-20T09:00:00-03:00");
 
 // ── Curso "Viva o seu Chamado" (Curso dos 5 Ministérios) ────────────────────
-// Lançamento em turma pioneira (drip: aulas liberadas por semana).
-// Enquanto VIVA_LAUNCHED e VIVA_PRESALE forem false → mostra lista de espera.
-// Quando tiver preço + checkout Hotmart, preencha e ligue o presale.
+// Pré-venda: vende AGORA por R$ 39,90 (preço cheio R$ 59,90), com a moldura de
+// que o acesso libera no lançamento (VIVA_LAUNCH_DATE). No lançamento saem 5
+// aulas de uma vez e, depois, 1 aula nova por semana. Quem compra na pré-venda
+// ganha o Livro dos 5 Ministérios (liberado no dia do lançamento).
+// Quando lançar de fato, deixe VIVA_LAUNCHED = true (acesso imediato).
+// ⚠️ A venda só ativa quando VIVA_HOTMART_URL estiver preenchido (link do
+//    checkout da pré-venda). Sem ele, a página mostra a lista de espera.
 export const VIVA_LAUNCHED = false;
-export const VIVA_PRESALE = false;
-export const VIVA_LAUNCH_DATE = new Date("2026-09-30T09:00:00-03:00"); // placeholder — ajuste no lançamento
-export const VIVA_HOTMART_URL = ""; // preencher quando tiver o checkout
-export const VIVA_PRICE = "R$ 97,00"; // placeholder — ajuste o preço da turma pioneira
+export const VIVA_PRESALE = true;
+export const VIVA_LAUNCH_DATE = new Date("2026-09-09T09:00:00-03:00");
+export const VIVA_HOTMART_URL = ""; // ⚠️ COLAR aqui o link do checkout Hotmart da pré-venda
+export const VIVA_PRICE = "R$ 39,90";       // preço da pré-venda (promocional)
+export const VIVA_PRICE_FULL = "R$ 59,90";  // preço cheio (riscado na pré-venda)
 
 // Fonte única de dados dos cursos.
 // Importada pela Home (CourseShowcase) e pela página /cursos.
