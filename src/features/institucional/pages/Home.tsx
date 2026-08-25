@@ -14,7 +14,7 @@ const Home = () => {
     if (meta) {
       meta.setAttribute(
         "content",
-        "Cursos online sobre a Bíblia com fundamento teológico e linguagem clara. Comece pelo curso Defenda a sua Fé ou descubra gratuitamente seu dom ministerial."
+        "Cursos online sobre a Bíblia com fundamento teológico e linguagem clara. Comece pelo curso Viva o seu Chamado ou descubra gratuitamente seu dom ministerial."
       );
     }
   }, []);

@@ -310,7 +310,7 @@ const SELLING = (VIVA_LAUNCHED || VIVA_PRESALE) && HOTMART_CHECKOUT_URL.trim() !
 const PRESALE = VIVA_PRESALE && !VIVA_LAUNCHED;
 const LAUNCH_DAY_LABEL = VIVA_LAUNCH_DATE.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
-const PAYMENT_METHODS = ["Pix", "Cartão em até 12x", "Boleto"];
+const PAYMENT_METHODS = ["Pix", "Cartão em até 2x", "Boleto"];
 
 function useCountdown(target: Date) {
   const calc = () => {
@@ -396,9 +396,9 @@ function PurchaseCard() {
       </div>
       <p className="text-xs text-slate mt-0.5">
         {PRESALE ? (
-          <>de <span className="line-through">{PRICE_FULL}</span> · ou em até <strong className="text-slate-light">12x no cartão</strong></>
+          <>de <span className="line-through">{PRICE_FULL}</span> · ou em até <strong className="text-slate-light">2x no cartão</strong></>
         ) : (
-          <>ou em até <strong className="text-slate-light">12x no cartão</strong></>
+          <>ou em até <strong className="text-slate-light">2x no cartão</strong></>
         )}
       </p>
 
@@ -956,7 +956,7 @@ const CursoVivaSeuChamado = () => {
                   {PRESALE ? "Garantir minha vaga na pré-venda" : "Quero viver o meu chamado"}
                 </BuyButton>
                 <p className="text-2xs text-slate/80">
-                  Pix · cartão em até 12x · boleto · 7 dias de garantia
+                  Pix · cartão em até 2x · boleto · 7 dias de garantia
                 </p>
               </div>
             </>

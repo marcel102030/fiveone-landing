@@ -40,9 +40,9 @@ const LINKS: LinkItem[] = [
   {
     Icon: FaGraduationCap,
     iconClass: "text-mint",
-    label: "Defenda a sua Fé",
-    sublabel: "Lançamento 20 de novembro · R$ 59,90",
-    to: "/cursos/apologetica",
+    label: "Viva o seu Chamado",
+    sublabel: "Pré-venda · de R$ 59,90 por R$ 39,90 · lança 9/set",
+    to: "/cursos/viva-o-seu-chamado",
   },
   {
     Icon: FaWhatsapp,
@@ -55,7 +55,7 @@ const LINKS: LinkItem[] = [
     Icon: FaWhatsapp,
     iconClass: "text-[#25D366]",
     label: "Lista de Espera — WhatsApp",
-    sublabel: "Comunidade do curso de Apologética",
+    sublabel: "Novidades e lançamentos dos cursos Five One",
     href: "https://chat.whatsapp.com/DuYWYWMQleG897njhHUOKa?s=cl&p=i&ilr=4",
   },
   {

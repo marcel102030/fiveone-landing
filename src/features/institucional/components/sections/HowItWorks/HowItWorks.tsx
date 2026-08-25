@@ -51,7 +51,7 @@ const steps: Step[] = [
     number: "03",
     title: "Aprofunde-se em um curso",
     description:
-      "Escolha um dos nossos cursos para se aprofundar nas Escrituras. Comece pelo curso Defenda a sua Fé — base sólida para defender a sua fé.",
+      "Escolha um dos nossos cursos para se aprofundar nas Escrituras. Comece pelo curso Viva o seu Chamado — descubra e viva o seu dom ministerial.",
     ctaLabel: "Ver cursos",
     ctaTo: "/cursos",
     icon: <BookIcon />,

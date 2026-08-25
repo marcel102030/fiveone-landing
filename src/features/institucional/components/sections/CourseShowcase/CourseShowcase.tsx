@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import courseCover from "../../../assets/images/capa_curso_apologetica.jpg";
-import { UPCOMING_COURSES, APOLOGETICA_LAUNCHED, APOLOGETICA_LAUNCH_DATE } from "../../../data/courses";
+import courseCover from "../../../assets/images/VivaOSeuChamado.png";
+import { UPCOMING_COURSES, VIVA_LAUNCH_DATE, VIVA_PRICE, VIVA_PRICE_FULL } from "../../../data/courses";
+
+const VIVA_LAUNCH_LABEL = VIVA_LAUNCH_DATE.toLocaleDateString("pt-BR", { day: "numeric", month: "long" });
 
 function useDaysLeft() {
-  const calc = () => Math.max(0, Math.ceil((APOLOGETICA_LAUNCH_DATE.getTime() - Date.now()) / 86400000));
+  const calc = () => Math.max(0, Math.ceil((VIVA_LAUNCH_DATE.getTime() - Date.now()) / 86400000));
   const [days, setDays] = useState(calc);
   useEffect(() => {
     const id = setInterval(() => setDays(calc()), 60000);
@@ -30,23 +32,23 @@ type FeaturedCourse = {
 };
 
 const featured: FeaturedCourse = {
-  slug: "apologetica",
-  title: "Defenda a sua Fé",
-  badge: "Lançamento",
-  tagline: "Introdução à Apologética Cristã · 20 aulas",
+  slug: "viva-o-seu-chamado",
+  title: "Viva o seu Chamado",
+  badge: "Pré-venda aberta",
+  tagline: "Curso dos 5 Ministérios · 21 aulas",
   description:
-    "Aprenda a defender a fé com solidez bíblica e racional. Conteúdo profundo, linguagem clara e exemplos do dia a dia para conversas reais com céticos, irmãos com dúvidas e a sua própria caminhada.",
+    "Descobrir o seu dom é só o começo. Neste curso você aprende a desenvolver e viver o seu chamado ministerial no dia a dia — com fundamento bíblico, clareza e um caminho prático, na sua família, na sua igreja e no mundo ao seu redor.",
   highlights: [
-    "20 aulas em vídeo (~8h20 de conteúdo)",
-    "4 módulos organizados do básico ao avançado",
-    "Materiais complementares em PDF",
+    "5 aulas no lançamento + 1 nova por semana",
+    "Materiais de apoio em PDF por módulo",
     "Certificado ao concluir o curso",
+    "🎁 Bônus da pré-venda: o Livro dos 5 Ministérios",
   ],
-  duration: "~8h20 de conteúdo",
-  lessons: "20 aulas",
+  duration: "Uma aula por semana",
+  lessons: "21 aulas · 5 módulos",
   format: "100% online",
-  priceLabel: "R$ 59,90",
-  ctaLabel: "Quero esse curso",
+  priceLabel: VIVA_PRICE,
+  ctaLabel: "Garantir na pré-venda",
   cover: courseCover,
 };
 
@@ -118,8 +120,8 @@ const CourseShowcase = () => {
             Conhecimento bíblico que <span className="text-mint">transforma</span> a sua vida
           </h2>
           <p className="mt-4 text-base sm:text-lg text-slate">
-            Comece pelo curso Defenda a sua Fé. Em breve novos temas para aprofundar
-            sua jornada.
+            Comece pelo curso Viva o seu Chamado, em pré-venda. Em breve novos temas
+            para aprofundar a sua jornada.
           </p>
         </div>
 
@@ -183,19 +185,20 @@ const CourseShowcase = () => {
               {/* Preço + CTA */}
               <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                 <div>
-                  <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
-                  <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
-                  {!APOLOGETICA_LAUNCHED && (
-                    <p className="text-2xs text-slate/70 mt-0.5">
-                      ⏱ Lança em <span className="text-mint font-semibold">{daysLeft} dias</span>
-                    </p>
-                  )}
+                  <p className="text-2xs text-slate uppercase tracking-wider">Pré-venda · lança {VIVA_LAUNCH_LABEL}</p>
+                  <p className="flex items-baseline gap-2">
+                    <span className="text-lg text-slate line-through tabular-nums">{VIVA_PRICE_FULL}</span>
+                    <span className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">{featured.priceLabel}</span>
+                  </p>
+                  <p className="text-2xs text-golden/90 mt-0.5">
+                    🎁 + Livro de bônus · ⏱ faltam <span className="font-semibold">{daysLeft} dias</span>
+                  </p>
                 </div>
                 <Link
                   to={`/cursos/${featured.slug}`}
                   className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                 >
-                  {APOLOGETICA_LAUNCHED ? featured.ctaLabel : "Saiba mais"}
+                  {featured.ctaLabel}
                   <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" /></svg>
                 </Link>
               </div>

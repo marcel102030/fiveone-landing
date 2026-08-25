@@ -25,15 +25,15 @@ const FinalCTA = () => {
 
         <p className="mt-5 text-base sm:text-lg lg:text-xl text-slate max-w-2xl mx-auto leading-relaxed">
           Aprofunde sua fé com conteúdo bíblico de qualidade. Comece pelo teste
-          gratuito ou já entre direto no curso Defenda a sua Fé.
+          gratuito ou garanta sua vaga na pré-venda do curso Viva o seu Chamado.
         </p>
 
         <div className="mt-9 flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
           <Link
-            to="/cursos/apologetica"
+            to="/cursos/viva-o-seu-chamado"
             className="group inline-flex items-center justify-center gap-2 px-7 py-4 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
           >
-            Quero — Defenda a sua Fé
+            Quero — Viva o seu Chamado
             <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden>
               <path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" />
             </svg>
@@ -47,7 +47,7 @@ const FinalCTA = () => {
         </div>
 
         <p className="mt-7 text-xs sm:text-sm text-slate/80">
-          R$ 59,90 · pagamento único · acesso por 1 ano · certificado incluído
+          Pré-venda de <span className="line-through">R$ 59,90</span> por R$ 39,90 · + Livro de bônus · acesso por 1 ano · certificado
         </p>
       </div>
     </section>
