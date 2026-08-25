@@ -19,7 +19,10 @@ export const APOLOGETICA_LAUNCH_DATE = new Date("2026-11-20T09:00:00-03:00");
 export const VIVA_LAUNCHED = false;
 export const VIVA_PRESALE = true;
 export const VIVA_LAUNCH_DATE = new Date("2026-09-09T09:00:00-03:00");
-export const VIVA_HOTMART_URL = ""; // ⚠️ COLAR aqui o link do checkout Hotmart da pré-venda
+// ⚠️ Reaproveitando o checkout da Apologética por ora. IMPORTANTE: ajustar no
+//    Hotmart o PREÇO deste produto para R$ 39,90 (hoje está R$ 59,90), além de
+//    nome/imagem — senão o cliente paga valor diferente do anunciado no site.
+export const VIVA_HOTMART_URL = "https://pay.hotmart.com/D106250318V";
 export const VIVA_PRICE = "R$ 39,90";       // preço da pré-venda (promocional)
 export const VIVA_PRICE_FULL = "R$ 59,90";  // preço cheio (riscado na pré-venda)
 
