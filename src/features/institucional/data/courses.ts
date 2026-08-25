@@ -3,11 +3,20 @@
 // Quando APOLOGETICA_LAUNCHED = true   → mostra botão de compra normal
 // Troque para true no dia do lançamento.
 export const APOLOGETICA_LAUNCHED = false;
-// Pré-venda: vende AGORA (botões de compra ativos), mas com a moldura de que o
-// acesso libera no lançamento (APOLOGETICA_LAUNCH_DATE). Quando lançar de fato,
-// deixe APOLOGETICA_LAUNCHED = true (acesso imediato) — o presale deixa de moldar.
-export const APOLOGETICA_PRESALE = true;
+// Apologética pausada por ora → "Em breve" (sem venda). Quando quiser reabrir a
+// pré-venda, volte APOLOGETICA_PRESALE para true.
+export const APOLOGETICA_PRESALE = false;
 export const APOLOGETICA_LAUNCH_DATE = new Date("2026-11-20T09:00:00-03:00");
+
+// ── Curso "Viva o seu Chamado" (Curso dos 5 Ministérios) ────────────────────
+// Lançamento em turma pioneira (drip: aulas liberadas por semana).
+// Enquanto VIVA_LAUNCHED e VIVA_PRESALE forem false → mostra lista de espera.
+// Quando tiver preço + checkout Hotmart, preencha e ligue o presale.
+export const VIVA_LAUNCHED = false;
+export const VIVA_PRESALE = false;
+export const VIVA_LAUNCH_DATE = new Date("2026-09-30T09:00:00-03:00"); // placeholder — ajuste no lançamento
+export const VIVA_HOTMART_URL = ""; // preencher quando tiver o checkout
+export const VIVA_PRICE = "R$ 97,00"; // placeholder — ajuste o preço da turma pioneira
 
 // Fonte única de dados dos cursos.
 // Importada pela Home (CourseShowcase) e pela página /cursos.
@@ -15,7 +24,7 @@ export const APOLOGETICA_LAUNCH_DATE = new Date("2026-11-20T09:00:00-03:00");
 
 import coverEntendes from "../assets/images/EntendesOqueler.png";
 import coverFimDosTempos from "../assets/images/IntroducaoAoFimDostempos.png";
-import coverVivaChamado from "../assets/images/VivaOSeuChamado.png";
+import coverApologetica from "../assets/images/capa_curso_apologetica.jpg";
 
 export type UpcomingCourse = {
   title: string;
@@ -40,10 +49,10 @@ export const UPCOMING_COURSES: UpcomingCourse[] = [
     coverUrl: coverFimDosTempos,
   },
   {
-    title: "Viva o seu Chamado",
+    title: "Defenda a sua Fé",
     description:
-      "Descubra como identificar, desenvolver e viver o seu dom ministerial no dia a dia — na sua família, na sua igreja e no mundo ao seu redor.",
-    category: "Ministério",
-    coverUrl: coverVivaChamado,
+      "Introdução à Apologética Cristã: aprenda a defender a sua fé com solidez bíblica e racional, com linguagem clara e exemplos do dia a dia.",
+    category: "Apologética",
+    coverUrl: coverApologetica,
   },
 ];

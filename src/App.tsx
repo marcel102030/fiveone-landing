@@ -83,6 +83,7 @@ const CertificadoPublico = lazy(() => import("./features/plataforma/pages/Certif
 const QuizResult = lazy(() => import("./features/institucional/pages/QuizResult"));
 const PoliticaPrivacidade = lazy(() => import("./features/institucional/pages/PoliticaPrivacidade"));
 const CursoApologetica = lazy(() => import("./features/institucional/pages/CursoApologetica"));
+const CursoVivaSeuChamado = lazy(() => import("./features/institucional/pages/CursoVivaSeuChamado"));
 const LpApologetica = lazy(() => import("./features/institucional/pages/LpApologetica"));
 const Links = lazy(() => import("./features/institucional/pages/Links"));
 
@@ -325,6 +326,7 @@ function AppContent() {
             <Route path="/solucoes/imersao-ministerial" element={<ImersaoForm />} />
             <Route path="/solucoes" element={<Navigate to="/cursos" replace />} />
             <Route path="/cursos/apologetica" element={<CursoApologetica />} />
+            <Route path="/cursos/viva-o-seu-chamado" element={<CursoVivaSeuChamado />} />
             <Route path="/lp/apologetica" element={<LpApologetica />} />
             <Route path="/links" element={<Links />} />
             <Route

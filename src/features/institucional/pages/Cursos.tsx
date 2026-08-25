@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
-import courseCover from "../assets/images/capa_curso_apologetica.jpg";
+import courseCover from "../assets/images/VivaOSeuChamado.png";
 import imgProximosCursos from "../assets/images/ProximosCursos.png";
 import imgNossosCursos from "../assets/images/NossosCursos.png";
 import apostoloIcon from "../../../assets/images/icons/apostolo.png";
@@ -8,14 +8,7 @@ import profetaIcon  from "../../../assets/images/icons/profeta.png";
 import evangelistaIcon from "../../../assets/images/icons/evangelista.png";
 import pastorIcon from "../../../assets/images/icons/pastor.png";
 import mestreIcon from "../../../assets/images/icons/mestre.png";
-import { UPCOMING_COURSES as upcoming, APOLOGETICA_LAUNCHED, APOLOGETICA_LAUNCH_DATE } from "../data/courses";
-
-function useDaysLeft() {
-  const calc = () => Math.max(0, Math.ceil((APOLOGETICA_LAUNCH_DATE.getTime() - Date.now()) / 86400000));
-  const [days, setDays] = useState(calc);
-  useEffect(() => { const id = setInterval(() => setDays(calc()), 60000); return () => clearInterval(id); }, []); // eslint-disable-line
-  return days;
-}
+import { UPCOMING_COURSES as upcoming } from "../data/courses";
 
 const CheckIcon = () => (
   <svg className="w-4 h-4 text-mint shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
@@ -56,7 +49,6 @@ const AwardIcon = () => (
 // ChurchIcon removido — card de treinamentos agora usa imagem de capa
 
 const Cursos = () => {
-  const daysLeft = useDaysLeft();
   useEffect(() => {
     document.title = "Cursos e Treinamentos | Five One";
     const meta = document.querySelector('meta[name="description"]');
@@ -123,7 +115,7 @@ const Cursos = () => {
               <div className="lg:col-span-2 relative overflow-hidden bg-navy aspect-square lg:aspect-auto">
                 <img
                   src={courseCover}
-                  alt="Curso de Apologética"
+                  alt="Curso Viva o seu Chamado — os 5 Ministérios"
                   className="absolute inset-0 w-full h-full object-cover"
                   draggable={false}
                 />
@@ -133,34 +125,34 @@ const Cursos = () => {
               <div className="lg:col-span-3 p-6 sm:p-8 lg:p-10 flex flex-col">
                 <div className="flex items-center gap-2 mb-4">
                   <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-mint text-navy text-xs font-bold uppercase tracking-wider">
-                    Lançamento
+                    Turma pioneira
                   </span>
-                  <span className="text-xs text-slate">Introdução à Apologética Cristã · 20 aulas</span>
+                  <span className="text-xs text-slate">Curso dos 5 Ministérios · 21 aulas</span>
                 </div>
 
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-white mb-3">
-                  Defenda a sua Fé
+                  Viva o seu Chamado
                 </h2>
 
                 <p className="text-sm sm:text-base text-mint font-medium mb-2">
-                  Fundamentos para defender a fé com inteligência e respeito
+                  Descubra, desenvolva e viva o seu dom ministerial no dia a dia
                 </p>
 
                 <p className="text-sm sm:text-base text-slate leading-relaxed mb-5">
-                  Aprenda a defender a sua fé com solidez bíblica e racional.
-                  Conteúdo profundo, linguagem clara e exemplos do dia a dia para
-                  conversas reais com céticos, irmãos com dúvidas e a sua própria
-                  caminhada.
+                  Descobrir o seu dom é só o começo. Neste curso você aprende a
+                  desenvolver e viver o seu chamado ministerial — com fundamento
+                  bíblico, clareza e um caminho prático para a sua família, a sua
+                  igreja e o mundo ao seu redor.
                 </p>
 
                 <ul className="space-y-2.5 mb-6">
                   <li className="flex items-start gap-2.5 text-sm text-slate-light">
                     <CheckIcon />
-                    <span>20 aulas em vídeo (~8h20 de conteúdo)</span>
+                    <span>Aulas em vídeo liberadas toda semana</span>
                   </li>
                   <li className="flex items-start gap-2.5 text-sm text-slate-light">
                     <CheckIcon />
-                    <span>Materiais complementares em PDF</span>
+                    <span>Materiais de apoio em PDF por módulo</span>
                   </li>
                   <li className="flex items-start gap-2.5 text-sm text-slate-light">
                     <CheckIcon />
@@ -168,16 +160,16 @@ const Cursos = () => {
                   </li>
                   <li className="flex items-start gap-2.5 text-sm text-slate-light">
                     <CheckIcon />
-                    <span>Acesso por 1 ano a partir da compra</span>
+                    <span>Acesso por 1 ano + comunidade de alunos</span>
                   </li>
                 </ul>
 
                 <div className="flex flex-wrap gap-x-5 gap-y-2 mb-6 pb-6 border-b border-slate/10">
                   <span className="inline-flex items-center gap-1.5 text-xs text-slate">
-                    <ClockIcon /> ~8h20 de conteúdo
+                    <ClockIcon /> Uma aula por semana
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-xs text-slate">
-                    <PlayIcon /> 20 aulas · 4 módulos
+                    <PlayIcon /> 21 aulas · 5 módulos
                   </span>
                   <span className="inline-flex items-center gap-1.5 text-xs text-slate">
                     <GlobeIcon /> 100% online
@@ -189,19 +181,17 @@ const Cursos = () => {
 
                 <div className="mt-auto flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                   <div>
-                    <p className="text-2xs text-slate uppercase tracking-wider">Pagamento único</p>
-                    <p className="text-3xl sm:text-4xl font-bold text-mint tabular-nums">R$ 59,90</p>
-                    {!APOLOGETICA_LAUNCHED && (
-                      <p className="text-2xs text-slate/70 mt-0.5">
-                        ⏱ Lança em <span className="text-mint font-semibold">{daysLeft} dias</span>
-                      </p>
-                    )}
+                    <p className="text-2xs text-slate uppercase tracking-wider">Lançamento</p>
+                    <p className="text-2xl sm:text-3xl font-bold text-mint">Turma pioneira</p>
+                    <p className="text-2xs text-slate/70 mt-0.5">
+                      Entre na lista e seja avisado da abertura
+                    </p>
                   </div>
                   <Link
-                    to="/cursos/apologetica"
+                    to="/cursos/viva-o-seu-chamado"
                     className="group inline-flex items-center justify-center gap-2 px-6 py-3.5 bg-mint text-navy font-semibold rounded-xl shadow-mint hover:shadow-mint-strong hover:scale-[1.02] active:scale-[0.98] transition-all duration-200"
                   >
-                    {APOLOGETICA_LAUNCHED ? "Saber mais" : "Saiba mais"}
+                    Saiba mais
                     <svg className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" viewBox="0 0 20 20" fill="currentColor" aria-hidden><path d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" /></svg>
                   </Link>
                 </div>

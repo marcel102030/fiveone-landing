@@ -1677,19 +1677,21 @@ const Quiz = () => {
             </p>
             <div className="product-cards">
               {/* Curso */}
-              <div className="product-card">
-                <span className="product-tag">Em breve</span>
+              <div className="product-card product-card-live">
+                <span className="product-tag product-tag-live">Turma pioneira</span>
                 <div className="product-name">🎓 Curso “Viva o seu Chamado”</div>
                 <p className="product-desc">
-                  20 aulas pra identificar, desenvolver e viver o seu dom no dia a dia — na família, na igreja e no mundo.
+                  21 aulas pra identificar, desenvolver e viver o seu dom no dia a dia — liberadas toda semana, na turma pioneira.
                 </p>
-                {waitlist.curso ? (
-                  <div className="product-done">✓ Você está na lista de espera!</div>
-                ) : (
-                  <button type="button" className="product-btn" onClick={() => joinWaitlist("curso")}>
-                    Quero ser avisado no lançamento
-                  </button>
-                )}
+                <a
+                  href="/cursos/viva-o-seu-chamado"
+                  className="product-btn product-btn-live"
+                  onClick={() => {
+                    if (typeof gtag === "function") gtag("event", "curso_click", { event_category: "quiz", event_label: "viva-o-seu-chamado" });
+                  }}
+                >
+                  Conhecer o curso →
+                </a>
               </div>
               {/* Livro */}
               <div className="product-card">
