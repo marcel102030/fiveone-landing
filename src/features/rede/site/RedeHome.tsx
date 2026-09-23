@@ -76,7 +76,7 @@ function Valores() {
             Nossos <em>Valores</em>
           </h2>
           <p className="rs-lead">
-            Seis coisas que a gente vive toda vez que se reúne numa casa.
+            Seis coisas que vivemos toda vez que nos reunimos numa casa.
           </p>
         </div>
         <div className="rs-carousel-nav">

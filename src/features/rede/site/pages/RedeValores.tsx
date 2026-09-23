@@ -61,7 +61,7 @@ export default function RedeValores() {
                 Os cinco <em>motivos</em> do encontro
               </>
             }
-            lead="São os motivos que fazem a gente se reunir toda semana."
+            lead="São os motivos pelos quais nos reunimos toda semana."
           />
           <NumberedGrid items={CINCO_MOTIVOS} />
           <Callout>{CINCO_MOTIVOS_DESTAQUE}</Callout>

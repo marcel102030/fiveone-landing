@@ -60,7 +60,7 @@ export const VALORES: Valor[] = [
   {
     titulo: 'Estudo Bíblico e',
     destaque: 'Partilha',
-    descricao: 'A gente abre a Bíblia junto, conversa sobre o que leu e ora uns pelos outros.',
+    descricao: 'Abrimos a Bíblia juntos, conversamos sobre o que lemos e oramos uns pelos outros.',
     image: principal1,
   },
   {
@@ -141,7 +141,7 @@ export const PROGRAMACAO = [
 
 // ── Quem somos ─────────────────────────────────────────────────
 export const MANIFESTO = [
-  'A gente se reúne em casas, ao redor da mesa. Lemos a Bíblia, oramos, cantamos, comemos juntos e cuidamos uns dos outros durante a semana.',
+  'Nós nos reunimos em casas, ao redor da mesa. Lemos a Bíblia, oramos, cantamos, comemos juntos e cuidamos uns dos outros durante a semana.',
   'Cada casa também é lugar de missão. Convidamos vizinhos, amigos e colegas de trabalho, e muita gente conhece Jesus ali, na sala de alguém.',
   'Queremos uma igreja simples, que qualquer pessoa consiga viver e levar para outra casa, outro bairro e outra cidade.',
 ];
@@ -302,7 +302,7 @@ export const ENCONTROS = [
   {
     titulo: 'Estudo Bíblico e',
     destaque: 'Partilha',
-    descricao: 'A gente abre a Bíblia junto, conversa sobre o que leu e ora uns pelos outros.',
+    descricao: 'Abrimos a Bíblia juntos, conversamos sobre o que lemos e oramos uns pelos outros.',
     imagens: [encontro1, principal1, principal2, principal3],
   },
   {

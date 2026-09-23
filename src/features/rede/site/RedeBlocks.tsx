@@ -139,7 +139,7 @@ export function VisitCta({ image }: { image: string }) {
           Venha para uma <em>casa</em>
         </>
       }
-      lead="Quer visitar uma casa ou abrir a sua? A gente adoraria conversar com você."
+      lead="Quer visitar uma casa ou abrir a sua? Vamos adorar conversar com você."
     >
       <Link to={VISITOR_FORM_PATH} className="rs-btn rs-btn--primary">
         Visitar uma casa <ArrowIcon />

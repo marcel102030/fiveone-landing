@@ -5,8 +5,8 @@ import { INSTAGRAM_HANDLE, INSTAGRAM_URL, REDE_EMAIL, REDE_PHONE_DISPLAY, WHATSA
 
 const PASSOS = [
   'Sua mensagem chega no WhatsApp da rede e uma pessoa de verdade lê.',
-  'Um presbítero te responde.',
-  'Se você mora em Campina Grande, a gente te convida para um encontro numa casa.',
+  'Um presbítero vai responder você.',
+  'Se você mora em Campina Grande, convidamos você para um encontro numa casa.',
 ];
 
 function CartaForm() {
@@ -64,7 +64,7 @@ export default function RedeContato() {
             Vamos <em>conversar</em>
           </>
         }
-        lead="Tem alguma pergunta ou quer conhecer uma casa? Escreve pra gente."
+        lead="Tem alguma pergunta ou quer conhecer uma casa? Escreva para nós."
       />
 
       <section className="rs-section rs-section--light rs-section--tight-top">

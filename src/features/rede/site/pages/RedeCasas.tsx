@@ -98,7 +98,7 @@ export default function RedeCasas() {
           </div>
           <div className="rs-prose rs-reveal">
             <p>
-              Ainda não temos casas em outras cidades. Manda uma mensagem pra gente: avisamos quando a rede chegar na
+              Ainda não temos casas em outras cidades. Mande uma mensagem para nós: avisamos quando a rede chegar na
               sua região e podemos conversar sobre começar uma igreja na casa aí.
             </p>
             <div className="rs-actions">

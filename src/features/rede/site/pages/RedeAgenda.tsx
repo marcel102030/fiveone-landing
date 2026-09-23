@@ -38,7 +38,7 @@ export default function RedeAgenda() {
                 Encontros <em>semanais</em>
               </>
             }
-            lead="Mande uma mensagem e um presbítero te passa o endereço e os detalhes do próximo encontro."
+            lead="Mande uma mensagem e um presbítero passa para você o endereço e os detalhes do próximo encontro."
           />
           <ol className="rs-schedule">
             {PROGRAMACAO.map((item) => (
