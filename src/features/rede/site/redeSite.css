@@ -461,6 +461,8 @@
   .rs-drawer.is-open {
     position: fixed;
     inset: var(--rs-header-h) 0 0;
+    z-index: 49;
+    overscroll-behavior: contain;
     display: flex;
     flex-direction: column;
     gap: 28px;
@@ -471,12 +473,13 @@
 
   .rs-drawer nav {
     display: grid;
-    gap: 22px;
+    gap: 4px;
   }
 
   .rs-drawer__group {
     display: grid;
-    gap: 6px;
+    gap: 4px;
+    margin-bottom: 14px;
     padding-bottom: 18px;
     border-bottom: 1px solid var(--rs-line-dark);
   }
@@ -2698,5 +2701,53 @@
 @media (max-width: 520px) {
   .rs-resources {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Áreas de toque no celular (mínimo ~44px) ───────────────── */
+@media (max-width: 960px) {
+  .rs-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .rs-contact__info dd a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .rs-contact__info div {
+    padding-bottom: 6px;
+  }
+
+  .rs-footer__col a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+  }
+
+  .rs-footer__col {
+    gap: 0;
+  }
+
+  .rs-footer__bottom a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .rs-brand {
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 640px) {
+  .rs-fab {
+    right: 14px;
+    bottom: 14px;
+    width: 50px;
+    height: 50px;
   }
 }

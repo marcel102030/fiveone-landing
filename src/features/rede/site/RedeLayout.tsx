@@ -132,63 +132,67 @@ function Header({ overlay }: { overlay: boolean }) {
   const solid = !overlay || scrolled || openGroup !== null || drawerOpen;
 
   return (
-    <header className={`rs-header${solid ? ' is-solid' : ''}`}>
-      <div className="rs-header__inner">
-        <Brand />
+    <>
+      <header className={`rs-header${solid ? ' is-solid' : ''}`}>
+        <div className="rs-header__inner">
+          <Brand />
 
-        <nav className="rs-nav" aria-label="Principal">
-          {NAV.map((item) =>
-            isGroup(item) ? (
-              <div
-                key={item.label}
-                className={`rs-nav__group${openGroup === item.label ? ' is-open' : ''}`}
-                onMouseEnter={() => openNow(item.label)}
-                onMouseLeave={closeSoon}
-              >
-                <button
-                  type="button"
-                  className="rs-nav__link"
-                  aria-expanded={openGroup === item.label}
-                  onClick={() => setOpenGroup((g) => (g === item.label ? null : item.label))}
+          <nav className="rs-nav" aria-label="Principal">
+            {NAV.map((item) =>
+              isGroup(item) ? (
+                <div
+                  key={item.label}
+                  className={`rs-nav__group${openGroup === item.label ? ' is-open' : ''}`}
+                  onMouseEnter={() => openNow(item.label)}
+                  onMouseLeave={closeSoon}
                 >
-                  {item.label}
-                  <span className="rs-nav__caret" aria-hidden="true" />
-                </button>
-                <div className="rs-nav__panel">
-                  {item.items.map((sub) => (
-                    <NavLink key={sub.slug} to={redePath(sub.slug)} className="rs-nav__panel-link">
-                      <strong>{sub.label}</strong>
-                      {sub.hint && <span>{sub.hint}</span>}
-                    </NavLink>
-                  ))}
+                  <button
+                    type="button"
+                    className="rs-nav__link"
+                    aria-expanded={openGroup === item.label}
+                    onClick={() => setOpenGroup((g) => (g === item.label ? null : item.label))}
+                  >
+                    {item.label}
+                    <span className="rs-nav__caret" aria-hidden="true" />
+                  </button>
+                  <div className="rs-nav__panel">
+                    {item.items.map((sub) => (
+                      <NavLink key={sub.slug} to={redePath(sub.slug)} className="rs-nav__panel-link">
+                        <strong>{sub.label}</strong>
+                        {sub.hint && <span>{sub.hint}</span>}
+                      </NavLink>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : (
-              <NavLink key={item.slug} to={redePath(item.slug)} className="rs-nav__link">
-                {item.label}
-              </NavLink>
-            ),
-          )}
-        </nav>
+              ) : (
+                <NavLink key={item.slug} to={redePath(item.slug)} className="rs-nav__link">
+                  {item.label}
+                </NavLink>
+              ),
+            )}
+          </nav>
 
-        <div className="rs-header__actions">
-          <Link to={VISITOR_FORM_PATH} className="rs-btn rs-btn--primary rs-btn--sm">
-            Visitar uma casa
-          </Link>
-          <button
-            type="button"
-            className={`rs-burger${drawerOpen ? ' is-open' : ''}`}
-            aria-expanded={drawerOpen}
-            aria-controls="rs-drawer"
-            onClick={() => setDrawerOpen((v) => !v)}
-          >
-            <span />
-            <span />
-            <span className="sr-only">{drawerOpen ? 'Fechar menu' : 'Abrir menu'}</span>
-          </button>
+          <div className="rs-header__actions">
+            <Link to={VISITOR_FORM_PATH} className="rs-btn rs-btn--primary rs-btn--sm">
+              Visitar uma casa
+            </Link>
+            <button
+              type="button"
+              className={`rs-burger${drawerOpen ? ' is-open' : ''}`}
+              aria-expanded={drawerOpen}
+              aria-controls="rs-drawer"
+              onClick={() => setDrawerOpen((v) => !v)}
+            >
+              <span />
+              <span />
+              <span className="sr-only">{drawerOpen ? 'Fechar menu' : 'Abrir menu'}</span>
+            </button>
+          </div>
         </div>
-      </div>
+      </header>
 
+      {/* Fora do <header>: o backdrop-filter do cabeçalho prenderia o menu
+          (position: fixed) dentro dos 76px da barra, e as opções sumiriam. */}
       <div id="rs-drawer" className={`rs-drawer${drawerOpen ? ' is-open' : ''}`} hidden={!drawerOpen}>
         <nav aria-label="Menu">
           {NAV.map((item) =>
@@ -212,7 +216,7 @@ function Header({ overlay }: { overlay: boolean }) {
           Visitar uma casa <ArrowIcon />
         </Link>
       </div>
-    </header>
+    </>
   );
 }
 
