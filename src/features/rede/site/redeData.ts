@@ -60,37 +60,37 @@ export const VALORES: Valor[] = [
   {
     titulo: 'Estudo Bíblico e',
     destaque: 'Partilha',
-    descricao: 'Mesa aberta para mergulhar na Palavra, ouvir testemunhos e orar uns pelos outros.',
+    descricao: 'A gente abre a Bíblia junto, conversa sobre o que leu e ora uns pelos outros.',
     image: principal1,
   },
   {
     titulo: 'Louvor e',
     destaque: 'Comunhão',
-    descricao: 'Adoração simples, família reunida e dons em movimento em cada casa.',
+    descricao: 'Louvor simples, em família. Cada um participa com o dom que tem.',
     image: principal4,
   },
   {
     titulo: 'Palavra e',
     destaque: 'Testemunho',
-    descricao: 'Compartilhamos experiências reais, aplicamos o Evangelho e celebramos milagres.',
+    descricao: 'Contamos o que Deus tem feito na nossa vida e aplicamos a Palavra ao dia a dia.',
     image: principal7,
   },
   {
     titulo: 'Discipulado em',
     destaque: 'Família',
-    descricao: 'Casas acolhedoras onde cada geração encontra lugar e propósito no Reino.',
+    descricao: 'Crianças, jovens e adultos na mesma casa, aprendendo uns com os outros.',
     image: principal3,
   },
   {
     titulo: 'Missão na',
     destaque: 'Cidade',
-    descricao: 'Vemos a cidade como campo missionário e as casas como base de envio.',
+    descricao: 'Cada casa é um ponto de partida para alcançar vizinhos, amigos e a cidade.',
     image: principal5,
   },
   {
     titulo: 'Sacerdócio de',
     destaque: 'Todos',
-    descricao: 'Cristo como cabeça. Todos participam, todos servem, todos crescem.',
+    descricao: 'Jesus é o cabeça da igreja. Não tem plateia: todo mundo participa e serve.',
     image: principal2,
   },
 ];
@@ -126,14 +126,14 @@ export const PROGRAMACAO = [
   {
     titulo: 'Estudo Bíblico nas Casas',
     quando: 'Sexta-feira · 19h',
-    descricao: 'Uma noite para mergulhar na Palavra, partilhar revelações e orar uns pelos outros.',
+    descricao: 'Uma noite para estudar a Bíblia juntos, conversar e orar uns pelos outros.',
     botao: 'Quero participar',
     link: WHATSAPP.estudo,
   },
   {
     titulo: 'Culto nas Casas',
     quando: 'Sábado · 19h',
-    descricao: 'Celebração com louvor, comunhão e envio missionário direto do coração da família Five One.',
+    descricao: 'Louvor, Palavra e a Ceia ao redor da mesa, com a família reunida.',
     botao: 'Confirmar presença',
     link: WHATSAPP.culto,
   },
@@ -141,9 +141,9 @@ export const PROGRAMACAO = [
 
 // ── Quem somos ─────────────────────────────────────────────────
 export const MANIFESTO = [
-  'Somos uma rede de discípulos que abre lares para viver o Evangelho com simplicidade, participação e presença do Espírito Santo em cada encontro.',
-  'Vemos cada casa como campo de missão — lugar onde Cristo é anunciado, dons são ativados e famílias espirituais florescem bairro a bairro.',
-  'Caminhamos próximos uns dos outros, conectados por uma mesma visão bíblica: uma comunidade simples, perseverante e fiel, capaz de florescer em qualquer cultura até a volta de Cristo.',
+  'A gente se reúne em casas, ao redor da mesa. Lemos a Bíblia, oramos, cantamos, comemos juntos e cuidamos uns dos outros durante a semana.',
+  'Cada casa também é lugar de missão. Convidamos vizinhos, amigos e colegas de trabalho, e muita gente conhece Jesus ali, na sala de alguém.',
+  'Queremos uma igreja simples, que qualquer pessoa consiga viver e levar para outra casa, outro bairro e outra cidade.',
 ];
 
 export const PILARES = [
@@ -164,7 +164,7 @@ export const PILARES = [
   {
     tag: 'Missão',
     titulo: 'Onde estamos hoje',
-    resumo: 'Começamos em uma casa, cultivando fé, comunhão, discipulado e missão com simplicidade intencional.',
+    resumo: 'Começamos em uma casa, em Campina Grande, e seguimos simples de propósito.',
     itens: [
       'Comunhão ao redor da mesa',
       'Discipulado orgânico que acompanha histórias reais',
@@ -174,10 +174,10 @@ export const PILARES = [
   {
     tag: 'Propósito',
     titulo: 'Para onde estamos indo',
-    resumo: 'Multiplicar comunidades simples, cheias do Espírito, que florescem em casas e abençoam bairros inteiros.',
+    resumo: 'Queremos ver novas igrejas nas casas começando em outros bairros e cidades.',
     itens: [
       'Discípulos que fazem discípulos (2 Timóteo 2:2)',
-      'Casas como centros de glória e serviço',
+      'Casas abertas para servir o bairro',
       'Cada cristão vivendo seu dom com ousadia (Efésios 4:7-16)',
     ],
     quote: {
@@ -191,15 +191,15 @@ export const PILARES = [
 export const NAO_E = [
   {
     titulo: 'Não é um templo.',
-    texto: 'A casa não vira “lugar sagrado” porque a igreja se reúne nela. A casa continua sendo casa: quem é Igreja é o povo de Deus reunido por Cristo.',
+    texto: 'A casa continua sendo casa. A igreja são as pessoas que se reúnem ali.',
   },
   {
     titulo: 'Não é uma denominação.',
-    texto: 'Nenhuma instituição “possui” as casas. Os vínculos entre nós se parecem mais com os de uma família do que com os de uma estrutura institucional.',
+    texto: 'Nenhuma instituição é dona das casas. A relação entre nós é de família.',
   },
   {
     titulo: 'Não é uma reação contra outras igrejas.',
-    texto: 'Lutamos contra o “nós contra eles” e pela unidade com as outras igrejas locais e com o Corpo de Cristo na cidade.',
+    texto: 'Queremos andar junto com as outras igrejas da cidade. Somos todos o mesmo Corpo de Cristo.',
   },
 ];
 
@@ -207,19 +207,19 @@ export const NAO_E = [
 type Item = { titulo: string; descricao: string };
 
 export const CINCO_MOTIVOS: Item[] = [
-  { titulo: 'Adoração', descricao: 'Cristo no centro de cada encontro — em palavra, oração e canto, dirigida ao Pai, por meio do Filho, no Espírito.' },
-  { titulo: 'Comunhão', descricao: 'Mesa aberta, vidas conectadas, presença real entre irmãos. Não há cristianismo solitário.' },
-  { titulo: 'Discipulado', descricao: 'Aprender a obedecer a Jesus juntos, no cotidiano — ensinando uns aos outros tudo o que Ele ordenou.' },
-  { titulo: 'Serviço', descricao: 'Cada um servindo com o dom que recebeu, dentro e fora da casa, em sacerdócio real.' },
-  { titulo: 'Evangelismo', descricao: 'A casa como base de envio para o bairro, a cidade e os povos — porque Cristo é o único Mediador.' },
+  { titulo: 'Adoração', descricao: 'Jesus no centro de cada encontro, na Palavra, na oração e no louvor.' },
+  { titulo: 'Comunhão', descricao: 'Mesa aberta e vida compartilhada. Ninguém segue Jesus sozinho.' },
+  { titulo: 'Discipulado', descricao: 'Aprender juntos a obedecer Jesus no dia a dia, ensinando uns aos outros.' },
+  { titulo: 'Serviço', descricao: 'Cada um serve com o dom que recebeu, dentro e fora de casa.' },
+  { titulo: 'Evangelismo', descricao: 'Falar de Jesus para quem ainda não conhece, começando pela vizinhança.' },
 ];
 
 export const CINCO_MOTIVOS_DESTAQUE =
-  'Em uma igreja na casa, cada membro faz muita falta. Como a proposta é sermos menos em número, a presença de cada um pesa muito — o nosso encontro é prioridade.';
+  'Numa igreja na casa, cada pessoa faz falta. Como somos poucos em cada casa, estar no encontro é prioridade.';
 
 export const VIDA_DA_IGREJA: Item[] = [
   { titulo: 'Igreja na casa', descricao: 'Reunimo-nos prioritariamente em lares, recuperando o modelo neotestamentário e relacional dos primeiros discípulos.' },
-  { titulo: 'Ceia ao redor da mesa', descricao: 'Celebramos a Ceia como refeição comunitária autêntica, não como rito isolado — em memória de Cristo e antecipando o banquete do Reino.' },
+  { titulo: 'Ceia ao redor da mesa', descricao: 'Celebramos a Ceia como uma refeição de verdade, em memória de Cristo e olhando para o banquete do Reino.' },
   { titulo: 'Batismo por imersão', descricao: 'Celebramos o batismo de quem professa fé consciente, como festa comunitária e entrada visível no Corpo.' },
   { titulo: 'Discipulado relacional', descricao: 'Cada cristão é discípulo e discipulador, formando outros no convívio diário, e não apenas pela transmissão de conteúdo.' },
   { titulo: 'Sacerdócio de todos', descricao: 'Rejeitamos o clericalismo: cada irmão e irmã tem dom, vocação e responsabilidade no Reino.' },
@@ -229,7 +229,7 @@ export const VIDA_DA_IGREJA: Item[] = [
 // ── Estrutura ──────────────────────────────────────────────────
 export const ESTRUTURA_VISAO = {
   paragrafos: [
-    'O nome da igreja local não é "Five One". Cada igreja é, antes de tudo, uma igreja na casa. A Rede Five One é a rede dos cinco ministérios de Efésios 4 — apóstolos, profetas, evangelistas, pastores e mestres — que cuidam, acompanham e fortalecem essas casas, para que o Corpo de Cristo seja edificado de forma saudável e fiel à Escritura.',
+    'O nome da igreja local não é "Five One". Cada igreja é, antes de tudo, uma igreja na casa. A Rede Five One é a rede dos cinco ministérios de Efésios 4 (apóstolos, profetas, evangelistas, pastores e mestres), que cuidam, acompanham e fortalecem essas casas.',
     'Nós somos a Igreja. Não somos uma denominação, e nenhuma instituição "possui" as casas. A natureza dos vínculos entre nós se parece mais com os de uma família do que com os de uma estrutura institucional: depende de amor, confiança, tempo e longevidade.',
   ],
   versiculo: {
@@ -238,16 +238,16 @@ export const ESTRUTURA_VISAO = {
   },
   itens: [
     { titulo: 'Igreja é gente, não local', descricao: 'A casa não vira "templo" porque a igreja se reúne nela. Quem é Igreja é o povo de Deus reunido por Cristo.' },
-    { titulo: 'Cinco ministérios juntos', descricao: 'Apóstolos, profetas, evangelistas, pastores e mestres servindo o Corpo — sem o "ministério de um homem só".' },
+    { titulo: 'Cinco ministérios juntos', descricao: 'Apóstolos, profetas, evangelistas, pastores e mestres servindo juntos. A igreja não depende de uma pessoa só.' },
     { titulo: 'Vínculos relacionais', descricao: 'Acompanhamento de família, não de organização: caminhar próximo, com amor e tempo.' },
     { titulo: 'Unidade com a Igreja', descricao: 'Lutamos contra o "nós contra eles" e pela unidade com outras igrejas locais e com o Corpo de Cristo na cidade.' },
   ],
-  destaque: 'A Rede Five One é apenas uma expressão da igreja entre tantas outras boas e fiéis. Não somos uma marca; somos um lar.',
+  destaque: 'A Rede Five One é só uma das muitas expressões boas e fiéis da igreja de Jesus.',
 };
 
 /** Círculos de cuidado — da casa para a rede (Confissão de Fé, Parte II, d). */
 export const CIRCULOS = [
-  { titulo: 'Igreja na casa', subtitulo: 'onde a vida acontece', texto: 'Uma igreja pequena por natureza, com cerca de até vinte pessoas, reunida ao redor da mesa. Tudo o mais nesta estrutura existe para servi-la.' },
+  { titulo: 'Igreja na casa', subtitulo: 'onde a vida acontece', texto: 'Uma igreja pequena, com até umas vinte pessoas, que se reúne ao redor da mesa.' },
   { titulo: 'Casal de presbíteros', subtitulo: 'pastoreia a casa', texto: 'Cada igreja na casa é cuidada por um casal de presbíteros, que pastoreia a vida cotidiana da comunidade e forma novos líderes para a multiplicação.' },
   { titulo: 'Comunhão de presbíteros', subtitulo: 'caminham juntos', texto: 'A liderança é plural: os presbíteros das diversas casas caminham juntos no contexto da rede, em comunhão constante.' },
   { titulo: 'Cinco ministérios', subtitulo: 'cuidam da rede', texto: 'A rede como um todo é liderada pelos cinco ministérios de Efésios 4, em colaboração constante com os presbíteros das casas.' },
@@ -255,8 +255,8 @@ export const CIRCULOS = [
 
 export const LIDERANCA = {
   paragrafos: [
-    'O modelo neotestamentário não conhece o líder solitário no topo de uma estrutura piramidal. Conhece, sim, presbíteros — sempre no plural — que cuidam juntos do rebanho de Deus, reconhecidos pelo caráter antes da capacidade, ao longo do tempo (At 14.23; Tt 1.5-9; 1Pe 5.1-4).',
-    'Distinguimos cuidadosamente presbítero de pastor. Em Efésios 4.11, pastor é um dos cinco dons ministeriais que Cristo distribuiu à sua Igreja. Um presbítero pode ter o dom de pastor — mas também pode liderar pelo dom de mestre, profeta, evangelista ou apóstolo. Queremos resgatar a pluralidade dos cinco ministérios e abandonar o modelo de "ministério de um homem só".',
+    'O modelo neotestamentário não conhece o líder solitário no topo de uma estrutura piramidal. Conhece presbíteros, sempre no plural, que cuidam juntos do rebanho de Deus e são reconhecidos pelo caráter ao longo do tempo (At 14.23; Tt 1.5-9; 1Pe 5.1-4).',
+    'Distinguimos cuidadosamente presbítero de pastor. Em Efésios 4.11, pastor é um dos cinco dons ministeriais que Cristo distribuiu à sua Igreja. Um presbítero pode ter o dom de pastor, mas também pode liderar pelo dom de mestre, profeta, evangelista ou apóstolo. Queremos resgatar a pluralidade dos cinco ministérios e abandonar o modelo de "ministério de um homem só".',
   ],
   ministerios: [
     { titulo: 'Apóstolos', descricao: 'Enviados que abrem caminhos, plantam comunidades e cuidam da fidelidade ao evangelho.' },
@@ -265,13 +265,13 @@ export const LIDERANCA = {
     { titulo: 'Pastores', descricao: 'Cuidadores que conhecem cada ovelha pelo nome, alimentando, protegendo e curando.' },
     { titulo: 'Mestres', descricao: 'Guardiões da sã doutrina, que ensinam com fidelidade e profundidade as Escrituras.' },
   ],
-  areas: 'Equipes de membros servem em finanças, mídia, louvor, ceia, departamento infantil e prospecção de necessidades — para que cada casa funcione como família espiritual viva.',
+  areas: 'Membros servem em finanças, mídia, louvor, Ceia, crianças e no cuidado de quem está passando necessidade.',
 };
 
 export const MEMBRESIA = {
   paragrafos: [
     'A membresia formal em uma igreja local não é mera adesão administrativa, mas um pacto de aliança espiritual entre o crente e a comunidade da fé, comprometendo-os mutuamente diante de Deus e uns dos outros (Hb 10.24-25; At 2.42-47).',
-    'Para se tornar membro de uma igreja na casa da Rede Five One, a pessoa precisa concluir o curso Bases — onde percorre os fundamentos da fé cristã e nossa identidade como rede — e ler a Confissão de Fé junto com os presbíteros, acolhendo-a como sua.',
+    'Para se tornar membro de uma igreja na casa da Rede Five One, a pessoa precisa fazer o curso Bases, que passa pelos fundamentos da fé cristã e pela identidade da rede, e ler a Confissão de Fé junto com os presbíteros.',
   ],
   itens: [
     { titulo: 'Submissão mútua', descricao: 'Viver em aliança fraterna com os demais irmãos (Ef 4.1-3; Hb 10.24-25).' },
@@ -284,7 +284,7 @@ export const MEMBRESIA = {
 
 export const MULTIPLICACAO = {
   paragrafos: [
-    'Nosso desejo é multiplicar. Mas a multiplicação só ocorrerá quando identificarmos presbíteros preparados para conduzir uma nova casa. Entendemos pela Escritura que cabe ao ministério apostólico reconhecer presbíteros — queremos ser o mais fiéis possível ao texto.',
+    'Nosso desejo é multiplicar. Mas a multiplicação só ocorrerá quando identificarmos presbíteros preparados para conduzir uma nova casa. Entendemos pela Escritura que cabe ao ministério apostólico reconhecer presbíteros, e queremos ser fiéis ao texto.',
     'Cada nova casa permanece sob o acompanhamento da Rede e participa de uma reunião geral mensal com as demais igrejas da rede na mesma cidade. Seus presbíteros se reúnem com a liderança da rede em periodicidade aproximada de dois meses, para que a unidade seja preservada.',
   ],
   itens: [
@@ -294,7 +294,7 @@ export const MULTIPLICACAO = {
     { titulo: 'Comunhão real', descricao: 'Amizade e relacionamento verdadeiro com os presbíteros atuais, para preservar a unidade.' },
     { titulo: 'Conexão entre as casas', descricao: 'Reunião mensal das casas da mesma cidade e contribuição financeira para que a obra continue avançando.' },
   ],
-  destaque: 'Cada casa que surgir separa um valor mensal para a Rede Five One — para multiplicar novas casas, abrir orfanatos e cumprir outros chamados que o Senhor venha a colocar diante de nós.',
+  destaque: 'Cada nova casa separa um valor mensal para a Rede Five One. Esse dinheiro ajuda a abrir novas casas, orfanatos e outros projetos que o Senhor colocar diante de nós.',
 };
 
 // ── Encontros (galeria da agenda) ──────────────────────────────
@@ -302,25 +302,25 @@ export const ENCONTROS = [
   {
     titulo: 'Estudo Bíblico e',
     destaque: 'Partilha',
-    descricao: 'Mesa aberta para mergulhar na Palavra, ouvir testemunhos e orar uns pelos outros.',
+    descricao: 'A gente abre a Bíblia junto, conversa sobre o que leu e ora uns pelos outros.',
     imagens: [encontro1, principal1, principal2, principal3],
   },
   {
     titulo: 'Louvor e',
     destaque: 'Comunhão',
-    descricao: 'Adoração simples, família reunida e dons em movimento em cada casa.',
+    descricao: 'Louvor simples, em família. Cada um participa com o dom que tem.',
     imagens: [encontro2, principal4, principal5, principal6],
   },
   {
     titulo: 'Palavra e',
     destaque: 'Testemunho',
-    descricao: 'Compartilhamos experiências reais, aplicamos o Evangelho e celebramos milagres.',
+    descricao: 'Contamos o que Deus tem feito na nossa vida e aplicamos a Palavra ao dia a dia.',
     imagens: [principal7, principal9, principal8, principal1],
   },
   {
     titulo: 'Discipulado em',
     destaque: 'Família',
-    descricao: 'Casas acolhedoras onde cada geração encontra lugar e propósito no Reino.',
+    descricao: 'Crianças, jovens e adultos na mesma casa, aprendendo uns com os outros.',
     imagens: [encontro4, principal2, principal5, principal8],
   },
 ];
@@ -331,8 +331,8 @@ export const PRESBITEROS = {
   nomes: 'Marcelo Junior e Suenia Karcia',
   papel: 'Casal de presbíteros',
   texto: [
-    'Marcelo e Suenia abriram a primeira casa da rede em 2025. Como casal de presbíteros, pastoreiam a vida cotidiana da comunidade — a Palavra, a mesa, a oração e o cuidado de cada pessoa pelo nome.',
-    'Mais do que conduzir encontros, a vocação deles é formar novos presbíteros, para que cada casa madura possa dar à luz outra casa.',
+    'Marcelo e Suenia são casados e abriram a primeira casa da rede em 2025, em Campina Grande.',
+    'Hoje cuidam dessa casa como presbíteros e estão formando novos líderes, para que outras casas possam começar.',
   ],
 };
 
@@ -341,37 +341,37 @@ export const PRESBITEROS = {
 export const HISTORIA = [
   {
     quando: '2025',
-    titulo: 'Uma casa, doze pessoas',
-    texto: 'Em 2025, em Campina Grande - PB, abrimos a primeira casa. Doze pessoas ao redor de uma mesa, com a Bíblia aberta, pão partido e a certeza de que não precisávamos de um templo para ser igreja — só de Jesus no centro e uns dos outros por perto.',
+    titulo: 'A primeira casa',
+    texto: 'Abrimos a primeira casa em Campina Grande - PB, com um grupo de doze pessoas.',
   },
   {
     quando: '2025',
-    titulo: 'Um propósito maior que a sala',
-    texto: 'Desde o primeiro encontro, o chamado foi claro: espalhar a visão de igreja nas casas por todo o Brasil, multiplicando igrejas nas casas — bairro a bairro, cidade a cidade.',
+    titulo: 'O propósito',
+    texto: 'Desde o começo, o propósito é espalhar a visão de igreja nas casas por todo o Brasil, multiplicando igrejas nas casas.',
   },
   {
     quando: 'Toda semana',
-    titulo: 'A mesa posta',
-    texto: 'Às sextas, o Estudo Bíblico; aos sábados, o Culto nas Casas. Palavra, louvor, oração e a Ceia partilhada como refeição — cada um trazendo o seu dom, ninguém como plateia.',
+    titulo: 'Os encontros',
+    texto: 'Estudo bíblico na sexta e culto no sábado, sempre às 19h. A Ceia é feita ao redor da mesa, como uma refeição.',
   },
   {
-    quando: 'Cuidado de família',
-    titulo: 'Presbíteros, no plural',
-    texto: 'Marcelo Junior e Suenia Karcia servem como casal de presbíteros, cuidando da casa e formando novos líderes, sob o cuidado dos cinco ministérios de Efésios 4.',
+    quando: 'Liderança',
+    titulo: 'Os presbíteros',
+    texto: 'Marcelo Junior e Suenia Karcia cuidam da casa como presbíteros e estão formando novos líderes.',
   },
   {
     quando: 'O que cremos',
-    titulo: 'A fé, por escrito',
-    texto: 'Escrevemos a nossa Confissão de Fé: as doutrinas que nos unem à Igreja de todos os tempos e as convicções que dão rosto à nossa rede. Não um manual de regras, mas um pacto de aliança.',
+    titulo: 'A Confissão de Fé',
+    texto: 'Colocamos por escrito o que cremos e como vivemos como igreja. Quem quer ser membro lê a Confissão junto com os presbíteros.',
   },
   {
     quando: 'Hoje',
-    titulo: 'Uma família em Campina Grande',
-    texto: 'Seguimos reunidos nas casas de Campina Grande, com encontros semanais, discipulado de perto e portas abertas para quem quiser se sentar à mesa.',
+    titulo: 'Campina Grande',
+    texto: 'Seguimos nos reunindo nas casas de Campina Grande. Quem quiser visitar é bem-vindo.',
   },
   {
     quando: 'Adiante',
-    titulo: 'Casas por todo o Brasil',
-    texto: 'Oramos para que cada casa madura gere outra casa, e que presbíteros sejam levantados em outros bairros e cidades — até que a igreja nas casas seja uma realidade por todo o Brasil.',
+    titulo: 'Mais casas',
+    texto: 'Nosso desejo é que cada casa, quando estiver madura, dê origem a outra, e que a rede chegue a outras cidades do Brasil.',
   },
 ];

@@ -75,7 +75,7 @@ const REDE_SITE = "https://redeigrejanascasas.com";
 const REDE_META: RouteMeta = {
   title: "Rede de Igrejas nas Casas | Five One",
   description:
-    "Um movimento que transforma lares em centros de comunhão, discipulado e missão — bairro a bairro, em Campina Grande - PB.",
+    "Igrejas pequenas que se reúnem em casas em Campina Grande - PB. Estudo bíblico na sexta e culto no sábado, às 19h.",
   url: `${REDE_SITE}/`,
   image: `${REDE_SITE}/rede-favicon-192.png`,
 };

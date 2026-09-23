@@ -15,7 +15,7 @@ export default function RedeQuemSomos() {
             Igreja é <em>gente</em>, não lugar
           </>
         }
-        lead="Uma rede de discípulos que abre lares para viver o Evangelho com simplicidade, participação e presença do Espírito Santo."
+        lead="Somos igrejas pequenas que se reúnem em casas, em Campina Grande - PB."
       />
 
       <section className="rs-section rs-section--light">
@@ -37,7 +37,7 @@ export default function RedeQuemSomos() {
       <section className="rs-section rs-section--dark">
         <div className="rs-container">
           <SectionHead
-            eyebrow="Visão, missão e propósito"
+            eyebrow="No que acreditamos"
             title={
               <>
                 Por que <em>existimos</em>

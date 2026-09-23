@@ -25,7 +25,7 @@ export default function RedeCasas() {
             Encontre uma <em>casa</em>
           </>
         }
-        lead="Hoje a rede está presente em Campina Grande - PB. Escolha uma casa, registre sua visita e um presbítero entra em contato para te receber."
+        lead="Por enquanto estamos só em Campina Grande - PB. Escolha uma casa, registre sua visita e um presbítero vai falar com você."
       />
 
       <section className="rs-section rs-section--light">
@@ -93,13 +93,13 @@ export default function RedeCasas() {
           <div className="rs-reveal">
             <span className="rs-eyebrow">Fora de Campina Grande?</span>
             <h2 className="rs-title">
-              Estamos <em>crescendo</em>
+              Mora em outra <em>cidade</em>?
             </h2>
           </div>
           <div className="rs-prose rs-reveal">
             <p>
-              Ainda não temos casas em outras cidades. Se você mora fora de Campina Grande, fale com a gente: avisamos
-              quando a rede chegar na sua região e podemos conversar sobre como viver a igreja nas casas onde você está.
+              Ainda não temos casas em outras cidades. Manda uma mensagem pra gente: avisamos quando a rede chegar na
+              sua região e podemos conversar sobre começar uma igreja na casa aí.
             </p>
             <div className="rs-actions">
               {/* Sem a pergunta de cidade: este botão já é para quem é de fora. */}

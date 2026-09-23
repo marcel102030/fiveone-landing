@@ -26,7 +26,7 @@ export default function RedeAgenda() {
             Venha para a <em>mesa</em>
           </>
         }
-        lead="Dois encontros por semana, nas casas de Campina Grande - PB. Palavra, louvor, pão partido e oração, com todos participando."
+        lead="Dois encontros por semana, nas casas de Campina Grande - PB."
       />
 
       <section className="rs-section rs-section--light">
@@ -38,7 +38,7 @@ export default function RedeAgenda() {
                 Encontros <em>semanais</em>
               </>
             }
-            lead="Mande uma mensagem e um presbítero te passa os detalhes do próximo encontro na casa mais perto de você."
+            lead="Mande uma mensagem e um presbítero te passa o endereço e os detalhes do próximo encontro."
           />
           <ol className="rs-schedule">
             {PROGRAMACAO.map((item) => (
@@ -68,7 +68,7 @@ export default function RedeAgenda() {
       <section className="rs-section rs-section--dark">
         <div className="rs-container">
           <SectionHead
-            eyebrow="Momentos reais da rede"
+            eyebrow="Fotos dos encontros"
             title={
               <>
                 Como são nossos <em>encontros</em>

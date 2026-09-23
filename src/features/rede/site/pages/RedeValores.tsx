@@ -16,7 +16,7 @@ export default function RedeValores() {
             Nossos <em>Valores</em>
           </>
         }
-        lead="Seis convicções guiam cada encontro, cada mesa e cada discipulado na Rede de Igrejas nas Casas."
+        lead="Seis convicções que marcam o jeito como seguimos Jesus juntos, nas casas."
       >
         <nav className="rs-index" aria-label="Valores">
           {VALORES.map((v, i) => (
@@ -61,7 +61,7 @@ export default function RedeValores() {
                 Os cinco <em>motivos</em> do encontro
               </>
             }
-            lead="Não como agenda, mas como vida compartilhada ao redor da mesa, na presença do Espírito Santo."
+            lead="São os motivos que fazem a gente se reunir toda semana."
           />
           <NumberedGrid items={CINCO_MOTIVOS} />
           <Callout>{CINCO_MOTIVOS_DESTAQUE}</Callout>
@@ -90,8 +90,7 @@ export default function RedeValores() {
             A Confissão de <em>Fé</em>
           </h2>
           <p className="rs-lead">
-            Nossos valores nascem das Escrituras. A Confissão de Fé reúne o que cremos e o modo como vivemos como igreja
-            nas casas.
+            Tudo o que cremos está escrito na nossa Confissão de Fé. Quem quer ser membro lê junto com os presbíteros.
           </p>
           <div className="rs-actions">
             <Link to={redePath('confissao')} className="rs-btn rs-btn--primary">

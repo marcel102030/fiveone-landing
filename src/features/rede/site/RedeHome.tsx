@@ -50,7 +50,7 @@ function Hero() {
           <br />
           Fazendo discípulos.
           <br />
-          Sendo igreja nas casas, bairro a bairro.
+          Sendo igreja nas casas.
         </p>
       </div>
     </section>
@@ -76,8 +76,7 @@ function Valores() {
             Nossos <em>Valores</em>
           </h2>
           <p className="rs-lead">
-            Seis convicções guiam cada encontro, cada mesa e cada discipulado. Simples o bastante para caber numa
-            sala de estar, profundas o bastante para uma vida inteira.
+            Seis coisas que a gente vive toda vez que se reúne numa casa.
           </p>
         </div>
         <div className="rs-carousel-nav">
@@ -160,7 +159,7 @@ function Casas() {
         </ol>
 
         <p className="rs-note">
-          Hoje a rede está presente apenas em Campina Grande - PB. Estamos crescendo — em breve, novas cidades.
+          Por enquanto estamos só em Campina Grande - PB.
         </p>
 
         <div className="rs-center">
@@ -183,8 +182,7 @@ function Encontros() {
           Uma <em>mesa</em> posta toda semana
         </h2>
         <p className="rs-lead rs-lead--light">
-          Sexta-feira, 19h, Estudo Bíblico nas casas. Sábado, 19h, Culto nas casas. Palavra, louvor, pão partido e
-          oração, com todos participando.
+          Sexta, às 19h, tem estudo bíblico. Sábado, às 19h, tem culto nas casas. Todo mundo participa.
         </p>
         <Link to={redePath('agenda')} className="rs-btn rs-btn--primary">
           Ver a agenda <ArrowIcon />

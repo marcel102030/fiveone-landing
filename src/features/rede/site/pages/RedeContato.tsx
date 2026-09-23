@@ -4,9 +4,9 @@ import { PageHero } from '../RedeBlocks';
 import { INSTAGRAM_HANDLE, INSTAGRAM_URL, REDE_EMAIL, REDE_PHONE_DISPLAY, WHATSAPP } from '../redeData';
 
 const PASSOS = [
-  'Sua mensagem chega ao WhatsApp da rede e uma pessoa de verdade lê.',
-  'Um presbítero responde com um nome e um próximo passo.',
-  'Se você é de Campina Grande, te convidamos para um encontro numa casa perto de você.',
+  'Sua mensagem chega no WhatsApp da rede e uma pessoa de verdade lê.',
+  'Um presbítero te responde.',
+  'Se você mora em Campina Grande, a gente te convida para um encontro numa casa.',
 ];
 
 function CartaForm() {
@@ -34,7 +34,7 @@ function CartaForm() {
       <p className="rs-letter__salute">Querida Rede,</p>
       <label className="rs-letter__field rs-letter__field--area">
         <span className="sr-only">Sua mensagem</span>
-        <textarea name="mensagem" rows={6} required placeholder="Escreva aqui sua pergunta, sua história ou como podemos caminhar com você…" />
+        <textarea name="mensagem" rows={6} required placeholder="Escreva sua mensagem…" />
       </label>
       <p className="rs-letter__closing">Com carinho,</p>
       <div className="rs-letter__row">
@@ -64,7 +64,7 @@ export default function RedeContato() {
             Vamos <em>conversar</em>
           </>
         }
-        lead="Tem uma pergunta, uma história, ou quer fazer parte da família? Escreva pra gente."
+        lead="Tem alguma pergunta ou quer conhecer uma casa? Escreve pra gente."
       />
 
       <section className="rs-section rs-section--light rs-section--tight-top">

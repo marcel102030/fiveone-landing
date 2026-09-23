@@ -43,7 +43,7 @@ export default function RedeEstrutura() {
                 Círculos de cuidado, <em>uma família</em>
               </>
             }
-            lead="A vida acontece na casa. Tudo o que vem depois existe para servi-la, e não o contrário."
+            lead="A vida da igreja acontece na casa. O resto da estrutura existe para ajudar as casas."
           />
           <div className="rs-rings-layout">
             <Rings />

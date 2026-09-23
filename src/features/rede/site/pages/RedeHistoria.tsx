@@ -15,7 +15,7 @@ export default function RedeHistoria() {
             Nossa <em>história</em>
           </>
         }
-        lead="Começou numa sala de estar em Campina Grande, com uma casa, doze pessoas e um sonho do tamanho do Brasil."
+        lead="Começamos em 2025, em Campina Grande, com uma casa e doze pessoas."
       />
 
       <section className="rs-section rs-section--light">
@@ -23,18 +23,13 @@ export default function RedeHistoria() {
           <div className="rs-reveal">
             <span className="rs-eyebrow">Como tudo começou</span>
             <h2 className="rs-title">
-              Uma mesa, e não um <em>palco</em>
+              Uma casa e doze <em>pessoas</em>
             </h2>
           </div>
           <div className="rs-prose rs-reveal">
             <p>
-              Em 2025, um pequeno grupo decidiu viver a igreja do jeito que o Novo Testamento descreve: reunida nas casas,
-              perseverando na doutrina dos apóstolos, na comunhão, no partir do pão e nas orações (At 2.42).
-            </p>
-            <p>
-              Eram doze pessoas ao redor de uma mesa. Não havia púlpito nem plateia — havia a Palavra aberta, o pão
-              partido e cada irmão trazendo o seu dom. Dali nasceu a Rede de Igrejas nas Casas, com um propósito que
-              desde o primeiro dia foi maior do que aquela sala: espalhar a visão de igreja nas casas por todo o Brasil.
+              Em 2025 abrimos a primeira casa, em Campina Grande. Éramos doze pessoas querendo viver a igreja como está
+              no livro de Atos: reunidos nas casas, estudando a Palavra, comendo juntos e orando (At 2.42).
             </p>
           </div>
         </div>
@@ -46,7 +41,7 @@ export default function RedeHistoria() {
             eyebrow="A linha do tempo"
             title={
               <>
-                Uma família de casas, <em>crescendo</em>
+                Nossa <em>caminhada</em> até aqui
               </>
             }
           />
@@ -75,12 +70,9 @@ export default function RedeHistoria() {
         <div className="rs-container rs-center-block rs-reveal">
           <span className="rs-eyebrow">Para onde vamos</span>
           <h2 className="rs-title">
-            A próxima casa pode ser a <em>sua</em>
+            Quer abrir uma <em>casa</em>?
           </h2>
-          <p className="rs-lead">
-            Cada casa madura pode dar à luz outra casa. Veja como uma nova igreja na casa nasce e o que caminha junto com
-            ela.
-          </p>
+          <p className="rs-lead">Veja como uma nova igreja na casa começa na rede.</p>
           <div className="rs-actions">
             <Link to={redePath('estrutura')} className="rs-btn rs-btn--primary">
               Como uma casa nasce <ArrowIcon />

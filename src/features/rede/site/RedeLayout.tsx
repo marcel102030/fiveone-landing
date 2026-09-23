@@ -55,9 +55,9 @@ const NAV: (NavGroup | NavItem)[] = [
   {
     label: 'Sobre',
     items: [
-      { label: 'Quem somos', slug: 'quem-somos', hint: 'Visão, missão e propósito da rede' },
-      { label: 'Nossa história', slug: 'historia', hint: 'Uma casa, doze pessoas e um sonho' },
-      { label: 'Nossos valores', slug: 'valores', hint: 'O que vivemos quando nos encontramos' },
+      { label: 'Quem somos', slug: 'quem-somos', hint: 'Quem somos e no que acreditamos' },
+      { label: 'Nossa história', slug: 'historia', hint: 'Como a rede começou' },
+      { label: 'Nossos valores', slug: 'valores', hint: 'O que vivemos nos encontros' },
       { label: 'Estrutura', slug: 'estrutura', hint: 'Casas, presbíteros e os cinco ministérios' },
       { label: 'Confissão de Fé', slug: 'confissao', hint: 'O que cremos' },
     ],

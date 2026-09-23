@@ -20,7 +20,7 @@ const EXTERNOS = [
   {
     tipo: 'Cursos',
     titulo: 'Formação Five One',
-    texto: 'Cursos para crescer no chamado, nos dons e na vida de igreja — do fundamento à prática.',
+    texto: 'Cursos da Five One sobre chamado, dons e vida de igreja.',
     href: `${FIVEONE}/cursos`,
     acao: 'Ver cursos',
   },
@@ -47,10 +47,10 @@ export default function RedeRecursos() {
         eyebrow="Biblioteca da rede"
         title={
           <>
-            Para ler, estudar e <em>caminhar</em>
+            O que estamos <em>lendo</em> e recomendando
           </>
         }
-        lead="O que cremos, o que ensinamos e o que recomendamos — tudo num só lugar."
+        lead="Materiais para estudar sozinho ou junto com a sua casa."
       />
 
       <section className="rs-section rs-section--light">
@@ -67,8 +67,7 @@ export default function RedeRecursos() {
             <div>
               <p className="rs-feature__kicker">Documento confessional · 13 doutrinas primárias · 12 secundárias</p>
               <p>
-                O coração doutrinário da Rede de Igrejas nas Casas: o que cremos, como cremos e por que cremos. Um pacto
-                de aliança para ler junto, em casa, com os irmãos.
+                O documento com tudo o que cremos. Vale a pena ler junto com a sua casa.
               </p>
             </div>
             <div className="rs-actions">

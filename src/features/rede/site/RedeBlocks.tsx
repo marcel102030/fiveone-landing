@@ -136,10 +136,10 @@ export function VisitCta({ image }: { image: string }) {
       eyebrow="Participe"
       title={
         <>
-          Tem lugar para você <em>à mesa</em>
+          Venha para uma <em>casa</em>
         </>
       }
-      lead="Quer encontrar uma família espiritual perto de você, ou abrir a sua casa? Converse com a gente e descubra como caminhar junto."
+      lead="Quer visitar uma casa ou abrir a sua? A gente adoraria conversar com você."
     >
       <Link to={VISITOR_FORM_PATH} className="rs-btn rs-btn--primary">
         Visitar uma casa <ArrowIcon />
@@ -175,7 +175,7 @@ export function PrimeiroPasso() {
           <li className="rs-reveal">
             <span className="rs-steps__num">02</span>
             <h3>Visite uma casa</h3>
-            <p>Registre sua visita. Um presbítero local entra em contato para te receber com carinho.</p>
+            <p>Registre sua visita e um presbítero entra em contato com você.</p>
             <Link to={VISITOR_FORM_PATH} className="rs-link">
               Registrar minha visita →
             </Link>
