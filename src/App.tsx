@@ -22,6 +22,7 @@ import "./App.css";
 import Footer from "./shared/components/layout/Footer/Footer";
 import Navbar from "./shared/components/layout/Navbar/Navbar";
 import ScrollToTop from "./shared/components/layout/ScrollToTop/ScrollToTop";
+import { REDE_PAGE_SLUGS, REDE_SLUGS_SHARED_WITH_FIVEONE } from "./features/rede/site/redeLinks";
 import ScrollToTopOnMount from "./shared/components/layout/ScrollToTop/ScrollToTopOnMount";
 import PWAInstallBanner from "./shared/components/PWAInstallBanner/PWAInstallBanner";
 import { focusStore } from "./shared/state/focusMode";
@@ -36,10 +37,9 @@ const DomPage = lazy(() => import("./features/institucional/pages/DomPage"));
 const Treinamentos = lazy(() => import("./features/institucional/pages/Treinamentos"));
 const BlogPostPage = lazy(() => import("./features/institucional/pages/BlogPostPage"));
 const Ministerio = lazy(() => import("./features/institucional/pages/Ministerio"));
-const IgrejaNasCasas = lazy(() => import("./features/rede/pages/igrejaNasCasas"));
-const ComoFuncionaCasas = lazy(() => import("./features/rede/pages/redeIgrejas/ComoFunciona"));
-const RedeFiveOne = lazy(() => import("./features/rede/pages/redeIgrejas/RedeFiveOne"));
-const OQueEFiveOne = lazy(() => import("./features/rede/pages/redeIgrejas/OQueEFiveOne"));
+const RedeHome = lazy(() => import("./features/rede/site/RedeHome"));
+const RedeSitePage = lazy(() => import("./features/rede/site/RedeSitePage"));
+const RedeArtigo = lazy(() => import("./features/rede/site/pages/RedeArtigo"));
 const Plataforma = lazy(() => import("./features/plataforma/pages/plataforma"));
 const LoginAluno = lazy(() => import("./features/plataforma/pages/loginAluno"));
 const CursoModulos = lazy(() => import("./features/plataforma/pages/CursoModulos"));
@@ -134,6 +134,13 @@ function AppContent() {
     (window.location.hostname === "redeigrejanascasas.com" ||
       window.location.hostname === "www.redeigrejanascasas.com");
 
+  // Páginas do site da rede: têm botão de WhatsApp próprio no canto da tela.
+  const isRedeSitePage =
+    isIgrejasStandalone ||
+    (isRedeDomain &&
+      (location.pathname === "/" ||
+        REDE_PAGE_SLUGS.some((slug) => location.pathname === `/${slug}`)));
+
   const hideLayout =
     location.pathname === "/links" ||
     location.pathname.startsWith("/lp/") ||
@@ -173,7 +180,7 @@ function AppContent() {
           <ErrorBoundary scope="route">
           <Suspense fallback={<PageLoader label="Carregando…" />}>
           <Routes>
-            <Route path="/" element={isRedeDomain ? <IgrejaNasCasas /> : <Home />} />
+            <Route path="/" element={isRedeDomain ? <RedeHome /> : <Home />} />
             <Route path="/admin" element={<AdminLogin />} />
             <Route
               path="/admin/administracao"
@@ -301,7 +308,10 @@ function AppContent() {
             <Route path="/resultado/:token" element={<QuizResult />} />
             <Route path="/cadastrar-igreja" element={<ChurchCreateInvite />} />
             <Route path="/copiar" element={<CopyLink />} />
-            <Route path="/quem-somos" element={<About />} />
+            <Route
+              path="/quem-somos"
+              element={isRedeDomain ? <RedeSitePage slug="quem-somos" /> : <About />}
+            />
             <Route path="/descubra-seu-dom" element={<Quiz />} />
             <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
             <Route path="/teste-dons" element={<RedirectWithQuery to="/descubra-seu-dom" />} />
@@ -313,12 +323,27 @@ function AppContent() {
             <Route path="/para-ler" element={<BlogList />} />
             <Route path="/para-ler/:postId" element={<BlogPostPage />} />
             <Route path="/para-ler/:slug" element={<BlogPostPage />} />
-            <Route path="/contato" element={<Contact />} />
+            <Route
+              path="/contato"
+              element={isRedeDomain ? <RedeSitePage slug="contato" /> : <Contact />}
+            />
             <Route path="/ministerios/:nome" element={<Ministerio />} />
-            <Route path="/rede-igrejas" element={<IgrejaNasCasas />} />
-            <Route path="/rede-igrejas/como-funciona" element={<ComoFuncionaCasas />} />
-            <Route path="/rede-igrejas/rede-five-one" element={<RedeFiveOne />} />
-            <Route path="/rede-igrejas/o-que-e-five-one" element={<OQueEFiveOne />} />
+            <Route path="/rede-igrejas" element={<RedeHome />} />
+            {REDE_PAGE_SLUGS.map((slug) => (
+              <Route
+                key={slug}
+                path={`/rede-igrejas/${slug}`}
+                element={<RedeSitePage slug={slug} />}
+              />
+            ))}
+            {/* No domínio da rede as páginas ficam na raiz (/valores, /casas…). */}
+            {isRedeDomain &&
+              REDE_PAGE_SLUGS.filter((slug) => !REDE_SLUGS_SHARED_WITH_FIVEONE.includes(slug)).map((slug) => (
+                <Route key={`rede-${slug}`} path={`/${slug}`} element={<RedeSitePage slug={slug} />} />
+              ))}
+            <Route path="/rede-igrejas/como-funciona" element={<RedeArtigo slug="como-funciona" />} />
+            <Route path="/rede-igrejas/rede-five-one" element={<RedeArtigo slug="rede-five-one" />} />
+            <Route path="/rede-igrejas/o-que-e-five-one" element={<RedeArtigo slug="o-que-e-five-one" />} />
             <Route path="/igrejas" element={<Navigate to="/rede-igrejas" replace />} />
             <Route path="/solucoes/mentoria-individual" element={<MentoriaForm />} />
             <Route path="/solucoes/palestra-introdutoria" element={<PalestraForm />} />
@@ -398,7 +423,7 @@ function AppContent() {
           </Suspense>
           </ErrorBoundary>
         </main>
-        <ScrollToTop />
+        {!isRedeSitePage && <ScrollToTop />}
         {!hideLayout && !isInviteTest && <Footer />}
       </div>
       {/* Banner de instalação do app apenas na plataforma (aluno logado) */}

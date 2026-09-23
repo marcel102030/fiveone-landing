@@ -26,6 +26,15 @@ const STATIC_ROUTES: { url: string; priority: string; changefreq: string }[] = [
 const REDE_SITE = "https://redeigrejanascasas.com";
 const REDE_ROUTES: { url: string; priority: string; changefreq: string }[] = [
   { url: "/",                                priority: "1.0", changefreq: "weekly" },
+  { url: "/casas",                           priority: "0.9", changefreq: "weekly" },
+  { url: "/agenda",                          priority: "0.9", changefreq: "weekly" },
+  { url: "/quem-somos",                      priority: "0.8", changefreq: "monthly" },
+  { url: "/historia",                        priority: "0.8", changefreq: "monthly" },
+  { url: "/valores",                         priority: "0.8", changefreq: "monthly" },
+  { url: "/estrutura",                       priority: "0.8", changefreq: "monthly" },
+  { url: "/confissao",                       priority: "0.8", changefreq: "monthly" },
+  { url: "/recursos",                        priority: "0.7", changefreq: "monthly" },
+  { url: "/contato",                         priority: "0.7", changefreq: "monthly" },
   { url: "/rede-igrejas/o-que-e-five-one",   priority: "0.8", changefreq: "monthly" },
   { url: "/rede-igrejas/como-funciona",      priority: "0.8", changefreq: "monthly" },
   { url: "/rede-igrejas/rede-five-one",      priority: "0.8", changefreq: "monthly" },
