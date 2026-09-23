@@ -8,6 +8,8 @@ import { redePath } from './redeLinks';
 
 function Hero() {
   const [active, setActive] = useState(0);
+  const next = (active + 1) % HERO_IMAGES.length;
+  const prev = (active - 1 + HERO_IMAGES.length) % HERO_IMAGES.length;
 
   useEffect(() => {
     if (HERO_IMAGES.length <= 1) return;
@@ -18,16 +20,19 @@ function Hero() {
   return (
     <section className="rs-hero">
       <div className="rs-hero__slides" aria-hidden="true">
-        {HERO_IMAGES.map((src, i) => (
-          <img
-            key={src}
-            src={src}
-            alt=""
-            className={i === active ? 'is-active' : ''}
-            loading={i === 0 ? 'eager' : 'lazy'}
-            decoding="async"
-          />
-        ))}
+        {/* Só a foto anterior (para a transição), a atual e a próxima ficam na página:
+            as outras só baixam na vez delas. */}
+        {HERO_IMAGES.map((src, i) =>
+          i === prev || i === active || i === next ? (
+            <img
+              key={src}
+              src={src}
+              alt=""
+              className={i === active ? 'is-active' : ''}
+              decoding="async"
+            />
+          ) : null,
+        )}
       </div>
       <div className="rs-hero__shade" aria-hidden="true" />
       <div className="rs-hero__content rs-container">

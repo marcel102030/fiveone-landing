@@ -1,37 +1,38 @@
 // Conteúdo compartilhado pelas páginas do site da Rede de Igrejas nas Casas.
-import principal1 from '../assets/image/principal/20250715_215515(0).jpeg';
-import principal2 from '../assets/image/principal/AirBrush_20250625220548.jpeg';
-import principal3 from '../assets/image/principal/AirBrush_20250703233528.jpeg';
-import principal4 from '../assets/image/principal/AirBrush_20250703233640.jpeg';
-import principal5 from '../assets/image/principal/img_0274.jpg';
-import principal6 from '../assets/image/principal/img_0352.jpg';
-import principal7 from '../assets/image/principal/img_0469.jpg';
-import principal8 from '../assets/image/principal/img_9291.jpg';
-import principal9 from '../assets/image/principal/img_9375.jpg';
-import encontro1 from '../../../assets/images/encontro1.jpg';
-import encontro2 from '../../../assets/images/encontro2.png';
-import encontro4 from '../../../assets/images/encontro4.jpg';
-import presbiterosFoto from '../assets/image/presbiteros/marcelo-suenia.jpg';
 import redeLogo from '../assets/image/logoRedeIgrejas/Post para Instagram Parabéns Aniversário Azul e Branco Divertido Moderno.png?url';
+import { foto, fotoCapa } from './fotos';
 
 export { redeLogo };
 
+// Fotos em WebP (src/features/rede/assets/otimizadas), geradas a partir dos
+// originais do celular. `lg` (1600px) para capas e fundos; as demais variáveis
+// abaixo são a versão de 1000px, usada em cartões.
 export const PHOTOS = {
-  mesa: principal1,
-  grupo: principal2,
-  familia: principal3,
-  louvor: principal4,
-  missao: principal5,
-  comunhao: principal6,
-  palavra: principal7,
-  rede: principal9,
+  mesa: foto('mesa').lg,
+  grupo: foto('grupo').lg,
+  familia: foto('familia').lg,
+  louvor: foto('louvor').lg,
+  missao: foto('missao').lg,
+  comunhao: foto('comunhao').lg,
+  palavra: foto('palavra').lg,
+  rede: foto('rede').lg,
 };
 
-const heroModules = import.meta.glob<{ default: string }>(
-  '../assets/image/principal/Imagens_Header/converted/*.jpg',
-  { eager: true },
-);
-export const HERO_IMAGES: string[] = Object.values(heroModules).map((m) => m.default);
+const principal1 = foto('mesa').sm;
+const principal2 = foto('grupo').sm;
+const principal3 = foto('familia').sm;
+const principal4 = foto('louvor').sm;
+const principal5 = foto('missao').sm;
+const principal6 = foto('comunhao').sm;
+const principal7 = foto('palavra').sm;
+const principal8 = foto('amigos').sm;
+const principal9 = foto('rede').sm;
+const encontro1 = foto('encontro1').sm;
+const encontro2 = foto('encontro2').sm;
+const encontro4 = foto('encontro4').sm;
+const presbiterosFoto = foto('presbiteros').sm;
+
+export const HERO_IMAGES: string[] = fotoCapa();
 
 // ── Contato ────────────────────────────────────────────────────
 export const REDE_PHONE_DISPLAY = '+55 (83) 98718-1731';
