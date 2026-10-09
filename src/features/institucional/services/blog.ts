@@ -32,6 +32,7 @@ export interface BlogPost {
   published_at: string | null;
   created_at: string;
   updated_at: string;
+  sort_position?: number | null; // ordem manual (arrastar no admin); null = vai pro fim
 }
 
 export type BlogPostInput = Omit<BlogPost, "id" | "created_at" | "updated_at">;
@@ -54,21 +55,29 @@ export async function listPublishedPosts(opts?: {
   limit?: number;
   offset?: number;
 }): Promise<BlogPost[]> {
-  // Mesma ordenação do admin (listAllPostsAdmin usa updated_at) para a lista
-  // pública seguir exatamente a ordem que aparece no painel.
-  let q = supabase
-    .from("platform_blog_post")
-    .select("*")
-    .eq("status", "published")
-    .order("updated_at", { ascending: false });
+  // Ordem manual (sort_position) com a mesma lógica do admin, para o site seguir
+  // exatamente a ordem do painel. Fallback para updated_at se a coluna ainda não
+  // existir (ex.: migration não aplicada) — assim nunca quebra.
+  const build = (manual: boolean) => {
+    let q = supabase
+      .from("platform_blog_post")
+      .select("*")
+      .eq("status", "published");
+    q = manual
+      ? q
+          .order("sort_position", { ascending: true, nullsFirst: false })
+          .order("updated_at", { ascending: false })
+      : q.order("updated_at", { ascending: false });
+    if (opts?.category) q = q.eq("category", opts.category);
+    if (opts?.limit) q = q.limit(opts.limit);
+    if (opts?.offset !== undefined && opts?.limit) {
+      q = q.range(opts.offset, opts.offset + opts.limit - 1);
+    }
+    return q;
+  };
 
-  if (opts?.category) q = q.eq("category", opts.category);
-  if (opts?.limit) q = q.limit(opts.limit);
-  if (opts?.offset !== undefined && opts?.limit) {
-    q = q.range(opts.offset, opts.offset + opts.limit - 1);
-  }
-
-  const { data, error } = await q;
+  let { data, error } = await build(true);
+  if (error && /sort_position/i.test(error.message)) ({ data, error } = await build(false));
   if (error) throw error;
   return (data || []) as BlogPost[];
 }
@@ -203,19 +212,36 @@ export async function listAllPostsAdmin(opts?: {
   status?: BlogPostStatus | "ALL";
   search?: string;
 }): Promise<BlogPost[]> {
-  let q = supabase
-    .from("platform_blog_post")
-    .select("*")
-    .order("updated_at", { ascending: false });
+  // Mesma ordem manual da lista pública (sort_position), com fallback.
+  const build = (manual: boolean) => {
+    let q = supabase.from("platform_blog_post").select("*");
+    q = manual
+      ? q
+          .order("sort_position", { ascending: true, nullsFirst: false })
+          .order("updated_at", { ascending: false })
+      : q.order("updated_at", { ascending: false });
+    if (opts?.status && opts.status !== "ALL") q = q.eq("status", opts.status);
+    if (opts?.search && opts.search.trim()) {
+      q = q.ilike("title", `%${opts.search.trim()}%`);
+    }
+    return q;
+  };
 
-  if (opts?.status && opts.status !== "ALL") q = q.eq("status", opts.status);
-  if (opts?.search && opts.search.trim()) {
-    q = q.ilike("title", `%${opts.search.trim()}%`);
-  }
-
-  const { data, error } = await q;
+  let { data, error } = await build(true);
+  if (error && /sort_position/i.test(error.message)) ({ data, error } = await build(false));
   if (error) throw error;
   return (data || []) as BlogPost[];
+}
+
+// Persiste a ordem manual: grava sort_position = índice+1 na ordem recebida.
+export async function reorderPosts(orderedIds: string[]): Promise<void> {
+  const results = await Promise.all(
+    orderedIds.map((id, i) =>
+      supabase.from("platform_blog_post").update({ sort_position: i + 1 }).eq("id", id),
+    ),
+  );
+  const err = results.find((r) => r.error)?.error;
+  if (err) throw err;
 }
 
 export async function getPostByIdAdmin(id: string): Promise<BlogPost | null> {

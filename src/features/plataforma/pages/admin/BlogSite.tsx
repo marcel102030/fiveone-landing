@@ -11,6 +11,7 @@ import {
   formatPostDate,
   getPostByIdAdmin,
   listAllPostsAdmin,
+  reorderPosts,
   slugify,
   updatePost,
   uploadBlogCover,
@@ -175,6 +176,30 @@ function BlogList({
     return posts.filter((p) => p.title.toLowerCase().includes(s) || p.slug.toLowerCase().includes(s));
   }, [posts, search]);
 
+  // Reordenação manual (arrastar) só faz sentido na lista completa, sem filtro/busca.
+  const reorderEnabled = !search.trim() && status === "ALL";
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
+
+  async function handleDrop(dropIndex: number) {
+    const from = dragIndex;
+    setDragIndex(null);
+    setDragOverIndex(null);
+    if (from === null || from === dropIndex) return;
+    const next = [...posts];
+    const [moved] = next.splice(from, 1);
+    next.splice(dropIndex, 0, moved);
+    const prev = posts;
+    setPosts(next); // otimista
+    try {
+      await reorderPosts(next.map((p) => p.id));
+      onToast("Ordem atualizada.", true);
+    } catch (e: any) {
+      setPosts(prev); // reverte
+      onToast(e?.message || "Falha ao salvar a ordem.", false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Toolbar */}
@@ -205,6 +230,16 @@ function BlogList({
         />
       </div>
 
+      {reorderEnabled ? (
+        <p className="text-2xs text-slate/70 -mt-2">
+          💡 Arraste as linhas pela alça <span className="text-slate-light">⠿</span> para definir a ordem — vale pro site e pro admin.
+        </p>
+      ) : (
+        <p className="text-2xs text-slate/50 -mt-2">
+          Para reordenar, limpe a busca e deixe o filtro em “Todos os status”.
+        </p>
+      )}
+
       {/* Lista */}
       {loading ? (
         <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-8 text-slate text-sm text-center">
@@ -220,6 +255,7 @@ function BlogList({
           <table className="w-full text-sm">
             <thead className="bg-navy-lighter/40 text-slate text-xs uppercase tracking-wider">
               <tr>
+                <th className="w-8 px-2 py-3" aria-label="Reordenar"></th>
                 <th className="text-left px-4 py-3">Título</th>
                 <th className="text-left px-4 py-3">Categoria</th>
                 <th className="text-left px-4 py-3">Status</th>
@@ -228,8 +264,44 @@ function BlogList({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate/10">
-              {filtered.map((p) => (
-                <tr key={p.id} className="hover:bg-navy-lighter/30 transition">
+              {filtered.map((p, idx) => (
+                <tr
+                  key={p.id}
+                  draggable={reorderEnabled}
+                  onDragStart={reorderEnabled ? () => setDragIndex(idx) : undefined}
+                  onDragOver={
+                    reorderEnabled
+                      ? (e) => {
+                          e.preventDefault();
+                          if (dragOverIndex !== idx) setDragOverIndex(idx);
+                        }
+                      : undefined
+                  }
+                  onDrop={reorderEnabled ? () => void handleDrop(idx) : undefined}
+                  onDragEnd={reorderEnabled ? () => { setDragIndex(null); setDragOverIndex(null); } : undefined}
+                  className={`hover:bg-navy-lighter/30 transition ${
+                    dragOverIndex === idx && dragIndex !== null && dragIndex !== idx
+                      ? "border-t-2 border-mint"
+                      : ""
+                  } ${dragIndex === idx ? "opacity-40" : ""}`}
+                >
+                  <td className="px-2 py-3 text-center">
+                    {reorderEnabled ? (
+                      <span
+                        title="Arraste para reordenar"
+                        className="cursor-grab active:cursor-grabbing text-slate/50 hover:text-mint select-none"
+                      >
+                        ⠿
+                      </span>
+                    ) : (
+                      <span
+                        title="Limpe a busca e deixe 'Todos os status' para reordenar"
+                        className="text-slate/20 select-none"
+                      >
+                        ⠿
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="text-slate-white font-medium flex items-center gap-2">
                       {p.is_featured && (
