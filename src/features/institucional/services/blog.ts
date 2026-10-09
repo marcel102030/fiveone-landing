@@ -233,6 +233,29 @@ export async function listAllPostsAdmin(opts?: {
   return (data || []) as BlogPost[];
 }
 
+export interface BlogPostStats {
+  post_id: string;
+  views: number;
+  avg_seconds: number | null;
+  avg_scroll: number | null;
+  pct_reached_end: number | null;
+  sources: Record<string, number> | null;
+}
+
+// Agregados de leitura por post nos últimos `days` dias (via RPC no banco).
+// Retorna um mapa post_id → estatísticas. Se a tabela/RPC ainda não existir,
+// devolve {} (não quebra o admin).
+export async function getBlogStats(days = 30): Promise<Record<string, BlogPostStats>> {
+  const { data, error } = await supabase.rpc("get_blog_post_stats", { days });
+  if (error) {
+    console.warn("getBlogStats:", error.message);
+    return {};
+  }
+  const map: Record<string, BlogPostStats> = {};
+  for (const r of (data || []) as BlogPostStats[]) map[r.post_id] = r;
+  return map;
+}
+
 // Persiste a ordem manual: grava sort_position = índice+1 na ordem recebida.
 export async function reorderPosts(orderedIds: string[]): Promise<void> {
   const results = await Promise.all(

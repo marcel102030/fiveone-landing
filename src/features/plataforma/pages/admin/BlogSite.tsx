@@ -9,6 +9,8 @@ import {
   createPost,
   deletePost,
   formatPostDate,
+  getBlogStats,
+  type BlogPostStats,
   getPostByIdAdmin,
   listAllPostsAdmin,
   reorderPosts,
@@ -20,7 +22,7 @@ import { buildShareUrl } from "../../../institucional/components/blog/blogHelper
 import InstagramShareButton from "../../../institucional/components/blog/InstagramShareButton";
 import { supabase } from "../../../../shared/lib/supabaseClient";
 
-type Mode = "list" | "editor" | "subscribers";
+type Mode = "list" | "editor" | "subscribers" | "metrics";
 
 export default function AdminBlogSite() {
   useEffect(() => {
@@ -53,6 +55,12 @@ export default function AdminBlogSite() {
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition ${mode === "list" ? "bg-mint text-navy" : "border border-slate/20 text-slate-light hover:border-mint/40"}`}
                 >
                   Posts
+                </button>
+                <button
+                  onClick={() => setMode("metrics")}
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition ${mode === "metrics" ? "bg-mint text-navy" : "border border-slate/20 text-slate-light hover:border-mint/40"}`}
+                >
+                  Métricas
                 </button>
                 <button
                   onClick={() => setMode("subscribers")}
@@ -89,6 +97,8 @@ export default function AdminBlogSite() {
           />
         ) : mode === "subscribers" ? (
           <SubscribersList />
+        ) : mode === "metrics" ? (
+          <MetricsList onToast={showToast} />
         ) : (
           <BlogEditor
             key={editingId || "new"}
@@ -1062,6 +1072,157 @@ function Field({
 
 
 // ─── Assinantes da newsletter ───────────────────────────────
+
+// ─── Métricas de leitura ────────────────────────────────────
+const SOURCE_LABELS: Record<string, string> = {
+  instagram: "Instagram",
+  google: "Google",
+  whatsapp: "WhatsApp",
+  facebook: "Facebook",
+  direct: "Direto",
+  other: "Outros",
+};
+
+function fmtSecs(n: number | null): string {
+  if (n == null || !Number.isFinite(n)) return "—";
+  const m = Math.floor(n / 60);
+  const s = Math.round(n % 60);
+  return m > 0 ? `${m}m ${s}s` : `${s}s`;
+}
+
+function topSource(sources: Record<string, number> | null): string {
+  if (!sources) return "—";
+  const entries = Object.entries(sources);
+  if (!entries.length) return "—";
+  const total = entries.reduce((a, [, c]) => a + c, 0);
+  const [key, c] = entries.sort((a, b) => b[1] - a[1])[0];
+  const pct = total > 0 ? Math.round((c / total) * 100) : 0;
+  return `${SOURCE_LABELS[key] || key} (${pct}%)`;
+}
+
+const PERIODS: { label: string; days: number }[] = [
+  { label: "30 dias", days: 30 },
+  { label: "90 dias", days: 90 },
+  { label: "Tudo", days: 36500 },
+];
+
+function MetricsList({ onToast }: { onToast: (msg: string, ok: boolean) => void }) {
+  const [posts, setPosts] = useState<BlogPost[]>([]);
+  const [stats, setStats] = useState<Record<string, BlogPostStats>>({});
+  const [days, setDays] = useState(30);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    setLoading(true);
+    Promise.all([listAllPostsAdmin({ status: "ALL" }), getBlogStats(days)])
+      .then(([p, s]) => {
+        if (!alive) return;
+        setPosts(p);
+        setStats(s);
+      })
+      .catch((e) => onToast(e?.message || "Erro ao carregar métricas.", false))
+      .finally(() => alive && setLoading(false));
+    return () => {
+      alive = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [days]);
+
+  const rows = useMemo(() => {
+    return posts
+      .map((p) => ({ post: p, st: stats[p.id] }))
+      .sort((a, b) => (b.st?.views || 0) - (a.st?.views || 0));
+  }, [posts, stats]);
+
+  const totalViews = useMemo(
+    () => Object.values(stats).reduce((a, s) => a + (s.views || 0), 0),
+    [stats],
+  );
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between gap-4 flex-wrap">
+        <div>
+          <h2 className="text-xl font-bold text-slate-white">Métricas de leitura</h2>
+          <p className="text-sm text-slate mt-0.5">
+            {loading ? "Carregando…" : `${totalViews} leitura${totalViews !== 1 ? "s" : ""} no período`}
+          </p>
+        </div>
+        <div className="flex gap-2">
+          {PERIODS.map((pr) => (
+            <button
+              key={pr.days}
+              onClick={() => setDays(pr.days)}
+              className={`px-3 py-1.5 rounded-lg text-sm transition ${
+                days === pr.days
+                  ? "bg-mint text-navy font-medium"
+                  : "border border-slate/20 text-slate-light hover:border-mint/40"
+              }`}
+            >
+              {pr.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-8 text-center text-slate text-sm">
+          Carregando…
+        </div>
+      ) : totalViews === 0 ? (
+        <div className="bg-navy-light/60 border border-slate/10 rounded-2xl p-10 text-center">
+          <p className="text-3xl mb-3">📊</p>
+          <p className="text-slate-white font-medium">Ainda sem dados de leitura</p>
+          <p className="text-sm text-slate mt-1">
+            Assim que as pessoas começarem a ler os posts, as métricas aparecem aqui.
+          </p>
+        </div>
+      ) : (
+        <div className="bg-navy-light border border-slate/10 rounded-2xl overflow-x-auto">
+          <table className="w-full text-sm min-w-[720px]">
+            <thead className="bg-navy-lighter/40 text-slate text-xs uppercase tracking-wider">
+              <tr>
+                <th className="text-left px-4 py-3">Post</th>
+                <th className="text-right px-4 py-3">Leitores</th>
+                <th className="text-right px-4 py-3">Tempo médio</th>
+                <th className="text-right px-4 py-3">Rolagem média</th>
+                <th className="text-right px-4 py-3">Leram até o fim</th>
+                <th className="text-left px-4 py-3">Origem principal</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate/10">
+              {rows.map(({ post, st }) => (
+                <tr key={post.id} className="hover:bg-navy-lighter/30 transition">
+                  <td className="px-4 py-3">
+                    <div className="text-slate-white font-medium flex items-center gap-2">
+                      {post.is_featured && <span title="Destaque">⭐</span>}
+                      {post.title}
+                    </div>
+                    <div className="text-2xs text-slate mt-0.5"><code>/para-ler/{post.slug}</code></div>
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-white font-semibold">
+                    {st?.views ?? 0}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-light">
+                    {fmtSecs(st?.avg_seconds ?? null)}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-light">
+                    {st?.avg_scroll != null ? `${st.avg_scroll}%` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-right tabular-nums text-slate-light">
+                    {st?.pct_reached_end != null ? `${st.pct_reached_end}%` : "—"}
+                  </td>
+                  <td className="px-4 py-3 text-slate-light">{topSource(st?.sources ?? null)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
+}
 
 type Subscriber = {
   id: string;

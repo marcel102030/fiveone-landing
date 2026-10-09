@@ -14,6 +14,7 @@ import ReadingProgress from "../components/blog/ReadingProgress";
 import ReadingTOC from "../components/blog/ReadingTOC";
 import SelectionShare from "../components/blog/SelectionShare";
 import BlogReactions from "../components/blog/BlogReactions";
+import ReadingAnalytics from "../components/blog/ReadingAnalytics";
 import NextPostCard from "../components/blog/NextPostCard";
 import AuthorCard from "../components/blog/AuthorCard";
 import ReaderControls from "../components/blog/ReaderControls";
@@ -244,6 +245,7 @@ const BlogPostPage = () => {
         <div className="absolute bottom-0 right-1/4 w-[700px] h-[400px] bg-mint/[0.07] blur-[120px] rounded-full" />
       </div>
       <ReadingProgress targetSelector="article.post-article" />
+      <ReadingAnalytics postId={post.id} />
       <ReaderControls />
       <NewsletterStickyBanner />
       <SelectionShare title={post.title} shareUrl={shareUrl} />
