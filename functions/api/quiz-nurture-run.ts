@@ -10,6 +10,18 @@ import { createClient } from '@supabase/supabase-js';
 const SITE = 'https://fiveonemovement.com';
 const BATCH_LIMIT = 50; // e-mails por execução (folga p/ o volume atual)
 
+// ── Pré-venda "Viva o seu Chamado" (espelha src/.../data/courses.ts) ─────────
+// Como esta é uma Cloudflare Function, não importamos o courses.ts (ele puxa
+// imagens). Ao mudar preço/data lá, atualize aqui também.
+const VIVA_URL = `${SITE}/cursos/viva-o-seu-chamado`;
+const VIVA_PRICE = 'R$ 39,90';
+const VIVA_PRICE_FULL = 'R$ 59,90';
+const VIVA_LAUNCH_LABEL = '9 de setembro';
+
+// ── Instagram do Marcelo (conversão em seguidores) ───────────────────────────
+const IG_URL = 'https://instagram.com/marcelojunior.fiveone';
+const IG_HANDLE = '@marcelojunior.fiveone';
+
 const DOM_NAMES: Record<string, string> = {
   apostolo: 'Apóstolo',
   profeta: 'Profeta',
@@ -29,9 +41,19 @@ function firstName(name?: string | null) {
   return n || 'tudo bem';
 }
 
-// Envelope de e-mail com identidade Five One (navy/mint)
+// Envelope de e-mail com identidade Five One (navy/mint).
+// Documento HTML completo com color-scheme declarado → impede o Mail (iOS/dark)
+// de escurecer o botão mint por conta própria.
 function wrap(bodyHtml: string, unsubscribeUrl: string) {
-  return `
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="color-scheme" content="light dark"/>
+  <meta name="supported-color-schemes" content="light dark"/>
+</head>
+<body style="margin:0;padding:0;background:#0d1b2a;">
   <div style="background:#0d1b2a;padding:28px 16px;font-family:Arial,Helvetica,sans-serif;">
     <div style="max-width:560px;margin:0 auto;background:#0f2233;border:1px solid rgba(100,255,218,0.18);border-radius:16px;overflow:hidden;">
       <div style="padding:22px 28px;border-bottom:1px solid rgba(255,255,255,0.06);">
@@ -45,11 +67,27 @@ function wrap(bodyHtml: string, unsubscribeUrl: string) {
         <a href="${unsubscribeUrl}" style="color:#6b8291;text-decoration:underline;">Não quero mais receber estes e-mails</a>
       </div>
     </div>
-  </div>`;
+  </div>
+</body>
+</html>`;
 }
 
+// Botão principal (mint sólido) — a cor mint fica fixa por causa do color-scheme no <head>.
 const btn = (href: string, label: string) =>
-  `<a href="${href}" style="display:inline-block;margin-top:8px;padding:12px 22px;background:#64ffda;color:#052e16;font-weight:700;border-radius:10px;text-decoration:none;">${label}</a>`;
+  `<a href="${href}" style="display:inline-block;margin-top:8px;padding:13px 24px;background:#64ffda;color:#052e16;font-weight:700;border-radius:10px;text-decoration:none;">${label}</a>`;
+
+// Convite claro para SEGUIR o Marcelo no Instagram, com botão.
+const igFollow = () => `
+  <div style="margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,0.08);">
+    <p style="margin:0 0 12px;color:#cfd8dc;font-size:14px;line-height:1.6;">
+      Me segue no Instagram: sou o <strong style="color:#ffffff;">Marcelo</strong> e é lá que eu ensino sobre os 5 ministérios e como viver o seu chamado no dia a dia.
+    </p>
+    <a href="${IG_URL}" style="display:inline-block;padding:12px 22px;background:#64ffda;color:#052e16;font-weight:700;border-radius:10px;text-decoration:none;">Seguir ${IG_HANDLE}</a>
+  </div>`;
+
+// Assinaturas
+const signMarcelo = () => `<p style="margin-top:18px;">Um abraço,<br/>Marcelo Junior<br/><span style="color:#6b8291;font-size:13px;">Five One</span></p>`;
+const signEquipe = (closing: string) => `<p style="margin-top:18px;">${closing},<br/>Equipe Five One</p>`;
 
 // Estágios da régua. Índice = nurture_stage atual do lead a ser enviado.
 // afterDays = idade mínima (a partir de created_at) para disparar aquele estágio.
@@ -57,37 +95,44 @@ type Lead = { id: string; person_name: string | null; person_email: string; top_
 
 const STAGES: Array<{
   afterDays: number;
-  subject: (domLabel: string) => string;
+  subject: (lead: Lead, domLabel: string) => string;
   body: (lead: Lead, domLabel: string) => string;
 }> = [
+  // D+1 — boas-vindas + rever resultado. Assinado Equipe.
   {
     afterDays: 1,
-    subject: (dom) => `Seu dom de ${dom} — e o próximo passo`,
+    subject: (_lead, dom) => `Seu dom de ${dom} — e o próximo passo`,
     body: (lead, dom) => `
       <p>Oi, ${escapeHtml(firstName(lead.person_name))}!</p>
-      <p>Há alguns dias você fez o Teste dos 5 Ministérios e descobriu que o seu dom em maior expressão é o de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong>.</p>
-      <p>Descobrir é só o começo — o que transforma é <strong>desenvolver</strong>. Guarde o seu resultado e comece a olhar com atenção para como esse dom já se manifesta na sua caminhada.</p>
+      <p>No Teste dos 5 Ministérios você descobriu que o seu dom em maior expressão é o de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong>.</p>
+      <p>Descobrir é só o começo — o que transforma é desenvolver. Comece observando como esse dom já aparece na sua caminhada.</p>
       ${lead.result_token ? `<p>${btn(`${SITE}/resultado/${lead.result_token}`, 'Rever meu resultado')}</p>` : ''}
-      <p style="margin-top:18px;">Nos vemos por aqui,<br/>Equipe Five One</p>`,
+      ${igFollow()}
+      ${signEquipe('Nos vemos por aqui')}`,
   },
+  // D+3 — desenvolver o dom com conteúdos grátis. Assinado Equipe.
   {
     afterDays: 3,
-    subject: (dom) => `Como desenvolver o seu dom de ${dom}`,
+    subject: (_lead, dom) => `Como desenvolver o seu dom de ${dom}`,
     body: (lead, dom) => `
       <p>Oi, ${escapeHtml(firstName(lead.person_name))}!</p>
-      <p>Todo dom cresce quando é alimentado. Separamos conteúdos gratuitos que ajudam você a entender melhor o seu chamado de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong> e a colocá-lo em prática na igreja e no dia a dia.</p>
+      <p>Todo dom cresce quando é alimentado. Separei conteúdos gratuitos para você entender melhor o seu chamado de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong> e colocá-lo em prática.</p>
       <p>${btn(`${SITE}/para-ler`, 'Ler conteúdos do Five One')}</p>
-      <p style="margin-top:18px;">Com você nessa jornada,<br/>Equipe Five One</p>`,
+      ${igFollow()}
+      ${signEquipe('Com você nessa jornada')}`,
   },
+  // D+5 — VENDA do "Viva o seu Chamado" (pré-venda). Assinado Marcelo.
   {
-    afterDays: 7,
-    subject: () => `O próximo passo do seu chamado`,
+    afterDays: 5,
+    subject: (_lead, dom) => `O próximo passo do seu dom de ${dom}`,
     body: (lead, dom) => `
       <p>Oi, ${escapeHtml(firstName(lead.person_name))}!</p>
-      <p>Conhecer o seu dom de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong> abre uma pergunta importante: como ser treinado e ativado de forma intencional?</p>
-      <p>É exatamente isso que a Escola Five One existe para fazer — uma formação ministerial e teológica, 100% online, para você desenvolver e viver o seu chamado com profundidade.</p>
-      <p>${btn(`${SITE}/cursos`, 'Conhecer os cursos')}</p>
-      <p style="margin-top:18px;">Torcendo por você,<br/>Equipe Five One</p>`,
+      <p>Você descobriu o seu dom de <strong style="color:#64ffda;">${escapeHtml(dom)}</strong>. O próximo passo é ser treinado para viver esse chamado no dia a dia.</p>
+      <p>Foi para isso que criei o curso <strong style="color:#ffffff;">Viva o seu Chamado</strong> — os 5 Ministérios na prática, 100% online.</p>
+      <p>Ele está em pré-venda até o lançamento (${VIVA_LAUNCH_LABEL}): de <span style="text-decoration:line-through;">${VIVA_PRICE_FULL}</span> por <strong style="color:#64ffda;">${VIVA_PRICE}</strong>, com o Livro dos 5 Ministérios de bônus.</p>
+      <p>${btn(VIVA_URL, 'Quero garantir minha vaga')}</p>
+      ${igFollow()}
+      ${signMarcelo()}`,
   },
 ];
 
@@ -156,7 +201,7 @@ export const onRequestPost = async (ctx: any) => {
               from: fromAddress,
               to: lead.person_email,
               reply_to: replyTo,
-              subject: STAGES[stage].subject(domLabel),
+              subject: STAGES[stage].subject(lead, domLabel),
               html: wrap(STAGES[stage].body(lead, domLabel), unsubUrl),
             }),
           });

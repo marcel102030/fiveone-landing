@@ -52,7 +52,7 @@ const BlogList = () => {
 
   const { featured, rest } = useMemo(() => {
     // Destaque = post marcado manualmente (is_featured). Se nenhum estiver
-    // marcado, cai no mais recente (posts já vêm ordenados por published_at).
+    // marcado, cai no primeiro (posts já vêm ordenados por updated_at, igual ao admin).
     const f = posts.find((p) => p.is_featured) || posts[0] || null;
     const r = posts.filter((p) => p.id !== f?.id).slice(0, PAGE_SIZE);
     return { featured: f, rest: r };

@@ -54,11 +54,13 @@ export async function listPublishedPosts(opts?: {
   limit?: number;
   offset?: number;
 }): Promise<BlogPost[]> {
+  // Mesma ordenação do admin (listAllPostsAdmin usa updated_at) para a lista
+  // pública seguir exatamente a ordem que aparece no painel.
   let q = supabase
     .from("platform_blog_post")
     .select("*")
     .eq("status", "published")
-    .order("published_at", { ascending: false });
+    .order("updated_at", { ascending: false });
 
   if (opts?.category) q = q.eq("category", opts.category);
   if (opts?.limit) q = q.limit(opts.limit);
