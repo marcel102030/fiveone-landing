@@ -240,6 +240,7 @@ export interface BlogPostStats {
   avg_scroll: number | null;
   pct_reached_end: number | null;
   sources: Record<string, number> | null;
+  last_view: string | null;
 }
 
 // Agregados de leitura por post nos últimos `days` dias (via RPC no banco).

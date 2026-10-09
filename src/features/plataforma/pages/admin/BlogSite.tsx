@@ -1090,6 +1090,17 @@ function fmtSecs(n: number | null): string {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 }
 
+function fmtLastView(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return "—";
+  const today = new Date();
+  const sameDay = d.toDateString() === today.toDateString();
+  const hm = d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+  if (sameDay) return `hoje ${hm}`;
+  return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit" }) + ` ${hm}`;
+}
+
 function topSource(sources: Record<string, number> | null): string {
   if (!sources) return "—";
   const entries = Object.entries(sources);
@@ -1180,7 +1191,7 @@ function MetricsList({ onToast }: { onToast: (msg: string, ok: boolean) => void 
         </div>
       ) : (
         <div className="bg-navy-light border border-slate/10 rounded-2xl overflow-x-auto">
-          <table className="w-full text-sm min-w-[720px]">
+          <table className="w-full text-sm min-w-[840px]">
             <thead className="bg-navy-lighter/40 text-slate text-xs uppercase tracking-wider">
               <tr>
                 <th className="text-left px-4 py-3">Post</th>
@@ -1189,6 +1200,7 @@ function MetricsList({ onToast }: { onToast: (msg: string, ok: boolean) => void 
                 <th className="text-right px-4 py-3">Rolagem média</th>
                 <th className="text-right px-4 py-3">Leram até o fim</th>
                 <th className="text-left px-4 py-3">Origem principal</th>
+                <th className="text-left px-4 py-3">Última leitura</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate/10">
@@ -1214,6 +1226,7 @@ function MetricsList({ onToast }: { onToast: (msg: string, ok: boolean) => void 
                     {st?.pct_reached_end != null ? `${st.pct_reached_end}%` : "—"}
                   </td>
                   <td className="px-4 py-3 text-slate-light">{topSource(st?.sources ?? null)}</td>
+                  <td className="px-4 py-3 text-slate-light tabular-nums">{fmtLastView(st?.last_view ?? null)}</td>
                 </tr>
               ))}
             </tbody>
