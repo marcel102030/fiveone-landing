@@ -1,5 +1,5 @@
 // Conteúdo compartilhado pelas páginas do site da Rede de Igrejas nas Casas.
-import redeLogo from '../assets/image/logoRedeIgrejas/Post para Instagram Parabéns Aniversário Azul e Branco Divertido Moderno.png?url';
+import redeLogo from '../assets/image/logoRedeIgrejas/logo-lugar-a-mesa.webp?url';
 import { foto, fotoCapa } from './fotos';
 
 export { redeLogo };
