@@ -19,8 +19,8 @@ const REDE_WHATSAPP_NUMBER = '5583987181731';
 export function buildOutOfCityWhatsApp(city: string): string {
   const c = city.trim();
   const msg = c
-    ? `Olá! Sou de ${c}. Vi que a Rede Five One ainda não tem casa por aqui — gostaria de ser avisado(a) quando vocês chegarem na minha região.`
-    : `Olá! Sou de outra cidade. Vi que a Rede Five One ainda não tem casa por aqui — gostaria de ser avisado(a) quando vocês chegarem na minha região.`;
+    ? `Olá! Sou de ${c}. Vi que a Rede Lugar à Mesa ainda não tem casa por aqui — gostaria de ser avisado(a) quando vocês chegarem na minha região.`
+    : `Olá! Sou de outra cidade. Vi que a Rede Lugar à Mesa ainda não tem casa por aqui — gostaria de ser avisado(a) quando vocês chegarem na minha região.`;
   return `https://wa.me/${REDE_WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
 }
 
@@ -30,7 +30,7 @@ export function RedeLocationNotice({ className = '' }: { className?: string }) {
     <div className={`citygate-notice ${className}`} role="note">
       <span className="citygate-notice__pin">📍</span>
       <span>
-        No momento, a Rede Five One está presente <strong>apenas em Campina Grande - PB</strong>.
+        No momento, a Rede Lugar à Mesa está presente <strong>apenas em Campina Grande - PB</strong>.
         Estamos crescendo — em breve, novas cidades.
       </span>
     </div>

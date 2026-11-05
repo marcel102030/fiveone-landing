@@ -1,8 +1,8 @@
 // Rotas do site da Rede de Igrejas nas Casas.
 //
 // No domínio próprio (redeigrejanascasas.com) as páginas ficam na raiz
-// (/valores, /casas…). No domínio do Five One elas ficam sob /rede-igrejas,
-// para não colidir com rotas do Five One (ex.: /contato).
+// (/valores, /casas…). No domínio do Lugar à Mesa elas ficam sob /rede-igrejas,
+// para não colidir com rotas do Lugar à Mesa (ex.: /contato).
 
 export const REDE_PAGE_SLUGS = [
   'quem-somos',
@@ -18,7 +18,7 @@ export const REDE_PAGE_SLUGS = [
 
 export type RedePageSlug = (typeof REDE_PAGE_SLUGS)[number];
 
-/** Slugs que já são rotas do Five One; no domínio da rede a rota troca de página. */
+/** Slugs que já são rotas do Lugar à Mesa; no domínio da rede a rota troca de página. */
 export const REDE_SLUGS_SHARED_WITH_FIVEONE: readonly RedePageSlug[] = ['quem-somos', 'contato'];
 
 export function isRedeDomain(): boolean {

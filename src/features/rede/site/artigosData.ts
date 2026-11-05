@@ -24,7 +24,7 @@ export const ARTIGOS: Artigo[] = [
     titulo: 'Como funcionam as igrejas',
     destaque: 'nas casas?',
     resumo:
-      'A Rede Five One nasce na mesa. Descubra como cada encontro nas casas cria ambientes seguros para discipular, enviar e servir a cidade com o Evangelho.',
+      'A Rede Lugar à Mesa nasce na mesa. Descubra como cada encontro nas casas cria ambientes seguros para discipular, enviar e servir a cidade com o Evangelho.',
     secoes: [
       {
         titulo: 'O que são',
@@ -81,14 +81,14 @@ export const ARTIGOS: Artigo[] = [
     slug: 'rede-five-one',
     categoria: 'A rede',
     titulo: 'Rede de Igrejas',
-    destaque: 'Five One',
+    destaque: 'Lugar à Mesa',
     resumo:
       'Conheça a visão que sustenta a rede e como cuidamos de pessoas, líderes e casas para que cada bairro receba o Evangelho de forma prática.',
     secoes: [
       {
-        titulo: 'A Rede de Igrejas nas Casas – Five One',
+        titulo: 'A Rede de Igrejas nas Casas – Lugar à Mesa',
         blocos: [
-          'A Rede Five One nasce da convicção de que a Igreja de Cristo é chamada a ser um corpo vivo e missionário, fundamentado na prática comunitária, na simplicidade do evangelho e no poder transformador do Espírito Santo. Diferente de modelos excessivamente centralizados e hierarquizados, essa rede se estrutura de maneira orgânica, tendo como base as igrejas que se reúnem em casas, como no tempo do Novo Testamento (At 2.46; Rm 16.5; Cl 4.15).',
+          'A Rede Lugar à Mesa nasce da convicção de que a Igreja de Cristo é chamada a ser um corpo vivo e missionário, fundamentado na prática comunitária, na simplicidade do evangelho e no poder transformador do Espírito Santo. Diferente de modelos excessivamente centralizados e hierarquizados, essa rede se estrutura de maneira orgânica, tendo como base as igrejas que se reúnem em casas, como no tempo do Novo Testamento (At 2.46; Rm 16.5; Cl 4.15).',
         ],
       },
       {
@@ -101,7 +101,7 @@ export const ARTIGOS: Artigo[] = [
       {
         titulo: 'O ministério quíntuplo',
         blocos: [
-          'A Rede Five One reconhece que Cristo concedeu à igreja cinco dons ministeriais (Ef 4.11): apóstolos, profetas, evangelistas, pastores e mestres. Esses dons não são títulos hierárquicos, mas funções de serviço para edificação da Igreja. Eles funcionam como um sistema circulatório espiritual, levando vida e nutrientes para cada igreja.',
+          'A Rede Lugar à Mesa reconhece que Cristo concedeu à igreja cinco dons ministeriais (Ef 4.11): apóstolos, profetas, evangelistas, pastores e mestres. Esses dons não são títulos hierárquicos, mas funções de serviço para edificação da Igreja. Eles funcionam como um sistema circulatório espiritual, levando vida e nutrientes para cada igreja.',
           {
             tipo: 'lista',
             itens: [
@@ -118,7 +118,7 @@ export const ARTIGOS: Artigo[] = [
       {
         titulo: 'A rede como organismo',
         blocos: [
-          'Diferente de uma organização meramente institucional, a Rede Five One se estrutura como uma rede apostólica de significados. Seu funcionamento não depende de estruturas rígidas, mas de relacionamentos de discipulado, fidelidade ao evangelho e compartilhamento de vida.',
+          'Diferente de uma organização meramente institucional, a Rede Lugar à Mesa se estrutura como uma rede apostólica de significados. Seu funcionamento não depende de estruturas rígidas, mas de relacionamentos de discipulado, fidelidade ao evangelho e compartilhamento de vida.',
           {
             tipo: 'lista',
             itens: [
@@ -132,19 +132,19 @@ export const ARTIGOS: Artigo[] = [
       {
         titulo: 'Multiplicação e missão',
         blocos: [
-          'Esse modelo permite que a Rede Five One seja expansiva por natureza. Como cada igreja se reúne em casas e é nutrida pelos ministérios, ela se torna saudável e, consequentemente, apta a multiplicar-se. Cada casa pode tornar-se o ponto inicial de uma nova comunidade, e cada comunidade pode se conectar a outras, formando uma teia viva de discipulado e missão (At 6.7).',
+          'Esse modelo permite que a Rede Lugar à Mesa seja expansiva por natureza. Como cada igreja se reúne em casas e é nutrida pelos ministérios, ela se torna saudável e, consequentemente, apta a multiplicar-se. Cada casa pode tornar-se o ponto inicial de uma nova comunidade, e cada comunidade pode se conectar a outras, formando uma teia viva de discipulado e missão (At 6.7).',
         ],
       },
       {
         titulo: 'Unidade na diversidade',
         blocos: [
-          'Um dos maiores desafios da igreja ao longo da história foi o risco de se tornar monopolizada por apenas um dom. A Rede Five One busca superar esse desequilíbrio, promovendo a plenitude dos cinco dons atuando em conjunto, para que a igreja reflita Cristo em sua totalidade.',
+          'Um dos maiores desafios da igreja ao longo da história foi o risco de se tornar monopolizada por apenas um dom. A Rede Lugar à Mesa busca superar esse desequilíbrio, promovendo a plenitude dos cinco dons atuando em conjunto, para que a igreja reflita Cristo em sua totalidade.',
         ],
       },
       {
         titulo: 'Conclusão',
         blocos: [
-          'A Rede Five One é uma expressão contemporânea do modelo bíblico de igreja: simples, missionária e relacional. Ela une a força das igrejas nas casas, a liderança de presbíteros e a atuação indispensável dos cinco ministérios. Mais do que uma instituição, é um movimento vivo, onde cada comunidade local é parte de um organismo maior, nutrido e sustentado por Cristo, o verdadeiro cabeça da Igreja.',
+          'A Rede Lugar à Mesa é uma expressão contemporânea do modelo bíblico de igreja: simples, missionária e relacional. Ela une a força das igrejas nas casas, a liderança de presbíteros e a atuação indispensável dos cinco ministérios. Mais do que uma instituição, é um movimento vivo, onde cada comunidade local é parte de um organismo maior, nutrido e sustentado por Cristo, o verdadeiro cabeça da Igreja.',
           {
             tipo: 'destaque',
             texto: 'Um chamado a viver o DNA apostólico da igreja primitiva, para que o povo de Deus seja formado, as cidades sejam impactadas e o Reino de Cristo avance até os confins da terra.',
@@ -155,17 +155,17 @@ export const ARTIGOS: Artigo[] = [
   },
   {
     slug: 'o-que-e-five-one',
-    categoria: 'Five One',
+    categoria: 'Lugar à Mesa',
     titulo: 'O que é o',
-    destaque: 'Five One',
+    destaque: 'Lugar à Mesa',
     resumo:
-      'Entenda o coração apostólico da Five One e como despertamos discípulos para viver, ensinar e multiplicar o Reino em todos os lugares.',
+      'Entenda o coração apostólico da Lugar à Mesa e como despertamos discípulos para viver, ensinar e multiplicar o Reino em todos os lugares.',
     secoes: [
       {
         blocos: [
-          'Five One é uma cultura, não apenas um nome. Somos inspirados por Efésios 4:11 e acreditamos que os cinco dons ministeriais continuam ativos hoje para edificar a igreja. Trabalhamos para despertar e integrar esses dons no dia a dia das casas, das equipes e de toda a rede.',
+          'Lugar à Mesa é uma cultura, não apenas um nome. Somos inspirados por Efésios 4:11 e acreditamos que os cinco dons ministeriais continuam ativos hoje para edificar a igreja. Trabalhamos para despertar e integrar esses dons no dia a dia das casas, das equipes e de toda a rede.',
           'Nosso processo envolve formação intencional, acompanhamento pastoral e experiências práticas de serviço. Cada pessoa é convidada a descobrir sua vocação em Cristo e a colocá-la em movimento na comunidade. Queremos remover a separação entre “chamados” e “membros”, pois todos são capacitados pelo Espírito para servir.',
-          'A Five One também desenvolve conteúdos, encontros regionais e iniciativas sociais para impactar cidades. A mesa abre portas, o discipulado gera maturidade e o envio mantém a chama missionária acesa. Assim, fortalecemos a unidade do corpo de Cristo enquanto multiplicamos igrejas nas casas.',
+          'A Lugar à Mesa também desenvolve conteúdos, encontros regionais e iniciativas sociais para impactar cidades. A mesa abre portas, o discipulado gera maturidade e o envio mantém a chama missionária acesa. Assim, fortalecemos a unidade do corpo de Cristo enquanto multiplicamos igrejas nas casas.',
           {
             tipo: 'destaque',
             texto: 'Nosso compromisso é formar discípulos maduros que manifestem Jesus com criatividade, coragem e amor em cada contexto da sociedade.',

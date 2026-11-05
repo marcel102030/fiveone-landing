@@ -5,7 +5,7 @@ import { ARTIGOS, artigoPath } from '../artigosData';
 import { CONFISSAO_PDF, INSTAGRAM_HANDLE, INSTAGRAM_URL, PHOTOS } from '../redeData';
 import { redePath } from '../redeLinks';
 
-// Páginas do Five One: sempre pelo domínio principal, mesmo quando o visitante
+// Páginas do Lugar à Mesa: sempre pelo domínio principal, mesmo quando o visitante
 // está em redeigrejanascasas.com.
 const FIVEONE = 'https://fiveonemovement.com';
 
@@ -19,15 +19,15 @@ const EXTERNOS = [
   },
   {
     tipo: 'Cursos',
-    titulo: 'Formação Five One',
-    texto: 'Cursos da Five One sobre chamado, dons e vida de igreja.',
+    titulo: 'Formação Lugar à Mesa',
+    texto: 'Cursos da Lugar à Mesa sobre chamado, dons e vida de igreja.',
     href: `${FIVEONE}/cursos`,
     acao: 'Ver cursos',
   },
   {
     tipo: 'Leitura',
     titulo: 'Para Ler',
-    texto: 'Artigos do Five One sobre discipulado, os cinco ministérios e a vida da igreja.',
+    texto: 'Artigos do Lugar à Mesa sobre discipulado, os cinco ministérios e a vida da igreja.',
     href: `${FIVEONE}/para-ler`,
     acao: 'Ler artigos',
   },

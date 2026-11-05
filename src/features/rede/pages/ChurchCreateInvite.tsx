@@ -180,7 +180,7 @@ function ChurchCreateInviteInner() {
             <div className="option-icon" aria-hidden>💬</div>
             <div className="option-content">
               <h2 className="option-title">Dúvidas</h2>
-              <p className="option-desc">Fale com a equipe Five One pelo WhatsApp para tirar dúvidas.</p>
+              <p className="option-desc">Fale com a equipe Lugar à Mesa pelo WhatsApp para tirar dúvidas.</p>
             </div>
             <div className="option-actions">
               <a className="admin-btn" target="_blank" rel="noreferrer" href={`https://wa.me/5583989004764?text=${encodeURIComponent(`Olá! Cadastrei a igreja ${success.name} (slug: ${success.slug}). Poderiam me ajudar?`)}`}>WhatsApp</a>
@@ -216,7 +216,7 @@ function ChurchCreateInviteInner() {
               className="form-input"
               value={form.name}
               onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-              placeholder="Ex.: Rede Five One - Centro"
+              placeholder="Ex.: Rede Lugar à Mesa - Centro"
               required
             />
           </div>

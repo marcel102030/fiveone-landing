@@ -44,10 +44,10 @@ export const CONFISSAO_PDF = '/assets/pdfs/confissao-de-fe.pdf';
 const wa = (text: string) => `https://wa.me/5583987181731?text=${encodeURIComponent(text)}`;
 
 export const WHATSAPP = {
-  geral: wa('Olá! Vim pelo site da Rede Five One e gostaria de saber mais sobre as igrejas nas casas.'),
-  abrirCasa: wa('Olá! Vi no site da Rede Five One e tenho interesse em abrir minha casa para uma igreja nas casas. Como funciona?'),
-  estudo: wa('Olá! Vi no site da Rede Five One e quero participar do estudo bíblico nas casas. Quando e onde será o próximo encontro?'),
-  culto: wa('Olá! Vi no site da Rede Five One e quero confirmar presença no culto nas casas do sábado. Como funciona?'),
+  geral: wa('Olá! Vim pelo site da Rede Lugar à Mesa e gostaria de saber mais sobre as igrejas nas casas.'),
+  abrirCasa: wa('Olá! Vi no site da Rede Lugar à Mesa e tenho interesse em abrir minha casa para uma igreja nas casas. Como funciona?'),
+  estudo: wa('Olá! Vi no site da Rede Lugar à Mesa e quero participar do estudo bíblico nas casas. Quando e onde será o próximo encontro?'),
+  culto: wa('Olá! Vi no site da Rede Lugar à Mesa e quero confirmar presença no culto nas casas do sábado. Como funciona?'),
 };
 
 const PUBLIC_VISITOR_TOKEN = 'd8a7f3b2-1c0e-4a69-8b95-6f4e3d2c1b0a';
@@ -230,7 +230,7 @@ export const VIDA_DA_IGREJA: Item[] = [
 // ── Estrutura ──────────────────────────────────────────────────
 export const ESTRUTURA_VISAO = {
   paragrafos: [
-    'O nome da igreja local não é "Five One". Cada igreja é, antes de tudo, uma igreja na casa. A Rede Five One é a rede dos cinco ministérios de Efésios 4 (apóstolos, profetas, evangelistas, pastores e mestres), que cuidam, acompanham e fortalecem essas casas.',
+    'O nome da igreja local não é "Lugar à Mesa". Cada igreja é, antes de tudo, uma igreja na casa. A Rede Lugar à Mesa é a rede dos cinco ministérios de Efésios 4 (apóstolos, profetas, evangelistas, pastores e mestres), que cuidam, acompanham e fortalecem essas casas.',
     'Nós somos a Igreja. Não somos uma denominação, e nenhuma instituição "possui" as casas. A natureza dos vínculos entre nós se parece mais com os de uma família do que com os de uma estrutura institucional: depende de amor, confiança, tempo e longevidade.',
   ],
   versiculo: {
@@ -243,7 +243,7 @@ export const ESTRUTURA_VISAO = {
     { titulo: 'Vínculos relacionais', descricao: 'Acompanhamento de família, não de organização: caminhar próximo, com amor e tempo.' },
     { titulo: 'Unidade com a Igreja', descricao: 'Lutamos contra o "nós contra eles" e pela unidade com outras igrejas locais e com o Corpo de Cristo na cidade.' },
   ],
-  destaque: 'A Rede Five One é só uma das muitas expressões boas e fiéis da igreja de Jesus.',
+  destaque: 'A Rede Lugar à Mesa é só uma das muitas expressões boas e fiéis da igreja de Jesus.',
 };
 
 /** Círculos de cuidado — da casa para a rede (Confissão de Fé, Parte II, d). */
@@ -272,7 +272,7 @@ export const LIDERANCA = {
 export const MEMBRESIA = {
   paragrafos: [
     'A membresia formal em uma igreja local não é mera adesão administrativa, mas um pacto de aliança espiritual entre o crente e a comunidade da fé, comprometendo-os mutuamente diante de Deus e uns dos outros (Hb 10.24-25; At 2.42-47).',
-    'Para se tornar membro de uma igreja na casa da Rede Five One, a pessoa precisa fazer o curso Bases, que passa pelos fundamentos da fé cristã e pela identidade da rede, e ler a Confissão de Fé junto com os presbíteros.',
+    'Para se tornar membro de uma igreja na casa da Rede Lugar à Mesa, a pessoa precisa fazer o curso Bases, que passa pelos fundamentos da fé cristã e pela identidade da rede, e ler a Confissão de Fé junto com os presbíteros.',
   ],
   itens: [
     { titulo: 'Submissão mútua', descricao: 'Viver em aliança fraterna com os demais irmãos (Ef 4.1-3; Hb 10.24-25).' },
@@ -295,7 +295,7 @@ export const MULTIPLICACAO = {
     { titulo: 'Comunhão real', descricao: 'Amizade e relacionamento verdadeiro com os presbíteros atuais, para preservar a unidade.' },
     { titulo: 'Conexão entre as casas', descricao: 'Reunião mensal das casas da mesma cidade e contribuição financeira para que a obra continue avançando.' },
   ],
-  destaque: 'Cada nova casa separa um valor mensal para a Rede Five One. Esse dinheiro ajuda a abrir novas casas, orfanatos e outros projetos que o Senhor colocar diante de nós.',
+  destaque: 'Cada nova casa separa um valor mensal para a Rede Lugar à Mesa. Esse dinheiro ajuda a abrir novas casas, orfanatos e outros projetos que o Senhor colocar diante de nós.',
 };
 
 // ── Encontros (galeria da agenda) ──────────────────────────────

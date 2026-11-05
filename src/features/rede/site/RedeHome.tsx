@@ -37,7 +37,7 @@ function Hero() {
       <div className="rs-hero__shade" aria-hidden="true" />
       <div className="rs-hero__content rs-container">
         <div>
-          <span className="rs-eyebrow rs-eyebrow--light">Rede Five One · Campina Grande - PB</span>
+          <span className="rs-eyebrow rs-eyebrow--light">Rede Lugar à Mesa · Campina Grande - PB</span>
           <h1 className="rs-display">
             Uma <em>família</em> de igrejas <em>nas casas</em>
           </h1>

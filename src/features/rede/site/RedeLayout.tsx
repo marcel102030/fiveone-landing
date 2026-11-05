@@ -77,7 +77,7 @@ function Brand() {
       <span className="rs-brand__mark" style={{ backgroundImage: `url("${redeLogo}")` }} aria-hidden="true" />
       <span className="rs-brand__text">
         <strong>igrejas nas casas</strong>
-        <small>Rede Five One</small>
+        <small>Rede Lugar à Mesa</small>
       </span>
     </Link>
   );
@@ -256,7 +256,7 @@ function Footer() {
         </div>
       </div>
       <div className="rs-footer__bottom">
-        <span>© {year} Rede de Igrejas nas Casas — Five One</span>
+        <span>© {year} Rede de Igrejas nas Casas — Lugar à Mesa</span>
         <span>Catolé · Campina Grande — PB</span>
         <a href={INSTAGRAM_URL} target="_blank" rel="noopener noreferrer">
           Instagram {INSTAGRAM_HANDLE}
@@ -331,7 +331,7 @@ export default function RedeLayout({
 }) {
   const { gate, modal } = useCityGateModal();
   useEffect(() => {
-    document.title = title ? `${title} · Rede de Igrejas nas Casas` : 'Rede de Igrejas nas Casas | Five One';
+    document.title = title ? `${title} · Rede de Igrejas nas Casas` : 'Rede de Igrejas nas Casas | Lugar à Mesa';
   }, [title]);
   const openWhatsApp = (url: string) => gate(() => window.open(url, '_blank', 'noopener,noreferrer'));
   useReveal();
